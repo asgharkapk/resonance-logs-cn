@@ -9,6 +9,7 @@
   import AbbreviatedNumber from "$lib/components/abbreviated-number.svelte";
   import { SETTINGS } from "$lib/settings-store";
   import { resolveMonsterName } from "$lib/config/game-names";
+  import { formatNumber, t } from "$lib/i18n/index.svelte";
 
   let headerInfo: HeaderInfo = $state({
     totalDps: 0,
@@ -71,12 +72,19 @@
             <span
               > / <AbbreviatedNumber num={boss.maxHp} {abbreviationStyle} /></span
             >
-            <span class="text-rose-400 ml-1">({hpPercent.toFixed(1)}%)</span>
+            <span class="text-rose-400 ml-1"
+              >({formatNumber(hpPercent, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })}%)</span
+            >
           {/if}
         </span>
       </div>
     {/each}
   </div>
 {:else}
-  <span class="text-base text-neutral-500 font-medium italic">No Boss</span>
+  <span class="text-base text-neutral-500 font-medium italic"
+    >{t("live.empty.noBoss")}</span
+  >
 {/if}

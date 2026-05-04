@@ -15,7 +15,11 @@
     historyTankedPlayerColumns,
     historyTankedSkillColumns,
   } from "$lib/column-data";
-  import { settings, SETTINGS, DEFAULT_HISTORY_STATS } from "$lib/settings-store";
+  import {
+    settings,
+    SETTINGS,
+    DEFAULT_HISTORY_STATS,
+  } from "$lib/settings-store";
   import getDisplayName from "$lib/name-display";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { computePlayerRowsFromEntities } from "$lib/live-derived";
@@ -26,6 +30,12 @@
   } from "$lib/config/recount-table";
   import { resolveMonsterName, resolveSceneName } from "$lib/config/game-names";
   import { formatClassSpecLabel } from "$lib/class-labels";
+  import {
+    formatDateTime,
+    formatNumber,
+    t,
+    type MessageKey,
+  } from "$lib/i18n/index.svelte";
   import DeathPlayerList, {
     type DeathPlayerEntry,
   } from "$lib/components/death-replay/death-player-list.svelte";
@@ -101,9 +111,13 @@
   };
 
   // Get encounter ID from URL params
-  let encounterId = $derived($page.params.id ? parseInt($page.params.id) : null);
+  let encounterId = $derived(
+    $page.params.id ? parseInt($page.params.id) : null,
+  );
   let charId = $derived($page.url.searchParams.get("charId"));
-  let skillType = $derived(($page.url.searchParams.get("skillType") ?? "dps") as HistorySkillType);
+  let skillType = $derived(
+    ($page.url.searchParams.get("skillType") ?? "dps") as HistorySkillType,
+  );
 
   let encounter = $state<EncounterSummaryDto | null>(null);
   let localPlayerUid = $state<number | null>(null);
@@ -118,11 +132,11 @@
   // Tab state for encounter view
   type HistoryTab = "damage" | "tanked" | "healing" | "death";
   let activeTab = $state<HistoryTab>("damage");
-  const tabs: { key: HistoryTab; label: string }[] = [
-    { key: "damage", label: "伤害" },
-    { key: "tanked", label: "承伤" },
-    { key: "healing", label: "治疗" },
-    { key: "death", label: "死亡回放" },
+  const tabs: { key: HistoryTab; labelKey: MessageKey }[] = [
+    { key: "damage", labelKey: "history.detail.tabs.damage" },
+    { key: "tanked", labelKey: "history.detail.tabs.tanked" },
+    { key: "healing", labelKey: "history.detail.tabs.healing" },
+    { key: "death", labelKey: "history.detail.tabs.death" },
   ];
 
   let encounterDurationSeconds = $derived.by(() => {
@@ -156,9 +170,18 @@
       entities,
       elapsedMs,
       activeCombatTimeMs: activeCombatMs,
-      totalDmg: entities.reduce((sum, entity) => sum + (entity.damage?.total ?? 0), 0),
-      totalHeal: entities.reduce((sum, entity) => sum + (entity.healing?.total ?? 0), 0),
-      totalDmgBossOnly: entities.reduce((sum, entity) => sum + (entity.damageBossOnly?.total ?? 0), 0),
+      totalDmg: entities.reduce(
+        (sum, entity) => sum + (entity.damage?.total ?? 0),
+        0,
+      ),
+      totalHeal: entities.reduce(
+        (sum, entity) => sum + (entity.healing?.total ?? 0),
+        0,
+      ),
+      totalDmgBossOnly: entities.reduce(
+        (sum, entity) => sum + (entity.damageBossOnly?.total ?? 0),
+        0,
+      ),
     };
 
     const dpsRows = computePlayerRowsFromEntities(source, "dps");
@@ -181,7 +204,9 @@
           isLocalPlayer: localUid !== null && entity.uid === localUid,
           className,
           classSpecName,
-          classDisplay: formatClassSpecLabel(className, classSpecName) || "未知职业",
+          classDisplay:
+            formatClassSpecLabel(className, classSpecName) ||
+            t("history.detail.player.unknownClass"),
           abilityScore: entity.abilityScore || 0,
           seasonStrength: entity.seasonStrength || 0,
           totalDmg: dps?.totalDmg ?? 0,
@@ -212,7 +237,9 @@
           hitsHeal: heal?.hits ?? 0,
         };
       })
-      .filter((row) => row.totalDmg > 0 || row.healDealt > 0 || row.damageTaken > 0);
+      .filter(
+        (row) => row.totalDmg > 0 || row.healDealt > 0 || row.damageTaken > 0,
+      );
   }
 
   // Filtered and sorted players based on active tab
@@ -228,17 +255,18 @@
     };
   }
 
-  let perTargetByUid = $derived.by(() =>
-    new Map(
-      rawEntities.map((row) => [
-        row.uid,
-        {
-          uid: row.uid,
-          dmgTargets: row.dmgPerTarget ?? [],
-          healTargets: row.healPerTarget ?? [],
-        } satisfies EntityPerTargetData,
-      ]),
-    ),
+  let perTargetByUid = $derived.by(
+    () =>
+      new Map(
+        rawEntities.map((row) => [
+          row.uid,
+          {
+            uid: row.uid,
+            dmgTargets: row.dmgPerTarget ?? [],
+            healTargets: row.healPerTarget ?? [],
+          } satisfies EntityPerTargetData,
+        ]),
+      ),
   );
 
   let entityNameByUid = $derived.by(() => {
@@ -262,7 +290,9 @@
     return `#${target.targetUid}`;
   }
 
-  let pushedUidSet = $derived.by(() => new Set(rawEntities.map((row) => row.uid)));
+  let pushedUidSet = $derived.by(
+    () => new Set(rawEntities.map((row) => row.uid)),
+  );
 
   function isNumericLikeName(name: string): boolean {
     return /^#?\d+$/.test(name.trim());
@@ -279,7 +309,10 @@
           if (existing.targetName.startsWith("#") && targetName) {
             existing.targetName = targetName;
           }
-          if (existing.targetMonsterId === null && target.targetMonsterId !== null) {
+          if (
+            existing.targetMonsterId === null &&
+            target.targetMonsterId !== null
+          ) {
             existing.targetMonsterId = target.targetMonsterId;
           }
         } else {
@@ -325,8 +358,7 @@
         encounterDurationSeconds,
         encounter?.activeCombatDuration ?? null,
         localPlayerUid,
-      )
-        .sort((a, b) => b.totalDmg - a.totalDmg);
+      ).sort((a, b) => b.totalDmg - a.totalDmg);
     } else if (activeTab === "tanked") {
       return [...players]
         .filter((p) => p.damageTaken > 0)
@@ -394,11 +426,15 @@
   }): FlatSkillRow[] {
     const rows: FlatSkillRow[] = [];
     const topLevel = [
-      ...grouping.groups.map(
-        (group): { kind: "group"; row: RecountGroup } => ({ kind: "group", row: group }),
-      ),
+      ...grouping.groups.map((group): { kind: "group"; row: RecountGroup } => ({
+        kind: "group",
+        row: group,
+      })),
       ...grouping.ungrouped.map(
-        (skill): { kind: "skill"; row: SkillDisplayRow } => ({ kind: "skill", row: skill }),
+        (skill): { kind: "skill"; row: SkillDisplayRow } => ({
+          kind: "skill",
+          row: skill,
+        }),
       ),
     ].sort((a, b) => b.row.totalDmg - a.row.totalDmg);
 
@@ -436,10 +472,16 @@
   let skillGrouping = $derived.by(() => {
     if (!selectedEntity) return { groups: [], ungrouped: [] };
     const durationSecs = Math.max(1, encounterDurationSeconds);
-    if (skillType === "dps" && selectedSkillTargetUid !== null && selectedPlayer) {
+    if (
+      skillType === "dps" &&
+      selectedSkillTargetUid !== null &&
+      selectedPlayer
+    ) {
       const targetStats = perTargetByUid
         .get(selectedPlayer.uid)
-        ?.dmgTargets.find((target) => target.targetUid === selectedSkillTargetUid);
+        ?.dmgTargets.find(
+          (target) => target.targetUid === selectedSkillTargetUid,
+        );
       if (!targetStats) return { groups: [], ungrouped: [] };
       return groupSkillsByRecount(
         targetStats.skills,
@@ -465,7 +507,8 @@
   let flatSkillRows = $derived.by(() => flattenGrouping(skillGrouping));
 
   let healTargetSummary = $derived.by(() => {
-    if (!selectedPlayer || skillType !== "heal") return [] as DisplayPerTargetStats[];
+    if (!selectedPlayer || skillType !== "heal")
+      return [] as DisplayPerTargetStats[];
     return [...(perTargetByUid.get(selectedPlayer.uid)?.healTargets ?? [])]
       .map((target) => ({
         ...target,
@@ -474,13 +517,17 @@
       .filter(
         (target) =>
           target.totalValue > 0 &&
-          (!isNumericLikeName(target.targetName) || pushedUidSet.has(target.targetUid)),
+          (!isNumericLikeName(target.targetName) ||
+            pushedUidSet.has(target.targetUid)),
       )
       .sort((a, b) => b.totalValue - a.totalValue);
   });
 
   let healTargetTotal = $derived.by(() => {
-    return healTargetSummary.reduce((sum, target) => sum + target.totalValue, 0);
+    return healTargetSummary.reduce(
+      (sum, target) => sum + target.totalValue,
+      0,
+    );
   });
 
   function rowTotalDmg(row: FlatSkillRow): number {
@@ -496,32 +543,55 @@
     return typeof value === "number" ? value : 0;
   }
 
-  let maxDpsPlayer = $derived.by(() => displayedPlayers.reduce((max, p) => Math.max(max, p.totalDmg || 0), 0));
-  let maxHealPlayer = $derived.by(() => displayedPlayers.reduce((max, p) => Math.max(max, p.healDealt || 0), 0));
-  let maxTankedPlayer = $derived.by(() => displayedPlayers.reduce((max, p) => Math.max(max, p.damageTaken || 0), 0));
-  let maxSkillTotal = $derived.by(() => flatSkillRows.reduce((max, row) => Math.max(max, rowTotalDmg(row)), 0));
+  let maxDpsPlayer = $derived.by(() =>
+    displayedPlayers.reduce((max, p) => Math.max(max, p.totalDmg || 0), 0),
+  );
+  let maxHealPlayer = $derived.by(() =>
+    displayedPlayers.reduce((max, p) => Math.max(max, p.healDealt || 0), 0),
+  );
+  let maxTankedPlayer = $derived.by(() =>
+    displayedPlayers.reduce((max, p) => Math.max(max, p.damageTaken || 0), 0),
+  );
+  let maxSkillTotal = $derived.by(() =>
+    flatSkillRows.reduce((max, row) => Math.max(max, rowTotalDmg(row)), 0),
+  );
 
   // Get visible columns based on settings and active tab
   let visiblePlayerColumns = $derived.by(() => {
     if (activeTab === "healing") {
-      return historyHealPlayerColumns.filter((col) => settings.state.history.heal.players[col.key] ?? true);
+      return historyHealPlayerColumns.filter(
+        (col) => settings.state.history.heal.players[col.key] ?? true,
+      );
     } else if (activeTab === "tanked") {
-      return historyTankedPlayerColumns.filter((col) => settings.state.history.tanked.players[col.key] ?? true);
+      return historyTankedPlayerColumns.filter(
+        (col) => settings.state.history.tanked.players[col.key] ?? true,
+      );
     }
     return historyDpsPlayerColumns.filter((col) => {
-      const defaultValue = DEFAULT_HISTORY_STATS[col.key as keyof typeof DEFAULT_HISTORY_STATS] ?? true;
-      const setting = settings.state.history.dps.players[col.key as keyof typeof settings.state.history.dps.players];
+      const defaultValue =
+        DEFAULT_HISTORY_STATS[col.key as keyof typeof DEFAULT_HISTORY_STATS] ??
+        true;
+      const setting =
+        settings.state.history.dps.players[
+          col.key as keyof typeof settings.state.history.dps.players
+        ];
       return setting ?? defaultValue;
     });
   });
 
   let visibleSkillColumns = $derived.by(() => {
     if (skillType === "heal") {
-      return historyHealSkillColumns.filter((col) => settings.state.history.heal.skillBreakdown[col.key]);
+      return historyHealSkillColumns.filter(
+        (col) => settings.state.history.heal.skillBreakdown[col.key],
+      );
     } else if (skillType === "tanked") {
-      return historyTankedSkillColumns.filter((col) => settings.state.history.tanked.skillBreakdown[col.key]);
+      return historyTankedSkillColumns.filter(
+        (col) => settings.state.history.tanked.skillBreakdown[col.key],
+      );
     }
-    return historyDpsSkillColumns.filter((col) => settings.state.history.dps.skillBreakdown[col.key]);
+    return historyDpsSkillColumns.filter(
+      (col) => settings.state.history.dps.skillBreakdown[col.key],
+    );
   });
 
   const websiteBaseUrl = $derived.by(() => {
@@ -579,8 +649,8 @@
       }
       encounter = encounterRes.data;
       localPlayerUid =
-        (encounterRes.data as { localPlayerId?: number | null }).localPlayerId ??
-        null;
+        (encounterRes.data as { localPlayerId?: number | null })
+          .localPlayerId ?? null;
       rawEntities = entitiesRes.data;
       const durationSeconds =
         encounterRes.data.duration > 0
@@ -602,8 +672,11 @@
     }
   }
 
-  function viewPlayerSkills(playerUid: number, type = "dps", targetUid?: number | null) {
-
+  function viewPlayerSkills(
+    playerUid: number,
+    type = "dps",
+    targetUid?: number | null,
+  ) {
     const sp = new URLSearchParams($page.url.searchParams);
     sp.set("charId", String(playerUid));
     sp.set("skillType", type);
@@ -644,7 +717,6 @@
   }
 
   function backToEncounter() {
-
     const sp = new URLSearchParams($page.url.searchParams);
     sp.delete("charId");
     sp.delete("skillType");
@@ -655,7 +727,6 @@
   }
 
   function backToHistory() {
-
     // Return to the history list while preserving list state.
     const sp = new URLSearchParams($page.url.searchParams);
     sp.delete("charId");
@@ -697,7 +768,11 @@
       backToHistory();
     } catch (e) {
       console.error("Failed to delete encounter", e);
-      alert("删除战斗记录失败：" + e);
+      alert(
+        t("history.detail.error.deleteFailed", {
+          error: String(e),
+        }),
+      );
       isDeleting = false;
       showDeleteModal = false;
     }
@@ -737,30 +812,31 @@
       activeTab = "death";
     }
   });
-
 </script>
 
 <div class="">
   {#if error}
-    <div class="text-red-400 mb-3">{error}</div>
+    <div class="mb-3 text-red-400">{error}</div>
   {/if}
 
   {#if !charId && encounter}
     <!-- Encounter Overview -->
     <div class="mb-4">
-      <div class="flex flex-col gap-3 rounded-lg border border-border bg-card/50 p-4">
+      <div
+        class="border-border bg-card/50 flex flex-col gap-3 rounded-lg border p-4"
+      >
         <div class="flex flex-wrap items-stretch justify-between gap-3">
-          <div class="flex items-start gap-3 min-w-0 flex-1">
-            <div class="space-y-1 min-w-0 flex-1 h-full">
+          <div class="flex min-w-0 flex-1 items-start gap-3">
+            <div class="h-full min-w-0 flex-1 space-y-1">
               <div class="flex flex-wrap items-center gap-1">
                 <button
                   onclick={backToHistory}
-                  class="p-0.5 text-muted-foreground/70 hover:text-foreground transition-colors rounded shrink-0"
-                  title="返回历史"
-                  aria-label="返回历史"
+                  class="text-muted-foreground/70 hover:text-foreground shrink-0 rounded p-0.5 transition-colors"
+                  title={t("history.detail.actions.backToHistory")}
+                  aria-label={t("history.detail.actions.backToHistory")}
                 >
                   <svg
-                    class="w-4 h-4"
+                    class="h-4 w-4"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -774,18 +850,20 @@
                     />
                   </svg>
                 </button>
-                <h2 class="text-lg font-semibold text-foreground leading-tight">
+                <h2 class="text-foreground text-lg leading-tight font-semibold">
                   {encounter.sceneId !== null
                     ? resolveSceneName(
                         encounter.sceneId,
                         encounter.dungeonDifficulty,
                       )
-                    : "未知场景"}
+                    : t("history.detail.encounter.unknownScene")}
                 </h2>
               </div>
               {#if encounter.bosses.length > 0}
-                <div class="w-full mt-1">
-                  <div class="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                <div class="mt-1 w-full">
+                  <div
+                    class="text-muted-foreground flex flex-wrap items-center gap-1 text-xs"
+                  >
                     {#each encounter.bosses as b, i}
                       <span
                         class={b.isDefeated
@@ -800,27 +878,37 @@
                   </div>
                 </div>
               {/if}
-              <div class="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                <span>{new Date(encounter.startedAtMs).toLocaleString()}</span>
+              <div
+                class="text-muted-foreground flex flex-wrap items-center gap-1 text-xs"
+              >
+                <span>{formatDateTime(encounter.startedAtMs)}</span>
                 <span class="text-muted-foreground">•</span>
-                <span>时长：{formatEncounterDuration(encounterDurationSeconds)}</span>
+                <span>
+                  {t("history.detail.encounter.duration", {
+                    duration: formatEncounterDuration(encounterDurationSeconds),
+                  })}
+                </span>
                 <span class="text-muted-foreground">•</span>
-                <span class="text-[11px] text-muted-foreground">#{encounter.id}</span>
+                <span class="text-muted-foreground text-[11px]"
+                  >#{encounter.id}</span
+                >
               </div>
             </div>
           </div>
 
-          <div class="flex flex-col items-end gap-2 shrink-0 self-stretch justify-between h-full">
+          <div
+            class="flex h-full shrink-0 flex-col items-end justify-between gap-2 self-stretch"
+          >
             <div class="flex items-center gap-1.5">
               {#if encounter.remoteEncounterId}
                 <button
                   onclick={openEncounterOnWebsite}
-                  class="inline-flex items-center justify-center rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors p-2"
-                  title="在 resonance-logs.com 打开该战斗记录"
-                  aria-label="在网站打开"
+                  class="bg-primary/10 text-primary hover:bg-primary/20 inline-flex items-center justify-center rounded p-2 transition-colors"
+                  title={t("history.detail.actions.openWebsiteTitle")}
+                  aria-label={t("history.detail.actions.openWebsiteAria")}
                 >
                   <svg
-                    class="w-4 h-4"
+                    class="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -837,18 +925,18 @@
 
               <button
                 onclick={handleToggleFavorite}
-                class="inline-flex items-center justify-center rounded transition-colors p-2 {encounter.isFavorite
+                class="inline-flex items-center justify-center rounded p-2 transition-colors {encounter.isFavorite
                   ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
                   : 'bg-muted/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground'}"
                 title={encounter.isFavorite
-                  ? "取消收藏"
-                  : "加入收藏"}
+                  ? t("history.detail.actions.removeFavorite")
+                  : t("history.detail.actions.addFavorite")}
                 aria-label={encounter.isFavorite
-                  ? "取消收藏"
-                  : "加入收藏"}
+                  ? t("history.detail.actions.removeFavorite")
+                  : t("history.detail.actions.addFavorite")}
               >
                 <svg
-                  class="w-4 h-4"
+                  class="h-4 w-4"
                   fill={encounter.isFavorite ? "currentColor" : "none"}
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -864,12 +952,12 @@
 
               <button
                 onclick={openDeleteModal}
-                class="inline-flex items-center justify-center rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors p-2"
-                title="删除该战斗记录"
-                aria-label="删除战斗记录"
+                class="bg-destructive/10 text-destructive hover:bg-destructive/20 inline-flex items-center justify-center rounded p-2 transition-colors"
+                title={t("history.detail.actions.deleteTitle")}
+                aria-label={t("history.detail.actions.deleteAria")}
               >
                 <svg
-                  class="w-4 h-4"
+                  class="h-4 w-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -884,15 +972,16 @@
               </button>
             </div>
 
-            <div class="flex rounded border border-border bg-popover">
+            <div class="border-border bg-popover flex rounded border">
               {#each tabs as tab}
                 <button
                   onclick={() => (activeTab = tab.key)}
-                  class="px-3 py-1 text-xs rounded transition-colors {activeTab === tab.key
+                  class="rounded px-3 py-1 text-xs transition-colors {activeTab ===
+                  tab.key
                     ? 'bg-muted/40 text-foreground'
                     : 'text-muted-foreground hover:text-foreground'}"
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </button>
               {/each}
             </div>
@@ -904,20 +993,22 @@
     {#if activeTab === "damage" && overviewTargets.length > 0}
       <div class="mb-3 flex flex-wrap gap-1.5">
         <button
-          class="px-3 py-1 text-xs rounded border border-border transition-colors {overviewTargetUid === null
+          class="border-border rounded border px-3 py-1 text-xs transition-colors {overviewTargetUid ===
+          null
             ? 'bg-muted/40 text-foreground'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}"
           onclick={() => (overviewTargetUid = null)}
         >
-          总计
+          {t("history.detail.target.total")}
         </button>
         {#each overviewTargets as target (target.targetUid)}
           <button
-            class="px-3 py-1 text-xs rounded border border-border transition-colors {overviewTargetUid === target.targetUid
+            class="border-border rounded border px-3 py-1 text-xs transition-colors {overviewTargetUid ===
+            target.targetUid
               ? 'bg-muted/40 text-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}"
             onclick={() => (overviewTargetUid = target.targetUid)}
-            title={`目标 #${target.targetUid}`}
+            title={t("history.detail.target.title", { uid: target.targetUid })}
           >
             {target.targetName}
           </button>
@@ -928,23 +1019,23 @@
     {#if activeTab === "death"}
       <DeathPlayerList
         entries={deathEntries}
-        localPlayerUid={localPlayerUid}
+        {localPlayerUid}
         onSelect={(uid) => viewPlayerSkills(uid, "death")}
-        emptyMessage="本次战斗没有记录到玩家死亡。"
+        emptyMessage={t("history.detail.death.empty")}
         variant="history"
       />
     {:else}
-    <div class="overflow-x-auto rounded border border-border/60 bg-card/30">
+      <div class="border-border/60 bg-card/30 overflow-x-auto rounded border">
         <table class="w-full border-collapse">
           <thead>
             <tr class="bg-popover/60">
               <th
-                class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-                >玩家</th
+                class="text-muted-foreground px-3 py-3 text-left text-xs font-medium tracking-wider uppercase"
+                >{t("history.detail.table.player")}</th
               >
               {#each visiblePlayerColumns as col (col.key)}
                 <th
-                  class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                  class="text-muted-foreground px-3 py-3 text-right text-xs font-medium tracking-wider uppercase"
                   >{col.header}</th
                 >
               {/each}
@@ -953,7 +1044,7 @@
           <tbody class="bg-background/40">
             {#each displayedPlayers as p (p.uid)}
               <tr
-                class="relative border-t border-border/40 hover:bg-muted/60 transition-colors cursor-pointer"
+                class="border-border/40 hover:bg-muted/60 relative cursor-pointer border-t transition-colors"
                 onclick={() =>
                   viewPlayerSkills(
                     p.uid,
@@ -966,37 +1057,37 @@
                   )}
               >
                 <td
-                  class="px-3 py-3 text-sm text-muted-foreground relative z-10"
+                  class="text-muted-foreground relative z-10 px-3 py-3 text-sm"
                 >
-                  <div class="flex items-center gap-2 h-full">
+                  <div class="flex h-full items-center gap-2">
                     <img
                       class="size-5 object-contain"
                       src={getClassIcon(p.className)}
-                      alt="职业图标"
-                      {@attach tooltip(() => p.classDisplay || "未知职业")}
+                      alt={t("history.detail.table.classIconAlt")}
+                      {@attach tooltip(
+                        () =>
+                          p.classDisplay ||
+                          t("history.detail.player.unknownClass"),
+                      )}
                     />
                     <span
                       class="truncate"
-                      {@attach tooltip(() => `UID: #${p.uid}`)}
+                      {@attach tooltip(() =>
+                        t("common.uidTooltip", { uid: p.uid }),
+                      )}
                     >
-                      {#if (p.abilityScore > 0 && (p.isLocalPlayer
-                        ? SETTINGS.history.general.state.showYourAbilityScore
-                        : SETTINGS.history.general.state.showOthersAbilityScore)) || (p.seasonStrength > 0 && (p.isLocalPlayer
-                        ? SETTINGS.history.general.state.showYourSeasonStrength
-                        : SETTINGS.history.general.state.showOthersSeasonStrength))}
-                        <span class="inline-flex items-center gap-0 text-muted-foreground tabular-nums">
-                          {#if p.abilityScore > 0 && (p.isLocalPlayer
-                            ? SETTINGS.history.general.state.showYourAbilityScore
-                            : SETTINGS.history.general.state.showOthersAbilityScore)}
+                      {#if (p.abilityScore > 0 && (p.isLocalPlayer ? SETTINGS.history.general.state.showYourAbilityScore : SETTINGS.history.general.state.showOthersAbilityScore)) || (p.seasonStrength > 0 && (p.isLocalPlayer ? SETTINGS.history.general.state.showYourSeasonStrength : SETTINGS.history.general.state.showOthersSeasonStrength))}
+                        <span
+                          class="text-muted-foreground inline-flex items-center gap-0 tabular-nums"
+                        >
+                          {#if p.abilityScore > 0 && (p.isLocalPlayer ? SETTINGS.history.general.state.showYourAbilityScore : SETTINGS.history.general.state.showOthersAbilityScore)}
                             {#if SETTINGS.history.general.state.shortenAbilityScore}
                               <AbbreviatedNumber num={p.abilityScore} />
                             {:else}
                               <span>{p.abilityScore}</span>
                             {/if}
                           {/if}
-                          {#if p.seasonStrength > 0 && (p.isLocalPlayer
-                            ? SETTINGS.history.general.state.showYourSeasonStrength
-                            : SETTINGS.history.general.state.showOthersSeasonStrength)}
+                          {#if p.seasonStrength > 0 && (p.isLocalPlayer ? SETTINGS.history.general.state.showYourSeasonStrength : SETTINGS.history.general.state.showOthersSeasonStrength)}
                             <span>({p.seasonStrength})</span>
                           {/if}
                         </span>
@@ -1016,7 +1107,7 @@
                       })}
                       {#if p.isLocalPlayer}
                         <span class="ml-1 text-[oklch(0.65_0.1_250)]"
-                          >（你）</span
+                          >{t("history.detail.player.you")}</span
                         >
                       {/if}
                     </span>
@@ -1024,7 +1115,7 @@
                 </td>
                 {#each visiblePlayerColumns as col (col.key)}
                   <td
-                    class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10"
+                    class="text-muted-foreground relative z-10 px-3 py-3 text-right text-sm"
                   >
                     {#if (activeTab === "damage" && (col.key === "totalDmg" || col.key === "bossDmg" || col.key === "bossDps" || col.key === "dps" || col.key === "tdps") && SETTINGS.history.general.state.shortenDps) || (activeTab === "healing" && (col.key === "healDealt" || col.key === "hps" || col.key === "effectiveHeal" || col.key === "ehps") && SETTINGS.history.general.state.shortenDps) || (activeTab === "tanked" && (col.key === "damageTaken" || col.key === "tankedPS") && SETTINGS.history.general.state.shortenTps)}
                       {#if activeTab === "tanked" ? SETTINGS.history.general.state.shortenTps : SETTINGS.history.general.state.shortenDps}
@@ -1062,7 +1153,7 @@
             {/each}
           </tbody>
         </table>
-    </div>
+      </div>
     {/if}
   {:else if charId && selectedPlayer && selectedEntity && skillType === "death"}
     <!-- Death Replay: list or detail -->
@@ -1077,7 +1168,8 @@
               classSpecName: selectedPlayer.classSpecName,
             },
             showYourNameSetting: settings.state.history.general.showYourName,
-            showOthersNameSetting: settings.state.history.general.showOthersName,
+            showOthersNameSetting:
+              settings.state.history.general.showOthersName,
             isLocalPlayer: selectedPlayer.isLocalPlayer,
           })}
           className={selectedPlayer.className}
@@ -1098,7 +1190,8 @@
               classSpecName: selectedPlayer.classSpecName,
             },
             showYourNameSetting: settings.state.history.general.showYourName,
-            showOthersNameSetting: settings.state.history.general.showOthersName,
+            showOthersNameSetting:
+              settings.state.history.general.showOthersName,
             isLocalPlayer: selectedPlayer.isLocalPlayer,
           })}
           className={selectedPlayer.className}
@@ -1109,24 +1202,26 @@
         />
       {:else}
         <div
-          class="flex h-40 items-center justify-center rounded-lg border border-dashed border-border/60 text-muted-foreground text-xs"
+          class="border-border/60 text-muted-foreground flex h-40 items-center justify-center rounded-lg border border-dashed text-xs"
         >
-          未找到该死亡记录。
-          <button class="ml-2 underline" onclick={backToDeathList}>返回列表</button>
+          {t("history.detail.death.notFound")}
+          <button class="ml-2 underline" onclick={backToDeathList}>
+            {t("history.detail.death.backToList")}
+          </button>
         </div>
       {/if}
     </div>
   {:else if charId && selectedPlayer && selectedEntity}
     <!-- Player Skills View -->
     <div class="mb-4">
-      <div class="flex items-center gap-3 mb-2">
+      <div class="mb-2 flex items-center gap-3">
         <button
           onclick={backToEncounter}
-          class="p-1.5 text-neutral-400 hover:text-neutral-200 transition-colors rounded hover:bg-neutral-800"
-          aria-label="返回战斗概览"
+          class="rounded p-1.5 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+          aria-label={t("history.detail.actions.backToOverview")}
         >
           <svg
-            class="w-5 h-5"
+            class="h-5 w-5"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -1141,9 +1236,12 @@
           </svg>
         </button>
         <div>
-          <h2 class="text-xl font-semibold text-foreground">技能明细</h2>
+          <h2 class="text-foreground text-xl font-semibold">
+            {t("history.detail.skills.title")}
+          </h2>
           <div class="text-sm text-neutral-400">
-            Player: {getDisplayName({
+            {t("history.detail.player.label")}
+            {getDisplayName({
               player: {
                 uid: selectedPlayer.uid,
                 name: selectedPlayer.name,
@@ -1161,25 +1259,40 @@
     </div>
 
     {#if skillType === "heal"}
-      <div class="mb-3 rounded border border-border/60 bg-card/30 p-3">
-        <div class="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-          治疗目标分布
+      <div class="border-border/60 bg-card/30 mb-3 rounded border p-3">
+        <div
+          class="text-muted-foreground mb-2 text-xs tracking-wider uppercase"
+        >
+          {t("history.detail.healTargets.title")}
         </div>
         {#if healTargetSummary.length === 0}
-          <div class="text-sm text-muted-foreground">暂无目标治疗数据</div>
+          <div class="text-muted-foreground text-sm">
+            {t("history.detail.healTargets.empty")}
+          </div>
         {:else}
           <div class="space-y-1.5">
             {#each healTargetSummary as target (target.targetUid)}
-              {@const pct = healTargetTotal > 0 ? (target.totalValue / healTargetTotal) * 100 : 0}
+              {@const pct =
+                healTargetTotal > 0
+                  ? (target.totalValue / healTargetTotal) * 100
+                  : 0}
               <div class="text-sm">
-                <div class="flex items-center justify-between gap-2 text-muted-foreground">
+                <div
+                  class="text-muted-foreground flex items-center justify-between gap-2"
+                >
                   <span class="truncate">{target.targetName}</span>
                   <span class="shrink-0">
-                    {target.totalValue.toLocaleString()} ({pct.toFixed(1)}%)
+                    {formatNumber(target.totalValue)} ({formatNumber(pct, {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}%)
                   </span>
                 </div>
-                <div class="mt-1 h-1.5 rounded bg-muted/40 overflow-hidden">
-                  <div class="h-full bg-primary/70" style="width: {pct}%;"></div>
+                <div class="bg-muted/40 mt-1 h-1.5 overflow-hidden rounded">
+                  <div
+                    class="bg-primary/70 h-full"
+                    style="width: {pct}%;"
+                  ></div>
                 </div>
               </div>
             {/each}
@@ -1188,17 +1301,17 @@
       </div>
     {/if}
 
-    <div class="overflow-x-auto rounded border border-border/60 bg-card/30">
+    <div class="border-border/60 bg-card/30 overflow-x-auto rounded border">
       <table class="w-full border-collapse">
         <thead>
           <tr class="bg-popover/60">
             <th
-              class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-              >技能</th
+              class="text-muted-foreground px-3 py-3 text-left text-xs font-medium tracking-wider uppercase"
+              >{t("history.detail.table.skill")}</th
             >
             {#each visibleSkillColumns as col (col.key)}
               <th
-                class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                class="text-muted-foreground px-3 py-3 text-right text-xs font-medium tracking-wider uppercase"
                 >{col.header}</th
               >
             {/each}
@@ -1207,17 +1320,16 @@
         <tbody class="bg-background/40">
           {#each flatSkillRows as item (item.key)}
             <tr
-              class="relative border-t border-border/40 hover:bg-muted/60 transition-colors"
+              class="border-border/40 hover:bg-muted/60 relative border-t transition-colors"
             >
-              <td class="px-3 py-3 text-sm text-muted-foreground relative z-10"
-              >
+              <td class="text-muted-foreground relative z-10 px-3 py-3 text-sm">
                 {#if item.kind === "group"}
                   <button
-                    class="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+                    class="hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
                     onclick={() => toggleGroup(item.row.recountId)}
                   >
                     <svg
-                      class="size-3 shrink-0 text-muted-foreground/70 transition-transform duration-150 {expandedGroups.has(
+                      class="text-muted-foreground/70 size-3 shrink-0 transition-transform duration-150 {expandedGroups.has(
                         item.row.recountId,
                       )
                         ? 'rotate-90'
@@ -1241,25 +1353,27 @@
                     style="padding-left: {item.depth * 16}px;"
                   >
                     {#if item.depth > 0}
-                      <span class="w-3 shrink-0 flex justify-center">
-                        <span class="size-1 rounded-full bg-muted-foreground/35"></span>
+                      <span class="flex w-3 shrink-0 justify-center">
+                        <span class="bg-muted-foreground/35 size-1 rounded-full"
+                        ></span>
                       </span>
                     {:else}
                       <span class="w-3 shrink-0"></span>
                     {/if}
                     <span class="truncate">{item.row.name}</span>
                     {#if item.row.showSkillId}
-                      <span class="text-[10px] text-muted-foreground/50 shrink-0">
+                      <span
+                        class="text-muted-foreground/50 shrink-0 text-[10px]"
+                      >
                         #{item.row.skillId}
                       </span>
                     {/if}
                   </div>
                 {/if}
-              </td
-              >
+              </td>
               {#each visibleSkillColumns as col (col.key)}
                 <td
-                  class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10"
+                  class="text-muted-foreground relative z-10 px-3 py-3 text-right text-sm"
                 >
                   {#if (col.key === "totalDmg" || col.key === "dps" || col.key === "effectiveTotal" || col.key === "effectiveDps") && (skillType === "tanked" ? SETTINGS.history.general.state.shortenTps : SETTINGS.history.general.state.shortenDps)}
                     <AbbreviatedNumber
@@ -1271,7 +1385,9 @@
                     {#if item.kind === "group"}
                       <span class="text-muted-foreground/50">-</span>
                     {:else}
-                      {col.format((item.row as SkillDisplayRow)[col.key] as number)}
+                      {col.format(
+                        (item.row as SkillDisplayRow)[col.key] as number,
+                      )}
                     {/if}
                   {:else}
                     {col.format(skillCellValue(item, col.key))}
@@ -1301,7 +1417,7 @@
       </table>
     </div>
   {:else}
-    <div class="text-neutral-400">加载中...</div>
+    <div class="text-neutral-400">{t("history.detail.loading")}</div>
   {/if}
 </div>
 
@@ -1317,20 +1433,20 @@
     <button
       class="absolute inset-0 bg-black/60 backdrop-blur-sm"
       onclick={closeDeleteModal}
-      aria-label="关闭弹窗"
+      aria-label={t("history.detail.deleteDialog.closeAria")}
     ></button>
 
     <!-- Modal Content -->
     <div
-      class="relative bg-card border border-border rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
+      class="bg-card border-border relative mx-4 w-full max-w-md rounded-lg border p-6 shadow-xl"
     >
       <div class="flex items-start gap-4">
         <!-- Warning Icon -->
         <div
-          class="flex-shrink-0 w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center"
+          class="bg-destructive/10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
         >
           <svg
-            class="w-5 h-5 text-destructive"
+            class="text-destructive h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -1347,13 +1463,12 @@
         <div class="flex-1">
           <h3
             id="delete-modal-title"
-            class="text-lg font-semibold text-foreground"
+            class="text-foreground text-lg font-semibold"
           >
-            Delete Encounter
+            {t("history.detail.deleteDialog.title")}
           </h3>
-          <p class="mt-2 text-sm text-muted-foreground">
-            Are you sure you want to delete this encounter? This action cannot
-            be undone and all associated data will be permanently removed.
+          <p class="text-muted-foreground mt-2 text-sm">
+            {t("history.detail.deleteDialog.message")}
           </p>
         </div>
       </div>
@@ -1363,17 +1478,17 @@
         <button
           onclick={closeDeleteModal}
           disabled={isDeleting}
-          class="px-4 py-2 text-sm rounded-md border border-border bg-popover text-foreground hover:bg-muted/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="border-border bg-popover text-foreground hover:bg-muted/40 rounded-md border px-4 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Cancel
+          {t("history.detail.deleteDialog.cancel")}
         </button>
         <button
           onclick={confirmDeleteEncounter}
           disabled={isDeleting}
-          class="px-4 py-2 text-sm rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          class="bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           {#if isDeleting}
-            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle
                 class="opacity-25"
                 cx="12"
@@ -1388,12 +1503,12 @@
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            Deleting...
+            {t("history.detail.deleteDialog.deleting")}
           {:else}
-            Delete
+            {t("history.detail.deleteDialog.confirm")}
           {/if}
         </button>
       </div>
+    </div>
   </div>
-</div>
 {/if}

@@ -51,7 +51,9 @@
   <!-- Footer with version -->
   <div class="p-3 border-t border-border/50 space-y-3">
     <div class="text-center text-xs text-muted-foreground">
-      v{#await getVersion()}...{:then version}{version}{/await}
+      v{#await getVersion()}{t(
+          "toolbox.versionLoading",
+        )}{:then version}{version}{/await}
     </div>
   </div>
 </aside>

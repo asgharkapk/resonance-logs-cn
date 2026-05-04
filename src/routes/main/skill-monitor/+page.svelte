@@ -66,6 +66,7 @@
     ensureCustomPanelGroups,
     ensureInlineBuffEntries,
   } from "$lib/custom-panel-utils";
+  import { t } from "$lib/i18n/index.svelte";
 
   type CounterRuleOption = CounterRulePreset & { origin: "preset" | "user" };
 
@@ -734,7 +735,7 @@
   function addCustomPanelGroup() {
     updateCustomPanelGroups((groups) => [
       ...groups,
-      createDefaultCustomPanelGroup(`监控区 ${groups.length + 1}`, groups.length + 1),
+      createDefaultCustomPanelGroup("", groups.length + 1),
     ]);
   }
 
@@ -818,8 +819,8 @@
       const counterSlot = counterRule?.effectSlots.find((slot) => slot.slotId === counterSlotId);
       const label = sourceType === "counter"
         ? (counterSlot
-          ? `${counterRule?.name ?? `计数器 ${sourceId}`} #${counterSlot.slotId}`
-          : (counterRule?.name ?? `计数器 ${sourceId}`))
+          ? `${counterRule?.name ?? `#${sourceId}`} #${counterSlot.slotId}`
+          : (counterRule?.name ?? `#${sourceId}`))
         : "";
       const nextEntry: InlineBuffEntry = {
         id: `inline_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
@@ -963,7 +964,7 @@
       const groups = ensureBuffGroups(profile);
       return {
         ...profile,
-        buffGroups: [...groups, createDefaultBuffGroup(`分组 ${groups.length + 1}`, groups.length + 1)],
+        buffGroups: [...groups, createDefaultBuffGroup("", groups.length + 1)],
       };
     });
   }
@@ -994,7 +995,7 @@
       return {
         ...profile,
         individualMonitorAllGroup: {
-          ...createDefaultBuffGroup("全部 Buff", 1),
+          ...createDefaultBuffGroup("", 1),
           monitorAll: true,
         },
       };
@@ -1165,8 +1166,8 @@
   <div class="rounded-lg border border-border/60 bg-card/40 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] space-y-2">
     <SettingsSwitch
       bind:checked={SETTINGS.skillMonitor.state.enabled}
-      label="启用实时监控"
-      description="开启后将实时推送监控数据到悬浮窗口"
+      label={t("skillMonitor.main.enabled.label")}
+      description={t("skillMonitor.main.enabled.description")}
     />
   </div>
 
@@ -1179,7 +1180,7 @@
           : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
         onclick={() => (activeTab = "skill-cd")}
       >
-        技能CD
+        {t("skillMonitor.tabs.skillCd")}
       </button>
       <button
         type="button"
@@ -1188,7 +1189,7 @@
           : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
         onclick={() => (activeTab = "buff")}
       >
-        Buff监控
+        {t("skillMonitor.tabs.buff")}
       </button>
       <button
         type="button"
@@ -1197,7 +1198,7 @@
           : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
         onclick={() => (activeTab = "panel-attr")}
       >
-        角色面板
+        {t("skillMonitor.tabs.panelAttr")}
       </button>
       <button
         type="button"
@@ -1206,7 +1207,7 @@
           : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
         onclick={() => (activeTab = "custom-panel")}
       >
-        自定义监控
+        {t("skillMonitor.tabs.customPanel")}
       </button>
       <button
         type="button"
@@ -1215,7 +1216,7 @@
           : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
         onclick={() => (activeTab = "overlay")}
       >
-        启用窗口
+        {t("skillMonitor.tabs.overlay")}
       </button>
     </div>
   </div>

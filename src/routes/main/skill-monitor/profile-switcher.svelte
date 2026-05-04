@@ -8,6 +8,7 @@
     clampedProfileIndex,
     updateActiveProfile,
   } from "$lib/skill-monitor-profile.svelte.js";
+  import { t } from "$lib/i18n/index.svelte";
 
   const profiles = $derived(SETTINGS.skillMonitor.state.profiles);
   const activeProfileIndex = $derived.by(() => clampedProfileIndex());
@@ -25,9 +26,16 @@
     updateActiveProfile((profile) => ({ ...profile, name }));
   }
 
+  function getProfileDisplayName(name: string | undefined, index: number): string {
+    const trimmed = name?.trim();
+    if (trimmed) return trimmed;
+    return index === 0
+      ? t("skillMonitor.defaults.defaultProfileName")
+      : t("skillMonitor.defaults.profileName", { index: index + 1 });
+  }
+
   function addProfile() {
-    const nextIndex = SETTINGS.skillMonitor.state.profiles.length + 1;
-    const nextProfile = createDefaultSkillMonitorProfile(`方案 ${nextIndex}`);
+    const nextProfile = createDefaultSkillMonitorProfile("");
     SETTINGS.skillMonitor.state.profiles = [
       ...SETTINGS.skillMonitor.state.profiles,
       nextProfile,
@@ -37,7 +45,10 @@
   }
 
   function renameActiveProfile() {
-    const nextName = window.prompt("请输入新的方案名称", activeProfile.name);
+    const nextName = window.prompt(
+      t("skillMonitor.profile.renamePrompt"),
+      getProfileDisplayName(activeProfile.name, activeProfileIndex),
+    );
     if (!nextName) return;
     const trimmedName = nextName.trim();
     if (!trimmedName) return;
@@ -58,8 +69,8 @@
 
 <div class="rounded-lg border border-border/60 bg-card/40 p-4 space-y-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
   <div>
-    <h2 class="text-base font-semibold text-foreground">配置方案</h2>
-    <p class="text-xs text-muted-foreground">可创建多个角色监控方案并快速切换</p>
+    <h2 class="text-base font-semibold text-foreground">{t("skillMonitor.profile.title")}</h2>
+    <p class="text-xs text-muted-foreground">{t("skillMonitor.profile.description")}</p>
   </div>
   <div class="flex flex-wrap items-center gap-2">
     <select
@@ -69,7 +80,7 @@
         setActiveProfileIndex(Number((event.currentTarget as HTMLSelectElement).value))}
     >
       {#each profiles as profile, idx (idx)}
-        <option value={idx}>{profile.name}</option>
+        <option value={idx}>{getProfileDisplayName(profile.name, idx)}</option>
       {/each}
     </select>
     <button
@@ -77,14 +88,14 @@
       class="text-xs px-3 py-2 rounded border border-border/60 text-foreground hover:bg-muted/40 transition-colors"
       onclick={addProfile}
     >
-      新建方案
+      {t("skillMonitor.profile.new")}
     </button>
     <button
       type="button"
       class="text-xs px-3 py-2 rounded border border-border/60 text-foreground hover:bg-muted/40 transition-colors"
       onclick={renameActiveProfile}
     >
-      重命名
+      {t("skillMonitor.profile.rename")}
     </button>
     <button
       type="button"
@@ -92,7 +103,7 @@
       onclick={removeActiveProfile}
       disabled={profiles.length <= 1}
     >
-      删除方案
+      {t("skillMonitor.profile.delete")}
     </button>
   </div>
 </div>

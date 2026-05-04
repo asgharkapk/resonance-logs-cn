@@ -12,6 +12,7 @@
   import getDisplayName from "$lib/name-display";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatClassSpecLabel } from "$lib/class-labels";
+  import { formatNumber, t } from "$lib/i18n/index.svelte";
 
   let liveData = $derived(getLiveData());
   let rawHealData = $derived(
@@ -138,11 +139,11 @@
                   style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
                   class="object-contain shrink-0"
                   src={getClassIcon(className)}
-                  alt="Class icon"
+                  alt={t("live.table.classIconAlt")}
                   {@attach tooltip(
                     () =>
                       formatClassSpecLabel(player.className, player.classSpecName) ||
-                      "未知职业",
+                      t("live.player.unknownClass"),
                   )}
                 />
                 <div class="flex flex-1 min-w-0 items-center gap-1">
@@ -183,9 +184,9 @@
                       />
                       <span class="opacity-70">)</span>
                     {:else}
-                      {player.totalDmg.toLocaleString()}<span
+                      {formatNumber(player.totalDmg)}<span
                         class="opacity-70"
-                        >({Math.round(player.dps).toLocaleString()})</span
+                        >({formatNumber(Math.round(player.dps))})</span
                       >
                     {/if}
                   </span>
@@ -222,7 +223,7 @@
           <th
             class="px-3 py-1 text-left font-medium uppercase tracking-wide"
             style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-            >Player</th
+            >{t("live.table.player")}</th
           >
           {#each visiblePlayerColumns as col (col.key)}
             <th
@@ -285,11 +286,11 @@
                 style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
                 class="object-contain"
                 src={getClassIcon(className)}
-                alt="Class icon"
+                alt={t("live.table.classIconAlt")}
                 {@attach tooltip(
                   () =>
                     formatClassSpecLabel(player.className, player.classSpecName) ||
-                    "未知职业",
+                    t("live.player.unknownClass"),
                 )}
               />
               {#if showAbilityScore || showSeasonStrength}

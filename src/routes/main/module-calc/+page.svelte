@@ -24,30 +24,38 @@
     MODULE_CALC,
     ensureModuleCalcProgressListener,
   } from "$lib/stores/module-calc-store.svelte";
+  import { t } from "$lib/i18n/index.svelte";
+  import { getModuleAttrOptions } from "$lib/i18n/module-calc";
 
-  const ATTR_OPTIONS = [
-    { id: 1110, label: "力量加持" },
-    { id: 1111, label: "敏捷加持" },
-    { id: 1112, label: "智力加持" },
-    { id: 1113, label: "特攻伤害" },
-    { id: 1114, label: "精英打击" },
-    { id: 1205, label: "特攻治疗加持" },
-    { id: 1206, label: "专精治疗加持" },
-    { id: 1407, label: "施法专注" },
-    { id: 1408, label: "攻速专注" },
-    { id: 1409, label: "暴击专注" },
-    { id: 1410, label: "幸运专注" },
-    { id: 1307, label: "抵御魔法" },
-    { id: 1308, label: "抵御物理" },
-    { id: 2104, label: "极-伤害叠加" },
-    { id: 2105, label: "极-灵活身法" },
-    { id: 2204, label: "极-生命凝聚" },
-    { id: 2205, label: "极-急救措施" },
-    { id: 2404, label: "极-生命波动" },
-    { id: 2405, label: "极-生命汲取" },
-    { id: 2406, label: "极-全队幸暴" },
-    { id: 2304, label: "极-绝境守护" },
-  ];
+  const attributeOptions = $derived(getModuleAttrOptions());
+
+  function normalizeOptimizeError(error: unknown): string {
+    const message =
+      typeof error === "string"
+        ? error
+        : error instanceof Error
+          ? error.message
+          : null;
+
+    if (message) {
+      const needModulesMatch = message.match(/^需要至少 (\d+) 个模组$/);
+      if (needModulesMatch) {
+        return t("moduleCalc.error.needModules", {
+          count: needModulesMatch[1],
+        });
+      }
+
+      if (message === "combination_size 必须为 4 或 5") {
+        return t("moduleCalc.error.invalidCombinationSize");
+      }
+
+      return message;
+    }
+
+    return t("moduleCalc.error.optimizeFailed", {
+      error: JSON.stringify(error),
+    });
+  }
 
   async function refreshModules() {
     if (MODULE_CALC.loading) return;
@@ -57,7 +65,8 @@
       MODULE_CALC.modules = await getLatestModules();
       MODULE_CALC.moduleCount = MODULE_CALC.modules.length;
     } catch (e) {
-      MODULE_CALC.error = (e as Error)?.message ?? "拉取模组失败";
+      MODULE_CALC.error =
+        (e as Error)?.message ?? t("moduleCalc.error.fetchModules");
     } finally {
       MODULE_CALC.loading = false;
     }
@@ -80,7 +89,7 @@
       const minMap = Object.fromEntries(
         MODULE_CALC.minRequirements
           .filter((m) => m.attrId && m.value !== null)
-          .map((m) => [m.attrId as number, m.value as number])
+          .map((m) => [m.attrId as number, m.value as number]),
       );
 
       // Deep clone/snapshot to ensure no Proxy issues passed to invoke
@@ -97,17 +106,11 @@
 
       MODULE_CALC.solutions = await optimizeLatestModules(payload);
       if (MODULE_CALC.solutions.length === 0) {
-        MODULE_CALC.error = "无可用方案，请调整筛选条件";
+        MODULE_CALC.error = t("moduleCalc.error.noSolutions");
       }
     } catch (e) {
       console.error("Optimize error:", e);
-      if (typeof e === "string") {
-        MODULE_CALC.error = e;
-      } else if (e instanceof Error) {
-        MODULE_CALC.error = e.message;
-      } else {
-        MODULE_CALC.error = "计算失败: " + JSON.stringify(e);
-      }
+      MODULE_CALC.error = normalizeOptimizeError(e);
     } finally {
       MODULE_CALC.loading = false;
     }
@@ -135,8 +138,12 @@
         <CalculatorIcon class="w-5 h-5" />
       </div>
       <div>
-        <h1 class="text-xl font-bold text-foreground">模组计算</h1>
-        <p class="text-sm text-muted-foreground">计算和优化模组配置</p>
+        <h1 class="text-xl font-bold text-foreground">
+          {t("moduleCalc.title")}
+        </h1>
+        <p class="text-sm text-muted-foreground">
+          {t("moduleCalc.description")}
+        </p>
       </div>
     </div>
     <div class="flex items-center gap-2">
@@ -150,18 +157,19 @@
         {:else}
           <RefreshCw class="w-4 h-4 mr-2" />
         {/if}
-        刷新数据
+        {t("moduleCalc.refresh")}
       </Button>
       <Button
         onclick={runOptimize}
-        disabled={MODULE_CALC.loading || (MODULE_CALC.moduleCount || 0) < MODULE_CALC.combinationSize}
+        disabled={MODULE_CALC.loading ||
+          (MODULE_CALC.moduleCount || 0) < MODULE_CALC.combinationSize}
       >
         {#if MODULE_CALC.loading}
           <Loader2 class="w-4 h-4 mr-2 animate-spin" />
         {:else}
           <PlayIcon class="w-4 h-4 mr-2" />
         {/if}
-        开始计算
+        {t("moduleCalc.start")}
       </Button>
     </div>
   </div>
@@ -189,7 +197,7 @@
   </div>
 
   <FilterSettings
-    attributeOptions={ATTR_OPTIONS}
+    {attributeOptions}
     bind:targetAttributes={MODULE_CALC.targetAttributes}
     bind:excludeAttributes={MODULE_CALC.excludeAttributes}
     bind:minTotalValue={MODULE_CALC.minTotalValue}
@@ -199,7 +207,7 @@
   <div class="rounded-lg border border-border/60 bg-card/40 p-4 space-y-3">
     <div class="flex items-center justify-between">
       <div class="text-base font-semibold text-foreground">
-        计算结果 (Top 10)
+        {t("moduleCalc.results.title", { count: 10 })}
       </div>
       {#if MODULE_CALC.loading}
         <div class="flex flex-col gap-1 w-64">
@@ -208,15 +216,16 @@
           >
             <Loader2 class="w-3 h-3 mr-1 animate-spin" />
             <span>
-              {MODULE_CALC.combinationSize === 5 ? "多策略计算中..." : "计算中..."} {MODULE_CALC.progress.max > 0
+              {MODULE_CALC.combinationSize === 5
+                ? t("moduleCalc.progress.multiStrategy")
+                : t("moduleCalc.progress.calculating")}
+              {MODULE_CALC.progress.max > 0
                 ? `${Math.round((MODULE_CALC.progress.value / MODULE_CALC.progress.max) * 100)}%`
                 : ""}
             </span>
           </div>
           {#if MODULE_CALC.progress.max > 0}
-            <div
-              class="h-1.5 w-full overflow-hidden rounded-full bg-secondary"
-            >
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
               <div
                 class="h-full bg-primary transition-all duration-300"
                 style="width: {(MODULE_CALC.progress.value /
@@ -228,10 +237,7 @@
         </div>
       {/if}
     </div>
-    <ResultsTable
-      solutions={MODULE_CALC.solutions}
-      onview={openDetail}
-    />
+    <ResultsTable solutions={MODULE_CALC.solutions} onview={openDetail} />
   </div>
 
   <ModuleDetail

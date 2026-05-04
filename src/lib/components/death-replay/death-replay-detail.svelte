@@ -6,6 +6,7 @@
   import { formatClassSpecLabel } from "$lib/class-labels";
   import { lookupDamageIdName } from "$lib/config/recount-table";
   import TableRowGlow from "$lib/components/table-row-glow.svelte";
+  import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
 
   let {
     playerName,
@@ -58,28 +59,40 @@
   });
 
   function formatAbsoluteTime(ms: number): string {
-    const date = new Date(ms);
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    const ss = String(date.getSeconds()).padStart(2, "0");
-    return `${hh}:${mm}:${ss}`;
+    return (
+      formatDateTime(ms, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }) || String(ms)
+    );
   }
 
   function formatRelativeSeconds(snapshot: DamageSnapshot): string {
     const deltaMs =
       Number(snapshot.timestampMs) - Number(record.deathTimestampMs);
     const seconds = deltaMs / 1000;
-    if (seconds >= 0) return "0s";
-    return `${seconds.toFixed(1)}s`;
+    if (seconds >= 0) return t("components.deathReplay.relativeSeconds.zero");
+    return t("components.deathReplay.relativeSeconds.value", {
+      seconds: formatNumber(seconds, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }),
+    });
   }
 
   function resolveSkillName(snapshot: DamageSnapshot): string {
-    const base = lookupDamageIdName(Number(snapshot.skillKey));
-    if (base && !base.startsWith("Unknown")) return base;
+    const skillKey = Number(snapshot.skillKey);
+    const base = lookupDamageIdName(skillKey);
+    const unknown = t("game.damage.unknown", { id: skillKey });
+    if (base && base !== unknown) return base;
     if (snapshot.attackerMonsterTypeId != null) {
-      return `怪物 ${snapshot.attackerMonsterTypeId} · #${snapshot.skillKey}`;
+      return t("components.deathReplay.monsterSkillFallback", {
+        monsterId: snapshot.attackerMonsterTypeId,
+        skillKey: snapshot.skillKey,
+      });
     }
-    return base;
+    return unknown;
   }
 
   function glowPercentage(value: number): number {
@@ -93,7 +106,7 @@
     <button
       onclick={() => onBack?.()}
       class="p-1.5 text-neutral-400 hover:text-neutral-200 transition-colors rounded hover:bg-neutral-800"
-      aria-label="返回"
+      aria-label={t("components.deathReplay.back")}
     >
       <svg
         class="w-5 h-5"
@@ -114,17 +127,23 @@
       <img
         class="size-5 object-contain"
         src={getClassIcon(className)}
-        alt="职业图标"
+        alt={t("components.deathReplay.classIconAlt")}
         {@attach tooltip(
-          () => formatClassSpecLabel(className, classSpecName) || "未知职业",
+          () =>
+            formatClassSpecLabel(className, classSpecName) ||
+            t("components.deathReplay.unknownClass"),
         )}
       />
       <h2 class="text-xl font-semibold text-foreground">{playerName}</h2>
       <span class="text-sm text-neutral-400 tabular-nums">
-        死亡于 {formatAbsoluteTime(Number(record.deathTimestampMs))}
+        {t("components.deathReplay.deathAt", {
+          time: formatAbsoluteTime(Number(record.deathTimestampMs)),
+        })}
       </span>
       <span class="text-sm text-neutral-400">
-        共 {record.recentDamages.length} 次受击
+        {t("components.deathReplay.hitCountText", {
+          count: formatNumber(record.recentDamages.length),
+        })}
       </span>
     </div>
   </div>
@@ -135,19 +154,19 @@
         <tr class="bg-popover/60">
           <th
             class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >时间</th
+            >{t("components.deathReplay.table.time")}</th
           >
           <th
             class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >技能</th
+            >{t("components.deathReplay.table.skill")}</th
           >
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >伤害</th
+            >{t("components.deathReplay.table.damage")}</th
           >
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >占比</th
+            >{t("components.deathReplay.table.share")}</th
           >
         </tr>
       </thead>
@@ -158,7 +177,7 @@
               colspan="4"
               class="px-3 py-8 text-center text-xs text-muted-foreground"
             >
-              该次死亡无记录到的受击。
+              {t("components.deathReplay.noDamageSnapshots")}
             </td>
           </tr>
         {:else}
@@ -178,7 +197,7 @@
               >
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
-                {@attach tooltip(() => Number(dmg.value).toLocaleString())}
+                {@attach tooltip(() => formatNumber(Number(dmg.value)))}
               >
                 {#if shortenTps}
                   <AbbreviatedNumber
@@ -187,12 +206,14 @@
                     {abbreviationStyle}
                   />
                 {:else}
-                  {Number(dmg.value).toLocaleString()}
+                  {formatNumber(Number(dmg.value))}
                 {/if}
               </td>
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
-                >{pct.toFixed(0)}%</td
+                >{formatNumber(pct, {
+                  maximumFractionDigits: 0,
+                })}%</td
               >
               <TableRowGlow
                 isSkill={true}
@@ -217,7 +238,7 @@
               class="px-3 py-6 text-center text-muted-foreground text-xs"
               style="font-size: {tableSettings.skillFontSize}px;"
             >
-              该次死亡无记录到的受击。
+              {t("components.deathReplay.noDamageSnapshots")}
             </td>
           </tr>
         {:else}
@@ -243,7 +264,7 @@
                   >
                   <span
                     class="tabular-nums font-medium shrink-0"
-                    {@attach tooltip(() => Number(dmg.value).toLocaleString())}
+                    {@attach tooltip(() => formatNumber(Number(dmg.value)))}
                   >
                     {#if shortenTps}
                       <AbbreviatedNumber
@@ -254,7 +275,7 @@
                         suffixColor={customThemeColors.tableAbbreviatedColor}
                       />
                     {:else}
-                      {Number(dmg.value).toLocaleString()}
+                      {formatNumber(Number(dmg.value))}
                     {/if}
                   </span>
                 </div>

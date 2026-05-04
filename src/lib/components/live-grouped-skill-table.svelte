@@ -8,6 +8,7 @@
     RecountGroup,
     SkillDisplayRow,
   } from "$lib/config/recount-table";
+  import { formatNumber, t } from "$lib/i18n/index.svelte";
 
   type SkillColumn = {
     key: string;
@@ -248,7 +249,7 @@
           <th
             class="px-2 py-1 text-left font-medium uppercase tracking-wider"
             style="font-size: {tableSettings.skillHeaderFontSize}px; color: {tableSettings.skillHeaderTextColor};"
-            >Skill</th
+            >{t("live.table.skill")}</th
           >
           {#each visibleColumns as col (col.key)}
             <th
@@ -343,7 +344,7 @@
                       />
                       <span class="opacity-70">)</span>
                     {:else}
-                      {primaryVal.toLocaleString()}<span class="opacity-70"
+                      {formatNumber(primaryVal)}<span class="opacity-70"
                         >({formatRateValue(secondaryVal)})</span
                       >
                     {/if}

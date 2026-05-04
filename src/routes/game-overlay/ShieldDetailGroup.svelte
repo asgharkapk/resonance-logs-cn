@@ -1,5 +1,6 @@
 <script lang="ts">
   import { resolveBuffDisplayName } from "$lib/config/buff-name-table";
+  import { formatNumber, t } from "$lib/i18n/index.svelte";
   import { untrack } from "svelte";
   import {
     buffAliases,
@@ -77,7 +78,7 @@
   }
 
   function formatNum(v: number): string {
-    return v.toLocaleString();
+    return formatNumber(v);
   }
 
   function hpPct(current: number, max: number): number {
@@ -97,7 +98,9 @@
       return resolveBuffDisplayName(baseId, aliases);
     }
     // base_id unknown, show buff_uuid so user can identify
-    const typeSuffix = displayType === 12 ? "奶转盾" : "护盾";
+    const typeSuffix = displayType === 12
+      ? t("gameOverlay.shield.healShield")
+      : t("gameOverlay.shield.unknownShield");
     return `${typeSuffix}#${buffUuid}`;
   }
 
@@ -105,7 +108,9 @@
     if (expireTimeMs <= 0) return "";
     const remaining = Math.max(0, expireTimeMs - now);
     if (remaining <= 0) return "";
-    return `${(remaining / 1000).toFixed(1)}s`;
+    return t("gameOverlay.timer.seconds", {
+      value: (remaining / 1000).toFixed(1),
+    });
   }
 </script>
 
@@ -120,7 +125,7 @@
     onpointerdown={(e) => startDrag(e, { kind: "group", key: "shieldDetailGroup" }, groupPos)}
   >
     {#if editing}
-      <div class="group-tag">血量护盾区</div>
+      <div class="group-tag">{t("gameOverlay.group.shieldDetail")}</div>
     {/if}
 
     <div class="shield-detail-list" style:gap={`${style.gap}px`} style:font-size={`${style.fontSize}px`}>
@@ -128,7 +133,7 @@
       {#if hasData}
         {@const hpPercent = hpPct(hp.current, hp.max)}
         <div class="detail-row">
-          <span class="row-label hp-label">HP</span>
+          <span class="row-label hp-label">{t("gameOverlay.shield.hp")}</span>
           <div class="bar-container" style:width={`${style.barWidth}px`}>
             <div class="bar-bg hp-bar-bg">
               <div class="bar-fill" style:width={`${hpPercent}%`} style:background={style.hpColor}></div>
@@ -143,7 +148,7 @@
         {#if totalShield > 0}
           {@const layers = shieldLayers(totalShield, hp.max)}
           <div class="detail-row">
-            <span class="row-label hp-label">盾</span>
+            <span class="row-label hp-label">{t("gameOverlay.shield.shield")}</span>
             <div class="bar-container" style:width={`${style.barWidth}px`}>
               <div class="bar-bg">
                 {#each layers as layer, i}
@@ -179,7 +184,13 @@
           {@const name = entryName(entry.baseId, entry.buffUuid, entry.displayType)}
           {@const timeText = remainingText(entry.expireTimeMs)}
           <div class="detail-row entry-row">
-            <span class="row-label entry-label" title={`UUID: ${entry.buffUuid} · baseId: ${entry.baseId}`}>
+            <span
+              class="row-label entry-label"
+              title={t("gameOverlay.shield.entryTitle", {
+                uuid: entry.buffUuid,
+                baseId: entry.baseId,
+              })}
+            >
               {name}
             </span>
             <div class="bar-container" style:width={`${style.barWidth}px`}>

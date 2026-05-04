@@ -36,7 +36,7 @@ export function clampDecimal(value: number, min: number, max: number): number {
 export function ensureBuffGroup(group: BuffGroup, index: number): BuffGroup {
   return {
     id: group.id ?? `group_${index + 1}`,
-    name: group.name ?? `分组 ${index + 1}`,
+    name: group.name ?? "",
     buffIds: group.buffIds ?? [],
     priorityBuffIds: group.priorityBuffIds ?? [],
     monitorAll: group.monitorAll ?? false,
@@ -63,7 +63,7 @@ export function ensureIndividualMonitorAllGroup(
   if (!group) return null;
   return {
     id: group.id ?? "individual_all_group",
-    name: group.name ?? "全部 Buff",
+    name: group.name ?? "",
     buffIds: [],
     priorityBuffIds: group.priorityBuffIds ?? [],
     monitorAll: true,
@@ -88,7 +88,7 @@ export function ensurePanelAttrs(
     const existing = currentMap.get(item.attrId);
     return {
       attrId: item.attrId,
-      label: existing?.label ?? item.label,
+      label: String(item.attrId),
       color: existing?.color ?? item.color,
       enabled: existing?.enabled ?? item.enabled,
       format: existing?.format ?? item.format,

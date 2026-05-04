@@ -7,6 +7,7 @@
   import AbbreviatedNumber from "./abbreviated-number.svelte";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatClassSpecLabel, toClassLabel } from "$lib/class-labels";
+  import { t } from "$lib/i18n/index.svelte";
 
   let {
     className = "",
@@ -26,11 +27,14 @@
 
   // Use live context general settings (history pages should rely on their own components)
   let SETTINGS_YOUR_NAME = $derived(SETTINGS.live.general.state.showYourName);
-  let SETTINGS_OTHERS_NAME = $derived(SETTINGS.live.general.state.showOthersName);
+  let SETTINGS_OTHERS_NAME = $derived(
+    SETTINGS.live.general.state.showOthersName,
+  );
   // Derived helpers
   const isYou = $derived(name?.includes("You") ?? false);
   const classDisplay = $derived(
-    formatClassSpecLabel(className, classSpecName) || "未知职业",
+    formatClassSpecLabel(className, classSpecName) ||
+      t("components.playerInfo.unknownClass"),
   );
 
   const nameDisplay = $derived(() => {
@@ -38,9 +42,9 @@
     if (isYou) {
       const yourSetting = normalizeNameDisplaySetting(SETTINGS_YOUR_NAME);
       if (yourSetting === "Show Your Class") {
-        return `${toClassLabel(className)} (You)`;
+        return `${toClassLabel(className)}${t("components.playerInfo.localSuffix")}`;
       } else if (yourSetting === "Hide Your Name") {
-        return "Hidden Name (You)";
+        return `${t("components.playerInfo.hiddenName")}${t("components.playerInfo.localSuffix")}`;
       }
       return base;
     } else {
@@ -48,7 +52,7 @@
       if (othersSetting === "Show Others' Class") {
         return toClassLabel(className);
       } else if (othersSetting === "Hide Others' Name") {
-        return "Hidden Name";
+        return t("components.playerInfo.hiddenName");
       }
       return base;
     }
@@ -56,12 +60,15 @@
 
   const classIconDisplay = $derived(() => {
     if (isYou) {
-      if (normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) === "Hide Your Name") {
+      if (
+        normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) === "Hide Your Name"
+      ) {
         return "blank";
       }
     } else {
       if (
-        normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) === "Hide Others' Name"
+        normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) ===
+        "Hide Others' Name"
       ) {
         return "blank";
       }
@@ -80,12 +87,16 @@
 
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <span class="ml-1 cursor-pointer truncate" onclick={(error) => copyToClipboard(error, `#${uid}`)} {@attach tooltip(() => `UID: #${uid}`)}>
+  <span
+    class="ml-1 cursor-pointer truncate"
+    onclick={(error) => copyToClipboard(error, `#${uid}`)}
+    {@attach tooltip(() => t("common.uidTooltip", { uid }))}
+  >
     {#if abilityScore !== 0}
       {#if SETTINGS.live.general.state.shortenAbilityScore}
         {#if isYou && SETTINGS.live.general.state.showYourAbilityScore}
           <AbbreviatedNumber num={abilityScore} />
-  {:else if !isYou && SETTINGS.live.general.state.showOthersAbilityScore}
+        {:else if !isYou && SETTINGS.live.general.state.showOthersAbilityScore}
           <AbbreviatedNumber num={abilityScore} />
         {/if}
       {:else}
@@ -95,7 +106,9 @@
       ??
     {/if}
     {#if seasonStrength > 0 && (isYou ? SETTINGS.live.general.state.showYourSeasonStrength : SETTINGS.live.general.state.showOthersSeasonStrength)}
-      <span class="-ml-0.5 text-muted-foreground tabular-nums">({seasonStrength})</span>
+      <span class="text-muted-foreground -ml-0.5 tabular-nums"
+        >({seasonStrength})</span
+      >
     {/if}
     {nameDisplay()}
   </span>

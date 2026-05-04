@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { resolvePanelAttrLabel } from "$lib/i18n/panel-attrs";
+  import { t } from "$lib/i18n/index.svelte";
   import { formatAttrValue } from "./overlay-utils";
   import {
     getGroupPosition,
@@ -30,7 +32,7 @@
     onpointerdown={(e) => startDrag(e, { kind: "group", key: "panelAttrGroup" }, groupPos)}
   >
     {#if editing}
-      <div class="group-tag">角色属性区</div>
+      <div class="group-tag">{t("skillMonitor.overlay.panelAttrGroupTag")}</div>
     {/if}
 
     <div class="panel-attr-list" style:gap={`${sizes.panelAttrGap}px`}>
@@ -41,7 +43,7 @@
             style:color={row.attr.color}
             style:font-size={`${sizes.panelAttrFontSize}px`}
           >
-            {row.attr.label}
+            {resolvePanelAttrLabel(row.attr)}
           </span>
           <span
             class="panel-attr-value"

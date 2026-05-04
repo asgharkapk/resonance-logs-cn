@@ -8,14 +8,21 @@
     startDrag,
     startResize,
   } from "./overlay-state.svelte.js";
+  import { t } from "$lib/i18n/index.svelte";
 
   const editing = $derived(isEditing());
   const groups = $derived(customPanelGroups());
   const rowsByGroup = $derived(customPanelRowsByGroup());
   const styleConfig = $derived(customPanelStyle());
+
+  function getGroupName(group: { name: string }, index: number): string {
+    return group.name.trim() || t("skillMonitor.defaults.customPanelGroupName", {
+      index: index + 1,
+    });
+  }
 </script>
 
-{#each groups as group (group.id)}
+{#each groups as group, groupIndex (group.id)}
   {@const rows = rowsByGroup.get(group.id) ?? []}
   {#if rows.length > 0 || editing}
     <div
@@ -29,12 +36,12 @@
         startDrag(e, { kind: "customPanelGroup", groupId: group.id }, group.position)}
     >
       {#if editing}
-        <div class="group-tag">{group.name}</div>
+        <div class="group-tag">{getGroupName(group, groupIndex)}</div>
       {/if}
 
       <div class="custom-panel-list" style:gap={`${styleConfig.gap}px`}>
         {#if rows.length === 0}
-          <div class="empty-tip">暂无条目</div>
+          <div class="empty-tip">{t("skillMonitor.customPanel.entries.empty")}</div>
         {/if}
         {#each rows as row (row.key)}
           <TextBuffRow

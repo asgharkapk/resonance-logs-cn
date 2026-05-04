@@ -4,6 +4,7 @@
   import MenuIcon from "virtual:icons/lucide/menu";
   import type { ComponentProps } from "svelte";
   import { useSidebar } from "./context.svelte.js";
+  import { t } from "$lib/i18n/index.svelte";
 
   let {
     ref = $bindable(null),
@@ -31,5 +32,5 @@
   {...restProps}
 >
   <MenuIcon class="size-6" />
-  <span class="sr-only">Toggle Sidebar</span>
+  <span class="sr-only">{t("components.sidebar.toggle")}</span>
 </Button>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import ClassicTextBuffRow from "./ClassicTextBuffRow.svelte";
   import TextBuffRow from "$lib/components/TextBuffRow.svelte";
+  import { t } from "$lib/i18n/index.svelte";
   import {
     getGroupPosition,
     getGroupScale,
@@ -30,7 +31,7 @@
     onpointerdown={(e) => startDrag(e, { kind: "group", key: "textBuffPanel" }, groupPos)}
   >
     {#if editing}
-      <div class="group-tag">无图标Buff区</div>
+      <div class="group-tag">{t("gameOverlay.group.textBuff")}</div>
     {/if}
 
     {#each buffs as buff (buff.key)}

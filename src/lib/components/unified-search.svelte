@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { commands } from '$lib/bindings';
 	import type { NameOption } from '$lib/config/game-names';
+	import { t } from '$lib/i18n/index.svelte';
 
 	type SearchOption = NameOption | { label: string; ids: [] };
 
@@ -34,16 +35,20 @@
 	let showTypeDropdown = $state(false);
 
 	const searchTypeDisplay = $derived(
-		searchType === 'boss' ? '首领' : searchType === 'player' ? '玩家' : '场景'
+		searchType === 'boss'
+			? t('components.unifiedSearch.type.boss')
+			: searchType === 'player'
+				? t('components.unifiedSearch.type.player')
+				: t('components.unifiedSearch.type.encounter')
 	);
 
 	const computedPlaceholder = $derived(
 		placeholder ||
 			(searchType === 'boss'
-				? '搜索首领...'
+				? t('components.unifiedSearch.placeholder.boss')
 				: searchType === 'encounter'
-				? '搜索场景...'
-				: '搜索玩家...')
+					? t('components.unifiedSearch.placeholder.encounter')
+					: t('components.unifiedSearch.placeholder.player'))
 	);
 
 	async function handleInput() {
@@ -185,21 +190,21 @@
 					onclick={() => selectSearchType('boss')}
 					class="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted/40 focus:bg-muted/50 focus:outline-none transition-colors {searchType === 'boss' ? 'bg-muted/60 text-foreground' : ''}"
 				>
-					首领
+					{t('components.unifiedSearch.type.boss')}
 				</button>
 				<button
 					type="button"
 					onclick={() => selectSearchType('player')}
 					class="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted/40 focus:bg-muted/50 focus:outline-none transition-colors {searchType === 'player' ? 'bg-muted/60 text-foreground' : ''}"
 				>
-					玩家
+					{t('components.unifiedSearch.type.player')}
 				</button>
 				<button
 					type="button"
 					onclick={() => selectSearchType('encounter')}
 					class="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted/40 focus:bg-muted/50 focus:outline-none transition-colors {searchType === 'encounter' ? 'bg-muted/60 text-foreground' : ''}"
 				>
-					场景
+					{t('components.unifiedSearch.type.encounter')}
 				</button>
 			</div>
 		{/if}
@@ -225,7 +230,7 @@
 			<div
 				class="absolute z-10 w-full mt-1 bg-popover/95 backdrop-blur-md border border-border rounded-md shadow-lg px-3 py-2 animate-in fade-in-0 zoom-in-95"
 			>
-				<div class="text-muted-foreground text-sm">加载中...</div>
+				<div class="text-muted-foreground text-sm">{t('components.unifiedSearch.loading')}</div>
 			</div>
 		{:else if showDropdown && filteredOptions.length > 0}
 			<div
@@ -245,7 +250,7 @@
 			<div
 				class="absolute z-10 w-full mt-1 bg-popover/95 backdrop-blur-md border border-border rounded-md shadow-lg px-3 py-2 animate-in fade-in-0 zoom-in-95"
 			>
-				<div class="text-muted-foreground text-sm">未找到玩家</div>
+				<div class="text-muted-foreground text-sm">{t('components.unifiedSearch.noPlayers')}</div>
 			</div>
 		{/if}
 	</div>

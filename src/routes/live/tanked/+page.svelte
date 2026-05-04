@@ -12,6 +12,7 @@
   import getDisplayName from "$lib/name-display";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatClassSpecLabel } from "$lib/class-labels";
+  import { formatNumber, t } from "$lib/i18n/index.svelte";
 
   let liveData = $derived(getLiveData());
   let rawTankedData = $derived(
@@ -145,11 +146,11 @@
                   style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
                   class="object-contain shrink-0"
                   src={getClassIcon(className)}
-                  alt="Class icon"
+                  alt={t("live.table.classIconAlt")}
                   {@attach tooltip(
                     () =>
                       formatClassSpecLabel(player.className, player.classSpecName) ||
-                      "未知职业",
+                      t("live.player.unknownClass"),
                   )}
                 />
                 <div class="flex flex-1 min-w-0 items-center gap-1">
@@ -190,8 +191,11 @@
                       />
                       <span class="opacity-70">)</span>
                     {:else}
-                      {player.totalDmg.toLocaleString()}<span class="opacity-70"
-                        >({player.dps.toFixed(1)})</span
+                      {formatNumber(player.totalDmg)}<span class="opacity-70"
+                        >({formatNumber(player.dps, {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })})</span
                       >
                     {/if}
                   </span>
@@ -228,7 +232,7 @@
           <th
             class="px-3 py-1 text-left font-medium uppercase tracking-wide"
             style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-            >Player</th
+            >{t("live.table.player")}</th
           >
           {#each visiblePlayerColumns as col (col.key)}
             <th
@@ -291,11 +295,11 @@
                 style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
                 class="object-contain"
                 src={getClassIcon(className)}
-                alt="Class icon"
+                alt={t("live.table.classIconAlt")}
                 {@attach tooltip(
                   () =>
                     formatClassSpecLabel(player.className, player.classSpecName) ||
-                    "未知职业",
+                    t("live.player.unknownClass"),
                 )}
               />
               {#if showAbilityScore || showSeasonStrength}
@@ -345,7 +349,7 @@
                     suffixColor={customThemeColors.tableAbbreviatedColor}
                   />
                 {:else}
-                  {player.totalDmg.toLocaleString()}
+                  {formatNumber(player.totalDmg)}
                 {/if}
               {:else if col.key === "dps"}
                 {#if SETTINGS_SHORTEN_TPS}
@@ -357,7 +361,10 @@
                     suffixColor={customThemeColors.tableAbbreviatedColor}
                   />
                 {:else}
-                  {player.dps.toFixed(1)}
+                  {formatNumber(player.dps, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })}
                 {/if}
               {:else if col.key === "dmgPct"}
                 <PercentFormat

@@ -1,3 +1,5 @@
+import { t } from "./i18n/index.svelte";
+
 export const HEADER_LAYOUT_COMPONENT_IDS = [
   "timer",
   "sceneName",
@@ -29,19 +31,39 @@ export const HEADER_LAYOUT_COMPONENT_LABELS: Record<
   HeaderLayoutComponentId,
   string
 > = {
-  timer: "计时器",
-  sceneName: "场景名称",
-  trainingDummyStatus: "打桩状态",
-  totalDamage: "总伤害",
-  totalDps: "总 DPS",
-  bossHealth: "Boss 血量",
-  navigationTabs: "导航标签",
-  controlButtons: "控制按钮",
+  get timer() {
+    return t("live.headerLayout.component.timer");
+  },
+  get sceneName() {
+    return t("live.headerLayout.component.sceneName");
+  },
+  get trainingDummyStatus() {
+    return t("live.headerLayout.component.trainingDummyStatus");
+  },
+  get totalDamage() {
+    return t("live.headerLayout.component.totalDamage");
+  },
+  get totalDps() {
+    return t("live.headerLayout.component.totalDps");
+  },
+  get bossHealth() {
+    return t("live.headerLayout.component.bossHealth");
+  },
+  get navigationTabs() {
+    return t("live.headerLayout.component.navigationTabs");
+  },
+  get controlButtons() {
+    return t("live.headerLayout.component.controlButtons");
+  },
 };
 
 export const HEADER_LAYOUT_ZONE_LABELS: Record<HeaderLayoutZone, string> = {
-  start: "左侧",
-  end: "右侧",
+  get start() {
+    return t("live.headerLayout.zone.start");
+  },
+  get end() {
+    return t("live.headerLayout.zone.end");
+  },
 };
 
 export const HEADER_LAYOUT_ZONE_IDS: HeaderLayoutZone[] = ["start", "end"];

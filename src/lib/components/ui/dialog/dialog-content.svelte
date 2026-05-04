@@ -4,6 +4,7 @@
   import type { Snippet } from "svelte";
   import * as Dialog from "./index.js";
   import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
+  import { t } from "$lib/i18n/index.svelte";
 
   let {
     ref = $bindable(null),
@@ -26,7 +27,7 @@
     {#if showCloseButton}
       <DialogPrimitive.Close class="ring-offset-background focus:ring-ring rounded-xs focus:outline-hidden absolute end-4 top-4 opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0">
         <XIcon />
-        <span class="sr-only">Close</span>
+        <span class="sr-only">{t("components.dialog.close")}</span>
       </DialogPrimitive.Close>
     {/if}
   </DialogPrimitive.Content>

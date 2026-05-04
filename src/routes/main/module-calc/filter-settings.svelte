@@ -2,8 +2,9 @@
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Slider } from "$lib/components/ui/slider";
+  import { t } from "$lib/i18n/index.svelte";
+  import type { ModuleAttrOption } from "$lib/i18n/module-calc";
 
-  type AttrOption = { id: number; label: string };
   type MinReq = { attrId: number | null; value: number | null };
 
   let {
@@ -13,7 +14,7 @@
     minTotalValue = $bindable(12),
     minRequirements = $bindable<MinReq[]>([{ attrId: null, value: null }]),
   }: {
-    attributeOptions: AttrOption[];
+    attributeOptions: ModuleAttrOption[];
     targetAttributes: number[];
     excludeAttributes: number[];
     minTotalValue: number;
@@ -24,7 +25,11 @@
     return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
   }
 
-  function updateMin(idx: number, field: "attrId" | "value", val: number | null) {
+  function updateMin(
+    idx: number,
+    field: "attrId" | "value",
+    val: number | null,
+  ) {
     const next = [...minRequirements];
     const current = next[idx] ?? { attrId: null, value: null };
     if (field === "attrId") {
@@ -52,10 +57,14 @@
 </script>
 
 <div class="rounded-lg border border-border/60 bg-card/40 p-4 space-y-4">
-  <div class="text-base font-semibold text-foreground">筛选设置</div>
+  <div class="text-base font-semibold text-foreground">
+    {t("moduleCalc.filters.title")}
+  </div>
 
   <div class="space-y-2">
-    <div class="text-sm text-foreground">排除总值低于多少的模组:</div>
+    <div class="text-sm text-foreground">
+      {t("moduleCalc.filters.minTotalValue")}
+    </div>
     <div class="flex items-center gap-4">
       <Slider
         type="single"
@@ -65,12 +74,16 @@
         step={1}
         class="max-w-[70%]"
       />
-      <div class="min-w-12 text-sm text-foreground">{minTotalValue}级</div>
+      <div class="min-w-12 text-sm text-foreground">
+        {t("moduleCalc.filters.level", { level: minTotalValue })}
+      </div>
     </div>
   </div>
 
   <div class="space-y-2">
-    <div class="text-sm text-muted-foreground">目标属性, 选中后只会计算携带该属性的模组(模组数超过1000时可利用该设置先进行筛选)</div>
+    <div class="text-sm text-muted-foreground">
+      {t("moduleCalc.filters.targetAttributes")}
+    </div>
     <div class="flex flex-wrap gap-2">
       {#each attributeOptions as opt}
         <Button
@@ -85,13 +98,16 @@
   </div>
 
   <div class="space-y-2">
-    <div class="text-sm text-muted-foreground">排除属性</div>
+    <div class="text-sm text-muted-foreground">
+      {t("moduleCalc.filters.excludeAttributes")}
+    </div>
     <div class="flex flex-wrap gap-2">
       {#each attributeOptions as opt}
         <Button
           size="sm"
           variant={excludeAttributes.includes(opt.id) ? "default" : "outline"}
-          onclick={() => (excludeAttributes = toggle(excludeAttributes, opt.id))}
+          onclick={() =>
+            (excludeAttributes = toggle(excludeAttributes, opt.id))}
         >
           {opt.label}
         </Button>
@@ -100,7 +116,9 @@
   </div>
 
   <div class="space-y-3">
-    <div class="text-sm text-muted-foreground">最小属性要求</div>
+    <div class="text-sm text-muted-foreground">
+      {t("moduleCalc.filters.minRequirements")}
+    </div>
     <div class="space-y-2">
       {#each minRequirements as req, idx}
         <div class="flex items-center gap-2">
@@ -108,9 +126,13 @@
             class="h-9 rounded-md border border-border bg-background px-2 text-sm"
             value={req.attrId ?? ""}
             onchange={(e) =>
-              updateMin(idx, "attrId", parseNullableNumber((e.target as HTMLSelectElement).value))}
+              updateMin(
+                idx,
+                "attrId",
+                parseNullableNumber((e.target as HTMLSelectElement).value),
+              )}
           >
-            <option value="">选择属性</option>
+            <option value="">{t("moduleCalc.filters.selectAttribute")}</option>
             {#each attributeOptions as opt}
               <option value={opt.id}>{opt.label}</option>
             {/each}
@@ -121,13 +143,20 @@
             class="w-24"
             value={req.value ?? ""}
             onchange={(e) =>
-              updateMin(idx, "value", parseNullableNumber((e.target as HTMLInputElement).value))}
+              updateMin(
+                idx,
+                "value",
+                parseNullableNumber((e.target as HTMLInputElement).value),
+              )}
           />
-          <Button size="sm" variant="ghost" onclick={() => removeMin(idx)}>移除</Button>
+          <Button size="sm" variant="ghost" onclick={() => removeMin(idx)}>
+            {t("moduleCalc.filters.remove")}
+          </Button>
         </div>
       {/each}
     </div>
-    <Button size="sm" variant="outline" onclick={addMin}>+ 添加</Button>
+    <Button size="sm" variant="outline" onclick={addMin}>
+      {t("moduleCalc.filters.add")}
+    </Button>
   </div>
 </div>
-

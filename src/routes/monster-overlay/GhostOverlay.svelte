@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n/index.svelte";
   import { activeProfile } from "$lib/skill-monitor-profile.svelte.js";
   import { ensureCustomPanelGroups } from "../game-overlay/overlay-utils";
   import type { GhostArea } from "./monster-types";
@@ -23,13 +24,13 @@
     const { overlayPositions, overlaySizes, overlayVisibility } = profile;
 
     if (overlayVisibility.showSkillCdGroup) {
-      pushArea("skillCdGroup", "技能CD区", overlayPositions.skillCdGroup.x, overlayPositions.skillCdGroup.y, 280, 118, overlaySizes.skillCdGroupScale);
+      pushArea("skillCdGroup", t("monsterOverlay.ghost.skillCd"), overlayPositions.skillCdGroup.x, overlayPositions.skillCdGroup.y, 280, 118, overlaySizes.skillCdGroupScale);
     }
     if (overlayVisibility.showResourceGroup) {
-      pushArea("resourceGroup", "资源区", overlayPositions.resourceGroup.x, overlayPositions.resourceGroup.y, 250, 90, overlaySizes.resourceGroupScale);
+      pushArea("resourceGroup", t("monsterOverlay.ghost.resource"), overlayPositions.resourceGroup.x, overlayPositions.resourceGroup.y, 250, 90, overlaySizes.resourceGroupScale);
     }
     if (overlayVisibility.showPanelAttrGroup) {
-      pushArea("panelAttrGroup", "角色属性区", overlayPositions.panelAttrGroup.x, overlayPositions.panelAttrGroup.y, 220, 130, overlaySizes.panelAttrGroupScale);
+      pushArea("panelAttrGroup", t("monsterOverlay.ghost.panelAttr"), overlayPositions.panelAttrGroup.x, overlayPositions.panelAttrGroup.y, 220, 130, overlaySizes.panelAttrGroupScale);
     }
     if (overlayVisibility.showCustomPanelGroup) {
       for (const group of ensureCustomPanelGroups(profile)) {
@@ -49,32 +50,39 @@
     if (overlayVisibility?.showShieldDetailGroup !== false) {
       const pos = overlayPositions?.shieldDetailGroup ?? { x: 40, y: 550 };
       const scale = overlaySizes?.shieldDetailGroupScale ?? 1;
-      pushArea("shieldDetailGroup", "血量护盾区", pos.x, pos.y, 240, 120, scale);
+      pushArea("shieldDetailGroup", t("monsterOverlay.ghost.shieldDetail"), pos.x, pos.y, 240, 120, scale);
     }
 
-    pushArea("textBuffPanel", "无图标Buff区", overlayPositions.textBuffPanel.x, overlayPositions.textBuffPanel.y, 240, 130, overlaySizes.textBuffPanelScale);
+    pushArea("textBuffPanel", t("monsterOverlay.ghost.textBuff"), overlayPositions.textBuffPanel.x, overlayPositions.textBuffPanel.y, 240, 130, overlaySizes.textBuffPanelScale);
 
     if (profile.buffDisplayMode === "grouped") {
       for (const group of profile.buffGroups) {
         const width = Math.max(120, group.columns * (group.iconSize + group.gap));
         const height = Math.max(90, group.rows * (group.iconSize + group.gap) + 26);
-        pushArea(`buffGroup:${group.id}`, `${group.name}${group.monitorAll ? "（全部）" : ""}`, group.position.x, group.position.y, width, height);
+        pushArea(
+          `buffGroup:${group.id}`,
+          `${group.name}${group.monitorAll ? t("monsterOverlay.ghost.allSuffix") : ""}`,
+          group.position.x,
+          group.position.y,
+          width,
+          height,
+        );
       }
     } else if (profile.individualMonitorAllGroup) {
       const group = profile.individualMonitorAllGroup;
       const width = Math.max(120, group.columns * (group.iconSize + group.gap));
       const height = Math.max(90, group.rows * (group.iconSize + group.gap) + 26);
-      pushArea(`individualAllGroup:${group.id}`, `${group.name}（全部）`, group.position.x, group.position.y, width, height);
+      pushArea(`individualAllGroup:${group.id}`, `${group.name}${t("monsterOverlay.ghost.allSuffix")}`, group.position.x, group.position.y, width, height);
     }
 
     for (const [baseId, point] of Object.entries(overlayPositions.iconBuffPositions)) {
       const size = overlaySizes.iconBuffSizes[Number(baseId)] ?? 44;
-      pushArea(`icon:${baseId}`, `Buff ${baseId}`, point.x, point.y, size, size);
+      pushArea(`icon:${baseId}`, t("monsterOverlay.ghost.buff", { id: baseId }), point.x, point.y, size, size);
     }
 
     for (const [categoryKey, point] of Object.entries(overlayPositions.categoryIconPositions ?? {})) {
       const size = overlaySizes.categoryIconSizes?.[categoryKey as keyof typeof overlaySizes.categoryIconSizes] ?? 44;
-      pushArea(`category:${categoryKey}`, `分类 ${categoryKey}`, point.x, point.y, size, size);
+      pushArea(`category:${categoryKey}`, t("monsterOverlay.ghost.category", { key: categoryKey }), point.x, point.y, size, size);
     }
 
     return next;

@@ -1,10 +1,11 @@
 <script lang="ts">
   import { marked } from 'marked';
+  import { t } from '$lib/i18n/index.svelte';
 
   let {
     source,
-    loadingText = 'Loading content...',
-    emptyText = '暂无内容。',
+    loadingText,
+    emptyText,
     contentClass = '',
   }: {
     source: string;
@@ -14,6 +15,8 @@
   } = $props();
 
   let html = $state<string | null>(null);
+  const effectiveLoadingText = $derived(loadingText ?? t('components.markdownContent.loading'));
+  const effectiveEmptyText = $derived(emptyText ?? t('components.markdownContent.empty'));
 
   function escapeHtml(value: string) {
     return value
@@ -57,12 +60,12 @@
 
 {#if html === null}
   <div class="flex min-h-32 items-center justify-center text-sm text-muted-foreground">
-    {loadingText}
+    {effectiveLoadingText}
   </div>
 {:else if html}
   <div class={`markdown-body markdown-body--comfortable ${contentClass}`.trim()}>
     {@html html}
   </div>
 {:else}
-  <p class="text-sm leading-6 text-muted-foreground">{emptyText}</p>
+  <p class="text-sm leading-6 text-muted-foreground">{effectiveEmptyText}</p>
 {/if}

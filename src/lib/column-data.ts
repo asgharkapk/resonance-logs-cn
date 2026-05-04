@@ -4,129 +4,644 @@
  * reflect its purpose as generic column metadata.
  */
 
-import { propertyLabel, damageModeLabel } from "./damage-type";
+import { damageModeLabel, propertyLabel } from "./damage-type";
+import { formatNumber, t, type MessageKey } from "./i18n/index.svelte";
+
+type ColumnFormat = (value: number) => string;
+
+interface ColumnDefinition<Key extends string> {
+  readonly key: Key;
+  readonly header: string;
+  readonly label: string;
+  readonly description: string;
+  readonly format: ColumnFormat;
+}
+
+function createColumn<const Key extends string>({
+  key,
+  labelKey,
+  descriptionKey,
+  format,
+}: {
+  key: Key;
+  labelKey: MessageKey;
+  descriptionKey: MessageKey;
+  format: ColumnFormat;
+}): ColumnDefinition<Key> {
+  return {
+    key,
+    get header() {
+      return t(labelKey);
+    },
+    get label() {
+      return t(labelKey);
+    },
+    get description() {
+      return t(descriptionKey);
+    },
+    format,
+  };
+}
+
+const formatInteger = (value: number) => formatNumber(value);
+const formatDecimal = (value: number) =>
+  formatNumber(value, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+const formatPercent = (value: number) => `${formatDecimal(value)}%`;
 
 export const historyDpsPlayerColumns = [
-  { key: 'totalDmg', header: '伤害', label: '伤害', description: "显示玩家造成的总伤害", format: (v: number) => v.toLocaleString() },
-  { key: 'dps', header: '秒伤', label: '秒伤', description: "显示玩家每秒造成的伤害 (DPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'tdps', header: '真秒伤', label: '真秒伤', description: "显示玩家的真实 DPS（基于全局活跃战斗时间）", format: (v: number) => v.toFixed(1) },
-  { key: 'bossDmg', header: '首领伤害', label: '首领伤害', description: "显示玩家对首领造成的伤害", format: (v: number) => v.toLocaleString() },
-  { key: 'bossDps', header: '首领秒伤', label: '首领秒伤', description: "显示玩家对首领的秒伤 (Boss DPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'dmgPct', header: '占比%', label: '占比%', description: "显示玩家伤害占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critRate', header: '暴击%', label: '暴击%', description: "显示玩家的暴击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击伤%', label: '暴击伤%', description: "显示玩家造成的暴击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '幸运%', label: '幸运%', description: "显示玩家的幸运一击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运伤%', label: '幸运伤%', description: "显示玩家造成的幸运一击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hits', header: '命中数', label: '命中数', description: "显示玩家的总命中次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均命中', label: '分均命中', description: "显示玩家每分钟的命中次数", format: (v: number) => v.toFixed(1) },
+  createColumn({
+    key: "totalDmg",
+    labelKey: "columns.dps.totalDmg",
+    descriptionKey: "columns.description.dps.player.totalDmg",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "dps",
+    labelKey: "columns.dps.dps",
+    descriptionKey: "columns.description.dps.player.dps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "tdps",
+    labelKey: "columns.dps.tdps",
+    descriptionKey: "columns.description.dps.player.tdps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "bossDmg",
+    labelKey: "columns.dps.bossDmg",
+    descriptionKey: "columns.description.dps.player.bossDmg",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "bossDps",
+    labelKey: "columns.dps.bossDps",
+    descriptionKey: "columns.description.dps.player.bossDps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "dmgPct",
+    labelKey: "columns.dps.dmgPct",
+    descriptionKey: "columns.description.dps.player.dmgPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critRate",
+    labelKey: "columns.dps.critRate",
+    descriptionKey: "columns.description.dps.player.critRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.dps.critDmgRate",
+    descriptionKey: "columns.description.dps.player.critDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.dps.luckyRate",
+    descriptionKey: "columns.description.dps.player.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.dps.luckyDmgRate",
+    descriptionKey: "columns.description.dps.player.luckyDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hits",
+    labelKey: "columns.dps.hits",
+    descriptionKey: "columns.description.dps.player.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.dps.hitsPerMinute",
+    descriptionKey: "columns.description.dps.player.hitsPerMinute",
+    format: formatDecimal,
+  }),
 ] as const;
 
 export const historyDpsSkillColumns = [
-  { key: 'totalDmg', header: '伤害', label: '伤害', description: "显示技能造成的总伤害", format: (v: number) => v.toLocaleString() },
-  { key: 'dps', header: '秒伤', label: '秒伤', description: "显示技能的每秒伤害 (DPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'dmgPct', header: '占比%', label: '占比%', description: "显示技能伤害占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critRate', header: '暴击%', label: '暴击%', description: "显示技能的暴击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击伤%', label: '暴击伤%', description: "显示技能造成的暴击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '幸运%', label: '幸运%', description: "显示技能的幸运一击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运伤%', label: '幸运伤%', description: "显示技能造成的幸运一击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hits', header: '命中数', label: '命中数', description: "显示技能的总命中次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均命中', label: '分均命中', description: "显示技能每分钟的命中次数", format: (v: number) => v.toFixed(1) },
+  createColumn({
+    key: "totalDmg",
+    labelKey: "columns.dps.totalDmg",
+    descriptionKey: "columns.description.dps.skill.totalDmg",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "dps",
+    labelKey: "columns.dps.dps",
+    descriptionKey: "columns.description.dps.skill.dps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "dmgPct",
+    labelKey: "columns.dps.dmgPct",
+    descriptionKey: "columns.description.dps.skill.dmgPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critRate",
+    labelKey: "columns.dps.critRate",
+    descriptionKey: "columns.description.dps.skill.critRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.dps.critDmgRate",
+    descriptionKey: "columns.description.dps.skill.critDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.dps.luckyRate",
+    descriptionKey: "columns.description.dps.skill.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.dps.luckyDmgRate",
+    descriptionKey: "columns.description.dps.skill.luckyDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hits",
+    labelKey: "columns.dps.hits",
+    descriptionKey: "columns.description.dps.skill.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.dps.hitsPerMinute",
+    descriptionKey: "columns.description.dps.skill.hitsPerMinute",
+    format: formatDecimal,
+  }),
 ] as const;
 
 export const historyHealPlayerColumns = [
-  { key: 'healDealt', header: '治疗', label: '治疗', description: "显示玩家造成的总治疗量", format: (v: number) => v.toLocaleString() },
-  { key: 'hps', header: '秒疗', label: '秒疗', description: "显示玩家每秒造成的治疗量 (HPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'effectiveHeal', header: '有效治疗', label: '有效治疗', description: "显示玩家造成的有效治疗量", format: (v: number) => v.toLocaleString() },
-  { key: 'ehps', header: '有效秒疗', label: '有效秒疗', description: "显示玩家每秒造成的有效治疗量 (EHPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'healPct', header: '占比%', label: '占比%', description: "显示玩家治疗占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critHealRate', header: '暴击%', label: '暴击%', description: "显示玩家的治疗暴击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击疗%', label: '暴击疗%', description: "显示玩家造成的暴击治疗比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '幸运%', label: '幸运%', description: "显示玩家的治疗幸运一击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运疗%', label: '幸运疗%', description: "显示玩家造成的幸运一击治疗比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hitsHeal', header: '次数', label: '次数', description: "显示玩家的总治疗次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均次数', label: '分均次数', description: "显示玩家每分钟的治疗次数", format: (v: number) => v.toFixed(1) },
+  createColumn({
+    key: "healDealt",
+    labelKey: "columns.heal.total",
+    descriptionKey: "columns.description.heal.player.total",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hps",
+    labelKey: "columns.heal.hps",
+    descriptionKey: "columns.description.heal.player.hps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "effectiveHeal",
+    labelKey: "columns.heal.effectiveTotal",
+    descriptionKey: "columns.description.heal.player.effectiveTotal",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "ehps",
+    labelKey: "columns.heal.effectiveHps",
+    descriptionKey: "columns.description.heal.player.effectiveHps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "healPct",
+    labelKey: "columns.heal.healPct",
+    descriptionKey: "columns.description.heal.player.healPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critHealRate",
+    labelKey: "columns.heal.critRate",
+    descriptionKey: "columns.description.heal.player.critRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.heal.critHealRate",
+    descriptionKey: "columns.description.heal.player.critHealRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.heal.luckyRate",
+    descriptionKey: "columns.description.heal.player.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.heal.luckyHealRate",
+    descriptionKey: "columns.description.heal.player.luckyHealRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hitsHeal",
+    labelKey: "columns.heal.hits",
+    descriptionKey: "columns.description.heal.player.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.heal.hitsPerMinute",
+    descriptionKey: "columns.description.heal.player.hitsPerMinute",
+    format: formatDecimal,
+  }),
 ] as const;
 
 // Live meter heal player columns with correct headers
 export const liveHealPlayerColumns = [
-  { key: 'totalDmg', header: '治疗', label: '治疗', description: "显示玩家造成的总治疗量", format: (v: number) => v.toLocaleString() },
-  { key: 'dps', header: '秒疗', label: '秒疗', description: "显示玩家每秒造成的治疗量 (HPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'effectiveTotal', header: '有效治疗', label: '有效治疗', description: "显示玩家造成的有效治疗量", format: (v: number) => v.toLocaleString() },
-  { key: 'effectiveDps', header: '有效秒疗', label: '有效秒疗', description: "显示玩家每秒造成的有效治疗量 (EHPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'dmgPct', header: '占比%', label: '占比%', description: "显示玩家治疗占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critRate', header: '暴击%', label: '暴击%', description: "显示玩家的暴击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击疗%', label: '暴击疗%', description: "显示玩家造成的暴击治疗比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '幸运%', label: '幸运%', description: "显示玩家的幸运一击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运疗%', label: '幸运疗%', description: "显示玩家造成的幸运一击治疗比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hits', header: '次数', label: '次数', description: "显示玩家的总治疗次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均次数', label: '分均次数', description: "显示玩家每分钟的治疗次数", format: (v: number) => v.toFixed(1) },
+  createColumn({
+    key: "totalDmg",
+    labelKey: "columns.heal.total",
+    descriptionKey: "columns.description.heal.player.total",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "dps",
+    labelKey: "columns.heal.hps",
+    descriptionKey: "columns.description.heal.player.hps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "effectiveTotal",
+    labelKey: "columns.heal.effectiveTotal",
+    descriptionKey: "columns.description.heal.player.effectiveTotal",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "effectiveDps",
+    labelKey: "columns.heal.effectiveHps",
+    descriptionKey: "columns.description.heal.player.effectiveHps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "dmgPct",
+    labelKey: "columns.heal.healPct",
+    descriptionKey: "columns.description.heal.player.healPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critRate",
+    labelKey: "columns.heal.critRate",
+    descriptionKey: "columns.description.heal.player.critRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.heal.critHealRate",
+    descriptionKey: "columns.description.heal.player.critHealRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.heal.luckyRate",
+    descriptionKey: "columns.description.heal.player.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.heal.luckyHealRate",
+    descriptionKey: "columns.description.heal.player.luckyHealRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hits",
+    labelKey: "columns.heal.hits",
+    descriptionKey: "columns.description.heal.player.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.heal.hitsPerMinute",
+    descriptionKey: "columns.description.heal.player.hitsPerMinute",
+    format: formatDecimal,
+  }),
 ] as const;
 
 // Live meter tanked player columns with correct headers
 export const liveTankedPlayerColumns = [
-  { key: 'totalDmg', header: '承伤', label: '承伤', description: "显示玩家承受的总伤害", format: (v: number) => v.toLocaleString() },
-  { key: 'dps', header: '秒承伤', label: '秒承伤', description: "显示玩家每秒承受的伤害 (TPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'dmgPct', header: '占比%', label: '占比%', description: "显示玩家承伤占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critRate', header: '被暴击%', label: '被暴击%', description: "显示玩家被暴击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击承伤%', label: '暴击承伤%', description: "显示玩家承受的暴击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '被幸运%', label: '被幸运%', description: "显示玩家被幸运一击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运承伤%', label: '幸运承伤%', description: "显示玩家承受的幸运一击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hits', header: '受击数', label: '受击数', description: "显示玩家的总受击次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均受击', label: '分均受击', description: "显示玩家每分钟的受击次数", format: (v: number) => v.toFixed(1) },
+  createColumn({
+    key: "totalDmg",
+    labelKey: "columns.tanked.total",
+    descriptionKey: "columns.description.tanked.player.total",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "dps",
+    labelKey: "columns.tanked.tps",
+    descriptionKey: "columns.description.tanked.player.tps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "dmgPct",
+    labelKey: "columns.tanked.tankedPct",
+    descriptionKey: "columns.description.tanked.player.tankedPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critRate",
+    labelKey: "columns.tanked.critTakenRate",
+    descriptionKey: "columns.description.tanked.player.critTakenRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.tanked.critDmgRate",
+    descriptionKey: "columns.description.tanked.player.critDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.tanked.luckyRate",
+    descriptionKey: "columns.description.tanked.player.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.tanked.luckyDmgRate",
+    descriptionKey: "columns.description.tanked.player.luckyDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hits",
+    labelKey: "columns.tanked.hits",
+    descriptionKey: "columns.description.tanked.player.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.tanked.hitsPerMinute",
+    descriptionKey: "columns.description.tanked.player.hitsPerMinute",
+    format: formatDecimal,
+  }),
 ] as const;
 
 export const liveTankedSkillColumns = [
-  { key: 'totalDmg', header: '承伤', label: '承伤', description: "显示技能造成的总承伤", format: (v: number) => v.toLocaleString() },
-  { key: 'dps', header: '秒承伤', label: '秒承伤', description: "显示技能每秒造成的承伤 (DTPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'dmgPct', header: '占比%', label: '占比%', description: "显示技能承伤占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critRate', header: '被暴击%', label: '被暴击%', description: "显示该技能被暴击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击承伤%', label: '暴击承伤%', description: "显示该技能承受的暴击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '被幸运%', label: '被幸运%', description: "显示该技能被幸运一击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运承伤%', label: '幸运承伤%', description: "显示该技能承受的幸运一击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hits', header: '受击数', label: '受击数', description: "显示该技能造成的总受击次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均受击', label: '分均受击', description: "显示该技能每分钟造成的受击次数", format: (v: number) => v.toFixed(1) },
-  { key: 'property', header: '元素', label: '元素', description: "技能伤害的元素属性", format: (v: number) => propertyLabel(v) },
-  { key: 'damageMode', header: '物/魔', label: '物/魔', description: "物理或魔法伤害类型", format: (v: number) => damageModeLabel(v) },
+  createColumn({
+    key: "totalDmg",
+    labelKey: "columns.tanked.total",
+    descriptionKey: "columns.description.tanked.skill.total",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "dps",
+    labelKey: "columns.tanked.tps",
+    descriptionKey: "columns.description.tanked.skill.tps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "dmgPct",
+    labelKey: "columns.tanked.tankedPct",
+    descriptionKey: "columns.description.tanked.skill.tankedPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critRate",
+    labelKey: "columns.tanked.critTakenRate",
+    descriptionKey: "columns.description.tanked.skill.critTakenRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.tanked.critDmgRate",
+    descriptionKey: "columns.description.tanked.skill.critDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.tanked.luckyRate",
+    descriptionKey: "columns.description.tanked.skill.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.tanked.luckyDmgRate",
+    descriptionKey: "columns.description.tanked.skill.luckyDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hits",
+    labelKey: "columns.tanked.hits",
+    descriptionKey: "columns.description.tanked.skill.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.tanked.hitsPerMinute",
+    descriptionKey: "columns.description.tanked.skill.hitsPerMinute",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "property",
+    labelKey: "columns.skill.property",
+    descriptionKey: "columns.description.skill.property",
+    format: propertyLabel,
+  }),
+  createColumn({
+    key: "damageMode",
+    labelKey: "columns.skill.damageMode",
+    descriptionKey: "columns.description.skill.damageMode",
+    format: damageModeLabel,
+  }),
 ] as const;
 
 export const historyTankedPlayerColumns = [
-  { key: 'damageTaken', header: '承伤', label: '承伤', description: "显示玩家承受的总伤害", format: (v: number) => v.toLocaleString() },
-  { key: 'tankedPS', header: '秒承伤', label: '秒承伤', description: "显示玩家每秒承受的伤害 (TPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'tankedPct', header: '占比%', label: '占比%', description: "显示玩家承伤占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critTakenRate', header: '被暴击%', label: '被暴击%', description: "显示玩家被暴击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击承伤%', label: '暴击承伤%', description: "显示玩家承受的暴击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '被幸运%', label: '被幸运%', description: "显示玩家被幸运一击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运承伤%', label: '幸运承伤%', description: "显示玩家承受的幸运一击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hitsTaken', header: '受击数', label: '受击数', description: "显示玩家的总受击次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均受击', label: '分均受击', description: "显示玩家每分钟的受击次数", format: (v: number) => v.toFixed(1) },
+  createColumn({
+    key: "damageTaken",
+    labelKey: "columns.tanked.total",
+    descriptionKey: "columns.description.tanked.player.total",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "tankedPS",
+    labelKey: "columns.tanked.tps",
+    descriptionKey: "columns.description.tanked.player.tps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "tankedPct",
+    labelKey: "columns.tanked.tankedPct",
+    descriptionKey: "columns.description.tanked.player.tankedPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critTakenRate",
+    labelKey: "columns.tanked.critTakenRate",
+    descriptionKey: "columns.description.tanked.player.critTakenRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.tanked.critDmgRate",
+    descriptionKey: "columns.description.tanked.player.critDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.tanked.luckyRate",
+    descriptionKey: "columns.description.tanked.player.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.tanked.luckyDmgRate",
+    descriptionKey: "columns.description.tanked.player.luckyDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hitsTaken",
+    labelKey: "columns.tanked.hits",
+    descriptionKey: "columns.description.tanked.player.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.tanked.hitsPerMinute",
+    descriptionKey: "columns.description.tanked.player.hitsPerMinute",
+    format: formatDecimal,
+  }),
 ] as const;
 
 export const historyTankedSkillColumns = [
-  { key: 'totalDmg', header: '承伤', label: '承伤', description: "显示技能造成的总承伤", format: (v: number) => v.toLocaleString() },
-  { key: 'dps', header: '秒承伤', label: '秒承伤', description: "显示技能每秒造成的承伤 (DTPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'dmgPct', header: '占比%', label: '占比%', description: "显示技能承伤占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critRate', header: '被暴击%', label: '被暴击%', description: "显示该技能被暴击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击承伤%', label: '暴击承伤%', description: "显示该技能承受的暴击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '被幸运%', label: '被幸运%', description: "显示该技能被幸运一击的几率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运承伤%', label: '幸运承伤%', description: "显示该技能承受的幸运一击伤害比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hits', header: '受击数', label: '受击数', description: "显示该技能造成的总受击次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均受击', label: '分均受击', description: "显示该技能每分钟造成的受击次数", format: (v: number) => v.toFixed(1) },
-  { key: 'property', header: '元素', label: '元素', description: "技能伤害的元素属性", format: (v: number) => propertyLabel(v) },
-  { key: 'damageMode', header: '物/魔', label: '物/魔', description: "物理或魔法伤害类型", format: (v: number) => damageModeLabel(v) },
+  createColumn({
+    key: "totalDmg",
+    labelKey: "columns.tanked.total",
+    descriptionKey: "columns.description.tanked.skill.total",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "dps",
+    labelKey: "columns.tanked.tps",
+    descriptionKey: "columns.description.tanked.skill.tps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "dmgPct",
+    labelKey: "columns.tanked.tankedPct",
+    descriptionKey: "columns.description.tanked.skill.tankedPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critRate",
+    labelKey: "columns.tanked.critTakenRate",
+    descriptionKey: "columns.description.tanked.skill.critTakenRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.tanked.critDmgRate",
+    descriptionKey: "columns.description.tanked.skill.critDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.tanked.luckyRate",
+    descriptionKey: "columns.description.tanked.skill.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.tanked.luckyDmgRate",
+    descriptionKey: "columns.description.tanked.skill.luckyDmgRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hits",
+    labelKey: "columns.tanked.hits",
+    descriptionKey: "columns.description.tanked.skill.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.tanked.hitsPerMinute",
+    descriptionKey: "columns.description.tanked.skill.hitsPerMinute",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "property",
+    labelKey: "columns.skill.property",
+    descriptionKey: "columns.description.skill.property",
+    format: propertyLabel,
+  }),
+  createColumn({
+    key: "damageMode",
+    labelKey: "columns.skill.damageMode",
+    descriptionKey: "columns.description.skill.damageMode",
+    format: damageModeLabel,
+  }),
 ] as const;
 
 export const historyHealSkillColumns = [
-  { key: 'totalDmg', header: '治疗', label: '治疗', description: "显示技能造成的总治疗量", format: (v: number) => v.toLocaleString() },
-  { key: 'dps', header: '秒疗', label: '秒疗', description: "显示技能每秒造成的治疗量 (HPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'effectiveTotal', header: '有效治疗', label: '有效治疗', description: "显示技能造成的有效治疗量", format: (v: number) => v.toLocaleString() },
-  { key: 'effectiveDps', header: '有效秒疗', label: '有效秒疗', description: "显示技能每秒造成的有效治疗量 (EHPS)", format: (v: number) => v.toFixed(1) },
-  { key: 'dmgPct', header: '占比%', label: '占比%', description: "显示技能治疗占比", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critRate', header: '暴击%', label: '暴击%', description: "显示技能的暴击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'critDmgRate', header: '暴击疗%', label: '暴击疗%', description: "显示技能造成的暴击治疗比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyRate', header: '幸运%', label: '幸运%', description: "显示技能的幸运一击率", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'luckyDmgRate', header: '幸运疗%', label: '幸运疗%', description: "显示技能造成的幸运一击治疗比例", format: (v: number) => v.toFixed(1) + '%' },
-  { key: 'hits', header: '次数', label: '次数', description: "显示技能的总治疗次数", format: (v: number) => v.toLocaleString() },
-  { key: 'hitsPerMinute', header: '分均次数', label: '分均次数', description: "显示技能每分钟的治疗次数", format: (v: number) => v.toFixed(1) },
+  createColumn({
+    key: "totalDmg",
+    labelKey: "columns.heal.total",
+    descriptionKey: "columns.description.heal.skill.total",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "dps",
+    labelKey: "columns.heal.hps",
+    descriptionKey: "columns.description.heal.skill.hps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "effectiveTotal",
+    labelKey: "columns.heal.effectiveTotal",
+    descriptionKey: "columns.description.heal.skill.effectiveTotal",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "effectiveDps",
+    labelKey: "columns.heal.effectiveHps",
+    descriptionKey: "columns.description.heal.skill.effectiveHps",
+    format: formatDecimal,
+  }),
+  createColumn({
+    key: "dmgPct",
+    labelKey: "columns.heal.healPct",
+    descriptionKey: "columns.description.heal.skill.healPct",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critRate",
+    labelKey: "columns.heal.critRate",
+    descriptionKey: "columns.description.heal.skill.critRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "critDmgRate",
+    labelKey: "columns.heal.critHealRate",
+    descriptionKey: "columns.description.heal.skill.critHealRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyRate",
+    labelKey: "columns.heal.luckyRate",
+    descriptionKey: "columns.description.heal.skill.luckyRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "luckyDmgRate",
+    labelKey: "columns.heal.luckyHealRate",
+    descriptionKey: "columns.description.heal.skill.luckyHealRate",
+    format: formatPercent,
+  }),
+  createColumn({
+    key: "hits",
+    labelKey: "columns.heal.hits",
+    descriptionKey: "columns.description.heal.skill.hits",
+    format: formatInteger,
+  }),
+  createColumn({
+    key: "hitsPerMinute",
+    labelKey: "columns.heal.hitsPerMinute",
+    descriptionKey: "columns.description.heal.skill.hitsPerMinute",
+    format: formatDecimal,
+  }),
 ] as const;
 
 // Aliases for live views: reuse history DPS/Heal skill definitions where appropriate

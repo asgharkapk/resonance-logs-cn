@@ -2,6 +2,8 @@
   import { Button } from "$lib/components/ui/button";
   import type { ModuleSolution } from "$lib/api";
   import AttrBadge, { sortAttrEntries } from "./attr-badge.svelte";
+  import { t } from "$lib/i18n/index.svelte";
+  import { buildModuleAttrDisplayEntries } from "$lib/i18n/module-calc";
 
   let {
     solutions = [],
@@ -13,36 +15,48 @@
 </script>
 
 {#if !solutions.length}
-  <div class="text-sm text-muted-foreground">暂无结果</div>
+  <div class="text-sm text-muted-foreground">
+    {t("moduleCalc.results.empty")}
+  </div>
 {:else}
   <div class="space-y-3">
     {#each solutions as sol, idx}
-      {@const attrs = sortAttrEntries(Object.entries(sol.attr_breakdown))}
+      {@const attrs = sortAttrEntries(
+        buildModuleAttrDisplayEntries(sol.modules),
+      )}
       <article
-        class={`rounded-xl border p-4 transition-all duration-200 ${idx === 0
-          ? "border-primary/40 bg-primary/5 shadow-lg shadow-primary/10"
-          : "border-border/60 bg-card/50 hover:border-primary/30 hover:bg-card/80"}`}
+        class={`rounded-xl border p-4 transition-all duration-200 ${
+          idx === 0
+            ? "border-primary/40 bg-primary/5 shadow-lg shadow-primary/10"
+            : "border-border/60 bg-card/50 hover:border-primary/30 hover:bg-card/80"
+        }`}
       >
         <div class="flex flex-col gap-4 xl:flex-row xl:items-center">
           <div class="flex items-center gap-4 xl:w-52 xl:flex-none">
             <div
-              class={`flex size-12 items-center justify-center rounded-2xl text-lg font-semibold ${idx === 0
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "bg-muted text-foreground"}`}
+              class={`flex size-12 items-center justify-center rounded-2xl text-lg font-semibold ${
+                idx === 0
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-muted text-foreground"
+              }`}
             >
               {idx + 1}
             </div>
             <div class="min-w-0">
-              <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                方案得分
+              <div
+                class="text-xs uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                {t("moduleCalc.results.score")}
               </div>
-              <div class="mt-1 text-2xl font-semibold text-foreground">{sol.score}</div>
+              <div class="mt-1 text-2xl font-semibold text-foreground">
+                {sol.score}
+              </div>
             </div>
           </div>
 
           <div class="grid flex-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3">
-            {#each attrs as [name, value]}
-              <AttrBadge {name} {value} compact />
+            {#each attrs as attr (attr.id)}
+              <AttrBadge name={attr.label} value={attr.value} compact />
             {/each}
           </div>
 
@@ -54,7 +68,7 @@
                 class="w-full xl:w-auto"
                 onclick={() => onview?.(sol)}
               >
-                查看详情
+                {t("moduleCalc.results.viewDetail")}
               </Button>
             </div>
           </div>

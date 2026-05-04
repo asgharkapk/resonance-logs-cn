@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n/index.svelte";
   import {
     activeBuffIds,
     displayMap,
@@ -35,7 +36,7 @@
   onpointerdown={(e) => startDrag(e, { kind: "group", key: "skillCdGroup" }, groupPos)}
 >
   {#if editing}
-    <div class="group-tag">技能CD区</div>
+    <div class="group-tag">{t("gameOverlay.group.skillCd")}</div>
   {/if}
 
   <div class="skill-cd-grid">

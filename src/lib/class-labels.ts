@@ -1,3 +1,5 @@
+import { getLocale } from "$lib/i18n/index.svelte";
+
 const CLASS_LABELS_ZH: Record<string, string> = {
   "Heavy Guardian": "巨刃守护者",
   "Shield Knight": "神盾骑士",
@@ -34,10 +36,12 @@ const SPEC_LABELS_ZH: Record<string, string> = {
 };
 
 export function toClassLabel(className: string): string {
+  if (getLocale() !== "zh-CN") return className;
   return CLASS_LABELS_ZH[className] ?? className;
 }
 
 export function toSpecLabel(specName: string): string {
+  if (getLocale() !== "zh-CN") return specName;
   return SPEC_LABELS_ZH[specName] ?? specName;
 }
 

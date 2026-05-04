@@ -11,11 +11,16 @@
     startDrag,
     startResize,
   } from "./overlay-state.svelte.js";
+  import { t } from "$lib/i18n/index.svelte";
 
   const editing = $derived(isEditing());
   const individualBuffs = $derived(individualModeIconBuffs());
   const allGroup = $derived(individualMonitorAllGroup());
   const allGroupBuffs = $derived(individualAllGroupBuffs());
+
+  function getAllGroupName(group: { name: string }): string {
+    return group.name.trim() || t("skillMonitor.defaults.allBuffGroupName");
+  }
 </script>
 
 {#each individualBuffs as buff, idx (buff.layoutKey ?? `buff:${buff.baseId}`)}
@@ -54,7 +59,7 @@
     {group}
     buffs={allGroupBuffs.slice(0, maxVisible)}
     editable={editing}
-    tagText={`${group.name}（全部）`}
+    tagText={`${getAllGroupName(group)}${t("skillMonitor.buff.group.allSuffix")}`}
     onPointerDown={(e) => startDrag(e, { kind: "individualAllGroup" }, group.position)}
     onResizePointerDown={(e) =>
       startResize(e, { kind: "individualAllGroup" }, group.iconSize)}

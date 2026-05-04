@@ -4,6 +4,7 @@ import type {
   CounterUpdateState,
   SkillCdState,
 } from "$lib/api";
+import { formatNumber, t } from "$lib/i18n/index.svelte";
 export {
   ensureCustomPanelEntries,
   ensureCustomPanelGroups,
@@ -102,7 +103,7 @@ export function formatAttrValue(
   format: PanelAttrConfig["format"],
 ): string {
   if (format === "integer") {
-    return value.toLocaleString();
+    return formatNumber(value);
   }
   return `${(value / 100).toFixed(2)}%`;
 }
@@ -127,15 +128,21 @@ export function isBuffActive(
 }
 
 export function formatTimerText(remainingMs: number): string {
-  if (!Number.isFinite(remainingMs)) return "∞";
-  if (remainingMs <= 0) return "--";
+  if (!Number.isFinite(remainingMs)) return t("gameOverlay.timer.infinite");
+  if (remainingMs <= 0) return t("gameOverlay.timer.empty");
   if (remainingMs <= 60_000) {
-    return `${formatTenthsDown(remainingMs / 1000)}s`;
+    return t("gameOverlay.timer.seconds", {
+      value: formatTenthsDown(remainingMs / 1000),
+    });
   }
   if (remainingMs <= 3_600_000) {
-    return `${formatTenthsDown(remainingMs / 60_000)}m`;
+    return t("gameOverlay.timer.minutes", {
+      value: formatTenthsDown(remainingMs / 60_000),
+    });
   }
-  return `${formatTenthsDown(remainingMs / 3_600_000)}h`;
+  return t("gameOverlay.timer.hours", {
+    value: formatTenthsDown(remainingMs / 3_600_000),
+  });
 }
 
 export function getBuffRemainPercent(
@@ -170,7 +177,7 @@ export function buildBuffTextRow(
   return {
     key,
     label,
-    valueText: isPlaceholder ? "--" : formatTimerText(remainingMs),
+    valueText: isPlaceholder ? t("gameOverlay.timer.empty") : formatTimerText(remainingMs),
     metaText: layer > 1 ? `x${layer}` : undefined,
     progressPercent: isPlaceholder ? 0 : getBuffRemainPercent(buff, now),
     showProgress: !isPlaceholder && buff.durationMs > 0,
@@ -238,7 +245,7 @@ export function getCustomPanelDisplayRow(
     return {
       key: `counter_${entry.id}`,
       label: entry.label,
-      valueText: "--",
+      valueText: t("gameOverlay.timer.empty"),
       progressPercent: 0,
       showProgress: false,
     };
@@ -264,8 +271,8 @@ export function getCustomPanelDisplayRow(
     return {
       key: `inline_counter_${entry.id}`,
       label: entry.label,
-      valueText: fixedRemainingMs > 0 ? formatTimerText(fixedRemainingMs) : "--",
-      metaText: "冷却中",
+      valueText: fixedRemainingMs > 0 ? formatTimerText(fixedRemainingMs) : t("gameOverlay.timer.empty"),
+      metaText: t("gameOverlay.counter.cooling"),
       progressPercent,
       showProgress: freezeDurationMs > 0 && fixedRemainingMs > 0,
     };
@@ -275,8 +282,8 @@ export function getCustomPanelDisplayRow(
   return {
     key: `inline_counter_${entry.id}`,
     label: entry.label,
-    valueText: active ? formatTimerText(remainingMs) : "--",
-    metaText: active ? "冷却中" : "冷却中",
+    valueText: active ? formatTimerText(remainingMs) : t("gameOverlay.timer.empty"),
+    metaText: t("gameOverlay.counter.cooling"),
     progressPercent: getBuffRemainPercent(linkedBuff, now),
     showProgress: active && Boolean(linkedBuff && linkedBuff.durationMs > 0),
   };

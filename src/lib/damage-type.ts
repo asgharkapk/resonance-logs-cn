@@ -1,28 +1,33 @@
+import { t, type MessageKey } from "./i18n/index.svelte";
+
 export const NO_DAMAGE_INFO = "-" as const;
 
-export const DAMAGE_PROPERTY_LABELS: Readonly<Record<number, string>> = {
-  0: "通用",
-  1: "火",
-  2: "水",
-  3: "雷",
-  4: "木",
-  5: "风",
-  6: "岩",
-  7: "光",
-  8: "暗",
-};
+export const DAMAGE_PROPERTY_LABEL_KEYS: Readonly<Record<number, MessageKey>> =
+  {
+    0: "game.damageProperty.generic",
+    1: "game.damageProperty.fire",
+    2: "game.damageProperty.water",
+    3: "game.damageProperty.thunder",
+    4: "game.damageProperty.wood",
+    5: "game.damageProperty.wind",
+    6: "game.damageProperty.rock",
+    7: "game.damageProperty.light",
+    8: "game.damageProperty.dark",
+  };
 
-export const DAMAGE_MODE_LABELS: Readonly<Record<number, string>> = {
-  1: "物理",
-  2: "魔法",
+export const DAMAGE_MODE_LABEL_KEYS: Readonly<Record<number, MessageKey>> = {
+  1: "game.damageMode.physical",
+  2: "game.damageMode.magical",
 };
 
 export function propertyLabel(value: number | null | undefined): string {
   if (value == null) return NO_DAMAGE_INFO;
-  return DAMAGE_PROPERTY_LABELS[value] ?? NO_DAMAGE_INFO;
+  const labelKey = DAMAGE_PROPERTY_LABEL_KEYS[value];
+  return labelKey ? t(labelKey) : NO_DAMAGE_INFO;
 }
 
 export function damageModeLabel(value: number | null | undefined): string {
   if (value == null) return NO_DAMAGE_INFO;
-  return DAMAGE_MODE_LABELS[value] ?? NO_DAMAGE_INFO;
+  const labelKey = DAMAGE_MODE_LABEL_KEYS[value];
+  return labelKey ? t(labelKey) : NO_DAMAGE_INFO;
 }

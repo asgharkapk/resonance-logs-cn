@@ -10,6 +10,7 @@
    */
   import { onMount } from "svelte";
   import { SETTINGS } from "$lib/settings-store";
+  import { t } from "$lib/i18n/index.svelte";
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
   import {
     onLiveData,
@@ -100,7 +101,7 @@
         clearMeterData();
         notificationToast?.showToast(
           "notice",
-          "战斗记录已重置",
+          t("live.notifications.encounterReset"),
         );
       });
 
@@ -130,9 +131,15 @@
           lastPauseState !== newPaused
         ) {
           if (newPaused) {
-            notificationToast?.showToast("notice", "Encounter paused");
+            notificationToast?.showToast(
+              "notice",
+              t("live.notifications.encounterPaused"),
+            );
           } else {
-            notificationToast?.showToast("notice", "Encounter resumed");
+            notificationToast?.showToast(
+              "notice",
+              t("live.notifications.encounterResumed"),
+            );
           }
         }
         lastPauseState = newPaused;
@@ -314,11 +321,16 @@
     startReconnectCheck();
     listen<boolean>("live-clickthrough-changed", (event) => {
       SETTINGS.accessibility.state.clickthrough = event.payload;
-    }).then((unlisten) => {
-      clickthroughUnlisten = unlisten;
-    }).catch((error) => {
-      console.error("Failed to subscribe live-clickthrough-changed event", error);
-    });
+    })
+      .then((unlisten) => {
+        clickthroughUnlisten = unlisten;
+      })
+      .catch((error) => {
+        console.error(
+          "Failed to subscribe live-clickthrough-changed event",
+          error,
+        );
+      });
 
     return () => {
       isDestroyed = true;
@@ -396,20 +408,19 @@
       }
     })();
   });
-
 </script>
 
 <!-- flex flex-col min-h-screen → makes the page stretch full height and stack header, body, and footer. -->
 <!-- flex-1 on <main> → makes the body expand to fill leftover space, pushing the footer down. -->
 <div
-  class="flex h-screen flex-col bg-background-live text-[13px] text-foreground font-sans rounded-xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]"
+  class="bg-background-live text-foreground flex h-screen flex-col rounded-xl font-sans text-[13px] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]"
   style="padding: {SETTINGS.live.headerCustomization.state.windowPadding}px"
   data-tauri-drag-region
 >
   <HeaderCustom />
   <main
     bind:this={mainElement}
-    class="flex-1 overflow-y-auto gap-4 rounded-lg bg-card/20"
+    class="bg-card/20 flex-1 gap-4 overflow-y-auto rounded-lg"
   >
     {@render children()}
   </main>

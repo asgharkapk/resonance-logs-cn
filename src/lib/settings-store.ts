@@ -714,7 +714,7 @@ function createDefaultTextBuffPanelStyle(): TextBuffPanelStyle {
   };
 }
 
-export function createDefaultBuffGroup(name = "新分组", index = 1): BuffGroup {
+export function createDefaultBuffGroup(name = "", index = 1): BuffGroup {
   return {
     id: `group_${Date.now()}_${index}`,
     name,
@@ -733,7 +733,7 @@ export function createDefaultBuffGroup(name = "新分组", index = 1): BuffGroup
 }
 
 export function createDefaultCustomPanelGroup(
-  name = "监控区 1",
+  name = "",
   index = 1,
 ): CustomPanelGroup {
   return {
@@ -746,7 +746,7 @@ export function createDefaultCustomPanelGroup(
 }
 
 export function createDefaultSkillMonitorProfile(
-  name = "默认方案",
+  name = "",
   classKey = "wind_knight",
 ): SkillMonitorProfile {
   return {
@@ -756,7 +756,10 @@ export function createDefaultSkillMonitorProfile(
     monitoredSkillDurationIds: [],
     monitoredBuffIds: [],
     monitoredBuffCategories: [],
-    monitoredPanelAttrs: AVAILABLE_PANEL_ATTRS.map((item) => ({ ...item })),
+    monitoredPanelAttrs: AVAILABLE_PANEL_ATTRS.map((item) => ({
+      ...item,
+      label: String(item.attrId),
+    })),
     buffPriorityIds: [],
     buffDisplayMode: "individual",
     buffGroups: [],

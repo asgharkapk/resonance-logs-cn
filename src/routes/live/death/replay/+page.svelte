@@ -6,6 +6,7 @@
     getLiveData,
   } from "$lib/stores/live-meter-store.svelte";
   import DeathReplayDetail from "$lib/components/death-replay/death-replay-detail.svelte";
+  import { t } from "$lib/i18n/index.svelte";
 
   const playerUid = $derived(Number(page.url.searchParams.get("playerUid") ?? "-1"));
   const deathTs = $derived(Number(page.url.searchParams.get("deathTs") ?? "-1"));
@@ -46,7 +47,9 @@
   <div
     class="flex h-40 items-center justify-center rounded-lg border border-dashed border-border/60 text-muted-foreground text-xs"
   >
-    未找到指定的死亡记录，可能已被重置。
-    <button class="ml-2 underline" onclick={handleFallback}>返回列表</button>
+    {t("live.death.replay.notFound")}
+    <button class="ml-2 underline" onclick={handleFallback}
+      >{t("live.death.replay.backToList")}</button
+    >
   </div>
 {/if}

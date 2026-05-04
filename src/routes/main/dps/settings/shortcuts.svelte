@@ -9,9 +9,14 @@
   import * as Alert from "$lib/components/ui/alert/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
 
-  import { SETTINGS } from "$lib/settings-store";
+  import { t, type MessageKey } from "$lib/i18n/index.svelte";
+  import { SETTINGS, type ShortcutSettingId } from "$lib/settings-store";
   import { registerShortcut } from "./shortcuts.js";
-  import type { BaseInput, BaseInputs } from "./settings.js";
+
+  type ShortcutInput = {
+    id: ShortcutSettingId;
+    labelKey: MessageKey;
+  };
 
   let editingId: string | null = $state(null);
 
@@ -35,13 +40,13 @@
   /** Get the proper key name, handling numpad keys via e.code */
   function getKeyName(e: KeyboardEvent): string {
     const code = e.code;
-    
+
     // Handle numpad keys - use code directly as it matches the Tauri shortcut format
     // e.g., "Numpad0", "Numpad1", "NumpadAdd", "NumpadSubtract", etc.
     if (code.startsWith("Numpad")) {
       return code;
     }
-    
+
     // For regular keys, use the key value (normalized to lowercase)
     return e.key.toLowerCase();
   }
@@ -52,7 +57,7 @@
     return mainKey ? [...mods, mainKey].join("+") : mods.join("+");
   }
 
-  function startEdit(shortcut: BaseInput) {
+  function startEdit(shortcut: ShortcutInput) {
     stopEdit();
     editingId = shortcut.id;
     activeMods.clear();
@@ -112,7 +117,7 @@
     }
   }
 
-  async function clearShortcut(shortcut: BaseInput, e: MouseEvent) {
+  async function clearShortcut(shortcut: ShortcutInput, e: MouseEvent) {
     e.preventDefault();
     const existing = SETTINGS.shortcuts.state[shortcut.id];
     if (existing) {
@@ -125,72 +130,80 @@
 
   const SETTINGS_CATEGORY = "shortcuts";
 
-  let inputs: BaseInputs = [
+  let inputs = [
     {
       id: "showLiveMeter",
-      label: "显示实时窗口",
+      labelKey: "settings.shortcuts.showLiveMeter",
     },
     {
       id: "hideLiveMeter",
-      label: "隐藏实时窗口",
+      labelKey: "settings.shortcuts.hideLiveMeter",
     },
     {
       id: "toggleLiveMeter",
-      label: "切换实时窗口",
+      labelKey: "settings.shortcuts.toggleLiveMeter",
     },
     {
       id: "enableClickthrough",
-      label: "启用点击穿透",
+      labelKey: "settings.shortcuts.enableClickthrough",
     },
     {
       id: "disableClickthrough",
-      label: "禁用点击穿透",
+      labelKey: "settings.shortcuts.disableClickthrough",
     },
     {
       id: "toggleClickthrough",
-      label: "切换点击穿透",
+      labelKey: "settings.shortcuts.toggleClickthrough",
     },
     {
       id: "resetEncounter",
-      label: "重置战斗",
+      labelKey: "settings.shortcuts.resetEncounter",
     },
     {
       id: "togglePauseEncounter",
-      label: "切换暂停战斗",
+      labelKey: "settings.shortcuts.togglePauseEncounter",
     },
     {
       id: "toggleBossHp",
-      label: "切换 Boss 血量显示",
+      labelKey: "settings.shortcuts.toggleBossHp",
     },
     {
       id: "toggleOverlayEdit",
-      label: "切换遮罩编辑模式",
+      labelKey: "settings.shortcuts.toggleOverlayEdit",
     },
     {
       id: "toggleOverlayWindow",
-      label: "切换遮罩窗口",
+      labelKey: "settings.shortcuts.toggleOverlayWindow",
     },
-  ];
+  ] satisfies ShortcutInput[];
 </script>
 
 <Tabs.Content value={SETTINGS_CATEGORY}>
   <div class="space-y-3">
     <Alert.Root class="shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-    <AlertCircleIcon />
-      <Alert.Title>右键可清除快捷键</Alert.Title>
+      <AlertCircleIcon />
+      <Alert.Title>{t("settings.shortcuts.clearHint")}</Alert.Title>
     </Alert.Root>
-  <div class="rounded-lg border bg-card/40 border-border/60 p-4 space-y-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
+    <div
+      class="rounded-lg border bg-card/40 border-border/60 p-4 space-y-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]"
+    >
       {#each inputs as input (input.id)}
         <Item.Root>
           <Item.Content>
-            <Item.Title>{input.label}</Item.Title>
+            <Item.Title>{t(input.labelKey)}</Item.Title>
           </Item.Content>
           <Item.Actions>
-            <Button variant="outline" class="uppercase" onclick={() => startEdit(input)} oncontextmenu={(e: MouseEvent) => clearShortcut(input, e)}>
+            <Button
+              variant="outline"
+              class="uppercase"
+              onclick={() => startEdit(input)}
+              oncontextmenu={(e: MouseEvent) => clearShortcut(input, e)}
+            >
               {#if editingId === input.id}
-                {currentShortcutString() || "请按键"}...
+                {currentShortcutString() || t("settings.shortcuts.pressKey")}...
               {:else}
-                {SETTINGS.shortcuts.state[input.id] || "未绑定"}
+                {SETTINGS.shortcuts.state[input.id] ||
+                  t("settings.shortcuts.unbound")}
               {/if}
             </Button>
           </Item.Actions>

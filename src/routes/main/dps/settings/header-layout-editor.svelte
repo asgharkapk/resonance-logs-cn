@@ -9,6 +9,7 @@
     type HeaderLayoutComponentId,
     type HeaderLayoutZone,
   } from "$lib/live-header-layout";
+  import { t } from "$lib/i18n/index.svelte";
   import SettingsSlider from "./settings-slider.svelte";
 
   let {
@@ -138,8 +139,8 @@
       min={0}
       max={24}
       step={1}
-      label="行间距"
-      description="标题栏多行之间的距离"
+      label={t("settings.headerLayout.rowGap")}
+      description={t("settings.headerLayout.rowGapDescription")}
       unit="px"
     />
     <SettingsSlider
@@ -147,8 +148,8 @@
       min={0}
       max={24}
       step={1}
-      label="组件间距"
-      description="同一行内组件之间的距离"
+      label={t("settings.headerLayout.itemGap")}
+      description={t("settings.headerLayout.itemGapDescription")}
       unit="px"
     />
   </div>
@@ -159,10 +160,10 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div class="text-sm font-semibold text-foreground">
-              第 {rowIndex + 1} 行
+              {t("settings.headerLayout.rowTitle", { row: rowIndex + 1 })}
             </div>
             <div class="text-xs text-muted-foreground">
-              调整本行组件所在区域、顺序和换行位置。
+              {t("settings.headerLayout.rowDescription")}
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -172,7 +173,7 @@
               disabled={rowIndex === 0}
               onclick={() => moveRow(rowIndex, -1)}
             >
-              行上移
+              {t("settings.headerLayout.moveRowUp")}
             </button>
             <button
               type="button"
@@ -180,7 +181,7 @@
               disabled={rowIndex === normalizedLayout.rows.length - 1}
               onclick={() => moveRow(rowIndex, 1)}
             >
-              行下移
+              {t("settings.headerLayout.moveRowDown")}
             </button>
           </div>
         </div>
@@ -197,7 +198,7 @@
                 <div
                   class="rounded border border-dashed border-border/40 px-3 py-4 text-center text-xs text-muted-foreground"
                 >
-                  暂无组件
+                  {t("settings.headerLayout.empty")}
                 </div>
               {:else}
                 <div class="flex flex-col gap-2">
@@ -243,7 +244,7 @@
                               -1,
                             )}
                         >
-                          左移
+                          {t("settings.headerLayout.moveLeft")}
                         </button>
                         <button
                           type="button"
@@ -258,7 +259,7 @@
                               1,
                             )}
                         >
-                          右移
+                          {t("settings.headerLayout.moveRight")}
                         </button>
                         <button
                           type="button"
@@ -272,7 +273,7 @@
                               rowIndex - 1,
                             )}
                         >
-                          上一行
+                          {t("settings.headerLayout.previousRow")}
                         </button>
                         <button
                           type="button"
@@ -287,7 +288,7 @@
                               rowIndex + 1,
                             )}
                         >
-                          下一行
+                          {t("settings.headerLayout.nextRow")}
                         </button>
                         <button
                           type="button"
@@ -299,7 +300,7 @@
                               componentId,
                             )}
                         >
-                          拆到新行
+                          {t("settings.headerLayout.splitToNewRow")}
                         </button>
                       </div>
                     </div>

@@ -1,4 +1,7 @@
 <script lang="ts" module>
+  import { getLocale, type AppLocale } from "$lib/i18n/index.svelte";
+  import type { ModuleAttrDisplayEntry } from "$lib/i18n/module-calc";
+
   export function getAttrLevel(value: number): 0 | 1 | 2 | 3 | 4 | 5 | 6 {
     if (value >= 20) return 6;
     if (value >= 16) return 5;
@@ -9,17 +12,26 @@
     return 0;
   }
 
-  export function sortAttrEntries(entries: Array<[string, number]>) {
+  function getCollatorLocale(locale: AppLocale): string {
+    return locale === "zh-CN" ? "zh-Hans-CN" : locale;
+  }
+
+  export function sortAttrEntries(entries: ModuleAttrDisplayEntry[]) {
+    const collatorLocale = getCollatorLocale(getLocale());
+
     return [...entries].sort(
       (a, b) =>
-        getAttrLevel(b[1]) - getAttrLevel(a[1]) ||
-        b[1] - a[1] ||
-        a[0].localeCompare(b[0], "zh-CN")
+        getAttrLevel(b.value) - getAttrLevel(a.value) ||
+        b.value - a.value ||
+        a.label.localeCompare(b.label, collatorLocale) ||
+        a.id - b.id,
     );
   }
 </script>
 
 <script lang="ts">
+  import { t } from "$lib/i18n/index.svelte";
+
   let {
     name,
     value,
@@ -37,13 +49,19 @@
 
 <div
   class={`attr-badge ${compact ? "attr-badge--compact" : ""} ${tierClass}`}
-  aria-label={`${name} +${value}，${level}级`}
+  aria-label={t("moduleCalc.attrBadge.ariaLabel", {
+    name,
+    value,
+    level: t("moduleCalc.filters.level", { level }),
+  })}
 >
   <div class="attr-badge__name">{name}</div>
   <div class="attr-badge__meta">
     <span class="attr-badge__value">+{value}</span>
     {#if isHighlighted}
-      <span class="attr-badge__level">{level}级</span>
+      <span class="attr-badge__level"
+        >{t("moduleCalc.filters.level", { level })}</span
+      >
     {/if}
   </div>
 </div>
@@ -58,12 +76,11 @@
     gap: 0.75rem;
     border-radius: 0.95rem;
     border: 1px solid color-mix(in oklab, var(--tier-color) 40%, var(--border));
-    background:
-      linear-gradient(
-        135deg,
-        color-mix(in oklab, var(--tier-color) 18%, var(--card)) 0%,
-        color-mix(in oklab, var(--tier-color) 10%, var(--card)) 100%
-      );
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--tier-color) 18%, var(--card)) 0%,
+      color-mix(in oklab, var(--tier-color) 10%, var(--card)) 100%
+    );
     padding: 0.7rem 0.85rem;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.04),

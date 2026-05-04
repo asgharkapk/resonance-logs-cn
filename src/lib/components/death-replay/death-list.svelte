@@ -5,6 +5,7 @@
   import { formatClassSpecLabel } from "$lib/class-labels";
   import AbbreviatedNumber from "$lib/components/abbreviated-number.svelte";
   import TableRowGlow from "$lib/components/table-row-glow.svelte";
+  import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
 
   let {
     playerName,
@@ -82,11 +83,13 @@
   }
 
   function formatAbsoluteTime(ms: number): string {
-    const date = new Date(ms);
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    const ss = String(date.getSeconds()).padStart(2, "0");
-    return `${hh}:${mm}:${ss}`;
+    return (
+      formatDateTime(ms, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }) || String(ms)
+    );
   }
 
   function formatRelative(ms: number): string | null {
@@ -104,7 +107,7 @@
     <button
       onclick={() => onBack?.()}
       class="p-1.5 text-neutral-400 hover:text-neutral-200 transition-colors rounded hover:bg-neutral-800"
-      aria-label="返回"
+      aria-label={t("components.deathReplay.back")}
     >
       <svg
         class="w-5 h-5"
@@ -125,13 +128,19 @@
       <img
         class="size-5 object-contain"
         src={getClassIcon(className)}
-        alt="职业图标"
+        alt={t("components.deathReplay.classIconAlt")}
         {@attach tooltip(
-          () => formatClassSpecLabel(className, classSpecName) || "未知职业",
+          () =>
+            formatClassSpecLabel(className, classSpecName) ||
+            t("components.deathReplay.unknownClass"),
         )}
       />
       <h2 class="text-xl font-semibold text-foreground">{playerName}</h2>
-      <span class="text-sm text-neutral-400">共 {deaths.length} 次死亡</span>
+      <span class="text-sm text-neutral-400">
+        {t("components.deathReplay.deathCountText", {
+          count: formatNumber(deaths.length),
+        })}
+      </span>
     </div>
   </div>
 
@@ -141,25 +150,25 @@
         <tr class="bg-popover/60">
           <th
             class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >序号</th
+            >{t("components.deathReplay.table.index")}</th
           >
           <th
             class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >时间</th
+            >{t("components.deathReplay.table.time")}</th
           >
           {#if fightStartTimestampMs != null && fightStartTimestampMs > 0}
             <th
               class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-              >战斗内</th
+              >{t("components.deathReplay.table.encounterTime")}</th
             >
           {/if}
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >受击次数</th
+            >{t("components.deathReplay.table.hitCount")}</th
           >
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >总受伤</th
+            >{t("components.deathReplay.table.totalTaken")}</th
           >
         </tr>
       </thead>
@@ -170,7 +179,7 @@
               colspan="5"
               class="px-3 py-8 text-center text-xs text-muted-foreground"
             >
-              无死亡记录。
+              {t("components.deathReplay.noDeaths")}
             </td>
           </tr>
         {:else}
@@ -182,7 +191,7 @@
             >
               <td
                 class="px-3 py-3 text-sm text-muted-foreground relative z-10 tabular-nums"
-                >#{rows.length - idx}</td
+                >#{formatNumber(rows.length - idx)}</td
               >
               <td
                 class="px-3 py-3 text-sm text-muted-foreground relative z-10 tabular-nums"
@@ -196,7 +205,7 @@
               {/if}
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
-                >{row.hitCount}</td
+                >{formatNumber(row.hitCount)}</td
               >
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
@@ -208,7 +217,7 @@
                     {abbreviationStyle}
                   />
                 {:else}
-                  {row.totalTaken.toLocaleString()}
+                  {formatNumber(row.totalTaken)}
                 {/if}
               </td>
               <TableRowGlow
@@ -234,7 +243,7 @@
               class="px-3 py-6 text-center text-muted-foreground text-xs"
               style="font-size: {tableSettings.skillFontSize}px;"
             >
-              无死亡记录。
+              {t("components.deathReplay.noDeaths")}
             </td>
           </tr>
         {:else}
@@ -252,7 +261,7 @@
                 <div class="flex items-center h-full gap-2">
                   <span
                     class="tabular-nums font-semibold shrink-0 w-8"
-                    >#{rows.length - idx}</span
+                    >#{formatNumber(rows.length - idx)}</span
                   >
                   <span class="tabular-nums shrink-0"
                     >{formatAbsoluteTime(Number(row.record.deathTimestampMs))}</span
@@ -260,15 +269,23 @@
                   {#if rel}
                     <span
                       class="tabular-nums text-muted-foreground shrink-0"
-                      {@attach tooltip(() => "战斗相对时间")}
+                      {@attach tooltip(() =>
+                        t("components.deathReplay.relativeTimeTooltip"),
+                      )}
                     >
-                      战斗 {rel}
+                      {t("components.deathReplay.relativeTimeLabel", {
+                        time: rel,
+                      })}
                     </span>
                   {/if}
                   <span
                     class="inline-flex items-center gap-1 tabular-nums shrink-0 ml-auto"
                   >
-                    <span class="text-muted-foreground">{row.hitCount} 次受击</span>
+                    <span class="text-muted-foreground">
+                      {t("components.deathReplay.hitCountText", {
+                        count: formatNumber(row.hitCount),
+                      })}
+                    </span>
                     {#if shortenTps}
                       <AbbreviatedNumber
                         num={row.totalTaken}
@@ -278,7 +295,7 @@
                         suffixColor={customThemeColors.tableAbbreviatedColor}
                       />
                     {:else}
-                      <span>{row.totalTaken.toLocaleString()}</span>
+                      <span>{formatNumber(row.totalTaken)}</span>
                     {/if}
                   </span>
                 </div>

@@ -11,27 +11,34 @@
     startDrag,
     startResize,
   } from "./overlay-state.svelte.js";
+  import { t } from "$lib/i18n/index.svelte";
 
   const editing = $derived(isEditing());
   const groups = $derived(normalizedBuffGroups());
   const groupedBuffMap = $derived(groupedIconBuffs());
   const standaloneBuffs = $derived(specialStandaloneBuffs());
+
+  function getGroupName(group: { name: string; monitorAll: boolean }, index: number): string {
+    return group.name.trim() || (group.monitorAll
+      ? t("skillMonitor.defaults.allBuffGroupName")
+      : t("skillMonitor.defaults.buffGroupName", { index: index + 1 }));
+  }
 </script>
 
 {#if groups.length === 0 && editing}
   <div class="overlay-group grouped-empty-tip" style:left="40px" style:top="310px">
-    请先在技能监控页创建 Buff 分组
+    {t("gameOverlay.groupedBuff.empty")}
   </div>
 {/if}
 
-{#each groups as group (group.id)}
+{#each groups as group, groupIndex (group.id)}
   {@const groupBuffs = groupedBuffMap.get(group.id) ?? []}
   {#if groupBuffs.length > 0 || editing}
     <BuffGroupGrid
       {group}
       buffs={groupBuffs}
       editable={editing}
-      tagText={`${group.name}${group.monitorAll ? "（全部）" : ""}`}
+      tagText={`${getGroupName(group, groupIndex)}${group.monitorAll ? t("skillMonitor.buff.group.allSuffix") : ""}`}
       onPointerDown={(e) => startDrag(e, { kind: "buffGroup", groupId: group.id }, group.position)}
       onResizePointerDown={(e) =>
         startResize(e, { kind: "buffGroup", groupId: group.id }, group.iconSize)}

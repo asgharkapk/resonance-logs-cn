@@ -1,5 +1,6 @@
 <script lang="ts">
   import TextBuffRow from "$lib/components/TextBuffRow.svelte";
+  import { t } from "$lib/i18n/index.svelte";
   import {
     getMonsterPanelPosition,
     getMonsterPanelScale,
@@ -28,7 +29,7 @@
     onpointerdown={(event) => startMonsterDrag(event, { kind: "buffPanel" }, panelPos)}
   >
     {#if editing}
-      <div class="group-tag">怪物 Buff 区</div>
+      <div class="group-tag">{t("monsterOverlay.buffGroupTag")}</div>
     {/if}
 
     <div class="section-list">

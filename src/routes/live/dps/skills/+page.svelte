@@ -11,6 +11,7 @@
   import LiveGroupedSkillTable from "$lib/components/live-grouped-skill-table.svelte";
   import { liveDpsSkillColumns } from "$lib/column-data";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
+  import { formatNumber } from "$lib/i18n/index.svelte";
 
   const playerUid = Number(page.url.searchParams.get("playerUid") ?? "-1");
   const emptyGroupedSkills = {
@@ -89,7 +90,7 @@
   });
 
   function formatRateValue(value: number) {
-    return Math.round(value).toLocaleString();
+    return formatNumber(Math.round(value));
   }
 </script>
 

@@ -206,7 +206,7 @@ export function ensureUserCounterRules(
 ): UserCounterRule[] {
   return (rules ?? []).map((rule, idx) => ({
     ruleId: Number.isInteger(rule.ruleId) ? rule.ruleId : 10001 + idx,
-    name: rule.name?.trim() || `自定义计数器 ${idx + 1}`,
+    name: rule.name?.trim() || `#${Number.isInteger(rule.ruleId) ? rule.ruleId : 10001 + idx}`,
     sourceRefs: Array.from(
       new Set(
         (rule.sourceRefs ?? []).filter(

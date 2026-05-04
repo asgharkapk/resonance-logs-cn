@@ -1,5 +1,6 @@
 import { resolveBuffDisplayName } from "$lib/config/buff-name-table";
 import { resolveMonsterName } from "$lib/config/game-names";
+import { t } from "$lib/i18n/index.svelte";
 import { SETTINGS, ensureBuffAliases } from "$lib/settings-store";
 import type { HateEntry } from "$lib/api";
 import { buildBuffTextRow } from "../game-overlay/overlay-utils";
@@ -53,7 +54,7 @@ function buildPlaceholderRows(now: number): TextBuffDisplay[] {
   return [
     {
       key: "monster_preview_empty",
-      label: "在怪物监控页选择 Buff",
+      label: t("monsterOverlay.placeholder.selectBuff"),
       valueText: "--",
       progressPercent: 0,
       showProgress: false,
@@ -66,7 +67,7 @@ function buildHatePlaceholderRows(): TextBuffDisplay[] {
   return [
     {
       key: "monster_hate_preview_1",
-      label: "1. UID 10001",
+      label: `1. ${t("monsterOverlay.entity.uid", { uid: 10001 })}`,
       valueText: "100%",
       progressPercent: 0,
       showProgress: false,
@@ -74,7 +75,7 @@ function buildHatePlaceholderRows(): TextBuffDisplay[] {
     },
     {
       key: "monster_hate_preview_2",
-      label: "2. UID 10002",
+      label: `2. ${t("monsterOverlay.entity.uid", { uid: 10002 })}`,
       valueText: "68%",
       progressPercent: 0,
       showProgress: false,
@@ -82,7 +83,7 @@ function buildHatePlaceholderRows(): TextBuffDisplay[] {
     },
     {
       key: "monster_hate_preview_3",
-      label: "3. UID 10003",
+      label: `3. ${t("monsterOverlay.entity.uid", { uid: 10003 })}`,
       valueText: "41%",
       progressPercent: 0,
       showProgress: false,
@@ -98,14 +99,14 @@ function resolveEntityDisplayName(uid: number): string {
   const monsterId = monsterRuntime.monsterIdCache.get(uid);
   if (monsterId !== undefined) return resolveMonsterName(monsterId);
 
-  return `UID ${uid}`;
+  return t("monsterOverlay.entity.uid", { uid });
 }
 
 function resolveMonsterSectionTitle(uid: number): string {
   const monsterId = monsterRuntime.monsterIdCache.get(uid);
   if (monsterId !== undefined) return resolveMonsterName(monsterId);
 
-  return `目标 ${uid}`;
+  return t("monsterOverlay.placeholder.target", { uid });
 }
 
 function buildHateRows(entries: HateEntry[], maxDisplay: number): TextBuffDisplay[] {
@@ -229,7 +230,7 @@ export function updateMonsterDisplay() {
   if (nextSections.length === 0 && monsterRuntime.isEditing) {
     nextSections.push({
       bossUid: 0,
-      title: "预览",
+      title: t("monsterOverlay.placeholder.preview"),
       rows: buildPlaceholderRows(now),
       isPlaceholder: true,
     });
@@ -242,7 +243,7 @@ export function updateMonsterDisplay() {
   ) {
     nextHateSections.push({
       bossUid: 0,
-      title: "目标 0",
+      title: t("monsterOverlay.placeholder.target", { uid: 0 }),
       rows: buildHatePlaceholderRows(),
       isPlaceholder: true,
     });

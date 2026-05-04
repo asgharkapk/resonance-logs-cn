@@ -9,6 +9,7 @@
     type BuffDefinition,
     type BuffNameInfo,
   } from "$lib/config/buff-name-table";
+  import { t } from "$lib/i18n/index.svelte";
   import { SETTINGS, ensureBuffAliases } from "$lib/settings-store";
 
   type SearchTarget = "global" | "self";
@@ -163,12 +164,12 @@
 
   function searchStatusLabel(buffId: number): string | null {
     if (searchTarget === "global") {
-      if (globalBuffIds.includes(buffId)) return "已加全局";
-      if (selfAppliedBuffIds.includes(buffId)) return "当前在仅自身";
+      if (globalBuffIds.includes(buffId)) return t("monsterMonitor.buffSearch.status.addedGlobal");
+      if (selfAppliedBuffIds.includes(buffId)) return t("monsterMonitor.buffSearch.status.currentSelf");
       return null;
     }
-    if (selfAppliedBuffIds.includes(buffId)) return "已加仅自身";
-    if (globalBuffIds.includes(buffId)) return "当前在全局";
+    if (selfAppliedBuffIds.includes(buffId)) return t("monsterMonitor.buffSearch.status.addedSelf");
+    if (globalBuffIds.includes(buffId)) return t("monsterMonitor.buffSearch.status.currentGlobal");
     return null;
   }
 
@@ -177,7 +178,7 @@
   }
 
   function defaultBuffName(buffId: number) {
-    return lookupDefaultBuffName(buffId) ?? `Buff ${buffId}`;
+    return lookupDefaultBuffName(buffId) ?? t("monsterMonitor.buffFallback", { id: buffId });
   }
 
   function toggleMonsterBuffPriority(buffId: number) {
@@ -217,7 +218,7 @@
     <div class="flex justify-start">
       <div class="min-w-[220px]">
         <SettingsSwitch
-          label="启用怪物监控"
+          label={t("monsterMonitor.enabled")}
           bind:checked={SETTINGS.monsterMonitor.state.enabled}
         />
       </div>
@@ -235,7 +236,7 @@
           activeTab = "buff";
         }}
       >
-        Buff 监控
+        {t("monsterMonitor.tabs.buff")}
       </button>
       <button
         type="button"
@@ -246,7 +247,7 @@
           activeTab = "hate";
         }}
       >
-        仇恨列表
+        {t("monsterMonitor.tabs.hate")}
       </button>
     </div>
   </section>
@@ -254,7 +255,7 @@
   {#if activeTab === "buff"}
     <section class="rounded-xl border border-border/60 bg-card/60 p-5 space-y-5">
     <div class="space-y-1">
-      <h2 class="text-base font-semibold text-foreground">Buff 搜索与选择</h2>
+      <h2 class="text-base font-semibold text-foreground">{t("monsterMonitor.buffSearch.title")}</h2>
     </div>
 
     <div class="flex flex-wrap gap-2">
@@ -267,7 +268,7 @@
           searchTarget = "self";
         }}
       >
-        搜索加入仅自身施加
+        {t("monsterMonitor.buffSearch.self")}
       </button>
       <button
         type="button"
@@ -278,7 +279,7 @@
           searchTarget = "global";
         }}
       >
-        搜索加入全局监控
+        {t("monsterMonitor.buffSearch.global")}
       </button>
     </div>
 
@@ -287,8 +288,8 @@
         type="text"
         bind:value={searchKeyword}
         placeholder={searchTarget === "global"
-          ? "搜索要加入全局监控的 Boss Buff"
-          : "搜索要加入仅自身施加的 Boss Buff"}
+          ? t("monsterMonitor.buffSearch.placeholderGlobal")
+          : t("monsterMonitor.buffSearch.placeholderSelf")}
         class="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:border-primary"
       />
 
@@ -299,7 +300,7 @@
           onSelect={toggleSelectedBuff}
           isSelected={isSelectedInCurrentTarget}
           getStatusLabel={searchStatusLabel}
-          emptyMessage="没有匹配的 Boss Buff"
+          emptyMessage={t("monsterMonitor.buffSearch.empty")}
         />
       {/if}
     </div>
@@ -307,8 +308,8 @@
     <div class="grid gap-4 xl:grid-cols-2">
       <div class="rounded-lg border border-border/60 bg-background/50 p-4 space-y-3">
         <div>
-          <div class="text-sm font-semibold text-foreground">仅自身施加</div>
-          <div class="text-xs text-muted-foreground">只追踪本角色施加到 Boss 身上的 Buff</div>
+          <div class="text-sm font-semibold text-foreground">{t("monsterMonitor.buffGroups.self.title")}</div>
+          <div class="text-xs text-muted-foreground">{t("monsterMonitor.buffGroups.self.description")}</div>
         </div>
         {#if selfAppliedBuffIds.length > 0}
           <div class="flex flex-wrap gap-2">
@@ -318,7 +319,7 @@
                 type="button"
                 class="selected-buff"
                 onclick={() => removeBuff("self", buffId)}
-                title="点击移除"
+                title={t("monsterMonitor.buffGroups.removeTitle")}
               >
                 {#if iconBuff}
                   <img
@@ -332,14 +333,14 @@
             {/each}
           </div>
         {:else}
-          <div class="text-xs text-muted-foreground">尚未选择 Buff</div>
+          <div class="text-xs text-muted-foreground">{t("monsterMonitor.buffGroups.empty")}</div>
         {/if}
       </div>
 
       <div class="rounded-lg border border-border/60 bg-background/50 p-4 space-y-3">
         <div>
-          <div class="text-sm font-semibold text-foreground">全局监控</div>
-          <div class="text-xs text-muted-foreground">无论是谁施加，只要 Boss 身上出现就显示</div>
+          <div class="text-sm font-semibold text-foreground">{t("monsterMonitor.buffGroups.global.title")}</div>
+          <div class="text-xs text-muted-foreground">{t("monsterMonitor.buffGroups.global.description")}</div>
         </div>
         {#if globalBuffIds.length > 0}
           <div class="flex flex-wrap gap-2">
@@ -349,7 +350,7 @@
                 type="button"
                 class="selected-buff"
                 onclick={() => removeBuff("global", buffId)}
-                title="点击移除"
+                title={t("monsterMonitor.buffGroups.removeTitle")}
               >
                 {#if iconBuff}
                   <img
@@ -363,7 +364,7 @@
             {/each}
           </div>
         {:else}
-          <div class="text-xs text-muted-foreground">尚未选择 Buff</div>
+          <div class="text-xs text-muted-foreground">{t("monsterMonitor.buffGroups.empty")}</div>
         {/if}
       </div>
     </div>
@@ -371,12 +372,12 @@
 
   <section class="rounded-xl border border-border/60 bg-card/60 p-5 space-y-5">
     <div class="space-y-2">
-      <div class="text-base font-semibold text-foreground">Buff 优先级</div>
-      <div class="text-xs text-muted-foreground">自定义怪物 Buff 的显示排序。排在前面的 Buff 会优先显示。</div>
+      <div class="text-base font-semibold text-foreground">{t("monsterMonitor.priority.title")}</div>
+      <div class="text-xs text-muted-foreground">{t("monsterMonitor.priority.description")}</div>
       
       <input
         class="w-full sm:w-72 mt-2 rounded border border-border/60 bg-muted/30 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-        placeholder="搜索并添加到优先级列表"
+        placeholder={t("monsterMonitor.priority.placeholder")}
         value={prioritySearchKeyword}
         oninput={(event) => { prioritySearchKeyword = (event.currentTarget as HTMLInputElement).value; }}
       />
@@ -385,7 +386,7 @@
           items={prioritySearchResults}
           {availableBuffMap}
           onSelect={toggleMonsterBuffPriority}
-          emptyMessage="没有可添加到优先级的 Buff（需先在上方加入监控）"
+          emptyMessage={t("monsterMonitor.priority.emptySearch")}
           minColumnWidth={180}
         />
       {/if}
@@ -396,12 +397,12 @@
             <span class="flex-1 text-xs text-foreground truncate">
               {buffName(buffId)}
             </span>
-            <button type="button" class="text-xs px-2 py-0.5 rounded border border-border/60 hover:bg-muted/40" onclick={() => toggleMonsterBuffPriority(buffId)}>移除</button>
-            <button type="button" class="text-xs px-2 py-0.5 rounded border border-border/60 hover:bg-muted/40 disabled:opacity-50" onclick={() => moveMonsterBuffPriority(buffId, "up")} disabled={idx === 0}>上移</button>
-            <button type="button" class="text-xs px-2 py-0.5 rounded border border-border/60 hover:bg-muted/40 disabled:opacity-50" onclick={() => moveMonsterBuffPriority(buffId, "down")} disabled={idx === buffPriorityIds.length - 1}>下移</button>
+            <button type="button" class="text-xs px-2 py-0.5 rounded border border-border/60 hover:bg-muted/40" onclick={() => toggleMonsterBuffPriority(buffId)}>{t("monsterMonitor.priority.remove")}</button>
+            <button type="button" class="text-xs px-2 py-0.5 rounded border border-border/60 hover:bg-muted/40 disabled:opacity-50" onclick={() => moveMonsterBuffPriority(buffId, "up")} disabled={idx === 0}>{t("monsterMonitor.priority.moveUp")}</button>
+            <button type="button" class="text-xs px-2 py-0.5 rounded border border-border/60 hover:bg-muted/40 disabled:opacity-50" onclick={() => moveMonsterBuffPriority(buffId, "down")} disabled={idx === buffPriorityIds.length - 1}>{t("monsterMonitor.priority.moveDown")}</button>
           </div>
         {:else}
-          <div class="text-xs text-muted-foreground py-2">尚未设置优先级。你可以通过上方搜索框将监控中的 Buff 加入。</div>
+          <div class="text-xs text-muted-foreground py-2">{t("monsterMonitor.priority.empty")}</div>
         {/each}
       </div>
     </div>
@@ -409,7 +410,7 @@
 
   <section class="rounded-xl border border-border/60 bg-card/60 p-5 space-y-5">
     <div class="space-y-1">
-      <h2 class="text-base font-semibold text-foreground">显示名称</h2>
+      <h2 class="text-base font-semibold text-foreground">{t("monsterMonitor.alias.title")}</h2>
     </div>
 
     {#if combinedBuffIds.length > 0}
@@ -432,18 +433,18 @@
         {/each}
       </div>
     {:else}
-      <div class="text-sm text-muted-foreground">先选择要监控的怪物 Buff，之后可在这里设置别名。</div>
+      <div class="text-sm text-muted-foreground">{t("monsterMonitor.alias.empty")}</div>
     {/if}
   </section>
 
   <section class="rounded-xl border border-border/60 bg-card/60 p-5 space-y-5">
     <div class="space-y-1">
-      <h2 class="text-base font-semibold text-foreground">文字面板样式</h2>
+      <h2 class="text-base font-semibold text-foreground">{t("monsterMonitor.style.panelTitle")}</h2>
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
       <label class="style-field">
-        <span>行间距</span>
+        <span>{t("monsterMonitor.style.gap")}</span>
         <input
           type="range"
           min="0"
@@ -459,7 +460,7 @@
       </label>
 
       <label class="style-field">
-        <span>列间距</span>
+        <span>{t("monsterMonitor.style.columnGap")}</span>
         <input
           type="range"
           min="0"
@@ -475,7 +476,7 @@
       </label>
 
       <label class="style-field">
-        <span>字号</span>
+        <span>{t("monsterMonitor.style.fontSize")}</span>
         <input
           type="range"
           min="10"
@@ -493,7 +494,7 @@
 
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       <label class="color-field">
-        <span>名称颜色</span>
+        <span>{t("monsterMonitor.style.nameColor")}</span>
         <input
           type="color"
           value={monsterMonitor.panelStyle.nameColor}
@@ -506,7 +507,7 @@
       </label>
 
       <label class="color-field">
-        <span>数值颜色</span>
+        <span>{t("monsterMonitor.style.valueColor")}</span>
         <input
           type="color"
           value={monsterMonitor.panelStyle.valueColor}
@@ -519,7 +520,7 @@
       </label>
 
       <label class="color-field">
-        <span>进度条颜色</span>
+        <span>{t("monsterMonitor.style.progressColor")}</span>
         <input
           type="color"
           value={monsterMonitor.panelStyle.progressColor}
@@ -532,7 +533,7 @@
       </label>
 
       <label class="color-field">
-        <span>进度条透明度</span>
+        <span>{t("monsterMonitor.style.progressOpacity")}</span>
         <input
           type="range"
           min="0"
@@ -552,14 +553,14 @@
   {:else}
     <section class="rounded-xl border border-border/60 bg-card/60 p-5 space-y-5">
       <div class="space-y-1">
-        <h2 class="text-base font-semibold text-foreground">仇恨列表显示</h2>
-        <p class="text-sm text-muted-foreground">独立启用怪物仇恨面板，并单独配置它的样式。</p>
+        <h2 class="text-base font-semibold text-foreground">{t("monsterMonitor.hate.displayTitle")}</h2>
+        <p class="text-sm text-muted-foreground">{t("monsterMonitor.hate.displayDescription")}</p>
       </div>
 
       <div class="flex justify-start">
         <div class="min-w-[220px]">
           <SettingsSwitch
-            label="启用仇恨列表"
+            label={t("monsterMonitor.hate.enabled")}
             bind:checked={SETTINGS.monsterMonitor.state.hateListEnabled}
           />
         </div>
@@ -567,7 +568,7 @@
 
       <div class="grid gap-4 lg:grid-cols-3">
         <label class="style-field">
-          <span>最多显示角色数</span>
+          <span>{t("monsterMonitor.hate.maxDisplay")}</span>
           <input
             type="range"
             min="5"
@@ -590,12 +591,12 @@
 
     <section class="rounded-xl border border-border/60 bg-card/60 p-5 space-y-5">
       <div class="space-y-1">
-        <h2 class="text-base font-semibold text-foreground">仇恨面板样式</h2>
+        <h2 class="text-base font-semibold text-foreground">{t("monsterMonitor.hate.styleTitle")}</h2>
       </div>
 
       <div class="grid gap-4 lg:grid-cols-3">
         <label class="style-field">
-          <span>行间距</span>
+          <span>{t("monsterMonitor.style.gap")}</span>
           <input
             type="range"
             min="0"
@@ -611,7 +612,7 @@
         </label>
 
         <label class="style-field">
-          <span>列间距</span>
+          <span>{t("monsterMonitor.style.columnGap")}</span>
           <input
             type="range"
             min="0"
@@ -627,7 +628,7 @@
         </label>
 
         <label class="style-field">
-          <span>字号</span>
+          <span>{t("monsterMonitor.style.fontSize")}</span>
           <input
             type="range"
             min="10"
@@ -645,7 +646,7 @@
 
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label class="color-field">
-          <span>名称颜色</span>
+          <span>{t("monsterMonitor.style.nameColor")}</span>
           <input
             type="color"
             value={hatePanelStyle.nameColor}
@@ -658,7 +659,7 @@
         </label>
 
         <label class="color-field">
-          <span>数值颜色</span>
+          <span>{t("monsterMonitor.style.valueColor")}</span>
           <input
             type="color"
             value={hatePanelStyle.valueColor}
@@ -671,7 +672,7 @@
         </label>
 
         <label class="color-field">
-          <span>进度条颜色</span>
+          <span>{t("monsterMonitor.style.progressColor")}</span>
           <input
             type="color"
             value={hatePanelStyle.progressColor}
@@ -684,7 +685,7 @@
         </label>
 
         <label class="color-field">
-          <span>进度条透明度</span>
+          <span>{t("monsterMonitor.style.progressOpacity")}</span>
           <input
             type="range"
             min="0"

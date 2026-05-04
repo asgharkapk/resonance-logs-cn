@@ -2,6 +2,8 @@
   /**
    * @file This component displays a number in an abbreviated format.
    */
+  import { formatNumber } from "$lib/i18n/index.svelte";
+
   type AbbreviationStyle = "western" | "cn";
 
   let {
@@ -39,7 +41,7 @@
   let abbreviatedNumberTuple = $derived(
     abbreviateNumberSplit(num, decimalPlaces, abbreviationStyle),
   );
-  let fullNumberString = $derived(num.toLocaleString());
+  let fullNumberString = $derived(formatNumber(num));
 
   let suffixStyle = $derived(
     [
@@ -53,7 +55,7 @@
 
 <span
   title={fullNumberString}
-  class="whitespace-nowrap inline-flex items-baseline gap-0.5"
+  class="inline-flex items-baseline gap-0.5 whitespace-nowrap"
 >
   {abbreviatedNumberTuple[0]}<span
     class="text-tiny text-muted-foreground"

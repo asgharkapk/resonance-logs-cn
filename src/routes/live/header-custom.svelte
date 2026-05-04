@@ -43,6 +43,7 @@
     resolveMonsterName,
     resolveSceneName,
   } from "$lib/config/game-names";
+  import { formatNumber, t } from "$lib/i18n/index.svelte";
 
   // Get header settings
   const h = $derived(SETTINGS.live.headerCustomization.state);
@@ -180,11 +181,11 @@
   function formatTrainingDummyLabel(state: TrainingDummyState) {
     switch (state.phase) {
       case "armed":
-        return "打桩待命";
+        return t("live.header.trainingDummy.armed");
       case "running":
-        return "打桩中";
+        return t("live.header.trainingDummy.running");
       case "pendingRollover":
-        return "待切段";
+        return t("live.header.trainingDummy.pendingRollover");
       default:
         return "";
     }
@@ -256,20 +257,21 @@
     {#if h.timerLabelFontSize > 0}
       <span
         class="font-medium text-muted-foreground uppercase tracking-wider leading-none"
-        style="font-size: {h.timerLabelFontSize}px">Timer</span
+        style="font-size: {h.timerLabelFontSize}px"
+        >{t("live.header.timer")}</span
       >
     {/if}
     <span
       class="font-bold text-foreground tabular-nums tracking-tight leading-none"
       style="font-size: {h.timerFontSize}px"
-      {@attach tooltip(() => "Time Elapsed")}
+      {@attach tooltip(() => t("live.header.tooltip.timeElapsed"))}
       >{formatElapsed(displayElapsedMs)}</span
     >
     {#if h.showActiveTimer}
       <span
         class="font-bold text-foreground tabular-nums tracking-tight leading-none"
         style="font-size: {h.activeTimerFontSize}px"
-        {@attach tooltip(() => "Active Combat Time")}
+        {@attach tooltip(() => t("live.header.tooltip.activeCombatTime"))}
       >
         / {formatElapsed(displayHeaderInfo.activeCombatTimeMs)}
       </span>
@@ -308,12 +310,13 @@
     <span
       class="font-bold text-muted-foreground uppercase tracking-wider"
       style="font-size: {h.totalDamageLabelFontSize}px"
-      {@attach tooltip(() => "Total Damage Dealt")}>T.DMG</span
+      {@attach tooltip(() => t("live.header.tooltip.totalDamage"))}
+      >{t("live.header.totalDamage")}</span
     >
     <span
       class="font-bold text-foreground"
       style="font-size: {h.totalDamageValueFontSize}px"
-      {@attach tooltip(() => displayHeaderInfo.totalDmg.toLocaleString())}
+      {@attach tooltip(() => formatNumber(displayHeaderInfo.totalDmg))}
       ><AbbreviatedNumber
         num={Number(displayHeaderInfo.totalDmg)}
         {abbreviationStyle}
@@ -327,12 +330,13 @@
     <span
       class="font-bold text-muted-foreground uppercase tracking-wider"
       style="font-size: {h.totalDpsLabelFontSize}px"
-      {@attach tooltip(() => "Total Damage per Second")}>T.DPS</span
+      {@attach tooltip(() => t("live.header.tooltip.totalDps"))}
+      >{t("live.header.totalDps")}</span
     >
     <span
       class="font-bold text-foreground"
       style="font-size: {h.totalDpsValueFontSize}px"
-      {@attach tooltip(() => displayHeaderInfo.totalDps.toLocaleString())}
+      {@attach tooltip(() => formatNumber(displayHeaderInfo.totalDps))}
       ><AbbreviatedNumber
         num={displayHeaderInfo.totalDps}
         {abbreviationStyle}
@@ -346,7 +350,8 @@
     <span
       class="font-bold text-muted-foreground uppercase tracking-wider"
       style="font-size: {h.bossHealthLabelFontSize}px"
-      {@attach tooltip(() => "Boss Health")}>BOSS</span
+      {@attach tooltip(() => t("live.header.tooltip.bossHealth"))}
+      >{t("live.header.boss")}</span
     >
     {#if displayBosses.length > 0}
       <div
@@ -381,7 +386,10 @@
                 <span
                   class="text-destructive ml-1"
                   style="font-size: {h.bossHealthPercentFontSize}px"
-                  >({hpPercent.toFixed(1)}%)</span
+                  >({formatNumber(hpPercent, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })}%)</span
                 >
               {/if}
             </span>
@@ -391,7 +399,8 @@
     {:else}
       <span
         class="text-neutral-500 font-medium italic"
-        style="font-size: {h.bossHealthNameFontSize}px">No Boss</span
+        style="font-size: {h.bossHealthNameFontSize}px"
+        >{t("live.empty.noBoss")}</span
       >
     {/if}
   </div>
@@ -406,11 +415,15 @@
           : 'text-muted-foreground border-transparent'} hover:text-foreground hover:bg-popover/60 rounded-lg border transition-all duration-200 disabled:opacity-60"
         style="padding: {h.pauseButtonPadding}px"
         aria-pressed={isTrainingDummyActive}
-        aria-label={isTrainingDummyActive ? "关闭打桩模式" : "开启打桩模式"}
+        aria-label={isTrainingDummyActive
+          ? t("live.header.trainingDummy.disable")
+          : t("live.header.trainingDummy.enable")}
         disabled={trainingDummyBusy}
         onclick={toggleTrainingDummyMode}
         {@attach tooltip(() =>
-          isTrainingDummyActive ? "关闭打桩模式" : "开启打桩模式",
+          isTrainingDummyActive
+            ? t("live.header.trainingDummy.disable")
+            : t("live.header.trainingDummy.enable"),
         )}
       >
         <CrosshairIcon
@@ -424,7 +437,7 @@
         class="text-muted-foreground hover:text-foreground hover:bg-popover/60 rounded-lg transition-all duration-200"
         style="padding: {h.resetButtonPadding}px"
         onclick={handleResetEncounter}
-        {@attach tooltip(() => "Reset Encounter")}
+        {@attach tooltip(() => t("live.header.tooltip.resetEncounter"))}
       >
         <RefreshCwIcon
           style="width: {h.resetButtonSize}px; height: {h.resetButtonSize}px"
@@ -442,12 +455,12 @@
       >
         {#if isEncounterPaused}
           <PlayIcon
-            {@attach tooltip(() => "Resume Encounter")}
+            {@attach tooltip(() => t("live.header.tooltip.resumeEncounter"))}
             style="width: {h.pauseButtonSize}px; height: {h.pauseButtonSize}px"
           />
         {:else}
           <PauseIcon
-            {@attach tooltip(() => "Pause Encounter")}
+            {@attach tooltip(() => t("live.header.tooltip.pauseEncounter"))}
             style="width: {h.pauseButtonSize}px; height: {h.pauseButtonSize}px"
           />
         {/if}
@@ -459,7 +472,7 @@
         class="text-muted-foreground hover:text-foreground hover:bg-popover/60 rounded-lg transition-all duration-200"
         style="padding: {h.settingsButtonPadding}px"
         onclick={() => openSettings()}
-        {@attach tooltip(() => "Settings")}
+        {@attach tooltip(() => t("live.header.tooltip.settings"))}
       >
         <SettingsIcon
           style="width: {h.settingsButtonSize}px; height: {h.settingsButtonSize}px"
@@ -472,7 +485,7 @@
         class="text-muted-foreground hover:text-foreground hover:bg-popover/60 rounded-lg transition-all duration-200"
         style="padding: {h.minimizeButtonPadding}px"
         onclick={() => appWindow?.hide()}
-        {@attach tooltip(() => "Minimize")}
+        {@attach tooltip(() => t("live.header.tooltip.minimize"))}
       >
         <MinusIcon
           style="width: {h.minimizeButtonSize}px; height: {h.minimizeButtonSize}px"
@@ -494,7 +507,7 @@
         : 'text-muted-foreground hover:text-foreground hover:bg-popover/60'}"
       style="font-size: {h.navTabFontSize}px; padding: {h.navTabPaddingY}px {h.navTabPaddingX}px"
       aria-current={$page.url.pathname.includes("dps") ? "page" : undefined}
-      onclick={() => goto(resolve("/live/dps"))}>DPS</button
+      onclick={() => goto(resolve("/live/dps"))}>{t("live.tabs.dps")}</button
     >
     <button
       class="transition-all duration-200 font-bold tracking-wider uppercase border-r border-border whitespace-nowrap h-full flex items-center {$page.url.pathname.includes(
@@ -504,7 +517,7 @@
         : 'text-muted-foreground hover:text-foreground hover:bg-popover/60'}"
       style="font-size: {h.navTabFontSize}px; padding: {h.navTabPaddingY}px {h.navTabPaddingX}px"
       aria-current={$page.url.pathname.includes("heal") ? "page" : undefined}
-      onclick={() => goto(resolve("/live/heal"))}>HEAL</button
+      onclick={() => goto(resolve("/live/heal"))}>{t("live.tabs.heal")}</button
     >
     <button
       class="transition-all duration-200 font-bold tracking-wider uppercase border-r border-border whitespace-nowrap h-full flex items-center {$page.url.pathname.includes(
@@ -514,7 +527,7 @@
         : 'text-muted-foreground hover:text-foreground hover:bg-popover/60'}"
       style="font-size: {h.navTabFontSize}px; padding: {h.navTabPaddingY}px {h.navTabPaddingX}px"
       aria-current={$page.url.pathname.includes("tanked") ? "page" : undefined}
-      onclick={() => goto(resolve("/live/tanked"))}>TANKED</button
+      onclick={() => goto(resolve("/live/tanked"))}>{t("live.tabs.tanked")}</button
     >
     {#if h.showDeathTab}
       <button
@@ -525,7 +538,7 @@
           : 'text-muted-foreground hover:text-foreground hover:bg-popover/60'}"
         style="font-size: {h.navTabFontSize}px; padding: {h.navTabPaddingY}px {h.navTabPaddingX}px"
         aria-current={$page.url.pathname.includes("death") ? "page" : undefined}
-        onclick={() => goto(resolve("/live/death"))}>DEATH</button
+        onclick={() => goto(resolve("/live/death"))}>{t("live.tabs.death")}</button
       >
     {/if}
   </div>
@@ -603,20 +616,21 @@
             {#if h.timerLabelFontSize > 0}
               <span
                 class="font-medium text-muted-foreground uppercase tracking-wider leading-none"
-                style="font-size: {h.timerLabelFontSize}px">Timer</span
+                style="font-size: {h.timerLabelFontSize}px"
+                >{t("live.header.timer")}</span
               >
             {/if}
             <span
               class="font-bold text-foreground tabular-nums tracking-tight leading-none"
               style="font-size: {h.timerFontSize}px"
-              {@attach tooltip(() => "Time Elapsed")}
+              {@attach tooltip(() => t("live.header.tooltip.timeElapsed"))}
               >{formatElapsed(displayElapsedMs)}</span
             >
             {#if h.showActiveTimer}
               <span
                 class="font-bold text-foreground tabular-nums tracking-tight leading-none"
                 style="font-size: {h.activeTimerFontSize}px"
-                {@attach tooltip(() => "Active Combat Time")}
+                {@attach tooltip(() => t("live.header.tooltip.activeCombatTime"))}
               >
                 / {formatElapsed(displayHeaderInfo.activeCombatTimeMs)}
               </span>
@@ -667,11 +681,15 @@
               : 'text-muted-foreground border-transparent'} hover:text-foreground hover:bg-popover/60 rounded-lg border transition-all duration-200 disabled:opacity-60"
             style="padding: {h.pauseButtonPadding}px"
             aria-pressed={isTrainingDummyActive}
-            aria-label={isTrainingDummyActive ? "关闭打桩模式" : "开启打桩模式"}
+            aria-label={isTrainingDummyActive
+              ? t("live.header.trainingDummy.disable")
+              : t("live.header.trainingDummy.enable")}
             disabled={trainingDummyBusy}
             onclick={toggleTrainingDummyMode}
             {@attach tooltip(() =>
-              isTrainingDummyActive ? "关闭打桩模式" : "开启打桩模式",
+              isTrainingDummyActive
+                ? t("live.header.trainingDummy.disable")
+                : t("live.header.trainingDummy.enable"),
             )}
           >
             <CrosshairIcon
@@ -685,7 +703,7 @@
             class="text-muted-foreground hover:text-foreground hover:bg-popover/60 rounded-lg transition-all duration-200"
             style="padding: {h.resetButtonPadding}px"
             onclick={handleResetEncounter}
-            {@attach tooltip(() => "Reset Encounter")}
+            {@attach tooltip(() => t("live.header.tooltip.resetEncounter"))}
           >
             <RefreshCwIcon
               style="width: {h.resetButtonSize}px; height: {h.resetButtonSize}px"
@@ -703,12 +721,12 @@
           >
             {#if isEncounterPaused}
               <PlayIcon
-                {@attach tooltip(() => "Resume Encounter")}
+                {@attach tooltip(() => t("live.header.tooltip.resumeEncounter"))}
                 style="width: {h.pauseButtonSize}px; height: {h.pauseButtonSize}px"
               />
             {:else}
               <PauseIcon
-                {@attach tooltip(() => "Pause Encounter")}
+                {@attach tooltip(() => t("live.header.tooltip.pauseEncounter"))}
                 style="width: {h.pauseButtonSize}px; height: {h.pauseButtonSize}px"
               />
             {/if}
@@ -720,7 +738,7 @@
             class="text-muted-foreground hover:text-foreground hover:bg-popover/60 rounded-lg transition-all duration-200"
             style="padding: {h.settingsButtonPadding}px"
             onclick={() => openSettings()}
-            {@attach tooltip(() => "Settings")}
+            {@attach tooltip(() => t("live.header.tooltip.settings"))}
           >
             <SettingsIcon
               style="width: {h.settingsButtonSize}px; height: {h.settingsButtonSize}px"
@@ -733,7 +751,7 @@
             class="text-muted-foreground hover:text-foreground hover:bg-popover/60 rounded-lg transition-all duration-200"
             style="padding: {h.minimizeButtonPadding}px"
             onclick={() => appWindow?.hide()}
-            {@attach tooltip(() => "Minimize")}
+            {@attach tooltip(() => t("live.header.tooltip.minimize"))}
           >
             <MinusIcon
               style="width: {h.minimizeButtonSize}px; height: {h.minimizeButtonSize}px"
@@ -754,13 +772,14 @@
               <span
                 class="font-bold text-muted-foreground uppercase tracking-wider"
                 style="font-size: {h.totalDamageLabelFontSize}px"
-                {@attach tooltip(() => "Total Damage Dealt")}>T.DMG</span
+                {@attach tooltip(() => t("live.header.tooltip.totalDamage"))}
+                >{t("live.header.totalDamage")}</span
               >
               <span
                 class="font-bold text-foreground"
                 style="font-size: {h.totalDamageValueFontSize}px"
                 {@attach tooltip(() =>
-                  displayHeaderInfo.totalDmg.toLocaleString(),
+                  formatNumber(displayHeaderInfo.totalDmg),
                 )}
                 ><AbbreviatedNumber
                   num={Number(displayHeaderInfo.totalDmg)}
@@ -775,13 +794,14 @@
               <span
                 class="font-bold text-muted-foreground uppercase tracking-wider"
                 style="font-size: {h.totalDpsLabelFontSize}px"
-                {@attach tooltip(() => "Total Damage per Second")}>T.DPS</span
+                {@attach tooltip(() => t("live.header.tooltip.totalDps"))}
+                >{t("live.header.totalDps")}</span
               >
               <span
                 class="font-bold text-foreground"
                 style="font-size: {h.totalDpsValueFontSize}px"
                 {@attach tooltip(() =>
-                  displayHeaderInfo.totalDps.toLocaleString(),
+                  formatNumber(displayHeaderInfo.totalDps),
                 )}
                 ><AbbreviatedNumber
                   num={displayHeaderInfo.totalDps}
@@ -797,7 +817,8 @@
             <span
               class="font-bold text-muted-foreground uppercase tracking-wider"
               style="font-size: {h.bossHealthLabelFontSize}px"
-              {@attach tooltip(() => "Boss Health")}>BOSS</span
+              {@attach tooltip(() => t("live.header.tooltip.bossHealth"))}
+              >{t("live.header.boss")}</span
             >
             <!-- Inline Boss Health Display -->
             {#if displayBosses.length > 0}
@@ -840,7 +861,10 @@
                         <span
                           class="text-destructive ml-1"
                           style="font-size: {h.bossHealthPercentFontSize}px"
-                          >({hpPercent.toFixed(1)}%)</span
+                          >({formatNumber(hpPercent, {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          })}%)</span
                         >
                       {/if}
                     </span>
@@ -850,7 +874,8 @@
             {:else}
               <span
                 class="text-neutral-500 font-medium italic"
-                style="font-size: {h.bossHealthNameFontSize}px">No Boss</span
+                style="font-size: {h.bossHealthNameFontSize}px"
+                >{t("live.empty.noBoss")}</span
               >
             {/if}
           </div>
@@ -871,7 +896,7 @@
             : 'text-muted-foreground hover:text-foreground hover:bg-popover/60'}"
           style="font-size: {h.navTabFontSize}px; padding: {h.navTabPaddingY}px {h.navTabPaddingX}px"
           aria-current={$page.url.pathname.includes("dps") ? "page" : undefined}
-          onclick={() => goto(resolve("/live/dps"))}>DPS</button
+          onclick={() => goto(resolve("/live/dps"))}>{t("live.tabs.dps")}</button
         >
         <button
           class="transition-all duration-200 font-bold tracking-wider uppercase border-r border-border whitespace-nowrap h-full flex items-center {$page.url.pathname.includes(
@@ -883,7 +908,7 @@
           aria-current={$page.url.pathname.includes("heal")
             ? "page"
             : undefined}
-          onclick={() => goto(resolve("/live/heal"))}>HEAL</button
+          onclick={() => goto(resolve("/live/heal"))}>{t("live.tabs.heal")}</button
         >
         <button
           class="transition-all duration-200 font-bold tracking-wider uppercase border-r border-border whitespace-nowrap h-full flex items-center {$page.url.pathname.includes(
@@ -895,7 +920,7 @@
           aria-current={$page.url.pathname.includes("tanked")
             ? "page"
             : undefined}
-          onclick={() => goto(resolve("/live/tanked"))}>TANKED</button
+          onclick={() => goto(resolve("/live/tanked"))}>{t("live.tabs.tanked")}</button
         >
         {#if h.showDeathTab}
           <button
@@ -908,7 +933,7 @@
             aria-current={$page.url.pathname.includes("death")
               ? "page"
               : undefined}
-            onclick={() => goto(resolve("/live/death"))}>DEATH</button
+            onclick={() => goto(resolve("/live/death"))}>{t("live.tabs.death")}</button
           >
         {/if}
       </div>

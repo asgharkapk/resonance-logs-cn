@@ -7,6 +7,7 @@
   import AbbreviatedNumber from "$lib/components/abbreviated-number.svelte";
   import PercentFormat from "$lib/components/percent-format.svelte";
   import TableRowGlow from "$lib/components/table-row-glow.svelte";
+  import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
 
   export type DeathPlayerEntry = {
     uid: number;
@@ -20,7 +21,7 @@
     entries,
     localPlayerUid = null,
     onSelect,
-    emptyMessage = "暂无死亡回放。角色死亡后将在此按玩家汇总展示。",
+    emptyMessage,
     variant = "live",
   }: {
     entries: DeathPlayerEntry[];
@@ -62,6 +63,9 @@
     variant === "history"
       ? SETTINGS.history.general.state.abbreviationStyle
       : SETTINGS.live.general.state.abbreviationStyle,
+  );
+  const displayEmptyMessage = $derived(
+    emptyMessage ?? t("components.deathReplay.empty.default"),
   );
 
   type ComputedRow = {
@@ -114,11 +118,13 @@
   );
 
   function formatAbsoluteTime(ms: number): string {
-    const date = new Date(ms);
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    const ss = String(date.getSeconds()).padStart(2, "0");
-    return `${hh}:${mm}:${ss}`;
+    return (
+      formatDateTime(ms, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }) || String(ms)
+    );
   }
 
   function resolveDisplayName(entry: DeathPlayerEntry) {
@@ -167,23 +173,23 @@
         <tr class="bg-popover/60">
           <th
             class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >玩家</th
+            >{t("components.deathReplay.table.player")}</th
           >
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >死亡次数</th
+            >{t("components.deathReplay.table.deathCount")}</th
           >
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >总受伤</th
+            >{t("components.deathReplay.table.totalTaken")}</th
           >
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >占比</th
+            >{t("components.deathReplay.table.share")}</th
           >
           <th
             class="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground"
-            >最近死亡</th
+            >{t("components.deathReplay.table.latestDeath")}</th
           >
         </tr>
       </thead>
@@ -194,7 +200,7 @@
               colspan="5"
               class="px-3 py-8 text-center text-xs text-muted-foreground"
             >
-              {emptyMessage}
+              {displayEmptyMessage}
             </td>
           </tr>
         {:else}
@@ -209,18 +215,22 @@
                   <img
                     class="size-5 object-contain"
                     src={getClassIcon(info.className)}
-                    alt="职业图标"
+                    alt={t("components.deathReplay.classIconAlt")}
                     {@attach tooltip(
                       () =>
                         formatClassSpecLabel(
                           row.entry.className,
                           row.entry.classSpecName,
-                        ) || "未知职业",
+                        ) || t("components.deathReplay.unknownClass"),
                     )}
                   />
                   <span
                     class="truncate"
-                    {@attach tooltip(() => `UID: #${row.entry.uid}`)}
+                    {@attach tooltip(() =>
+                      t("components.deathReplay.uidTooltip", {
+                        uid: row.entry.uid,
+                      }),
+                    )}
                   >
                     {info.displayName}
                   </span>
@@ -228,7 +238,7 @@
               </td>
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
-                >{row.deathCount}</td
+                >{formatNumber(row.deathCount)}</td
               >
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
@@ -240,7 +250,7 @@
                     {abbreviationStyle}
                   />
                 {:else}
-                  {row.totalTaken.toLocaleString()}
+                  {formatNumber(row.totalTaken)}
                 {/if}
               </td>
               <td
@@ -271,7 +281,7 @@
       <div
         class="flex h-32 items-center justify-center text-muted-foreground text-xs"
       >
-        {emptyMessage}
+        {displayEmptyMessage}
       </div>
     {:else}
       <table class="w-full border-collapse">
@@ -284,22 +294,22 @@
               <th
                 class="px-3 py-1 text-left font-medium uppercase tracking-wide"
                 style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-                >Player</th
+                >{t("components.deathReplay.table.player")}</th
               >
               <th
                 class="px-3 py-1 text-right font-medium uppercase tracking-wide"
                 style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-                >死亡次数</th
+                >{t("components.deathReplay.table.deathCount")}</th
               >
               <th
                 class="px-3 py-1 text-right font-medium uppercase tracking-wide"
                 style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-                >总受伤</th
+                >{t("components.deathReplay.table.totalTaken")}</th
               >
               <th
                 class="px-3 py-1 text-right font-medium uppercase tracking-wide"
                 style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-                >占比</th
+                >{t("components.deathReplay.table.share")}</th
               >
             </tr>
           </thead>
@@ -319,13 +329,13 @@
                       style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
                       class="object-contain shrink-0"
                       src={getClassIcon(info.className)}
-                      alt="Class icon"
+                      alt={t("components.deathReplay.classIconAlt")}
                       {@attach tooltip(
                         () =>
                           formatClassSpecLabel(
                             row.entry.className,
                             row.entry.classSpecName,
-                          ) || "未知职业",
+                          ) || t("components.deathReplay.unknownClass"),
                       )}
                     />
                     <span
@@ -347,11 +357,18 @@
                             suffixColor={customThemeColors.tableAbbreviatedColor}
                           />
                           <span class="opacity-70">(</span>
-                          <span>{row.deathCount} 次</span>
+                          <span>
+                            {t("components.deathReplay.deathCountText", {
+                              count: formatNumber(row.deathCount),
+                            })}
+                          </span>
                           <span class="opacity-70">)</span>
                         {:else}
-                          {row.totalTaken.toLocaleString()}<span class="opacity-70"
-                            >({row.deathCount} 次)</span
+                          {formatNumber(row.totalTaken)}<span
+                            class="opacity-70"
+                            >({t("components.deathReplay.deathCountText", {
+                              count: formatNumber(row.deathCount),
+                            })})</span
                           >
                         {/if}
                       </span>
@@ -384,13 +401,13 @@
                       style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
                       class="object-contain"
                       src={getClassIcon(info.className)}
-                      alt="Class icon"
+                      alt={t("components.deathReplay.classIconAlt")}
                       {@attach tooltip(
                         () =>
                           formatClassSpecLabel(
                             row.entry.className,
                             row.entry.classSpecName,
-                          ) || "未知职业",
+                          ) || t("components.deathReplay.unknownClass"),
                       )}
                     />
                     <span
@@ -403,7 +420,7 @@
                 <td
                   class="px-3 py-1 text-right relative z-10 tabular-nums font-medium"
                   style="color: {customThemeColors.tableTextColor};"
-                  >{row.deathCount}</td
+                  >{formatNumber(row.deathCount)}</td
                 >
                 <td
                   class="px-3 py-1 text-right relative z-10 tabular-nums font-medium"
@@ -418,7 +435,7 @@
                       suffixColor={customThemeColors.tableAbbreviatedColor}
                     />
                   {:else}
-                    {row.totalTaken.toLocaleString()}
+                    {formatNumber(row.totalTaken)}
                   {/if}
                 </td>
                 <td

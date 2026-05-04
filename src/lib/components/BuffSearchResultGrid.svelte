@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { BuffDefinition, BuffNameInfo } from "$lib/config/buff-name-table";
+  import { t } from "$lib/i18n/index.svelte";
 
   interface Props {
     items: BuffNameInfo[];
@@ -19,9 +20,13 @@
     isSelected = () => false,
     isDisabled = () => false,
     getStatusLabel = () => null,
-    emptyMessage = "没有匹配的 Buff",
+    emptyMessage,
     minColumnWidth = 180,
   }: Props = $props();
+
+  const effectiveEmptyMessage = $derived(
+    emptyMessage ?? t("components.buffSearchResultGrid.empty"),
+  );
 </script>
 
 {#if items.length > 0}
@@ -36,8 +41,11 @@
       {@const statusLabel = getStatusLabel(item.baseId)}
       {@const defaultName = iconBuff?.name ?? null}
       {@const subtitle = defaultName && defaultName !== item.name
-        ? `${defaultName} · ID ${item.baseId}`
-        : `ID ${item.baseId}`}
+        ? t("components.buffSearchResultGrid.subtitle.defaultWithId", {
+          defaultName,
+          id: item.baseId,
+        })
+        : t("components.buffSearchResultGrid.subtitle.idOnly", { id: item.baseId })}
       <button
         type="button"
         class={`group relative flex items-start gap-3 rounded-lg border bg-card/40 p-3 text-left transition-all ${selected
@@ -58,7 +66,7 @@
             />
           {:else}
             <div class="flex h-full w-full items-center justify-center px-1 text-center text-[11px] text-foreground">
-              {item.name.slice(0, 8)}
+              {item.name.slice(0, 8) || t("components.buffSearchResultGrid.fallbackIcon")}
             </div>
           {/if}
         </div>
@@ -84,5 +92,5 @@
     {/each}
   </div>
 {:else}
-  <div class="text-xs text-muted-foreground">{emptyMessage}</div>
+  <div class="text-xs text-muted-foreground">{effectiveEmptyMessage}</div>
 {/if}

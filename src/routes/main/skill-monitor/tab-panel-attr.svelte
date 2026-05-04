@@ -1,6 +1,8 @@
 <script lang="ts">
   import ChevronDown from "virtual:icons/lucide/chevron-down";
   import type { PanelAttrConfig, PanelAreaRowRef } from "$lib/settings-store";
+  import { t } from "$lib/i18n/index.svelte";
+  import { resolvePanelAttrLabel } from "$lib/i18n/panel-attrs";
 
   interface Props {
     attrSectionExpanded: boolean;
@@ -42,13 +44,13 @@
       const attr = enabledPanelAttrs.find((item) => item.attrId === row.attrId);
       if (!attr || seen.has(attr.attrId)) continue;
       seen.add(attr.attrId);
-      rows.push({ ref: row, label: attr.label });
+      rows.push({ ref: row, label: resolvePanelAttrLabel(attr) });
     }
     for (const attr of enabledPanelAttrs) {
       if (seen.has(attr.attrId)) continue;
       rows.push({
         ref: { type: "attr", attrId: attr.attrId },
-        label: attr.label,
+        label: resolvePanelAttrLabel(attr),
       });
     }
     return rows;
@@ -62,9 +64,12 @@
     onclick={() => setAttrSectionExpanded(!attrSectionExpanded)}
   >
     <div class="text-left">
-      <h2 class="text-base font-semibold text-foreground">角色面板</h2>
+      <h2 class="text-base font-semibold text-foreground">{t("skillMonitor.panelAttr.title")}</h2>
       <p class="text-xs text-muted-foreground mt-1">
-        已启用属性 {enabledPanelAttrs.length}/{monitoredPanelAttrs.length}
+        {t("skillMonitor.panelAttr.enabledSummary", {
+          enabled: enabledPanelAttrs.length,
+          total: monitoredPanelAttrs.length,
+        })}
       </p>
     </div>
     <ChevronDown
@@ -79,7 +84,7 @@
         {#each monitoredPanelAttrs as attr (attr.attrId)}
           <div class="rounded-lg border border-border/60 bg-muted/20 px-3 py-2 space-y-2">
             <label class="flex items-center justify-between gap-3 text-sm text-foreground">
-              <span>{attr.label}</span>
+              <span>{resolvePanelAttrLabel(attr)}</span>
               <input
                 type="checkbox"
                 checked={attr.enabled}
@@ -88,7 +93,7 @@
               />
             </label>
             <label class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-              <span>显示颜色</span>
+              <span>{t("skillMonitor.panelAttr.displayColor")}</span>
               <input
                 type="color"
                 value={attr.color}
@@ -103,7 +108,7 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         <label class="text-xs text-muted-foreground">
-          行间距: {panelAttrGap}px
+          {t("skillMonitor.style.gap", { value: panelAttrGap })}
           <input
             class="w-full mt-1"
             type="range"
@@ -116,7 +121,7 @@
           />
         </label>
         <label class="text-xs text-muted-foreground">
-          字体大小: {panelAttrFontSize}px
+          {t("skillMonitor.style.fontSize", { value: panelAttrFontSize })}
           <input
             class="w-full mt-1"
             type="range"
@@ -129,7 +134,7 @@
           />
         </label>
         <label class="text-xs text-muted-foreground">
-          名称-数值间距: {panelAttrColumnGap}px
+          {t("skillMonitor.style.columnGap", { value: panelAttrColumnGap })}
           <input
             class="w-full mt-1"
             type="range"
@@ -144,9 +149,9 @@
       </div>
 
       <div class="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
-        <div class="text-sm font-medium text-foreground">行顺序</div>
+        <div class="text-sm font-medium text-foreground">{t("skillMonitor.panelAttr.rowOrder")}</div>
         {#if rowList.length === 0}
-          <div class="text-xs text-muted-foreground">暂无可排序项</div>
+          <div class="text-xs text-muted-foreground">{t("skillMonitor.panelAttr.noRows")}</div>
         {/if}
         {#each rowList as row, idx}
           <div class="flex items-center gap-2 rounded border border-border/60 bg-muted/20 px-2 py-1">
@@ -158,7 +163,7 @@
               onclick={() => movePanelAreaRow(row.ref, "up")}
               disabled={idx === 0}
             >
-              上移
+              {t("skillMonitor.common.moveUp")}
             </button>
             <button
               type="button"
@@ -166,7 +171,7 @@
               onclick={() => movePanelAreaRow(row.ref, "down")}
               disabled={idx === rowList.length - 1}
             >
-              下移
+              {t("skillMonitor.common.moveDown")}
             </button>
           </div>
         {/each}
