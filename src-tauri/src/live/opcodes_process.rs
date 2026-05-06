@@ -165,6 +165,27 @@ pub fn on_server_change(encounter: &mut Encounter) {
     encounter.reset_combat_state();
 }
 
+/// Decide whether a newly observed entity type should replace a cached one.
+///
+/// Entity type observations are not equally specific: `EntErrType` is an
+/// unknown fallback, while `EntChar` and `EntMonster` are stable identities that
+/// should not be downgraded or swapped by later UID-colliding observations.
+pub(crate) fn should_overwrite_entity_type(existing: EEntityType, observed: EEntityType) -> bool {
+    if existing == observed {
+        return false;
+    }
+
+    if observed == EEntityType::EntErrType {
+        return false;
+    }
+
+    if matches!(existing, EEntityType::EntChar | EEntityType::EntMonster) {
+        return false;
+    }
+
+    true
+}
+
 pub fn process_sync_near_entities(
     encounter: &mut Encounter,
     attr_store: &mut EntityAttrStore,
@@ -174,22 +195,21 @@ pub fn process_sync_near_entities(
         let target_uuid = pkt_entity.uuid?;
         let target_uid = target_uuid >> 16;
         let target_entity_type = EEntityType::from(target_uuid);
-
         let target_entity = match encounter.entity_uid_to_entity.entry(target_uid) {
             Entry::Occupied(mut entry) => {
-                if entry.get().entity_type == EEntityType::EntChar
-                    && target_entity_type != EEntityType::EntChar
-                {
+                let existing_type = entry.get().entity_type;
+                if should_overwrite_entity_type(existing_type, target_entity_type) {
+                    entry.get_mut().entity_type = target_entity_type;
+                } else if existing_type != target_entity_type {
                     info!(
                         target: "app::live",
-                        "SyncNearEntities: blocked entity_type overwrite for uid={} from EntChar to {:?} (uuid=0x{:x}, low16={})",
+                        "SyncNearEntities: blocked entity_type overwrite for uid={} from {:?} to {:?} (uuid=0x{:x}, low16={})",
                         target_uid,
+                        existing_type,
                         target_entity_type,
                         target_uuid,
                         target_uuid & 0xffff
                     );
-                } else {
-                    entry.get_mut().entity_type = target_entity_type;
                 }
                 entry.into_mut()
             }
@@ -939,17 +959,21 @@ pub fn process_aoi_sync_delta(
                 while defender_entity
                     .recent_taken_events
                     .front()
-                    .is_some_and(|ev| timestamp_ms.saturating_sub(ev.timestamp_ms) > REPLAY_WINDOW_MS)
+                    .is_some_and(|ev| {
+                        timestamp_ms.saturating_sub(ev.timestamp_ms) > REPLAY_WINDOW_MS
+                    })
                 {
                     defender_entity.recent_taken_events.pop_front();
                 }
-                defender_entity.recent_taken_events.push_back(DamageSnapshot {
-                    timestamp_ms,
-                    attacker_uid,
-                    attacker_monster_type_id,
-                    skill_key,
-                    value: actual_value,
-                });
+                defender_entity
+                    .recent_taken_events
+                    .push_back(DamageSnapshot {
+                        timestamp_ms,
+                        attacker_uid,
+                        attacker_monster_type_id,
+                        skill_key,
+                        value: actual_value,
+                    });
             }
         }
     }
@@ -1019,7 +1043,10 @@ fn decode_shield_detail_entries(raw: &[u8]) -> Vec<ShieldDetailEntry> {
         if tag != 0x0A {
             break;
         }
-        let Some(entry_len) = prost::encoding::decode_varint(&mut buf).ok().map(|v| v as usize) else {
+        let Some(entry_len) = prost::encoding::decode_varint(&mut buf)
+            .ok()
+            .map(|v| v as usize)
+        else {
             break;
         };
         if buf.remaining() < entry_len {
@@ -1104,11 +1131,7 @@ fn decode_unknown_attr_value(attr_id: i32, raw: &[u8]) -> Option<(AttrType, Attr
     ))
 }
 
-fn process_player_attrs(
-    target_uid: i64,
-    attrs: &[Attr],
-    attr_store: &mut EntityAttrStore,
-) {
+fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut EntityAttrStore) {
     for attr in attrs {
         let Some(attr_id) = attr.id else { continue };
         let raw_bytes_opt = attr.raw_data.as_deref();

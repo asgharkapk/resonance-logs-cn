@@ -493,8 +493,12 @@ impl BuffCounterTracker {
                         }
                     }
                     changed |= apply_action(slot_state, action);
-                    changed |=
-                        start_freeze_with_resolved_duration(slot_config, slot_state, action, change.create_time_ms);
+                    changed |= start_freeze_with_resolved_duration(
+                        slot_config,
+                        slot_state,
+                        action,
+                        change.create_time_ms,
+                    );
                 }
             }
         }
@@ -612,8 +616,7 @@ impl BuffCounterTracker {
                         == Some(active_id);
                 if !still_casting {
                     complete_state.active_skill_id = None;
-                    pending_increment =
-                        pending_increment.saturating_add(complete_state.increment);
+                    pending_increment = pending_increment.saturating_add(complete_state.increment);
                     changed = true;
                 }
             }

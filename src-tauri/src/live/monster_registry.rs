@@ -18,8 +18,7 @@ const EXTRA_BUFF_MONITORED_MONSTERS_RELATIVE: &str = "meter-data/ExtraBuffMonito
 
 static MONSTER_REGISTRY: LazyLock<HashMap<i32, MonsterType>> = LazyLock::new(|| {
     let data = include_str!("../../meter-data/MonsterIdType.json");
-    let raw: HashMap<String, u8> =
-        serde_json::from_str(data).expect("invalid MonsterIdType.json");
+    let raw: HashMap<String, u8> = serde_json::from_str(data).expect("invalid MonsterIdType.json");
 
     let mut registry = HashMap::with_capacity(raw.len());
     for (key, monster_type) in raw {
