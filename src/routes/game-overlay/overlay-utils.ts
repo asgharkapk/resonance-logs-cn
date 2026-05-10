@@ -218,7 +218,7 @@ function formatCounterCountText(
   slotState: CounterSlotState,
   slotConfig?: CounterRulePreset["effectSlots"][number],
 ): string {
-  const threshold = slotState.threshold;
+  const threshold = slotState.effectiveThreshold ?? slotState.threshold;
   if (
     slotConfig?.displayMode === "percentOfThreshold" &&
     threshold !== null &&
@@ -282,20 +282,17 @@ export function getCustomPanelDisplayRow(
       showProgress: false,
     };
   }
-  if (selectedSlot.isCounting) {
-    return {
-      key: `inline_counter_${entry.id}`,
-      label: entry.label,
-      valueText: formatCounterCountText(selectedSlot, slotConfig),
-      metaText: undefined,
-      progressPercent: 0,
-      showProgress: false,
-    };
-  }
   const fixedFreezeUntilMs = selectedSlot.freezeUntilMs;
-  if (fixedFreezeUntilMs !== null && fixedFreezeUntilMs !== undefined) {
+  if (
+    fixedFreezeUntilMs !== null &&
+    fixedFreezeUntilMs !== undefined &&
+    fixedFreezeUntilMs > now
+  ) {
     const fixedRemainingMs = Math.max(0, fixedFreezeUntilMs - now);
-    const freezeDurationMs = selectedSlot.freezeDurationMs ?? 0;
+    const freezeDurationMs =
+      selectedSlot.effectiveFreezeDurationMs ??
+      selectedSlot.freezeDurationMs ??
+      0;
     const progressPercent =
       freezeDurationMs > 0
         ? Math.max(
@@ -306,13 +303,20 @@ export function getCustomPanelDisplayRow(
     return {
       key: `inline_counter_${entry.id}`,
       label: entry.label,
-      valueText:
-        fixedRemainingMs > 0
-          ? formatTimerText(fixedRemainingMs)
-          : t("gameOverlay.timer.empty"),
+      valueText: formatTimerText(fixedRemainingMs),
       metaText: t("gameOverlay.counter.cooling"),
       progressPercent,
-      showProgress: freezeDurationMs > 0 && fixedRemainingMs > 0,
+      showProgress: freezeDurationMs > 0,
+    };
+  }
+  if (selectedSlot.isCounting) {
+    return {
+      key: `inline_counter_${entry.id}`,
+      label: entry.label,
+      valueText: formatCounterCountText(selectedSlot, slotConfig),
+      metaText: undefined,
+      progressPercent: 0,
+      showProgress: false,
     };
   }
   const active = selectedSlot.resetBuffActive ?? isBuffActive(linkedBuff, now);

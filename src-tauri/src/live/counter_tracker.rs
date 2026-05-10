@@ -3,7 +3,7 @@ use crate::live::buff_monitor::{BuffChangeEvent, BuffChangeType};
 use crate::live::commands_models::{CounterUpdateState, SlotUpdateState};
 use crate::live::entity_attr_store::EntityAttrStore;
 use crate::live::opcodes_models::{AttrType, AttrValue};
-use crate::live::opcodes_process::LocalDamageEvent;
+use crate::live::opcodes_process::{LocalDamageEvent, LocalDamageTakenEvent};
 use blueprotobuf_lib::blueprotobuf::EActorState;
 use log::info;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -41,6 +41,13 @@ pub enum CounterSource {
         hits_required: Option<u32>,
     },
     AnyDamage {
+        increment: u32,
+        #[serde(default, rename = "hitsRequired")]
+        hits_required: Option<u32>,
+    },
+    DamageTaken {
+        #[serde(default, rename = "skillKeys")]
+        skill_keys: Option<Vec<i64>>,
         increment: u32,
         #[serde(default, rename = "hitsRequired")]
         hits_required: Option<u32>,
@@ -89,6 +96,15 @@ pub struct AltFreezeConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
+pub struct AttrModifier {
+    pub attr_id: i32,
+    #[serde(default = "default_basis_points_per_unit")]
+    pub basis_points_per_unit: u32,
+    pub max_reduction_basis_points: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
 pub struct EffectSlotConfig {
     pub slot_id: i32,
     pub threshold: Option<u32>,
@@ -107,6 +123,14 @@ pub struct EffectSlotConfig {
     pub on_freeze_expire: CounterAction,
     #[serde(default)]
     pub alt_freeze: Option<AltFreezeConfig>,
+    #[serde(default)]
+    pub threshold_modifier: Option<AttrModifier>,
+    #[serde(default)]
+    pub freeze_duration_modifier: Option<AttrModifier>,
+    #[serde(default)]
+    pub reset_skill_keys: Option<Vec<i64>>,
+    #[serde(default)]
+    pub on_reset_skill: CounterAction,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, specta::Type, Default)]
@@ -115,6 +139,7 @@ pub enum CounterAction {
     Reset,
     Freeze,
     ResetAndFreeze,
+    ResetAndFreezeKeepCounting,
     ResetAndStartCount,
     StartCount,
     #[default]
@@ -154,7 +179,6 @@ pub(crate) struct BuffTickState {
     pub tick_interval_ms: u64,
     pub increment: u32,
     pub attr_condition: Option<TickAttrCondition>,
-    pub attr_type: Option<AttrType>,
 }
 
 #[derive(Debug, Clone)]
@@ -205,6 +229,10 @@ impl<'de> Deserialize<'de> for CounterRule {
                     freeze_duration_ms: None,
                     on_freeze_expire: default_on_freeze_expire(),
                     alt_freeze: None,
+                    threshold_modifier: None,
+                    freeze_duration_modifier: None,
+                    reset_skill_keys: None,
+                    on_reset_skill: CounterAction::NoOp,
                 }],
             }),
         }
@@ -263,9 +291,6 @@ impl BuffCounterTracker {
                         tick_interval_ms: (*tick_interval_ms).max(1),
                         increment: *increment,
                         attr_condition: attr_condition.clone(),
-                        attr_type: attr_condition
-                            .as_ref()
-                            .and_then(|condition| AttrType::from_id(condition.attr_id)),
                     }),
                     _ => None,
                 })
@@ -321,7 +346,12 @@ impl BuffCounterTracker {
         self.states = states;
     }
 
-    pub fn on_damage_events(&mut self, events: &[LocalDamageEvent], local_player_uid: i64) -> bool {
+    pub fn on_damage_events(
+        &mut self,
+        events: &[LocalDamageEvent],
+        local_player_uid: i64,
+        attr_store: &EntityAttrStore,
+    ) -> bool {
         if events.is_empty() {
             return false;
         }
@@ -383,6 +413,74 @@ impl BuffCounterTracker {
                 };
                 changed |= add_increment_to_slots(state, increment);
             }
+            for (slot_config, slot_state) in rule.effect_slots.iter().zip(&mut state.slot_states) {
+                let Some(reset_skill_keys) = slot_config.reset_skill_keys.as_ref() else {
+                    continue;
+                };
+                if reset_skill_keys.is_empty()
+                    || !events
+                        .iter()
+                        .any(|event| reset_skill_keys.contains(&event.skill_key))
+                {
+                    continue;
+                }
+                changed |= apply_action(slot_state, slot_config.on_reset_skill);
+                changed |= start_freeze_with_resolved_duration(
+                    slot_config,
+                    slot_state,
+                    slot_config.on_reset_skill,
+                    None,
+                    attr_store,
+                    local_player_uid,
+                );
+            }
+        }
+        changed
+    }
+
+    pub fn on_damage_taken_events(
+        &mut self,
+        events: &[LocalDamageTakenEvent],
+        local_player_uid: i64,
+    ) -> bool {
+        if events.is_empty() {
+            return false;
+        }
+
+        let mut changed = false;
+        let (rules, states) = (&self.rules, &mut self.states);
+        for rule in rules {
+            let Some(state) = states.get_mut(&rule.rule_id) else {
+                continue;
+            };
+            for (source_idx, source) in rule.sources.iter().enumerate() {
+                let CounterSource::DamageTaken {
+                    skill_keys,
+                    increment,
+                    hits_required,
+                } = source
+                else {
+                    continue;
+                };
+                let matches = events
+                    .iter()
+                    .filter(|event| {
+                        event.attacker_uid != local_player_uid
+                            && skill_keys
+                                .as_ref()
+                                .is_none_or(|keys| keys.contains(&event.skill_key))
+                    })
+                    .count();
+                let Some(increment) = apply_damage_hits_required(
+                    &mut state.damage_hit_accumulators[source_idx],
+                    *increment,
+                    *hits_required,
+                    matches,
+                ) else {
+                    continue;
+                };
+                changed |= add_increment_to_slots(state, increment);
+            }
         }
         changed
     }
@@ -430,7 +528,12 @@ impl BuffCounterTracker {
         changed
     }
 
-    pub fn on_buff_changes(&mut self, changes: &[BuffChangeEvent]) -> bool {
+    pub fn on_buff_changes(
+        &mut self,
+        changes: &[BuffChangeEvent],
+        attr_store: &EntityAttrStore,
+        local_player_uid: i64,
+    ) -> bool {
         let mut changed = false;
         let (rules, states) = (&self.rules, &mut self.states);
         for change in changes {
@@ -498,6 +601,8 @@ impl BuffCounterTracker {
                         slot_state,
                         action,
                         change.create_time_ms,
+                        attr_store,
+                        local_player_uid,
                     );
                 }
             }
@@ -628,25 +733,45 @@ impl BuffCounterTracker {
         changed
     }
 
-    pub fn build_payload(&self) -> Vec<CounterUpdateState> {
+    pub fn build_payload(
+        &self,
+        attr_store: &EntityAttrStore,
+        local_player_uid: i64,
+    ) -> Vec<CounterUpdateState> {
         let mut rows: Vec<CounterUpdateState> = self
-            .states
-            .values()
-            .map(|state| CounterUpdateState {
-                rule_id: state.rule_id,
-                slots: state
-                    .slot_states
-                    .iter()
-                    .map(|slot| SlotUpdateState {
-                        slot_id: slot.slot_id,
-                        current_count: slot.current_count,
-                        threshold: slot.threshold,
-                        is_counting: slot.is_counting,
-                        reset_buff_active: slot.reset_buff_active,
-                        freeze_until_ms: slot.freeze_until_ms,
-                        freeze_duration_ms: slot.freeze_duration_ms,
-                    })
-                    .collect(),
+            .rules
+            .iter()
+            .filter_map(|rule| {
+                let state = self.states.get(&rule.rule_id)?;
+                Some(CounterUpdateState {
+                    rule_id: state.rule_id,
+                    slots: rule
+                        .effect_slots
+                        .iter()
+                        .zip(&state.slot_states)
+                        .map(|(slot_config, slot)| SlotUpdateState {
+                            slot_id: slot.slot_id,
+                            current_count: slot.current_count,
+                            threshold: slot.threshold,
+                            effective_threshold: resolve_effective_threshold(
+                                slot.threshold,
+                                slot_config,
+                                attr_store,
+                                local_player_uid,
+                            ),
+                            is_counting: slot.is_counting,
+                            reset_buff_active: slot.reset_buff_active,
+                            freeze_until_ms: slot.freeze_until_ms,
+                            freeze_duration_ms: slot.freeze_duration_ms,
+                            effective_freeze_duration_ms: resolve_freeze_duration(
+                                slot_config,
+                                slot,
+                                attr_store,
+                                local_player_uid,
+                            ),
+                        })
+                        .collect(),
+                })
             })
             .collect();
         rows.sort_by(|a, b| a.rule_id.cmp(&b.rule_id));
@@ -749,6 +874,54 @@ fn default_on_freeze_expire() -> CounterAction {
     CounterAction::ResetAndStartCount
 }
 
+fn default_basis_points_per_unit() -> u32 {
+    1
+}
+
+fn resolve_attr_scale_bp(
+    modifier: Option<&AttrModifier>,
+    attr_store: &EntityAttrStore,
+    local_player_uid: i64,
+) -> u32 {
+    const FULL_SCALE_BASIS_POINTS: u64 = 10_000;
+
+    let Some(modifier) = modifier else {
+        return FULL_SCALE_BASIS_POINTS as u32;
+    };
+    let raw = attr_store
+        .attr_int_by_id(local_player_uid, modifier.attr_id)
+        .unwrap_or(0)
+        .max(0) as u64;
+    let divisor = u64::from(modifier.basis_points_per_unit.max(1));
+    let reduction = (raw / divisor).min(u64::from(modifier.max_reduction_basis_points));
+    FULL_SCALE_BASIS_POINTS.saturating_sub(reduction) as u32
+}
+
+fn scale_basis_points_ceil(value: u64, scale_basis_points: u32) -> u64 {
+    const FULL_SCALE_BASIS_POINTS: u64 = 10_000;
+
+    value
+        .saturating_mul(u64::from(scale_basis_points))
+        .saturating_add(FULL_SCALE_BASIS_POINTS - 1)
+        / FULL_SCALE_BASIS_POINTS
+}
+
+fn resolve_effective_threshold(
+    threshold: Option<u32>,
+    config: &EffectSlotConfig,
+    attr_store: &EntityAttrStore,
+    local_player_uid: i64,
+) -> Option<u32> {
+    threshold.map(|value| {
+        let scale = resolve_attr_scale_bp(
+            config.threshold_modifier.as_ref(),
+            attr_store,
+            local_player_uid,
+        );
+        u32::try_from(scale_basis_points_ceil(u64::from(value), scale)).unwrap_or(u32::MAX)
+    })
+}
+
 fn scaled_increment(increment: u32, matches: usize) -> Option<u32> {
     if matches == 0 {
         return None;
@@ -819,17 +992,13 @@ fn matches_attr_condition(
     local_player_uid: i64,
     tick_state: &BuffTickState,
 ) -> bool {
-    match (tick_state.attr_condition.as_ref(), tick_state.attr_type) {
-        (None, _) => true,
-        (Some(_condition), None) => false,
-        (Some(condition), Some(attr_type)) => {
-            attr_store
-                .attr(local_player_uid, attr_type)
-                .and_then(AttrValue::as_int)
-                .and_then(|value| i32::try_from(value).ok())
-                == Some(condition.required_value)
-        }
-    }
+    let Some(condition) = tick_state.attr_condition.as_ref() else {
+        return true;
+    };
+    attr_store
+        .attr_int_by_id(local_player_uid, condition.attr_id)
+        .and_then(|value| i32::try_from(value).ok())
+        == Some(condition.required_value)
 }
 
 fn is_actor_state_skill(attr_store: &EntityAttrStore, local_player_uid: i64) -> bool {
@@ -878,13 +1047,27 @@ fn add_increment_to_slots(state: &mut CounterModelState, increment: u32) -> bool
     changed
 }
 
-fn resolve_freeze_duration(config: &EffectSlotConfig, state: &SlotState) -> Option<u64> {
-    if let Some(alt) = &config.alt_freeze {
+fn resolve_freeze_duration(
+    config: &EffectSlotConfig,
+    state: &SlotState,
+    attr_store: &EntityAttrStore,
+    local_player_uid: i64,
+) -> Option<u64> {
+    let duration = if let Some(alt) = &config.alt_freeze {
         if state.condition_buff_active {
-            return Some(alt.freeze_duration_ms);
+            alt.freeze_duration_ms
+        } else {
+            config.freeze_duration_ms?
         }
-    }
-    config.freeze_duration_ms
+    } else {
+        config.freeze_duration_ms?
+    };
+    let scale = resolve_attr_scale_bp(
+        config.freeze_duration_modifier.as_ref(),
+        attr_store,
+        local_player_uid,
+    );
+    Some(scale_basis_points_ceil(duration, scale))
 }
 
 fn start_freeze_with_resolved_duration(
@@ -892,14 +1075,20 @@ fn start_freeze_with_resolved_duration(
     slot_state: &mut SlotState,
     action: CounterAction,
     event_time_ms: Option<i64>,
+    attr_store: &EntityAttrStore,
+    local_player_uid: i64,
 ) -> bool {
     if !matches!(
         action,
-        CounterAction::Freeze | CounterAction::ResetAndFreeze
+        CounterAction::Freeze
+            | CounterAction::ResetAndFreeze
+            | CounterAction::ResetAndFreezeKeepCounting
     ) {
         return false;
     }
-    let Some(duration) = resolve_freeze_duration(slot_config, slot_state) else {
+    let Some(duration) =
+        resolve_freeze_duration(slot_config, slot_state, attr_store, local_player_uid)
+    else {
         return false;
     };
     let freeze_until_ms = event_time_ms
@@ -999,6 +1188,18 @@ fn apply_action(state: &mut SlotState, action: CounterAction) -> bool {
             }
             if state.is_counting {
                 state.is_counting = false;
+                changed = true;
+            }
+            changed
+        }
+        CounterAction::ResetAndFreezeKeepCounting => {
+            let mut changed = false;
+            if state.current_count != 0 {
+                state.current_count = 0;
+                changed = true;
+            }
+            if !state.is_counting {
+                state.is_counting = true;
                 changed = true;
             }
             changed

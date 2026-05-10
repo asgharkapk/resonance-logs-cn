@@ -149,6 +149,12 @@ impl EntityAttrStore {
             .and_then(|entity_attrs| entity_attrs.get(&attr_type))
     }
 
+    pub fn attr_int_by_id(&self, uid: i64, attr_id: i32) -> Option<i64> {
+        let entity_attrs = self.attrs.get(&uid)?;
+        let attr_type = AttrType::from_id(attr_id).unwrap_or(AttrType::Unknown(attr_id));
+        entity_attrs.get(&attr_type).and_then(AttrValue::as_int)
+    }
+
     pub fn hate_list_mut(&mut self, uid: i64) -> &mut Vec<HateEntry> {
         self.hate_lists
             .entry(uid)

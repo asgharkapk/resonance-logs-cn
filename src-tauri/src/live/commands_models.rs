@@ -307,10 +307,12 @@ pub struct SlotUpdateState {
     pub slot_id: i32,
     pub current_count: u32,
     pub threshold: Option<u32>,
+    pub effective_threshold: Option<u32>,
     pub is_counting: bool,
     pub reset_buff_active: bool,
     pub freeze_until_ms: Option<i64>,
     pub freeze_duration_ms: Option<u64>,
+    pub effective_freeze_duration_ms: Option<u64>,
 }
 
 #[derive(serde::Serialize, Debug, Clone)]

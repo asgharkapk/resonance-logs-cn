@@ -36,7 +36,11 @@ export type HeaderInfo = {
   trainingDummy: TrainingDummyState;
 };
 
-export type TrainingDummyPhase = "idle" | "armed" | "running" | "pendingRollover";
+export type TrainingDummyPhase =
+  | "idle"
+  | "armed"
+  | "running"
+  | "pendingRollover";
 
 export type TrainingDummyState = {
   phase: TrainingDummyPhase;
@@ -68,7 +72,7 @@ export type PlayerRow = {
 };
 
 export type PlayersWindow = {
-  playerRows: PlayerRow[]
+  playerRows: PlayerRow[];
 };
 
 export type SkillRow = {
@@ -84,7 +88,7 @@ export type SkillRow = {
   luckyRate: number;
   luckyDmgRate: number;
   hits: number;
-  hitsPerMinute: number
+  hitsPerMinute: number;
 };
 
 export type SkillCdState = {
@@ -158,10 +162,12 @@ export type CounterSlotState = {
   slotId: number;
   currentCount: number;
   threshold: number | null;
+  effectiveThreshold?: number | null;
   isCounting: boolean;
   resetBuffActive: boolean;
   freezeUntilMs: number | null;
   freezeDurationMs: number | null;
+  effectiveFreezeDurationMs?: number | null;
 };
 
 export type PanelAttrState = {
@@ -227,79 +233,90 @@ export type DeathReplayPayload = {
 };
 
 // Event listener functions
-export const onEncounterUpdate = (handler: (event: Event<EncounterUpdatePayload>) => void): Promise<UnlistenFn> =>
+export const onEncounterUpdate = (
+  handler: (event: Event<EncounterUpdatePayload>) => void,
+): Promise<UnlistenFn> =>
   listen<EncounterUpdatePayload>("encounter-update", handler);
 
-export const onLiveData = (handler: (event: Event<LiveDataPayload>) => void): Promise<UnlistenFn> =>
-  listen<LiveDataPayload>("live-data", handler);
+export const onLiveData = (
+  handler: (event: Event<LiveDataPayload>) => void,
+): Promise<UnlistenFn> => listen<LiveDataPayload>("live-data", handler);
 
-export const onTrainingDummyUpdate = (handler: (event: Event<TrainingDummyState>) => void): Promise<UnlistenFn> =>
+export const onTrainingDummyUpdate = (
+  handler: (event: Event<TrainingDummyState>) => void,
+): Promise<UnlistenFn> =>
   listen<TrainingDummyState>("training-dummy-update", handler);
 
-export const onSceneChange = (handler: (event: Event<SceneChangePayload>) => void): Promise<UnlistenFn> =>
-  listen<SceneChangePayload>("scene-change", handler);
+export const onSceneChange = (
+  handler: (event: Event<SceneChangePayload>) => void,
+): Promise<UnlistenFn> => listen<SceneChangePayload>("scene-change", handler);
 
 export const onResetEncounter = (handler: () => void): Promise<UnlistenFn> =>
   listen("reset-encounter", handler);
 
-export const onPauseEncounter = (handler: (event: Event<boolean>) => void): Promise<UnlistenFn> =>
-  listen<boolean>("pause-encounter", handler);
+export const onPauseEncounter = (
+  handler: (event: Event<boolean>) => void,
+): Promise<UnlistenFn> => listen<boolean>("pause-encounter", handler);
 
 export const onSkillCdUpdate = (
-  handler: (event: Event<SkillCdUpdatePayload>) => void
+  handler: (event: Event<SkillCdUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<SkillCdUpdatePayload>("skill-cd-update", handler);
 
 export const onFightResUpdate = (
-  handler: (event: Event<FightResourceUpdatePayload>) => void
+  handler: (event: Event<FightResourceUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<FightResourceUpdatePayload>("fight-res-update", handler);
 
 export const onBuffUpdate = (
-  handler: (event: Event<BuffUpdatePayload>) => void
+  handler: (event: Event<BuffUpdatePayload>) => void,
 ): Promise<UnlistenFn> => listen<BuffUpdatePayload>("buff-update", handler);
 
 export const onBossBuffUpdate = (
-  handler: (event: Event<BossBuffUpdatePayload>) => void
+  handler: (event: Event<BossBuffUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<BossBuffUpdatePayload>("boss-buff-update", handler);
 
 export const onHateListUpdate = (
-  handler: (event: Event<HateListUpdatePayload>) => void
+  handler: (event: Event<HateListUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<HateListUpdatePayload>("hate-list-update", handler);
 
 export const onEntityIdentities = (
-  handler: (event: Event<EntityIdentityMapPayload>) => void
+  handler: (event: Event<EntityIdentityMapPayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<EntityIdentityMapPayload>("entity-identities", handler);
 
 export const onBuffCounterUpdate = (
-  handler: (event: Event<BuffCounterUpdatePayload>) => void
+  handler: (event: Event<BuffCounterUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<BuffCounterUpdatePayload>("buff-counter-update", handler);
 
 export const onPanelAttrUpdate = (
-  handler: (event: Event<PanelAttrUpdatePayload>) => void
+  handler: (event: Event<PanelAttrUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<PanelAttrUpdatePayload>("panel-attr-update", handler);
 
 export const onShieldDetailUpdate = (
-  handler: (event: Event<ShieldDetailUpdatePayload>) => void
+  handler: (event: Event<ShieldDetailUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<ShieldDetailUpdatePayload>("shield-detail-update", handler);
 
 export const onDeathReplay = (
-  handler: (event: Event<DeathReplayPayload>) => void
+  handler: (event: Event<DeathReplayPayload>) => void,
 ): Promise<UnlistenFn> => listen<DeathReplayPayload>("death-replay", handler);
 
 // Command wrappers (still using generated bindings)
 
-export const resetEncounter = (): Promise<Result<null, string>> => commands.resetEncounter();
-export const togglePauseEncounter = (): Promise<Result<null, string>> => commands.togglePauseEncounter();
-export const startTrainingDummy = (monsterId: number): Promise<Result<null, string>> =>
-  commands.startTrainingDummy(monsterId);
-export const stopTrainingDummy = (): Promise<Result<null, string>> => commands.stopTrainingDummy();
+export const resetEncounter = (): Promise<Result<null, string>> =>
+  commands.resetEncounter();
+export const togglePauseEncounter = (): Promise<Result<null, string>> =>
+  commands.togglePauseEncounter();
+export const startTrainingDummy = (
+  monsterId: number,
+): Promise<Result<null, string>> => commands.startTrainingDummy(monsterId);
+export const stopTrainingDummy = (): Promise<Result<null, string>> =>
+  commands.stopTrainingDummy();
 export const enableBlur = (): Promise<void> => commands.enableBlur();
 export const disableBlur = (): Promise<void> => commands.disableBlur();
 export const getEncounterEntitiesRaw = (
@@ -343,19 +360,18 @@ export type OptimizeLatestPayload = {
 export type ModuleCalcProgressPayload = [number, number]; // [processed, total]
 
 export const onModuleCalcProgress = (
-  handler: (event: Event<ModuleCalcProgressPayload>) => void
+  handler: (event: Event<ModuleCalcProgressPayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<ModuleCalcProgressPayload>("module-calc-progress", handler);
 
 export const onModuleCalcComplete = (
-    handler: (event: Event<ModuleSolution[]>) => void
+  handler: (event: Event<ModuleSolution[]>) => void,
 ): Promise<UnlistenFn> =>
-    listen<ModuleSolution[]>("module-calc-complete", handler);
+  listen<ModuleSolution[]>("module-calc-complete", handler);
 
 export const getLatestModules = (): Promise<ModuleInfo[]> =>
   invoke("get_latest_modules");
 
 export const optimizeLatestModules = (
-  payload: OptimizeLatestPayload
-): Promise<ModuleSolution[]> =>
-  invoke("optimize_latest_modules", payload);
+  payload: OptimizeLatestPayload,
+): Promise<ModuleSolution[]> => invoke("optimize_latest_modules", payload);

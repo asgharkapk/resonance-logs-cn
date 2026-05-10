@@ -72,6 +72,12 @@ export type CounterSlotDisplayMode =
   | "remainingToThreshold"
   | "percentOfThreshold";
 
+export type AttrModifierPreset = {
+  attrId: number;
+  basisPointsPerUnit?: number;
+  maxReductionBasisPoints: number;
+};
+
 export type CounterEffectSlotPreset = {
   slotId: number;
   threshold: number | null;
@@ -83,6 +89,10 @@ export type CounterEffectSlotPreset = {
   freezeDurationMs?: number;
   onFreezeExpire?: CounterAction;
   altFreeze?: { conditionBuffId: number; freezeDurationMs: number };
+  thresholdModifier?: AttrModifierPreset;
+  freezeDurationModifier?: AttrModifierPreset;
+  resetSkillKeys?: number[];
+  onResetSkill?: CounterAction;
   displayMode?: CounterSlotDisplayMode;
 };
 
@@ -192,6 +202,18 @@ export function resolveCounterEffectSlots(
             ...(item.slot.altFreeze !== undefined
               ? { altFreeze: item.slot.altFreeze }
               : {}),
+            ...(item.slot.thresholdModifier !== undefined
+              ? { thresholdModifier: item.slot.thresholdModifier }
+              : {}),
+            ...(item.slot.freezeDurationModifier !== undefined
+              ? { freezeDurationModifier: item.slot.freezeDurationModifier }
+              : {}),
+            ...(item.slot.resetSkillKeys !== undefined
+              ? { resetSkillKeys: item.slot.resetSkillKeys }
+              : {}),
+            ...(item.slot.onResetSkill !== undefined
+              ? { onResetSkill: item.slot.onResetSkill }
+              : {}),
             ...(item.slot.displayMode !== undefined
               ? { displayMode: item.slot.displayMode }
               : {}),
@@ -206,7 +228,9 @@ export function ensureUserCounterRules(
 ): UserCounterRule[] {
   return (rules ?? []).map((rule, idx) => ({
     ruleId: Number.isInteger(rule.ruleId) ? rule.ruleId : 10001 + idx,
-    name: rule.name?.trim() || `#${Number.isInteger(rule.ruleId) ? rule.ruleId : 10001 + idx}`,
+    name:
+      rule.name?.trim() ||
+      `#${Number.isInteger(rule.ruleId) ? rule.ruleId : 10001 + idx}`,
     sourceRefs: Array.from(
       new Set(
         (rule.sourceRefs ?? []).filter(

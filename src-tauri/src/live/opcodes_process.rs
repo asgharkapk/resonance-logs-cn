@@ -65,12 +65,19 @@ pub struct SyncToMeDeltaResult {
     pub fight_resources: Option<Vec<i64>>,
     pub attr_skill_id: Option<i32>,
     pub local_damage_events: Vec<LocalDamageEvent>,
+    pub local_damage_taken_events: Vec<LocalDamageTakenEvent>,
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct LocalDamageEvent {
     pub skill_key: i64,
     pub target_uid: i64,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct LocalDamageTakenEvent {
+    pub skill_key: i64,
+    pub attacker_uid: i64,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -493,10 +500,15 @@ pub fn process_sync_to_me_delta_info(
                 let _ = attr_store.set_temp_attr(id, value);
             }
         }
-        if let Some(events) =
-            process_aoi_sync_delta(encounter, attr_store, base_delta, combat_target_filter)
-        {
-            result.local_damage_events = events;
+        if let Some((damage_events, damage_taken_events)) = process_aoi_sync_delta(
+            encounter,
+            attr_store,
+            base_delta,
+            combat_target_filter,
+            true,
+        ) {
+            result.local_damage_events = damage_events;
+            result.local_damage_taken_events = damage_taken_events;
         }
     }
 
@@ -629,7 +641,8 @@ pub fn process_aoi_sync_delta(
     attr_store: &mut EntityAttrStore,
     aoi_sync_delta: blueprotobuf::AoiSyncDelta,
     combat_target_filter: Option<i64>,
-) -> Option<Vec<LocalDamageEvent>> {
+    collect_taken: bool,
+) -> Option<(Vec<LocalDamageEvent>, Vec<LocalDamageTakenEvent>)> {
     let target_uuid = aoi_sync_delta.uuid?; // UUID =/= uid (have to >> 16)
     let target_uid = target_uuid >> 16;
     let allow_combat = match combat_target_filter {
@@ -665,7 +678,7 @@ pub fn process_aoi_sync_delta(
     }
 
     let Some(skill_effect) = aoi_sync_delta.skill_effects else {
-        return Some(Vec::new()); // return ok since this variable usually doesn't exist
+        return Some((Vec::new(), Vec::new())); // return ok since this variable usually doesn't exist
     };
 
     let timestamp_ms = SystemTime::now()
@@ -674,6 +687,7 @@ pub fn process_aoi_sync_delta(
         .as_millis();
     let mut target_hp_state = TargetHpState::from_attr_store(attr_store, target_uid);
     let mut local_damage_events = Vec::new();
+    let mut local_damage_taken_events = Vec::new();
     let mut had_player_damage = false;
     let mut had_allowed_combat = false;
     // Process Damage
@@ -714,6 +728,12 @@ pub fn process_aoi_sync_delta(
             local_damage_events.push(LocalDamageEvent {
                 skill_key,
                 target_uid,
+            });
+        }
+        if collect_taken && target_uid == encounter.local_player_uid && !is_heal {
+            local_damage_taken_events.push(LocalDamageTakenEvent {
+                skill_key,
+                attacker_uid,
             });
         }
         let flag = sync_damage_info.type_flag.unwrap_or_default();
@@ -989,7 +1009,7 @@ pub fn process_aoi_sync_delta(
 
         encounter.time_last_combat_packet_ms = timestamp_ms;
     }
-    Some(local_damage_events)
+    Some((local_damage_events, local_damage_taken_events))
 }
 
 fn decode_varint_i64(raw: &[u8]) -> Option<i64> {

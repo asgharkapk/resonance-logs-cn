@@ -197,10 +197,7 @@ fn emit_panel_attr_update_if_needed(state: &mut AppState, payload: Vec<PanelAttr
     state.event_manager.emit_panel_attr_update(payload);
 }
 
-fn emit_shield_detail_update_if_needed(
-    state: &mut AppState,
-    mut entries: Vec<ShieldDetailEntry>,
-) {
+fn emit_shield_detail_update_if_needed(state: &mut AppState, mut entries: Vec<ShieldDetailEntry>) {
     // Note: unlike other *_if_needed emitters, empty `entries` is meaningful
     // (all shields expired) and must still be forwarded so the overlay clears.
     let uid = state.attr_store.local_player_uid();
@@ -506,7 +503,10 @@ impl AppStateManager {
         if counter_dirty {
             emit_buff_counter_update_if_needed(
                 state,
-                state.local_monitor.counter_tracker.build_payload(),
+                state
+                    .local_monitor
+                    .counter_tracker
+                    .build_payload(&state.attr_store, state.encounter.local_player_uid),
             );
         }
         self.apply_attr_store_changes(state);
@@ -940,6 +940,14 @@ impl AppStateManager {
             counter_dirty |= state.local_monitor.counter_tracker.on_damage_events(
                 &result.local_damage_events,
                 state.encounter.local_player_uid,
+                &state.attr_store,
+            );
+        }
+
+        if !result.local_damage_taken_events.is_empty() {
+            counter_dirty |= state.local_monitor.counter_tracker.on_damage_taken_events(
+                &result.local_damage_taken_events,
+                state.encounter.local_player_uid,
             );
         }
 
@@ -967,10 +975,11 @@ impl AppStateManager {
             if let Some(payload) = buff_process_result.update_payload {
                 state.event_manager.emit_buff_update(payload);
             }
-            counter_dirty |= state
-                .local_monitor
-                .counter_tracker
-                .on_buff_changes(&buff_process_result.changes);
+            counter_dirty |= state.local_monitor.counter_tracker.on_buff_changes(
+                &buff_process_result.changes,
+                &state.attr_store,
+                state.encounter.local_player_uid,
+            );
         }
 
         counter_dirty
@@ -1023,11 +1032,12 @@ impl AppStateManager {
             );
 
             // Missing fields are normal, no need to log
-            if let Some(events) = process_aoi_sync_delta(
+            if let Some((events, _)) = process_aoi_sync_delta(
                 &mut state.encounter,
                 &mut state.attr_store,
                 aoi_sync_delta,
                 combat_target_filter,
+                false,
             ) {
                 aggregated_damage_events.extend(events);
             }
@@ -1057,10 +1067,11 @@ impl AppStateManager {
         }
 
         if !aggregated_damage_events.is_empty() {
-            counter_dirty |= state
-                .local_monitor
-                .counter_tracker
-                .on_damage_events(&aggregated_damage_events, state.encounter.local_player_uid);
+            counter_dirty |= state.local_monitor.counter_tracker.on_damage_events(
+                &aggregated_damage_events,
+                state.encounter.local_player_uid,
+                &state.attr_store,
+            );
         }
 
         counter_dirty
