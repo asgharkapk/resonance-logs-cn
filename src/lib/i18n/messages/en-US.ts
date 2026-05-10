@@ -1079,9 +1079,9 @@ export const enUSMessages = {
   "skillMonitor.customPanel.entries.labelPlaceholder": "Display Name",
   "skillMonitor.customPanel.empty":
     'No custom monitor areas yet. Click "New Monitor Area" above, then add buffs or counters.',
-  "skillMonitor.customPanel.style.title": "Shared Style",
+  "skillMonitor.customPanel.style.title": "Current Monitor Area Style",
   "skillMonitor.customPanel.style.description":
-    "All custom monitor areas share these text and progress bar styles.",
+    "Adjust text and progress bar styles for the selected monitor area. Each area can use its own settings.",
   "skillMonitor.overlay.title": "Overlay Area Visibility",
   "skillMonitor.overlay.description":
     "Control whether the skill, duration skill, and resource areas are shown. Saved per profile",

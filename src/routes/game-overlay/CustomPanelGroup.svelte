@@ -3,7 +3,6 @@
   import {
     customPanelGroups,
     customPanelRowsByGroup,
-    customPanelStyle,
     isEditing,
     startDrag,
     startResize,
@@ -13,7 +12,6 @@
   const editing = $derived(isEditing());
   const groups = $derived(customPanelGroups());
   const rowsByGroup = $derived(customPanelRowsByGroup());
-  const styleConfig = $derived(customPanelStyle());
 
   function getGroupName(group: { name: string }, index: number): string {
     return group.name.trim() || t("skillMonitor.defaults.customPanelGroupName", {
@@ -24,6 +22,7 @@
 
 {#each groups as group, groupIndex (group.id)}
   {@const rows = rowsByGroup.get(group.id) ?? []}
+  {@const styleConfig = group.style}
   {#if rows.length > 0 || editing}
     <div
       class="overlay-group custom-panel-group"

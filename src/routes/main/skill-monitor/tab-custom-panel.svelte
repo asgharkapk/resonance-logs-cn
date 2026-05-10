@@ -26,11 +26,14 @@
     inlineBuffSearch: string;
     filteredInlineBuffSearchResults: BuffNameInfo[];
     customPanelGroups: CustomPanelGroup[];
-    customPanelStyle: CustomPanelStyle;
     setInlineBuffSearch: (value: string) => void;
     addCustomPanelGroup: () => void;
     removeCustomPanelGroup: (groupId: string) => void;
     renameCustomPanelGroup: (groupId: string, name: string) => void;
+    updateCustomPanelGroupStyle: (
+      groupId: string,
+      updater: (style: CustomPanelStyle) => CustomPanelStyle,
+    ) => void;
     addCustomPanelEntry: (
       groupId: string,
       sourceType: "buff" | "counter",
@@ -47,13 +50,6 @@
       entryId: string,
       direction: "up" | "down",
     ) => void;
-    setCustomPanelGap: (value: number) => void;
-    setCustomPanelFontSize: (value: number) => void;
-    setCustomPanelColumnGap: (value: number) => void;
-    setCustomPanelNameColor: (value: string) => void;
-    setCustomPanelValueColor: (value: string) => void;
-    setCustomPanelProgressColor: (value: string) => void;
-    setCustomPanelProgressOpacity: (value: number) => void;
   }
 
   let {
@@ -66,11 +62,11 @@
     inlineBuffSearch,
     filteredInlineBuffSearchResults,
     customPanelGroups,
-    customPanelStyle,
     setInlineBuffSearch,
     addCustomPanelGroup,
     removeCustomPanelGroup,
     renameCustomPanelGroup,
+    updateCustomPanelGroupStyle,
     addCustomPanelEntry,
     addUserCounterRule,
     removeUserCounterRule,
@@ -78,13 +74,6 @@
     removeCustomPanelEntry,
     setCustomPanelEntryLabel,
     moveCustomPanelEntry,
-    setCustomPanelGap,
-    setCustomPanelFontSize,
-    setCustomPanelColumnGap,
-    setCustomPanelNameColor,
-    setCustomPanelValueColor,
-    setCustomPanelProgressColor,
-    setCustomPanelProgressOpacity,
   }: Props = $props();
 
   let selectedGroupId = $state<string | null>(customPanelGroups[0]?.id ?? null);
@@ -185,6 +174,47 @@
     resetDraftRule();
   }
 
+  function updateSelectedGroupStyle(
+    updater: (style: CustomPanelStyle) => CustomPanelStyle,
+  ) {
+    if (!selectedGroup) return;
+    updateCustomPanelGroupStyle(selectedGroup.id, updater);
+  }
+
+  function setSelectedGroupGap(value: number) {
+    const nextValue = Math.max(0, Math.min(24, Math.round(value)));
+    updateSelectedGroupStyle((style) => ({ ...style, gap: nextValue }));
+  }
+
+  function setSelectedGroupFontSize(value: number) {
+    const nextValue = Math.max(10, Math.min(28, Math.round(value)));
+    updateSelectedGroupStyle((style) => ({ ...style, fontSize: nextValue }));
+  }
+
+  function setSelectedGroupColumnGap(value: number) {
+    const nextValue = Math.max(0, Math.min(240, Math.round(value)));
+    updateSelectedGroupStyle((style) => ({ ...style, columnGap: nextValue }));
+  }
+
+  function setSelectedGroupNameColor(value: string) {
+    updateSelectedGroupStyle((style) => ({ ...style, nameColor: value }));
+  }
+
+  function setSelectedGroupValueColor(value: string) {
+    updateSelectedGroupStyle((style) => ({ ...style, valueColor: value }));
+  }
+
+  function setSelectedGroupProgressColor(value: string) {
+    updateSelectedGroupStyle((style) => ({ ...style, progressColor: value }));
+  }
+
+  function setSelectedGroupProgressOpacity(value: number) {
+    updateSelectedGroupStyle((style) => ({
+      ...style,
+      progressOpacity: Math.max(0, Math.min(1, value)),
+    }));
+  }
+
   function getUserRuleSourceNames(rule: UserCounterRule): string {
     return rule.sourceRefs
       .map((ref) => sourceTemplateMap.get(ref)?.name ?? ref)
@@ -274,6 +304,95 @@
             renameCustomPanelGroup(selectedGroup.id, (event.currentTarget as HTMLInputElement).value)}
         />
       </label>
+
+      <div class="border-t border-border/60 pt-4 space-y-4">
+        <div>
+          <h2 class="text-base font-semibold text-foreground">{t("skillMonitor.customPanel.style.title")}</h2>
+          <p class="text-xs text-muted-foreground">{t("skillMonitor.customPanel.style.description")}</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <label class="text-xs text-muted-foreground">
+            {t("skillMonitor.style.gap", { value: selectedGroup.style.gap })}
+            <input
+              class="mt-1 w-full"
+              type="range"
+              min="0"
+              max="24"
+              step="1"
+              value={selectedGroup.style.gap}
+              oninput={(event) => setSelectedGroupGap(Number((event.currentTarget as HTMLInputElement).value))}
+            />
+          </label>
+          <label class="text-xs text-muted-foreground">
+            {t("skillMonitor.style.fontSize", { value: selectedGroup.style.fontSize })}
+            <input
+              class="mt-1 w-full"
+              type="range"
+              min="10"
+              max="28"
+              step="1"
+              value={selectedGroup.style.fontSize}
+              oninput={(event) => setSelectedGroupFontSize(Number((event.currentTarget as HTMLInputElement).value))}
+            />
+          </label>
+          <label class="text-xs text-muted-foreground">
+            {t("skillMonitor.style.columnGap", { value: selectedGroup.style.columnGap })}
+            <input
+              class="mt-1 w-full"
+              type="range"
+              min="0"
+              max="240"
+              step="1"
+              value={selectedGroup.style.columnGap}
+              oninput={(event) => setSelectedGroupColumnGap(Number((event.currentTarget as HTMLInputElement).value))}
+            />
+          </label>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <label class="flex items-center justify-between gap-2 rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+            {t("skillMonitor.style.nameColor")}
+            <input
+              type="color"
+              value={selectedGroup.style.nameColor}
+              class="h-7 w-12 rounded border border-border/60 bg-transparent p-0"
+              onchange={(event) => setSelectedGroupNameColor((event.currentTarget as HTMLInputElement).value)}
+            />
+          </label>
+          <label class="flex items-center justify-between gap-2 rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+            {t("skillMonitor.style.valueColor")}
+            <input
+              type="color"
+              value={selectedGroup.style.valueColor}
+              class="h-7 w-12 rounded border border-border/60 bg-transparent p-0"
+              onchange={(event) => setSelectedGroupValueColor((event.currentTarget as HTMLInputElement).value)}
+            />
+          </label>
+          <label class="flex items-center justify-between gap-2 rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+            {t("skillMonitor.style.progressColor")}
+            <input
+              type="color"
+              value={selectedGroup.style.progressColor}
+              class="h-7 w-12 rounded border border-border/60 bg-transparent p-0"
+              onchange={(event) => setSelectedGroupProgressColor((event.currentTarget as HTMLInputElement).value)}
+            />
+          </label>
+          <label class="rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+            <div>{t("skillMonitor.style.progressOpacity", { value: Math.round(selectedGroup.style.progressOpacity * 100) })}</div>
+            <input
+              class="mt-2 w-full"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={selectedGroup.style.progressOpacity}
+              oninput={(event) =>
+                setSelectedGroupProgressOpacity(Number((event.currentTarget as HTMLInputElement).value))}
+            />
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="rounded-lg border border-border/60 bg-card/40 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] space-y-3">
@@ -567,93 +686,4 @@
       {t("skillMonitor.customPanel.empty")}
     </div>
   {/if}
-
-  <div class="rounded-lg border border-border/60 bg-card/40 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] space-y-4">
-    <div>
-      <h2 class="text-base font-semibold text-foreground">{t("skillMonitor.customPanel.style.title")}</h2>
-      <p class="text-xs text-muted-foreground">{t("skillMonitor.customPanel.style.description")}</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      <label class="text-xs text-muted-foreground">
-        {t("skillMonitor.style.gap", { value: customPanelStyle.gap })}
-        <input
-          class="mt-1 w-full"
-          type="range"
-          min="0"
-          max="24"
-          step="1"
-          value={customPanelStyle.gap}
-          oninput={(event) => setCustomPanelGap(Number((event.currentTarget as HTMLInputElement).value))}
-        />
-      </label>
-      <label class="text-xs text-muted-foreground">
-        {t("skillMonitor.style.fontSize", { value: customPanelStyle.fontSize })}
-        <input
-          class="mt-1 w-full"
-          type="range"
-          min="10"
-          max="28"
-          step="1"
-          value={customPanelStyle.fontSize}
-          oninput={(event) => setCustomPanelFontSize(Number((event.currentTarget as HTMLInputElement).value))}
-        />
-      </label>
-      <label class="text-xs text-muted-foreground">
-        {t("skillMonitor.style.columnGap", { value: customPanelStyle.columnGap })}
-        <input
-          class="mt-1 w-full"
-          type="range"
-          min="0"
-          max="240"
-          step="1"
-          value={customPanelStyle.columnGap}
-          oninput={(event) => setCustomPanelColumnGap(Number((event.currentTarget as HTMLInputElement).value))}
-        />
-      </label>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      <label class="flex items-center justify-between gap-2 rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-        {t("skillMonitor.style.nameColor")}
-        <input
-          type="color"
-          value={customPanelStyle.nameColor}
-          class="h-7 w-12 rounded border border-border/60 bg-transparent p-0"
-          onchange={(event) => setCustomPanelNameColor((event.currentTarget as HTMLInputElement).value)}
-        />
-      </label>
-      <label class="flex items-center justify-between gap-2 rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-        {t("skillMonitor.style.valueColor")}
-        <input
-          type="color"
-          value={customPanelStyle.valueColor}
-          class="h-7 w-12 rounded border border-border/60 bg-transparent p-0"
-          onchange={(event) => setCustomPanelValueColor((event.currentTarget as HTMLInputElement).value)}
-        />
-      </label>
-      <label class="flex items-center justify-between gap-2 rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-        {t("skillMonitor.style.progressColor")}
-        <input
-          type="color"
-          value={customPanelStyle.progressColor}
-          class="h-7 w-12 rounded border border-border/60 bg-transparent p-0"
-          onchange={(event) => setCustomPanelProgressColor((event.currentTarget as HTMLInputElement).value)}
-        />
-      </label>
-      <label class="rounded border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-        <div>{t("skillMonitor.style.progressOpacity", { value: Math.round(customPanelStyle.progressOpacity * 100) })}</div>
-        <input
-          class="mt-2 w-full"
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          value={customPanelStyle.progressOpacity}
-          oninput={(event) =>
-            setCustomPanelProgressOpacity(Number((event.currentTarget as HTMLInputElement).value))}
-        />
-      </label>
-    </div>
-  </div>
 </div>

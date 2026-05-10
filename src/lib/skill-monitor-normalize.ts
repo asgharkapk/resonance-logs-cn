@@ -164,9 +164,12 @@ export function ensureOverlaySizes(profile: SkillMonitorProfile): OverlaySizes {
 }
 
 export function ensureCustomPanelStyle(
-  profile: SkillMonitorProfile | null,
+  source:
+    | { customPanelStyle?: CustomPanelStyle | null | undefined }
+    | null
+    | undefined,
 ): CustomPanelStyle {
-  const current = profile?.customPanelStyle;
+  const current = source?.customPanelStyle;
   return {
     gap: clampRounded(current?.gap ?? 6, 0, 24),
     columnGap: clampRounded(current?.columnGap ?? 12, 0, 240),

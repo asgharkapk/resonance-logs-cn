@@ -977,9 +977,9 @@ export const zhCNMessages = {
   "skillMonitor.customPanel.entries.labelPlaceholder": "显示名称",
   "skillMonitor.customPanel.empty":
     "还没有任何自定义监控区。先点击上方“新建监控区”，再向其中添加 Buff 或计数器。",
-  "skillMonitor.customPanel.style.title": "共享样式",
+  "skillMonitor.customPanel.style.title": "当前监控区样式",
   "skillMonitor.customPanel.style.description":
-    "所有自定义监控区共用以下文字与进度条样式。",
+    "调整当前选中监控区的文字与进度条样式（每个监控区可独立设置）。",
   "skillMonitor.overlay.title": "Overlay 区域显示",
   "skillMonitor.overlay.description":
     "可分别控制技能区、持续时间技能区和资源区是否显示（按方案保存）",

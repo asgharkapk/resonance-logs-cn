@@ -1,7 +1,6 @@
 import {
   SETTINGS,
   ensureBuffAliases,
-  type CustomPanelStyle,
   type InlineBuffEntry,
   type ShieldDetailStyle,
   type TextBuffPanelStyle,
@@ -25,7 +24,6 @@ import { ensureCustomPanelGroups } from "$lib/custom-panel-utils";
 import { DEFAULT_OVERLAY_VISIBILITY } from "./overlay-constants";
 import {
   ensureBuffGroups,
-  ensureCustomPanelStyle,
   ensureOverlayVisibility,
   ensureShieldDetailStyle,
   ensureTextBuffPanelStyle,
@@ -81,9 +79,6 @@ const _overlayVisibility = $derived.by(() =>
   _activeProfile
     ? ensureOverlayVisibility(_activeProfile)
     : DEFAULT_OVERLAY_VISIBILITY,
-);
-const _customPanelStyle = $derived.by<CustomPanelStyle>(() =>
-  ensureCustomPanelStyle(_activeProfile),
 );
 const _textBuffPanelStyle = $derived.by<TextBuffPanelStyle>(() =>
   ensureTextBuffPanelStyle(_activeProfile),
@@ -164,10 +159,6 @@ export function textBuffMaxVisible() {
 
 export function overlayVisibility() {
   return _overlayVisibility;
-}
-
-export function customPanelStyle() {
-  return _customPanelStyle;
 }
 
 export function textBuffPanelStyle() {

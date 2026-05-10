@@ -18,7 +18,6 @@ import {
 import {
   ensureBuffGroups,
   ensureCustomPanelGroups,
-  ensureCustomPanelStyle,
   ensureIndividualMonitorAllGroup,
   ensureOverlayPositions,
   ensureOverlaySizes,
@@ -179,7 +178,7 @@ function ensureActiveProfileDefaults() {
       !profile.buffDisplayMode ||
       !profile.buffGroups ||
       !profile.customPanelGroups ||
-      !profile.customPanelStyle ||
+      profile.customPanelGroups.some((group) => !group.style) ||
       !profile.textBuffPanelStyle ||
       !profile.textBuffMaxVisible ||
       profile.monitoredSkillDurationIds === undefined)
@@ -195,7 +194,6 @@ function ensureActiveProfileDefaults() {
       individualMonitorAllGroup: ensureIndividualMonitorAllGroup(profile),
       customPanelGroups: ensureCustomPanelGroups(profile),
       inlineBuffEntries: [],
-      customPanelStyle: ensureCustomPanelStyle(profile),
       textBuffPanelStyle: ensureTextBuffPanelStyle(profile),
       textBuffMaxVisible: Math.max(
         1,

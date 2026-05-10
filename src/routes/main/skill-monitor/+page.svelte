@@ -55,7 +55,6 @@
   import {
     ensureBuffGroup,
     ensureBuffGroups,
-    ensureCustomPanelStyle,
     ensureIndividualMonitorAllGroup,
     ensureOverlaySizes,
     ensurePanelAreaRowOrder,
@@ -134,7 +133,6 @@
   const showShieldDetailGroup = $derived(
     activeProfile.overlayVisibility?.showShieldDetailGroup ?? false,
   );
-  const customPanelStyle = $derived.by(() => ensureCustomPanelStyle(activeProfile));
   const textBuffPanelStyle = $derived.by(() => ensureTextBuffPanelStyle(activeProfile));
   const buffDisplayMode = $derived(
     activeProfile.buffDisplayMode ?? "individual",
@@ -689,46 +687,15 @@
     return null;
   }
 
-  function updateCustomPanelStyle(
+  function updateCustomPanelGroupStyle(
+    groupId: string,
     updater: (style: CustomPanelStyle) => CustomPanelStyle,
   ) {
     updateActiveProfile((profile) => ({
       ...profile,
-      customPanelStyle: updater(ensureCustomPanelStyle(profile)),
-    }));
-  }
-
-  function setCustomPanelGap(value: number) {
-    const nextValue = Math.max(0, Math.min(24, Math.round(value)));
-    updateCustomPanelStyle((style) => ({ ...style, gap: nextValue }));
-  }
-
-  function setCustomPanelFontSize(value: number) {
-    const nextValue = Math.max(10, Math.min(28, Math.round(value)));
-    updateCustomPanelStyle((style) => ({ ...style, fontSize: nextValue }));
-  }
-
-  function setCustomPanelColumnGap(value: number) {
-    const nextValue = Math.max(0, Math.min(240, Math.round(value)));
-    updateCustomPanelStyle((style) => ({ ...style, columnGap: nextValue }));
-  }
-
-  function setCustomPanelNameColor(value: string) {
-    updateCustomPanelStyle((style) => ({ ...style, nameColor: value }));
-  }
-
-  function setCustomPanelValueColor(value: string) {
-    updateCustomPanelStyle((style) => ({ ...style, valueColor: value }));
-  }
-
-  function setCustomPanelProgressColor(value: string) {
-    updateCustomPanelStyle((style) => ({ ...style, progressColor: value }));
-  }
-
-  function setCustomPanelProgressOpacity(value: number) {
-    updateCustomPanelStyle((style) => ({
-      ...style,
-      progressOpacity: Math.max(0, Math.min(1, value)),
+      customPanelGroups: ensureCustomPanelGroups(profile).map((group) =>
+        group.id === groupId ? { ...group, style: updater(group.style) } : group
+      ),
     }));
   }
 
@@ -1339,11 +1306,11 @@
       {inlineBuffSearch}
       {filteredInlineBuffSearchResults}
       {customPanelGroups}
-      {customPanelStyle}
       {setInlineBuffSearch}
       {addCustomPanelGroup}
       {removeCustomPanelGroup}
       {renameCustomPanelGroup}
+      {updateCustomPanelGroupStyle}
       {addCustomPanelEntry}
       {addUserCounterRule}
       {removeUserCounterRule}
@@ -1351,13 +1318,6 @@
       {removeCustomPanelEntry}
       {setCustomPanelEntryLabel}
       {moveCustomPanelEntry}
-      {setCustomPanelGap}
-      {setCustomPanelFontSize}
-      {setCustomPanelColumnGap}
-      {setCustomPanelNameColor}
-      {setCustomPanelValueColor}
-      {setCustomPanelProgressColor}
-      {setCustomPanelProgressOpacity}
     />
   {:else}
     <TabOverlay

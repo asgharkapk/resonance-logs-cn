@@ -577,6 +577,7 @@ export type CustomPanelGroup = {
   entries: InlineBuffEntry[];
   position: Point;
   scale: number;
+  style: CustomPanelStyle;
 };
 
 export type BuffGroup = {
@@ -611,6 +612,7 @@ export type SkillMonitorProfile = {
   customPanelGroups?: CustomPanelGroup[];
   inlineBuffEntries?: InlineBuffEntry[];
   panelAreaRowOrder?: PanelAreaRowRef[];
+  /** @deprecated Legacy shared style, kept only for migrating old custom panel groups. */
   customPanelStyle?: CustomPanelStyle;
   textBuffPanelStyle?: TextBuffPanelStyle;
   shieldDetailStyle?: ShieldDetailStyle;
@@ -675,7 +677,7 @@ function createDefaultOverlayVisibility(): OverlayVisibility {
   };
 }
 
-function createDefaultCustomPanelStyle(): CustomPanelStyle {
+export function createDefaultCustomPanelStyle(): CustomPanelStyle {
   return {
     gap: 6,
     columnGap: 12,
@@ -742,6 +744,7 @@ export function createDefaultCustomPanelGroup(
     entries: [],
     position: { x: 700 + (index - 1) * 40, y: 280 + (index - 1) * 40 },
     scale: 1,
+    style: createDefaultCustomPanelStyle(),
   };
 }
 
@@ -768,7 +771,6 @@ export function createDefaultSkillMonitorProfile(
     customPanelGroups: [],
     inlineBuffEntries: [],
     panelAreaRowOrder: [],
-    customPanelStyle: createDefaultCustomPanelStyle(),
     textBuffPanelStyle: createDefaultTextBuffPanelStyle(),
     textBuffMaxVisible: 10,
     overlayPositions: createDefaultOverlayPositions(),
