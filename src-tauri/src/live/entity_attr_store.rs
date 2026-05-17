@@ -1,5 +1,5 @@
 use crate::live::commands_models::{HateEntry, PanelAttrState, ShieldDetailEntry};
-use crate::live::opcodes_models::{AttrType, AttrValue, Entity};
+use crate::live::opcodes_models::{AttrType, AttrValue, Entity, PositionAttr};
 use blueprotobuf_lib::blueprotobuf::EActorState;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -153,6 +153,14 @@ impl EntityAttrStore {
         let entity_attrs = self.attrs.get(&uid)?;
         let attr_type = AttrType::from_id(attr_id).unwrap_or(AttrType::Unknown(attr_id));
         entity_attrs.get(&attr_type).and_then(AttrValue::as_int)
+    }
+
+    pub fn attr_position_by_id(&self, uid: i64, attr_id: i32) -> Option<PositionAttr> {
+        let entity_attrs = self.attrs.get(&uid)?;
+        let attr_type = AttrType::from_id(attr_id).unwrap_or(AttrType::Unknown(attr_id));
+        entity_attrs
+            .get(&attr_type)
+            .and_then(AttrValue::as_position)
     }
 
     pub fn hate_list_mut(&mut self, uid: i64) -> &mut Vec<HateEntry> {

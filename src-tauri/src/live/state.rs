@@ -915,6 +915,8 @@ impl AppStateManager {
             );
         }
 
+        let mut counter_dirty = false;
+
         if let Some(values) = result.fight_resources {
             let ids = state
                 .attr_store
@@ -930,12 +932,15 @@ impl AppStateManager {
                         .collect(),
                     received_at: now,
                 };
+                counter_dirty |= state
+                    .local_monitor
+                    .counter_tracker
+                    .on_fight_resource_update(&new_state.entries);
                 state.local_monitor.fight_res_state = Some(new_state.clone());
                 state.event_manager.emit_fight_resource_update(new_state);
             }
         }
 
-        let mut counter_dirty = false;
         if !result.local_damage_events.is_empty() {
             counter_dirty |= state.local_monitor.counter_tracker.on_damage_events(
                 &result.local_damage_events,
@@ -981,6 +986,11 @@ impl AppStateManager {
                 state.encounter.local_player_uid,
             );
         }
+
+        counter_dirty |= state
+            .local_monitor
+            .counter_tracker
+            .on_movement_sample(&state.attr_store, state.encounter.local_player_uid);
 
         counter_dirty
     }
@@ -1073,6 +1083,11 @@ impl AppStateManager {
                 &state.attr_store,
             );
         }
+
+        counter_dirty |= state
+            .local_monitor
+            .counter_tracker
+            .on_movement_sample(&state.attr_store, local_player_uid);
 
         counter_dirty
     }

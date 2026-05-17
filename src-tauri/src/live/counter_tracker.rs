@@ -1,8 +1,8 @@
 use crate::database::now_ms;
 use crate::live::buff_monitor::{BuffChangeEvent, BuffChangeType};
-use crate::live::commands_models::{CounterUpdateState, SlotUpdateState};
+use crate::live::commands_models::{CounterUpdateState, FightResourceEntry, SlotUpdateState};
 use crate::live::entity_attr_store::EntityAttrStore;
-use crate::live::opcodes_models::{AttrType, AttrValue};
+use crate::live::opcodes_models::{AttrType, AttrValue, PositionAttr};
 use crate::live::opcodes_process::{LocalDamageEvent, LocalDamageTakenEvent};
 use blueprotobuf_lib::blueprotobuf::EActorState;
 use log::info;
@@ -52,6 +52,13 @@ pub enum CounterSource {
         #[serde(default, rename = "hitsRequired")]
         hits_required: Option<u32>,
     },
+    FightResourceSpent {
+        #[serde(rename = "resourceId")]
+        resource_id: i32,
+        #[serde(rename = "unitsRequired")]
+        units_required: u32,
+        increment: u32,
+    },
     BuffDurationTick {
         #[serde(rename = "buffId")]
         buff_id: i32,
@@ -76,6 +83,15 @@ pub enum CounterSource {
     SkillCastComplete {
         #[serde(rename = "skillBaseIds")]
         skill_base_ids: Vec<i32>,
+        increment: u32,
+    },
+    MovementDistance {
+        #[serde(rename = "buffId")]
+        buff_id: i32,
+        #[serde(rename = "attrId")]
+        attr_id: i32,
+        #[serde(rename = "metersRequired")]
+        meters_required: f32,
         increment: u32,
     },
 }
@@ -153,6 +169,8 @@ pub(crate) struct CounterModelState {
     pub tick_states: Vec<BuffTickState>,
     pub skill_tick_states: Vec<SkillCastTickState>,
     pub skill_complete_states: Vec<SkillCastCompleteState>,
+    pub fight_resource_spent_states: Vec<FightResourceSpentState>,
+    pub movement_distance_states: Vec<MovementDistanceState>,
     pub damage_hit_accumulators: Vec<u32>,
 }
 
@@ -198,6 +216,26 @@ pub(crate) struct SkillCastCompleteState {
     pub increment: u32,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct FightResourceSpentState {
+    pub resource_id: i32,
+    pub previous_value: Option<i64>,
+    pub accumulated_spent: u32,
+    pub units_required: u32,
+    pub increment: u32,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct MovementDistanceState {
+    pub buff_id: i32,
+    pub attr_id: i32,
+    pub is_active: bool,
+    pub last_position: Option<PositionAttr>,
+    pub accumulated_meters: f32,
+    pub meters_required: f32,
+    pub increment: u32,
+}
+
 #[derive(Debug, Default)]
 pub struct BuffCounterTracker {
     rules: Vec<CounterRule>,
@@ -209,13 +247,18 @@ impl<'de> Deserialize<'de> for CounterRule {
     where
         D: Deserializer<'de>,
     {
-        match CounterRuleRepr::deserialize(deserializer)? {
-            CounterRuleRepr::Current(rule) => Ok(CounterRule {
-                rule_id: rule.rule_id,
-                sources: rule.sources,
-                effect_slots: rule.effect_slots,
-            }),
-            CounterRuleRepr::Legacy(rule) => Ok(CounterRule {
+        use serde::de::Error as _;
+
+        let value = serde_json::Value::deserialize(deserializer)?;
+        let object = value
+            .as_object()
+            .ok_or_else(|| D::Error::custom("counter rule must be a json object"))?;
+        let is_legacy = object.contains_key("trigger") || object.contains_key("linkedBuffId");
+
+        if is_legacy {
+            let rule: CounterRuleLegacy =
+                serde_json::from_value(value).map_err(D::Error::custom)?;
+            Ok(CounterRule {
                 rule_id: rule.rule_id,
                 sources: vec![rule.trigger.into_source()],
                 effect_slots: vec![EffectSlotConfig {
@@ -234,7 +277,15 @@ impl<'de> Deserialize<'de> for CounterRule {
                     reset_skill_keys: None,
                     on_reset_skill: CounterAction::NoOp,
                 }],
-            }),
+            })
+        } else {
+            let rule: CounterRuleCurrent =
+                serde_json::from_value(value).map_err(D::Error::custom)?;
+            Ok(CounterRule {
+                rule_id: rule.rule_id,
+                sources: rule.sources,
+                effect_slots: rule.effect_slots,
+            })
         }
     }
 }
@@ -329,6 +380,45 @@ impl BuffCounterTracker {
                     _ => None,
                 })
                 .collect();
+            let fight_resource_spent_states = rule
+                .sources
+                .iter()
+                .filter_map(|source| match source {
+                    CounterSource::FightResourceSpent {
+                        resource_id,
+                        units_required,
+                        increment,
+                    } => Some(FightResourceSpentState {
+                        resource_id: *resource_id,
+                        previous_value: None,
+                        accumulated_spent: 0,
+                        units_required: (*units_required).max(1),
+                        increment: *increment,
+                    }),
+                    _ => None,
+                })
+                .collect();
+            let movement_distance_states = rule
+                .sources
+                .iter()
+                .filter_map(|source| match source {
+                    CounterSource::MovementDistance {
+                        buff_id,
+                        attr_id,
+                        meters_required,
+                        increment,
+                    } => Some(MovementDistanceState {
+                        buff_id: *buff_id,
+                        attr_id: *attr_id,
+                        is_active: false,
+                        last_position: None,
+                        accumulated_meters: 0.0,
+                        meters_required: normalize_meters_required(*meters_required),
+                        increment: *increment,
+                    }),
+                    _ => None,
+                })
+                .collect();
             states.insert(
                 rule.rule_id,
                 CounterModelState {
@@ -337,6 +427,8 @@ impl BuffCounterTracker {
                     tick_states,
                     skill_tick_states,
                     skill_complete_states,
+                    fight_resource_spent_states,
+                    movement_distance_states,
                     damage_hit_accumulators: vec![0; rule.sources.len()],
                 },
             );
@@ -485,6 +577,58 @@ impl BuffCounterTracker {
         changed
     }
 
+    pub fn on_fight_resource_update(&mut self, entries: &[FightResourceEntry]) -> bool {
+        if entries.is_empty() {
+            return false;
+        }
+
+        let mut changed = false;
+        for state in self.states.values_mut() {
+            let mut pending_increment = 0u32;
+            for resource_state in &mut state.fight_resource_spent_states {
+                let Some(entry) = entries
+                    .iter()
+                    .find(|entry| entry.id == resource_state.resource_id)
+                else {
+                    continue;
+                };
+                pending_increment = pending_increment
+                    .saturating_add(apply_fight_resource_spent(resource_state, entry.value));
+            }
+            if pending_increment > 0 {
+                changed |= add_increment_to_slots(state, pending_increment);
+            }
+        }
+        changed
+    }
+
+    pub fn on_movement_sample(
+        &mut self,
+        attr_store: &EntityAttrStore,
+        local_player_uid: i64,
+    ) -> bool {
+        let mut changed = false;
+        for state in self.states.values_mut() {
+            let mut pending_increment = 0u32;
+            for movement_state in &mut state.movement_distance_states {
+                if !movement_state.is_active {
+                    continue;
+                }
+                let Some(position) =
+                    attr_store.attr_position_by_id(local_player_uid, movement_state.attr_id)
+                else {
+                    continue;
+                };
+                pending_increment = pending_increment
+                    .saturating_add(apply_movement_distance_sample(movement_state, position));
+            }
+            if pending_increment > 0 {
+                changed |= add_increment_to_slots(state, pending_increment);
+            }
+        }
+        changed
+    }
+
     pub fn on_skill_cast(&mut self, skill_base_id: i32) -> bool {
         let mut changed = false;
         let (rules, states) = (&self.rules, &mut self.states);
@@ -546,6 +690,9 @@ impl BuffCounterTracker {
                         continue;
                     }
                     changed |= apply_tick_change(tick_state, change);
+                }
+                for movement_state in &mut state.movement_distance_states {
+                    apply_movement_buff_change(movement_state, change);
                 }
                 for (slot_config, slot_state) in
                     rule.effect_slots.iter().zip(&mut state.slot_states)
@@ -802,6 +949,15 @@ impl BuffCounterTracker {
             for complete in &mut state.skill_complete_states {
                 complete.active_skill_id = None;
             }
+            for resource in &mut state.fight_resource_spent_states {
+                resource.previous_value = None;
+                resource.accumulated_spent = 0;
+            }
+            for movement in &mut state.movement_distance_states {
+                movement.is_active = false;
+                movement.last_position = None;
+                movement.accumulated_meters = 0.0;
+            }
             for accumulator in &mut state.damage_hit_accumulators {
                 *accumulator = 0;
             }
@@ -861,13 +1017,6 @@ impl CounterTriggerLegacy {
             },
         }
     }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(untagged)]
-enum CounterRuleRepr {
-    Current(CounterRuleCurrent),
-    Legacy(CounterRuleLegacy),
 }
 
 fn default_on_freeze_expire() -> CounterAction {
@@ -985,6 +1134,89 @@ fn apply_damage_hits_required(
         }
         _ => Some(increment.saturating_mul(matches)),
     }
+}
+
+fn apply_fight_resource_spent(state: &mut FightResourceSpentState, current_value: i64) -> u32 {
+    let Some(previous_value) = state.previous_value.replace(current_value) else {
+        return 0;
+    };
+    if current_value >= previous_value {
+        return 0;
+    }
+
+    let spent = u32::try_from(previous_value.saturating_sub(current_value)).unwrap_or(u32::MAX);
+    state.accumulated_spent = state.accumulated_spent.saturating_add(spent);
+    let triggers = state.accumulated_spent / state.units_required.max(1);
+    state.accumulated_spent %= state.units_required.max(1);
+    state.increment.saturating_mul(triggers)
+}
+
+fn normalize_meters_required(value: f32) -> f32 {
+    if value.is_finite() && value > 0.0 {
+        value
+    } else {
+        1.0
+    }
+}
+
+fn apply_movement_buff_change(state: &mut MovementDistanceState, change: &BuffChangeEvent) {
+    if state.buff_id != change.base_id {
+        return;
+    }
+
+    match change.change_type {
+        BuffChangeType::Added => {
+            state.is_active = true;
+            state.last_position = None;
+            state.accumulated_meters = 0.0;
+        }
+        BuffChangeType::Changed => {
+            if !state.is_active {
+                state.is_active = true;
+                state.last_position = None;
+                state.accumulated_meters = 0.0;
+            }
+        }
+        BuffChangeType::Removed => {
+            state.is_active = false;
+            state.last_position = None;
+            state.accumulated_meters = 0.0;
+        }
+    }
+}
+
+fn apply_movement_distance_sample(
+    state: &mut MovementDistanceState,
+    position: PositionAttr,
+) -> u32 {
+    const MAX_MOVEMENT_DELTA_METERS: f32 = 50.0;
+
+    let Some(previous) = state.last_position.replace(position) else {
+        return 0;
+    };
+
+    let distance = distance_between(previous, position);
+    if distance <= 0.0 || !distance.is_finite() {
+        return 0;
+    }
+    if distance > MAX_MOVEMENT_DELTA_METERS {
+        state.accumulated_meters = 0.0;
+        return 0;
+    }
+
+    state.accumulated_meters += distance;
+    let triggers = (state.accumulated_meters / state.meters_required).floor() as u32;
+    if triggers == 0 {
+        return 0;
+    }
+    state.accumulated_meters -= state.meters_required * triggers as f32;
+    state.increment.saturating_mul(triggers)
+}
+
+fn distance_between(a: PositionAttr, b: PositionAttr) -> f32 {
+    let dx = b.x - a.x;
+    let dz = b.z - a.z;
+    (dx.mul_add(dx, dz * dz)).sqrt()
 }
 
 fn matches_attr_condition(

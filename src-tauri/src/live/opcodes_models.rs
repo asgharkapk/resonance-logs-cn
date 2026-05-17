@@ -37,6 +37,14 @@ pub enum AttrValue {
     Float(f64),
     String(String),
     Bool(bool),
+    Position(PositionAttr),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct PositionAttr {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 /// Player attribute types from Blue Protocol packets.
@@ -50,7 +58,6 @@ pub enum AttrType {
     GuildId,
     AttackPower,
     DefensePower,
-    StarLevel,
     GearTier,
     BaseStrength,
     MoveType,
@@ -106,6 +113,7 @@ pub enum AttrType {
     ElementFlag,
     EnergyFlag,
     ReductionLevel,
+    Position,
     BuffSlot,
     BuffSlot2,
     /// Unknown attribute ID with raw packet ID
@@ -123,7 +131,7 @@ impl AttrType {
             attr_type::ATTR_GUILD_ID => Some(AttrType::GuildId),
             attr_type::ATTR_ATTACK_POWER => Some(AttrType::AttackPower),
             attr_type::ATTR_DEFENSE_POWER => Some(AttrType::DefensePower),
-            attr_type::ATTR_STAR_LEVEL => Some(AttrType::StarLevel),
+            attr_type::ATTR_POS => Some(AttrType::Position),
             attr_type::ATTR_GEAR_TIER => Some(AttrType::GearTier),
             attr_type::ATTR_BASE_STRENGTH => Some(AttrType::BaseStrength),
             attr_type::ATTR_MOVE_TYPE => Some(AttrType::MoveType),
@@ -195,7 +203,6 @@ impl AttrType {
             AttrType::GuildId => attr_type::ATTR_GUILD_ID,
             AttrType::AttackPower => attr_type::ATTR_ATTACK_POWER,
             AttrType::DefensePower => attr_type::ATTR_DEFENSE_POWER,
-            AttrType::StarLevel => attr_type::ATTR_STAR_LEVEL,
             AttrType::GearTier => attr_type::ATTR_GEAR_TIER,
             AttrType::BaseStrength => attr_type::ATTR_BASE_STRENGTH,
             AttrType::MoveType => attr_type::ATTR_MOVE_TYPE,
@@ -251,6 +258,7 @@ impl AttrType {
             AttrType::ElementFlag => attr_type::ATTR_ELEMENT_FLAG,
             AttrType::EnergyFlag => attr_type::ATTR_ENERGY_FLAG,
             AttrType::ReductionLevel => attr_type::ATTR_REDUCTION_LEVEL,
+            AttrType::Position => attr_type::ATTR_POS,
             AttrType::BuffSlot => attr_type::ATTR_FIGHT_RESOURCES,
             AttrType::BuffSlot2 => attr_type::ATTR_BUFF_SLOT_2,
             AttrType::Unknown(id) => id,
@@ -289,6 +297,13 @@ impl AttrValue {
     pub fn as_bool(&self) -> Option<bool> {
         match self {
             AttrValue::Bool(v) => Some(*v),
+            _ => None,
+        }
+    }
+
+    pub fn as_position(&self) -> Option<PositionAttr> {
+        match self {
+            AttrValue::Position(v) => Some(*v),
             _ => None,
         }
     }
@@ -445,7 +460,7 @@ pub mod attr_type {
     pub const ATTR_GUILD_ID: i32 = 0x1e; // Guild/clan ID
     pub const ATTR_ATTACK_POWER: i32 = 0x32; // Attack stat
     pub const ATTR_DEFENSE_POWER: i32 = 0x33; // Defense stat
-    pub const ATTR_STAR_LEVEL: i32 = 0x34; // Enhancement/star level
+    pub const ATTR_POS: i32 = 0x34; // Position vector
     pub const ATTR_GEAR_TIER: i32 = 0x35; // Gear tier/grade
     pub const ATTR_BASE_STRENGTH: i32 = 0x46; // Base strength/attack stat
     pub const ATTR_MOVE_TYPE: i32 = 0x47; // AttrMoveType, see EMoveType
@@ -686,12 +701,24 @@ mod tests {
     }
 
     #[test]
+    fn attr_value_position_conversion() {
+        let position = PositionAttr {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        };
+        let val = AttrValue::Position(position);
+        assert_eq!(val.as_position(), Some(position));
+        assert_eq!(val.as_int(), None);
+    }
+
+    #[test]
     fn attr_type_id_conversion() {
         assert_eq!(AttrType::from_id(0x01), Some(AttrType::Name));
         assert_eq!(AttrType::from_id(0x0b), Some(AttrType::ActorState));
         assert_eq!(AttrType::from_id(0x32), Some(AttrType::AttackPower));
         assert_eq!(AttrType::from_id(0x33), Some(AttrType::DefensePower));
-        assert_eq!(AttrType::from_id(0x34), Some(AttrType::StarLevel));
+        assert_eq!(AttrType::from_id(0x34), Some(AttrType::Position));
         assert_eq!(AttrType::from_id(0x35), Some(AttrType::GearTier));
         assert_eq!(AttrType::from_id(0xf9), Some(AttrType::PvpRank));
         assert_eq!(AttrType::from_id(0x105), Some(AttrType::TotalPower));
@@ -711,7 +738,7 @@ mod tests {
         assert_eq!(AttrType::ActorState.to_id(), 0x0b);
         assert_eq!(AttrType::AttackPower.to_id(), 0x32);
         assert_eq!(AttrType::DefensePower.to_id(), 0x33);
-        assert_eq!(AttrType::StarLevel.to_id(), 0x34);
+        assert_eq!(AttrType::Position.to_id(), 0x34);
         assert_eq!(AttrType::GearTier.to_id(), 0x35);
         assert_eq!(AttrType::TotalPower.to_id(), 0x105);
         assert_eq!(AttrType::PhysicalAttack.to_id(), 0x106);

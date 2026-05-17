@@ -7,11 +7,14 @@ use crate::live::entity_attr_store::EntityAttrStore;
 use crate::live::opcodes_models::class::{
     ClassSpec, get_class_id_from_spec, get_class_spec_from_skill_id,
 };
-use crate::live::opcodes_models::{AttrType, AttrValue, Encounter, Entity, Skill, attr_type};
+use crate::live::opcodes_models::{
+    AttrType, AttrValue, Encounter, Entity, PositionAttr, Skill, attr_type,
+};
 use blueprotobuf_lib::blueprotobuf;
 use blueprotobuf_lib::blueprotobuf::{Attr, EDamageType, EEntityType};
 use bytes::Buf;
 use log::{info, warn};
+use prost::Message;
 use std::collections::hash_map::Entry;
 use std::default::Default;
 
@@ -1151,6 +1154,15 @@ fn decode_unknown_attr_value(attr_id: i32, raw: &[u8]) -> Option<(AttrType, Attr
     ))
 }
 
+fn decode_position_attr(raw: Option<&[u8]>) -> Option<PositionAttr> {
+    let position = blueprotobuf::Position::decode(raw?).ok()?;
+    Some(PositionAttr {
+        x: position.x?,
+        y: position.y?,
+        z: position.z?,
+    })
+}
+
 fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut EntityAttrStore) {
     for attr in attrs {
         let Some(attr_id) = attr.id else { continue };
@@ -1194,6 +1206,17 @@ fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut Entity
                 AttrType::CurrentShield,
                 AttrValue::Int(total_shield),
             );
+            continue;
+        }
+
+        if attr_id == attr_type::ATTR_POS {
+            if let Some(position) = decode_position_attr(raw_bytes_opt) {
+                let _ = attr_store.set_attr(
+                    target_uid,
+                    AttrType::Position,
+                    AttrValue::Position(position),
+                );
+            }
             continue;
         }
 
