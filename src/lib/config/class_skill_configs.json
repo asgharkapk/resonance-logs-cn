@@ -354,5 +354,71 @@
         "imagePath": "/images/stormblade/skill/weapon_tdl-01_kx06_-1183548700792331979.png"
       }
     ]
+  },
+  "beat_performer": {
+    "classKey": "beat_performer",
+    "className": "灵魂乐手",
+    "classId": 13,
+    "defaultMonitoredBuffIds": [510072, 2207241, 55332, 2207011],
+    "derivations": [
+      {
+        "sourceSkillId": 2313,
+        "derivedSkillId": 2313,
+        "triggerBuffBaseId": 2207241,
+        "derivedName": "热情挥散",
+        "derivedImagePath": "/images/beat_performer/skill/weapon_jt-01_kx06_922226435693330329.png"
+      },
+      {
+        "sourceSkillId": 2311,
+        "derivedSkillId": 2318,
+        "triggerBuffBaseId": 55332,
+        "derivedName": "鸣奏·愈合乐章",
+        "derivedImagePath": "/images/beat_performer/skill/weapon_jt-01_kx04_01_1542676853620613518.png"
+      },
+      {
+        "sourceSkillId": 2307,
+        "derivedSkillId": 2307,
+        "triggerBuffBaseId": 2207011,
+        "derivedName": "愈合节拍",
+        "derivedImagePath": "/images/beat_performer/skill/weapon_jt-01_tg02_-7726600810236144266.png"
+      }
+    ],
+    "skills": [
+      {
+        "skillId": 2336,
+        "name": "升格·巡演曲",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_ult02_-4439127223253359714.png"
+      },
+      {
+        "skillId": 2315,
+        "name": "安可",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx07_6080503737517248499.png"
+      },
+      {
+        "skillId": 2309,
+        "name": "烈焰狂想",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx02_-3177198704358744543.png"
+      },
+      {
+        "skillId": 2313,
+        "name": "热情挥散",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx06_922226435693330329.png"
+      },
+      {
+        "skillId": 2312,
+        "name": "激情五重奏",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx05_3251506557365611240.png"
+      },
+      {
+        "skillId": 2311,
+        "name": "鸣奏·愈合乐章",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx04_828493212676998087.png"
+      },
+      {
+        "skillId": 2307,
+        "name": "愈合节拍",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_tg02_-7726600810236144266.png"
+      }
+    ]
   }
 }
