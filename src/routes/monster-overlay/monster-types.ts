@@ -1,14 +1,15 @@
 import type { TextBuffDisplay } from "../game-overlay/overlay-types";
+import type { EntityId } from "$lib/entity-id";
 
 export type MonsterBossBuffSection = {
-  bossUid: number;
+  bossEntityUuid: EntityId;
   title: string;
   rows: TextBuffDisplay[];
   isPlaceholder?: boolean;
 };
 
 export type MonsterHateSection = {
-  bossUid: number;
+  bossEntityUuid: EntityId;
   title: string;
   rows: TextBuffDisplay[];
   isPlaceholder?: boolean;

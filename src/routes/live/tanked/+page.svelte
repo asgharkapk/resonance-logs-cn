@@ -113,12 +113,13 @@
   <table class="w-full border-collapse overflow-hidden">
     {#if compactMode}
       <tbody>
-        {#each compactData as player (player.uid)}
-          {@const isLocalPlayer = liveData?.localPlayerUid != null &&
-            player.uid === liveData.localPlayerUid}
+        {#each compactData as player (player.entityUuid)}
+          {@const isLocalPlayer = liveData?.localPlayerUuid != null &&
+            player.entityUuid === liveData.localPlayerUuid}
           {@const displayName = getDisplayName({
             player: {
-              uid: player.uid,
+              entityUuid: player.entityUuid,
+              displayUid: player.displayUid,
               name: player.name,
               className: player.className,
               classSpecName: player.classSpecName,
@@ -138,7 +139,7 @@
           <tr
             class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
-            onclick={() => goto(`/live/tanked/skills?playerUid=${player.uid}`)}
+            onclick={() => goto(`/live/tanked/skills?entityUuid=${player.entityUuid}`)}
           >
             <td class="px-3 py-1 relative z-10">
               <div class="flex items-center h-full gap-2">
@@ -157,7 +158,7 @@
                   <span
                     class="truncate font-medium min-w-0"
                     style="color: {customThemeColors.tableTextColor};"
-                    >{displayName || `#${player.uid}`}</span
+                    >{displayName || `#${player.displayUid}`}</span
                   >
                   <LivePlayerPowerBadge
                     abilityScore={player.abilityScore}
@@ -243,7 +244,7 @@
               <span class="inline-flex items-center gap-1 justify-end">
                 {col.header}
                 {#if sortKey === col.key}
-                  <span class="text-primary">{sortDesc ? "▼" : "▲"}</span>
+                  <span class="text-primary">{sortDesc ? "v" : "^"}</span>
                 {/if}
               </span>
             </th>
@@ -252,12 +253,13 @@
       </thead>
     {/if}
     <tbody>
-      {#each tankedData as player (player.uid)}
-        {@const isLocalPlayer = liveData?.localPlayerUid != null &&
-          player.uid === liveData.localPlayerUid}
+      {#each tankedData as player (player.entityUuid)}
+        {@const isLocalPlayer = liveData?.localPlayerUuid != null &&
+          player.entityUuid === liveData.localPlayerUuid}
         {@const displayName = getDisplayName({
           player: {
-            uid: player.uid,
+            entityUuid: player.entityUuid,
+            displayUid: player.displayUid,
             name: player.name,
             className: player.className,
             classSpecName: player.classSpecName,
@@ -287,7 +289,7 @@
         <tr
           class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
           style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
-          onclick={() => goto(`/live/tanked/skills?playerUid=${player.uid}`)}
+          onclick={() => goto(`/live/tanked/skills?entityUuid=${player.entityUuid}`)}
         >
           <td class="px-3 py-1 relative z-10">
             <div class="flex items-center h-full gap-2">
@@ -330,7 +332,7 @@
               <span
                 class="truncate font-medium"
                 style="color: {customThemeColors.tableTextColor};"
-                >{displayName || `#${player.uid}`}</span
+                >{displayName || `#${player.displayUid}`}</span
               >
             </div>
           </td>

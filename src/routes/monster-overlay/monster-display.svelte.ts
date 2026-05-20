@@ -1,6 +1,7 @@
 import { resolveBuffDisplayName } from "$lib/config/buff-name-table";
 import { resolveMonsterName } from "$lib/config/game-names";
 import { t } from "$lib/i18n/index.svelte";
+import { uidFromEntityUuid, type EntityId } from "$lib/entity-id";
 import {
   SETTINGS,
   ensureBuffAliases,
@@ -106,21 +107,23 @@ function buildHatePlaceholderRows(): TextBuffDisplay[] {
   ];
 }
 
-function resolveEntityDisplayName(uid: number): string {
-  const playerName = monsterRuntime.playerNameCache.get(uid);
+function resolveEntityDisplayName(entityUuid: EntityId): string {
+  const playerName = monsterRuntime.playerNameCache.get(entityUuid);
   if (playerName) return playerName;
 
-  const monsterId = monsterRuntime.monsterIdCache.get(uid);
+  const monsterId = monsterRuntime.monsterIdCache.get(entityUuid);
   if (monsterId !== undefined) return resolveMonsterName(monsterId);
 
-  return t("monsterOverlay.entity.uid", { uid });
+  return t("monsterOverlay.entity.uid", { uid: uidFromEntityUuid(entityUuid) });
 }
 
-function resolveMonsterSectionTitle(uid: number): string {
-  const monsterId = monsterRuntime.monsterIdCache.get(uid);
+function resolveMonsterSectionTitle(entityUuid: EntityId): string {
+  const monsterId = monsterRuntime.monsterIdCache.get(entityUuid);
   if (monsterId !== undefined) return resolveMonsterName(monsterId);
 
-  return t("monsterOverlay.placeholder.target", { uid });
+  return t("monsterOverlay.placeholder.target", {
+    uid: uidFromEntityUuid(entityUuid),
+  });
 }
 
 function buildHateRows(
@@ -131,7 +134,7 @@ function buildHateRows(
     if (right.hateVal !== left.hateVal) {
       return right.hateVal - left.hateVal;
     }
-    return left.uid - right.uid;
+    return left.entityUuid.localeCompare(right.entityUuid);
   });
 
   const normalizedHateValues = sortedEntries.map((entry) =>
@@ -175,8 +178,8 @@ function buildHateRows(
 
   return sortedEntries
     .map((entry, index) => ({
-      key: `hate_${entry.uid}`,
-      label: `${index + 1}. ${resolveEntityDisplayName(entry.uid)}`,
+      key: `hate_${entry.entityUuid}`,
+      label: `${index + 1}. ${resolveEntityDisplayName(entry.entityUuid)}`,
       valueText: `${displayPercents[index] ?? 0}%`,
       progressPercent: 0,
       showProgress: false,
@@ -208,9 +211,7 @@ export function updateMonsterDisplay() {
   const nextSections: MonsterBossBuffSection[] = [];
   const nextHateSections: MonsterHateSection[] = [];
 
-  const sortedBossUids = Array.from(monsterRuntime.bossBuffMap.keys()).sort(
-    (leftUid, rightUid) => leftUid - rightUid,
-  );
+  const sortedBossUids = Array.from(monsterRuntime.bossBuffMap.keys()).sort();
 
   for (const bossUid of sortedBossUids) {
     const buffMap = monsterRuntime.bossBuffMap.get(bossUid) ?? new Map();
@@ -237,7 +238,7 @@ export function updateMonsterDisplay() {
 
     if (buffRows.length === 0) continue;
     nextSections.push({
-      bossUid,
+      bossEntityUuid: bossUid,
       title: resolveMonsterSectionTitle(bossUid),
       rows: buffRows,
     });
@@ -246,7 +247,7 @@ export function updateMonsterDisplay() {
   if (SETTINGS.monsterMonitor.state.hateListEnabled) {
     const sortedHateBossUids = Array.from(
       monsterRuntime.bossHateMap.keys(),
-    ).sort((leftUid, rightUid) => leftUid - rightUid);
+    ).sort();
     const maxDisplay = SETTINGS.monsterMonitor.state.hateListMaxDisplay ?? 5;
 
     for (const bossUid of sortedHateBossUids) {
@@ -256,7 +257,7 @@ export function updateMonsterDisplay() {
       );
       if (hateRows.length === 0) continue;
       nextHateSections.push({
-        bossUid,
+        bossEntityUuid: bossUid,
         title: resolveMonsterSectionTitle(bossUid),
         rows: hateRows,
       });
@@ -265,7 +266,7 @@ export function updateMonsterDisplay() {
 
   if (nextSections.length === 0 && monsterRuntime.isEditing) {
     nextSections.push({
-      bossUid: 0,
+      bossEntityUuid: "0",
       title: t("monsterOverlay.placeholder.preview"),
       rows: buildPlaceholderRows(now),
       isPlaceholder: true,
@@ -278,7 +279,7 @@ export function updateMonsterDisplay() {
     monsterRuntime.isEditing
   ) {
     nextHateSections.push({
-      bossUid: 0,
+      bossEntityUuid: "0",
       title: t("monsterOverlay.placeholder.target", { uid: 0 }),
       rows: buildHatePlaceholderRows(),
       isPlaceholder: true,

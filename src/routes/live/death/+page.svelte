@@ -12,33 +12,34 @@
   let deathRecords = $derived(getDeathRecords());
 
   let entries = $derived.by<DeathPlayerEntry[]>(() => {
-    const grouped = new Map<number, DeathPlayerEntry>();
+    const grouped = new Map<string, DeathPlayerEntry>();
     for (const record of deathRecords) {
-      const uid = Number(record.victimUid);
-      let entry = grouped.get(uid);
+      const entityUuid = record.victimEntityUuid;
+      let entry = grouped.get(entityUuid);
       if (!entry) {
-        const liveEntity = liveData?.entities.find((e) => e.uid === uid);
+        const liveEntity = liveData?.entities.find((e) => e.entityUuid === entityUuid);
         entry = {
-          uid,
-          name: liveEntity?.name ?? `#${uid}`,
+          entityUuid,
+          displayUid: liveEntity?.displayUid ?? 0,
+          name: liveEntity?.name ?? `#${liveEntity?.displayUid ?? entityUuid}`,
           className: liveEntity?.className ?? "",
           classSpecName: liveEntity?.classSpecName ?? "",
           deaths: [],
         };
-        grouped.set(uid, entry);
+        grouped.set(entityUuid, entry);
       }
       entry.deaths.push(record);
     }
     return Array.from(grouped.values());
   });
 
-  function handleSelect(uid: number) {
-    goto(`/live/death/deaths?playerUid=${uid}`);
+  function handleSelect(entityUuid: string) {
+    goto(`/live/death/deaths?entityUuid=${entityUuid}`);
   }
 </script>
 
 <DeathPlayerList
   {entries}
-  localPlayerUid={liveData?.localPlayerUid ?? null}
+  localPlayerUuid={liveData?.localPlayerUuid ?? null}
   onSelect={handleSelect}
 />

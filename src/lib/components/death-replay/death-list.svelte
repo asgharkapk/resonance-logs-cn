@@ -183,7 +183,7 @@
             </td>
           </tr>
         {:else}
-          {#each rows as row, idx (`${row.record.victimUid}-${row.record.deathTimestampMs}`)}
+          {#each rows as row, idx (`${row.record.victimEntityUuid}-${row.record.deathTimestampMs}`)}
             {@const rel = formatRelative(Number(row.record.deathTimestampMs))}
             <tr
               class="relative border-t border-border/40 hover:bg-muted/60 transition-colors cursor-pointer"
@@ -247,7 +247,7 @@
             </td>
           </tr>
         {:else}
-          {#each rows as row, idx (`${row.record.victimUid}-${row.record.deathTimestampMs}`)}
+          {#each rows as row, idx (`${row.record.victimEntityUuid}-${row.record.deathTimestampMs}`)}
             {@const rel = formatRelative(Number(row.record.deathTimestampMs))}
             <tr
               class="relative hover:bg-muted/60 transition-colors bg-background/40 cursor-pointer"

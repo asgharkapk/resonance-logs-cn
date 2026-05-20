@@ -9,7 +9,9 @@ import { toClassLabel, toSpecLabel } from "$lib/class-labels";
  */
 export interface Player {
   /** Unique identifier for the player */
-  uid: number;
+  entityUuid: string;
+  /** Short uid derived from the full entity UUID for display only. */
+  displayUid: number;
   /** Player's name */
   name: string;
   /** Player's class name */
@@ -56,7 +58,7 @@ export function normalizeNameDisplaySetting(
  * Parameters for the name display transformation function
  */
 export interface NameDisplayParams {
-  /** Player object with name, className, and uid properties */
+  /** Player object with name, className, and entityUuid properties */
   player: Player;
   /** Setting for how to display the local player's name */
   showYourNameSetting: string;
@@ -75,7 +77,7 @@ export interface NameDisplayParams {
  * @example
  * ```typescript
  * const displayName = getDisplayName({
- *   player: { uid: 123, name: "PlayerName", className: "Frost Mage" },
+ *   player: { entityUuid: "80740352", displayUid: 1232, name: "PlayerName", className: "Frost Mage" },
  *   showYourNameSetting: "Show Your Class",
  *   showOthersNameSetting: "Show Others' Name",
  *   isLocalPlayer: true
@@ -91,7 +93,7 @@ export default function getDisplayName(params: NameDisplayParams): string {
   const setting = normalizeNameDisplaySetting(settingRaw);
 
   // Get the base name to use
-  const baseName = player.name || player.uid.toString();
+  const baseName = player.name || player.displayUid.toString();
 
   // Apply the appropriate setting
   switch (setting) {
@@ -123,7 +125,7 @@ export default function getDisplayName(params: NameDisplayParams): string {
 
     case "Hide Your Name":
     case "Hide Others' Name":
-      return player.name ? "" : player.uid.toString();
+      return player.name ? "" : player.displayUid.toString();
 
     default:
       // Fallback to name if setting is unrecognized

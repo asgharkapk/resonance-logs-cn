@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { page } from "$app/state";
   import { settings, SETTINGS } from "$lib/settings-store";
   import { getLiveData } from "$lib/stores/live-meter-store.svelte";
@@ -13,7 +13,7 @@
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatNumber } from "$lib/i18n/index.svelte";
 
-  const playerUid = Number(page.url.searchParams.get("playerUid") ?? "-1");
+  const entityUuid = page.url.searchParams.get("entityUuid") ?? "";
   const emptyGroupedSkills = {
     groups: [] as RecountGroup[],
     ungrouped: [] as SkillDisplayRow[],
@@ -23,9 +23,9 @@
   let tankedPlayers = $derived(
     liveData ? computePlayerRows(liveData, "tanked") : [],
   );
-  let currPlayer = $derived(tankedPlayers.find((player) => player.uid === playerUid));
+  let currPlayer = $derived(tankedPlayers.find((player) => player.entityUuid === entityUuid));
   let currEntity = $derived(
-    liveData?.entities.find((entity) => entity.uid === playerUid) ?? null,
+    liveData?.entities.find((entity) => entity.entityUuid === entityUuid) ?? null,
   );
   let elapsedSecs = $derived((liveData?.elapsedMs ?? 0) / 1000);
 
@@ -81,7 +81,7 @@
   const glowClassName = $derived.by(() => {
     if (!currPlayer) return "";
     const isLocalPlayer =
-      liveData?.localPlayerUid != null && currPlayer.uid === liveData.localPlayerUid;
+      liveData?.localPlayerUuid != null && currPlayer.entityUuid === liveData.localPlayerUuid;
     return isLocalPlayer
       ? normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) !== "Hide Your Name"
         ? currPlayer.className

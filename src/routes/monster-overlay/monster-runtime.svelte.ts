@@ -1,5 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { BuffUpdateState, HateEntry } from "$lib/api";
+import type { EntityId } from "$lib/entity-id";
 import type {
   MonsterBossBuffSection,
   MonsterDragState,
@@ -13,10 +14,10 @@ export const monsterRuntime = $state({
   isInitialized: false,
   isMounted: false,
   rafId: null as number | null,
-  playerNameCache: new Map<number, string>(),
-  monsterIdCache: new Map<number, number>(),
-  bossBuffMap: new Map<number, Map<number, BuffUpdateState>>(),
-  bossHateMap: new Map<number, HateEntry[]>(),
+  playerNameCache: new Map<EntityId, string>(),
+  monsterIdCache: new Map<EntityId, number>(),
+  bossBuffMap: new Map<EntityId, Map<number, BuffUpdateState>>(),
+  bossHateMap: new Map<EntityId, HateEntry[]>(),
   bossSections: [] as MonsterBossBuffSection[],
   hateSections: [] as MonsterHateSection[],
   isEditing: false,

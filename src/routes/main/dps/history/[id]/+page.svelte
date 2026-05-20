@@ -45,7 +45,8 @@
   type HistorySkillType = "dps" | "heal" | "tanked" | "death";
 
   type HistoryPlayerRow = {
-    uid: number;
+    entityUuid: string;
+    displayUid: number;
     name: string;
     isLocalPlayer: boolean;
     className: string;
@@ -86,7 +87,8 @@
     | { kind: "skill"; key: string; depth: 0 | 1; row: SkillDisplayRow };
 
   type PerTargetStats = {
-    targetUid: number;
+    targetEntityUuid: string;
+    targetDisplayUid: number;
     targetMonsterId: number | null;
     totalValue: number;
     damage: RawCombatStats;
@@ -94,13 +96,14 @@
   };
 
   type EntityPerTargetData = {
-    uid: number;
+    entityUuid: string;
     dmgTargets: PerTargetStats[];
     healTargets: PerTargetStats[];
   };
 
   type OverviewTargetOption = {
-    targetUid: number;
+    targetEntityUuid: string;
+    targetDisplayUid: number;
     targetMonsterId: number | null;
     targetName: string;
     totalValue: number;
@@ -114,20 +117,20 @@
   let encounterId = $derived(
     $page.params.id ? parseInt($page.params.id) : null,
   );
-  let charId = $derived($page.url.searchParams.get("charId"));
+  let entityUuid = $derived($page.url.searchParams.get("entityUuid"));
   let skillType = $derived(
     ($page.url.searchParams.get("skillType") ?? "dps") as HistorySkillType,
   );
 
   let encounter = $state<EncounterSummaryDto | null>(null);
-  let localPlayerUid = $state<number | null>(null);
+  let localPlayerUuid = $state<string | null>(null);
   let rawEntities = $state<HistoryEntityData[]>([]);
   let players = $state<HistoryPlayerRow[]>([]);
   let error = $state<string | null>(null);
   let isDeleting = $state(false);
   let showDeleteModal = $state(false);
   let expandedGroups = $state<Set<number>>(new Set<number>());
-  let overviewTargetUid = $state<number | null>(null);
+  let overviewTargetUuid = $state<string | null>(null);
 
   // Tab state for encounter view
   type HistoryTab = "damage" | "tanked" | "healing" | "death";
@@ -159,7 +162,7 @@
     entities: HistoryEntityData[],
     durationSeconds: number,
     activeCombatDurationSeconds: number | null | undefined,
-    localUid: number | null,
+    localUuid: string | null,
   ): HistoryPlayerRow[] {
     const elapsedMs = Math.max(1, Math.floor(durationSeconds * 1000));
     const activeCombatMs = Math.max(
@@ -187,21 +190,22 @@
     const dpsRows = computePlayerRowsFromEntities(source, "dps");
     const healRows = computePlayerRowsFromEntities(source, "heal");
     const tankRows = computePlayerRowsFromEntities(source, "tanked");
-    const dpsByUid = new Map(dpsRows.map((row) => [row.uid, row]));
-    const healByUid = new Map(healRows.map((row) => [row.uid, row]));
-    const tankByUid = new Map(tankRows.map((row) => [row.uid, row]));
+    const dpsByUid = new Map(dpsRows.map((row) => [row.entityUuid, row]));
+    const healByUid = new Map(healRows.map((row) => [row.entityUuid, row]));
+    const tankByUid = new Map(tankRows.map((row) => [row.entityUuid, row]));
 
     return entities
       .map((entity) => {
-        const dps = dpsByUid.get(entity.uid);
-        const heal = healByUid.get(entity.uid);
-        const tank = tankByUid.get(entity.uid);
+        const dps = dpsByUid.get(entity.entityUuid);
+        const heal = healByUid.get(entity.entityUuid);
+        const tank = tankByUid.get(entity.entityUuid);
         const className = entity.className || "";
         const classSpecName = entity.classSpecName || "";
         return {
-          uid: entity.uid,
-          name: entity.name || `#${entity.uid}`,
-          isLocalPlayer: localUid !== null && entity.uid === localUid,
+          entityUuid: entity.entityUuid,
+          displayUid: entity.displayUid,
+          name: entity.name || `#${entity.displayUid}`,
+          isLocalPlayer: localUuid !== null && entity.entityUuid === localUuid,
           className,
           classSpecName,
           classDisplay:
@@ -255,13 +259,13 @@
     };
   }
 
-  let perTargetByUid = $derived.by(
+  let perTargetByEntityUuid = $derived.by(
     () =>
       new Map(
         rawEntities.map((row) => [
-          row.uid,
+          row.entityUuid,
           {
-            uid: row.uid,
+            entityUuid: row.entityUuid,
             dmgTargets: row.dmgPerTarget ?? [],
             healTargets: row.healPerTarget ?? [],
           } satisfies EntityPerTargetData,
@@ -269,29 +273,29 @@
       ),
   );
 
-  let entityNameByUid = $derived.by(() => {
-    const mapping = new Map<number, string>();
+  let entityNameByUuid = $derived.by(() => {
+    const mapping = new Map<string, string>();
     for (const entity of rawEntities) {
       if (entity.name && entity.name.trim().length > 0) {
-        mapping.set(entity.uid, entity.name);
+        mapping.set(entity.entityUuid, entity.name);
       }
     }
     return mapping;
   });
 
   function resolveTargetDisplayName(target: PerTargetStats): string {
-    const entityName = entityNameByUid.get(target.targetUid);
+    const entityName = entityNameByUuid.get(target.targetEntityUuid);
     if (entityName) return entityName;
 
     if (target.targetMonsterId !== null) {
       return resolveMonsterName(target.targetMonsterId);
     }
 
-    return `#${target.targetUid}`;
+    return `#${target.targetDisplayUid}`;
   }
 
-  let pushedUidSet = $derived.by(
-    () => new Set(rawEntities.map((row) => row.uid)),
+  let pushedUuidSet = $derived.by(
+    () => new Set(rawEntities.map((row) => row.entityUuid)),
   );
 
   function isNumericLikeName(name: string): boolean {
@@ -299,11 +303,11 @@
   }
 
   let overviewTargets = $derived.by(() => {
-    const merged = new Map<number, OverviewTargetOption>();
+    const merged = new Map<string, OverviewTargetOption>();
     for (const row of rawEntities) {
       for (const target of row.dmgPerTarget ?? []) {
         const targetName = resolveTargetDisplayName(target);
-        const existing = merged.get(target.targetUid);
+        const existing = merged.get(target.targetEntityUuid);
         if (existing) {
           existing.totalValue += target.totalValue;
           if (existing.targetName.startsWith("#") && targetName) {
@@ -316,8 +320,9 @@
             existing.targetMonsterId = target.targetMonsterId;
           }
         } else {
-          merged.set(target.targetUid, {
-            targetUid: target.targetUid,
+          merged.set(target.targetEntityUuid, {
+            targetEntityUuid: target.targetEntityUuid,
+            targetDisplayUid: target.targetDisplayUid,
             targetMonsterId: target.targetMonsterId,
             targetName,
             totalValue: target.totalValue,
@@ -336,14 +341,14 @@
 
   let displayedPlayers = $derived.by(() => {
     if (activeTab === "damage") {
-      if (overviewTargetUid === null) {
+      if (overviewTargetUuid === null) {
         return [...players].sort((a, b) => b.totalDmg - a.totalDmg);
       }
 
       const targetEntities = rawEntities.map((entity) => {
-        const perTarget = perTargetByUid
-          .get(entity.uid)
-          ?.dmgTargets.find((target) => target.targetUid === overviewTargetUid);
+        const perTarget = perTargetByEntityUuid
+          .get(entity.entityUuid)
+          ?.dmgTargets.find((target) => target.targetEntityUuid === overviewTargetUuid);
         const damage = perTarget?.damage ?? zeroCombatStats();
         return {
           ...entity,
@@ -357,7 +362,7 @@
         targetEntities,
         encounterDurationSeconds,
         encounter?.activeCombatDuration ?? null,
-        localPlayerUid,
+        localPlayerUuid,
       ).sort((a, b) => b.totalDmg - a.totalDmg);
     } else if (activeTab === "tanked") {
       return [...players]
@@ -372,24 +377,18 @@
   });
 
   let selectedPlayer = $derived.by(() => {
-    if (!charId) return null;
-    const playerUid = Number(charId);
-    if (!Number.isFinite(playerUid)) return null;
-    return players.find((p) => p.uid === playerUid) ?? null;
+    if (!entityUuid) return null;
+    return players.find((p) => p.entityUuid === entityUuid) ?? null;
   });
 
   let selectedEntity = $derived.by(() => {
-    if (!charId) return null;
-    const playerUid = Number(charId);
-    if (!Number.isFinite(playerUid)) return null;
-    return rawEntities.find((entity) => entity.uid === playerUid) ?? null;
+    if (!entityUuid) return null;
+    return rawEntities.find((entity) => entity.entityUuid === entityUuid) ?? null;
   });
 
-  let selectedSkillTargetUid = $derived.by(() => {
-    const raw = $page.url.searchParams.get("targetUid");
-    if (!raw) return null;
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) ? parsed : null;
+  let selectedSkillTargetUuid = $derived.by(() => {
+    const raw = $page.url.searchParams.get("targetEntityUuid");
+    return raw || null;
   });
 
   let selectedDeathTs = $derived.by(() => {
@@ -403,8 +402,9 @@
     rawEntities
       .filter((entity) => (entity.deaths?.length ?? 0) > 0)
       .map((entity) => ({
-        uid: entity.uid,
-        name: entity.name || `#${entity.uid}`,
+        entityUuid: entity.entityUuid,
+        displayUid: entity.displayUid,
+        name: entity.name || `#${entity.displayUid}`,
         className: entity.className || "",
         classSpecName: entity.classSpecName || "",
         deaths: entity.deaths ?? [],
@@ -474,13 +474,13 @@
     const durationSecs = Math.max(1, encounterDurationSeconds);
     if (
       skillType === "dps" &&
-      selectedSkillTargetUid !== null &&
+      selectedSkillTargetUuid !== null &&
       selectedPlayer
     ) {
-      const targetStats = perTargetByUid
-        .get(selectedPlayer.uid)
+      const targetStats = perTargetByEntityUuid
+        .get(selectedPlayer.entityUuid)
         ?.dmgTargets.find(
-          (target) => target.targetUid === selectedSkillTargetUid,
+          (target) => target.targetEntityUuid === selectedSkillTargetUuid,
         );
       if (!targetStats) return { groups: [], ungrouped: [] };
       return groupSkillsByRecount(
@@ -509,7 +509,7 @@
   let healTargetSummary = $derived.by(() => {
     if (!selectedPlayer || skillType !== "heal")
       return [] as DisplayPerTargetStats[];
-    return [...(perTargetByUid.get(selectedPlayer.uid)?.healTargets ?? [])]
+    return [...(perTargetByEntityUuid.get(selectedPlayer.entityUuid)?.healTargets ?? [])]
       .map((target) => ({
         ...target,
         targetName: resolveTargetDisplayName(target),
@@ -518,7 +518,7 @@
         (target) =>
           target.totalValue > 0 &&
           (!isNumericLikeName(target.targetName) ||
-            pushedUidSet.has(target.targetUid)),
+            pushedUuidSet.has(target.targetEntityUuid)),
       )
       .sort((a, b) => b.totalValue - a.totalValue);
   });
@@ -648,9 +648,10 @@
         return;
       }
       encounter = encounterRes.data;
-      localPlayerUid =
+      localPlayerUuid = String(
         (encounterRes.data as { localPlayerId?: number | null })
-          .localPlayerId ?? null;
+          .localPlayerId ?? "",
+      );
       rawEntities = entitiesRes.data;
       const durationSeconds =
         encounterRes.data.duration > 0
@@ -665,7 +666,7 @@
         rawEntities,
         durationSeconds,
         encounterRes.data.activeCombatDuration ?? null,
-        localPlayerUid,
+        localPlayerUuid,
       );
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
@@ -673,37 +674,37 @@
   }
 
   function viewPlayerSkills(
-    playerUid: number,
+    entityUuid: string,
     type = "dps",
-    targetUid?: number | null,
+    targetEntityUuid?: string | null,
   ) {
     const sp = new URLSearchParams($page.url.searchParams);
-    sp.set("charId", String(playerUid));
+    sp.set("entityUuid", String(entityUuid));
     sp.set("skillType", type);
-    if (type === "dps" && targetUid != null) {
-      sp.set("targetUid", String(targetUid));
+    if (type === "dps" && targetEntityUuid != null) {
+      sp.set("targetEntityUuid", String(targetEntityUuid));
     } else {
-      sp.delete("targetUid");
+      sp.delete("targetEntityUuid");
     }
     // Always drop any previous deathTs when navigating to a new player/type.
     sp.delete("deathTs");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
 
-  function viewDeathReplay(playerUid: number, deathTs: number) {
+  function viewDeathReplay(entityUuid: string, deathTs: number) {
     const sp = new URLSearchParams($page.url.searchParams);
-    sp.set("charId", String(playerUid));
+    sp.set("entityUuid", String(entityUuid));
     sp.set("skillType", "death");
     sp.set("deathTs", String(deathTs));
-    sp.delete("targetUid");
+    sp.delete("targetEntityUuid");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
 
   function backToDeathPlayerList() {
     const sp = new URLSearchParams($page.url.searchParams);
-    sp.delete("charId");
+    sp.delete("entityUuid");
     sp.delete("deathTs");
-    sp.delete("targetUid");
+    sp.delete("targetEntityUuid");
     sp.set("skillType", "death");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
@@ -711,16 +712,16 @@
   function backToDeathList() {
     const sp = new URLSearchParams($page.url.searchParams);
     sp.delete("deathTs");
-    sp.delete("targetUid");
+    sp.delete("targetEntityUuid");
     sp.set("skillType", "death");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
 
   function backToEncounter() {
     const sp = new URLSearchParams($page.url.searchParams);
-    sp.delete("charId");
+    sp.delete("entityUuid");
     sp.delete("skillType");
-    sp.delete("targetUid");
+    sp.delete("targetEntityUuid");
     sp.delete("deathTs");
     const qs = sp.toString();
     goto(`/main/dps/history/${encounterId}${qs ? `?${qs}` : ""}`);
@@ -729,9 +730,9 @@
   function backToHistory() {
     // Return to the history list while preserving list state.
     const sp = new URLSearchParams($page.url.searchParams);
-    sp.delete("charId");
+    sp.delete("entityUuid");
     sp.delete("skillType");
-    sp.delete("targetUid");
+    sp.delete("targetEntityUuid");
     sp.delete("deathTs");
     const qs = sp.toString();
     goto(`/main/dps/history${qs ? `?${qs}` : ""}`);
@@ -794,19 +795,19 @@
   });
 
   $effect(() => {
-    charId;
+    entityUuid;
     expandedGroups = new Set<number>();
   });
 
   $effect(() => {
     activeTab;
     if (activeTab !== "damage") {
-      overviewTargetUid = null;
+      overviewTargetUuid = null;
     }
   });
 
   // When the URL indicates the user drilled into a death-replay view, keep the top-level
-  // tab pointer in sync so the "死亡回放" tab appears active if/when they return to overview.
+  // tab pointer in sync so the "姝讳骸鍥炴斁" tab appears active if/when they return to overview.
   $effect(() => {
     if (skillType === "death") {
       activeTab = "death";
@@ -819,7 +820,7 @@
     <div class="mb-3 text-red-400">{error}</div>
   {/if}
 
-  {#if !charId && encounter}
+  {#if !entityUuid && encounter}
     <!-- Encounter Overview -->
     <div class="mb-4">
       <div
@@ -882,13 +883,13 @@
                 class="text-muted-foreground flex flex-wrap items-center gap-1 text-xs"
               >
                 <span>{formatDateTime(encounter.startedAtMs)}</span>
-                <span class="text-muted-foreground">•</span>
+                <span class="text-muted-foreground">-</span>
                 <span>
                   {t("history.detail.encounter.duration", {
                     duration: formatEncounterDuration(encounterDurationSeconds),
                   })}
                 </span>
-                <span class="text-muted-foreground">•</span>
+                <span class="text-muted-foreground">-</span>
                 <span class="text-muted-foreground text-[11px]"
                   >#{encounter.id}</span
                 >
@@ -993,22 +994,22 @@
     {#if activeTab === "damage" && overviewTargets.length > 0}
       <div class="mb-3 flex flex-wrap gap-1.5">
         <button
-          class="border-border rounded border px-3 py-1 text-xs transition-colors {overviewTargetUid ===
+          class="border-border rounded border px-3 py-1 text-xs transition-colors {overviewTargetUuid ===
           null
             ? 'bg-muted/40 text-foreground'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}"
-          onclick={() => (overviewTargetUid = null)}
+          onclick={() => (overviewTargetUuid = null)}
         >
           {t("history.detail.target.total")}
         </button>
-        {#each overviewTargets as target (target.targetUid)}
+        {#each overviewTargets as target (target.targetEntityUuid)}
           <button
-            class="border-border rounded border px-3 py-1 text-xs transition-colors {overviewTargetUid ===
-            target.targetUid
+            class="border-border rounded border px-3 py-1 text-xs transition-colors {overviewTargetUuid ===
+            target.targetEntityUuid
               ? 'bg-muted/40 text-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}"
-            onclick={() => (overviewTargetUid = target.targetUid)}
-            title={t("history.detail.target.title", { uid: target.targetUid })}
+            onclick={() => (overviewTargetUuid = target.targetEntityUuid)}
+            title={t("history.detail.target.title", { uid: target.targetDisplayUid })}
           >
             {target.targetName}
           </button>
@@ -1019,8 +1020,8 @@
     {#if activeTab === "death"}
       <DeathPlayerList
         entries={deathEntries}
-        {localPlayerUid}
-        onSelect={(uid) => viewPlayerSkills(uid, "death")}
+        {localPlayerUuid}
+        onSelect={(selectedEntityUuid) => viewPlayerSkills(selectedEntityUuid, "death")}
         emptyMessage={t("history.detail.death.empty")}
         variant="history"
       />
@@ -1042,18 +1043,18 @@
             </tr>
           </thead>
           <tbody class="bg-background/40">
-            {#each displayedPlayers as p (p.uid)}
+            {#each displayedPlayers as p (p.entityUuid)}
               <tr
                 class="border-border/40 hover:bg-muted/60 relative cursor-pointer border-t transition-colors"
                 onclick={() =>
                   viewPlayerSkills(
-                    p.uid,
+                    p.entityUuid,
                     activeTab === "healing"
                       ? "heal"
                       : activeTab === "tanked"
                         ? "tanked"
                         : "dps",
-                    activeTab === "damage" ? overviewTargetUid : null,
+                    activeTab === "damage" ? overviewTargetUuid : null,
                   )}
               >
                 <td
@@ -1073,7 +1074,7 @@
                     <span
                       class="truncate"
                       {@attach tooltip(() =>
-                        t("common.uidTooltip", { uid: p.uid }),
+                        t("common.uidTooltip", { uid: p.displayUid }),
                       )}
                     >
                       {#if (p.abilityScore > 0 && (p.isLocalPlayer ? SETTINGS.history.general.state.showYourAbilityScore : SETTINGS.history.general.state.showOthersAbilityScore)) || (p.seasonStrength > 0 && (p.isLocalPlayer ? SETTINGS.history.general.state.showYourSeasonStrength : SETTINGS.history.general.state.showOthersSeasonStrength))}
@@ -1094,7 +1095,8 @@
                       {/if}
                       {getDisplayName({
                         player: {
-                          uid: p.uid,
+                          entityUuid: p.entityUuid,
+                          displayUid: p.displayUid,
                           name: p.name,
                           className: p.className,
                           classSpecName: p.classSpecName,
@@ -1155,14 +1157,15 @@
         </table>
       </div>
     {/if}
-  {:else if charId && selectedPlayer && selectedEntity && skillType === "death"}
+  {:else if entityUuid && selectedPlayer && selectedEntity && skillType === "death"}
     <!-- Death Replay: list or detail -->
     <div class="mb-4">
       {#if selectedDeathTs == null}
         <DeathList
           playerName={getDisplayName({
             player: {
-              uid: selectedPlayer.uid,
+              entityUuid: selectedPlayer.entityUuid,
+              displayUid: selectedPlayer.displayUid,
               name: selectedPlayer.name,
               className: selectedPlayer.className,
               classSpecName: selectedPlayer.classSpecName,
@@ -1176,7 +1179,7 @@
           classSpecName={selectedPlayer.classSpecName}
           deaths={selectedEntity.deaths ?? []}
           fightStartTimestampMs={encounter?.startedAtMs ?? null}
-          onSelect={(ts) => viewDeathReplay(selectedPlayer.uid, ts)}
+          onSelect={(ts) => viewDeathReplay(selectedPlayer.entityUuid, ts)}
           onBack={backToDeathPlayerList}
           variant="history"
         />
@@ -1184,7 +1187,8 @@
         <DeathReplayDetail
           playerName={getDisplayName({
             player: {
-              uid: selectedPlayer.uid,
+              entityUuid: selectedPlayer.entityUuid,
+              displayUid: selectedPlayer.displayUid,
               name: selectedPlayer.name,
               className: selectedPlayer.className,
               classSpecName: selectedPlayer.classSpecName,
@@ -1211,7 +1215,7 @@
         </div>
       {/if}
     </div>
-  {:else if charId && selectedPlayer && selectedEntity}
+  {:else if entityUuid && selectedPlayer && selectedEntity}
     <!-- Player Skills View -->
     <div class="mb-4">
       <div class="mb-2 flex items-center gap-3">
@@ -1243,7 +1247,8 @@
             {t("history.detail.player.label")}
             {getDisplayName({
               player: {
-                uid: selectedPlayer.uid,
+                entityUuid: selectedPlayer.entityUuid,
+                displayUid: selectedPlayer.displayUid,
                 name: selectedPlayer.name,
                 className: selectedPlayer.className,
                 classSpecName: selectedPlayer.classSpecName,
@@ -1252,7 +1257,7 @@
               showOthersNameSetting:
                 settings.state.history.general.showOthersName,
               isLocalPlayer: selectedPlayer.isLocalPlayer,
-            })} <span class="text-neutral-500">#{selectedPlayer.uid}</span>
+            })} <span class="text-neutral-500">#{selectedPlayer.displayUid}</span>
           </div>
         </div>
       </div>
@@ -1271,7 +1276,7 @@
           </div>
         {:else}
           <div class="space-y-1.5">
-            {#each healTargetSummary as target (target.targetUid)}
+            {#each healTargetSummary as target (target.targetEntityUuid)}
               {@const pct =
                 healTargetTotal > 0
                   ? (target.totalValue / healTargetTotal) * 100

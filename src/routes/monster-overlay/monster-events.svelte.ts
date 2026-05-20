@@ -13,6 +13,7 @@ import {
   setMonsterEditMode,
   setMonsterOverlayWindow,
 } from "./monster-layout.svelte.js";
+import type { EntityId } from "$lib/entity-id";
 import { updateMonsterDisplay } from "./monster-display.svelte.js";
 import { monsterRuntime } from "./monster-runtime.svelte.js";
 
@@ -50,27 +51,27 @@ export function initMonsterOverlay() {
     void setMonsterEditMode(!monsterRuntime.isEditing);
   });
   const unlistenBossBuff = onBossBuffUpdate((event) => {
-    const next = new Map<number, Map<number, BuffUpdateState>>();
-    for (const [uid, buffs] of Object.entries(event.payload.bossBuffs)) {
-      next.set(Number(uid), mapBossBuffs(buffs));
+    const next = new Map<EntityId, Map<number, BuffUpdateState>>();
+    for (const [entityUuid, buffs] of Object.entries(event.payload.bossBuffs)) {
+      next.set(entityUuid, mapBossBuffs(buffs));
     }
     monsterRuntime.bossBuffMap = next;
   });
   const unlistenHateList = onHateListUpdate((event) => {
-    const next = new Map<number, HateEntry[]>();
-    for (const [uid, entries] of Object.entries(event.payload.hateLists)) {
-      next.set(Number(uid), entries);
+    const next = new Map<EntityId, HateEntry[]>();
+    for (const [entityUuid, entries] of Object.entries(event.payload.hateLists)) {
+      next.set(entityUuid, entries);
     }
     monsterRuntime.bossHateMap = next;
   });
   const unlistenIdentities = onEntityIdentities((event) => {
     const nextPlayerNames = new Map(monsterRuntime.playerNameCache);
-    for (const [uid, name] of Object.entries(event.payload.playerNames)) {
-      nextPlayerNames.set(Number(uid), name);
+    for (const [entityUuid, name] of Object.entries(event.payload.playerNames)) {
+      nextPlayerNames.set(entityUuid, name);
     }
     const nextMonsterIds = new Map(monsterRuntime.monsterIdCache);
-    for (const [uid, monsterId] of Object.entries(event.payload.monsterIds)) {
-      nextMonsterIds.set(Number(uid), monsterId);
+    for (const [entityUuid, monsterId] of Object.entries(event.payload.monsterIds)) {
+      nextMonsterIds.set(entityUuid, monsterId);
     }
     monsterRuntime.playerNameCache = nextPlayerNames;
     monsterRuntime.monsterIdCache = nextMonsterIds;

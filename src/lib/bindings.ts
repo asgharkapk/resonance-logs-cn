@@ -415,9 +415,9 @@ export type DamageSnapshot = {
  */
 timestampMs: number; 
 /**
- * Attacker entity uid (uuid >> 16).
+ * Attacker entity UUID, serialized as a string for JS safety.
  */
-attackerUid: number; 
+attackerEntityUuid: string; 
 /**
  * Monster type id of the attacker, if the attacker is a monster. None otherwise.
  */
@@ -433,7 +433,7 @@ value: number }
 /**
  * A death replay record, capturing the damage taken within the window leading up to a death.
  */
-export type DeathRecord = { victimUid: number; deathTimestampMs: number; 
+export type DeathRecord = { victimEntityUuid: string; deathTimestampMs: number; 
 /**
  * Damage snapshots in chronological order (oldest first).
  */
@@ -533,14 +533,14 @@ remoteEncounterId: number | null;
  */
 isFavorite: boolean }
 export type GpuSupport = { cuda_available: boolean; opencl_available: boolean }
-export type HistoryEntityData = { uid: number; name: string; classId: number; classSpec: number; className: string; classSpecName: string; abilityScore: number; seasonStrength: number; damage: RawCombatStats; damageBossOnly: RawCombatStats; healing: RawCombatStats; taken: RawCombatStats; dmgSkills: Partial<{ [key in number]: RawSkillStats }>; healSkills: Partial<{ [key in number]: RawSkillStats }>; takenSkills: Partial<{ [key in number]: RawSkillStats }>; dmgPerTarget: PerTargetStats[]; healPerTarget: PerTargetStats[]; deaths: DeathRecord[] }
+export type HistoryEntityData = { entityUuid: string; displayUid: number; name: string; classId: number; classSpec: number; className: string; classSpecName: string; abilityScore: number; seasonStrength: number; damage: RawCombatStats; damageBossOnly: RawCombatStats; healing: RawCombatStats; taken: RawCombatStats; dmgSkills: Partial<{ [key in number]: RawSkillStats }>; healSkills: Partial<{ [key in number]: RawSkillStats }>; takenSkills: Partial<{ [key in number]: RawSkillStats }>; dmgPerTarget: PerTargetStats[]; healPerTarget: PerTargetStats[]; deaths: DeathRecord[] }
 export type LiveRuntimeSnapshot = { eventUpdateRateMs: number }
 export type ModuleInfo = { name: string; config_id: number; uuid: number; quality: number; parts: ModulePart[] }
 export type ModulePart = { id: number; name: string; value: number }
 export type ModuleSolution = { modules: ModuleInfo[]; score: number; attr_breakdown: Partial<{ [key in string]: number }> }
 export type MonitorRuntimeSnapshot = { live: LiveRuntimeSnapshot; skill: SkillRuntimeSnapshot; monster: MonsterRuntimeSnapshot }
 export type MonsterRuntimeSnapshot = { enabled: boolean; globalIds: number[]; selfAppliedIds: number[] }
-export type PerTargetStats = { targetUid: number; targetMonsterId: number | null; totalValue: number; damage: RawCombatStats; skills: Partial<{ [key in number]: RawSkillStats }> }
+export type PerTargetStats = { targetEntityUuid: string; targetDisplayUid: number; targetMonsterId: number | null; totalValue: number; damage: RawCombatStats; skills: Partial<{ [key in number]: RawSkillStats }> }
 /**
  * The result of a query for player names.
  */
@@ -645,3 +645,6 @@ function __makeEvents__<T extends Record<string, any>>(
 		},
 	);
 }
+
+void TAURI_CHANNEL;
+void __makeEvents__;

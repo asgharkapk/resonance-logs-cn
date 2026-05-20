@@ -8,6 +8,7 @@
   import { lookupDamageIdName } from "$lib/config/recount-table";
   import TableRowGlow from "$lib/components/table-row-glow.svelte";
   import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
+  import { uidFromEntityUuid } from "$lib/entity-id";
 
   let {
     playerName,
@@ -87,9 +88,10 @@
       return resolveMonsterName(Number(snapshot.attackerMonsterTypeId));
     }
 
-    const attackerUid = Number(snapshot.attackerUid);
-    if (Number.isFinite(attackerUid) && attackerUid > 0) {
-      return t("components.deathReplay.attackerUid", { uid: attackerUid });
+    if (snapshot.attackerEntityUuid) {
+      return t("components.deathReplay.attackerUid", {
+        uid: uidFromEntityUuid(snapshot.attackerEntityUuid),
+      });
     }
 
     return "";

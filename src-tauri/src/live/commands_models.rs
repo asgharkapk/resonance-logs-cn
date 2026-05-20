@@ -1,5 +1,8 @@
 use crate::live::opcodes_models::SkillTargetStats;
 use crate::live::opcodes_models::{CombatStats, Skill};
+use crate::live::opcodes_models::{
+    DamageSnapshot as RuntimeDamageSnapshot, DeathRecord as RuntimeDeathRecord,
+};
 use crate::live::training_dummy::TrainingDummyPhase;
 use std::collections::HashMap;
 
@@ -7,8 +10,8 @@ use std::collections::HashMap;
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Default, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct BossHealth {
-    /// The unique ID of the boss.
-    pub uid: i64,
+    /// The unique entity UUID of the boss, serialized as a string for JS safety.
+    pub entity_uuid: String,
     /// Monster template ID used by the frontend to resolve the display name.
     pub monster_id: Option<i32>,
     /// The current HP of the boss.
@@ -54,7 +57,7 @@ pub struct LiveDataPayload {
     pub total_dmg_boss_only: u128,
     pub total_heal: u128,
     pub total_effective_heal: u128,
-    pub local_player_uid: i64,
+    pub local_player_uuid: String,
     pub scene_id: Option<i32>,
     pub dungeon_difficulty: Option<i32>,
     pub is_paused: bool,
@@ -71,7 +74,8 @@ pub struct TrainingDummyState {
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Default, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RawEntityData {
-    pub uid: i64,
+    pub entity_uuid: String,
+    pub display_uid: i64,
     pub name: String,
     pub class_id: i32,
     pub class_spec: i32,
@@ -91,7 +95,8 @@ pub struct RawEntityData {
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Default, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HistoryEntityData {
-    pub uid: i64,
+    pub entity_uuid: String,
+    pub display_uid: i64,
     pub name: String,
     pub class_id: i32,
     pub class_spec: i32,
@@ -140,7 +145,8 @@ pub struct RawSkillStats {
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Default, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PerTargetStats {
-    pub target_uid: i64,
+    pub target_entity_uuid: String,
+    pub target_display_uid: i64,
     pub target_monster_id: Option<i32>,
     pub total_value: u128,
     pub damage: RawCombatStats,
@@ -179,14 +185,17 @@ pub fn build_per_target_stats(
 ) -> Vec<PerTargetStats> {
     let mut grouped = HashMap::<i64, PerTargetStats>::new();
 
-    for (&(skill_id, target_uid), stats) in stats_by_skill_target {
-        let entry = grouped.entry(target_uid).or_insert_with(|| PerTargetStats {
-            target_uid,
-            target_monster_id: stats.target_monster_id,
-            total_value: 0,
-            damage: RawCombatStats::default(),
-            skills: HashMap::new(),
-        });
+    for (&(skill_id, target_entity_uuid), stats) in stats_by_skill_target {
+        let entry = grouped
+            .entry(target_entity_uuid)
+            .or_insert_with(|| PerTargetStats {
+                target_entity_uuid: target_entity_uuid.to_string(),
+                target_display_uid: crate::live::entity_id::uid_from_uuid(target_entity_uuid),
+                target_monster_id: stats.target_monster_id,
+                total_value: 0,
+                damage: RawCombatStats::default(),
+                skills: HashMap::new(),
+            });
 
         if entry.target_monster_id.is_none() && stats.target_monster_id.is_some() {
             entry.target_monster_id = stats.target_monster_id;
@@ -217,8 +226,8 @@ pub fn build_per_target_stats(
     }
 
     if let Some(totals) = totals_by_target {
-        for (target_uid, target_total) in totals {
-            if let Some(entry) = grouped.get_mut(target_uid) {
+        for (target_entity_uuid, target_total) in totals {
+            if let Some(entry) = grouped.get_mut(target_entity_uuid) {
                 entry.total_value = *target_total;
             }
         }
@@ -271,27 +280,27 @@ pub struct BuffUpdatePayload {
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct BossBuffUpdatePayload {
-    pub boss_buffs: HashMap<i64, Vec<BuffUpdateState>>,
+    pub boss_buffs: HashMap<String, Vec<BuffUpdateState>>,
 }
 
-#[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct HateEntry {
-    pub uid: i64,
+    pub entity_uuid: String,
     pub hate_val: u32,
 }
 
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HateListUpdatePayload {
-    pub hate_lists: HashMap<i64, Vec<HateEntry>>,
+    pub hate_lists: HashMap<String, Vec<HateEntry>>,
 }
 
 #[derive(serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EntityIdentityMapPayload {
-    pub player_names: HashMap<i64, String>,
-    pub monster_ids: HashMap<i64, i32>,
+    pub player_names: HashMap<String, String>,
+    pub monster_ids: HashMap<String, i32>,
 }
 
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -399,8 +408,8 @@ pub struct FightResourceUpdatePayload {
 pub struct DamageSnapshot {
     /// Absolute timestamp in milliseconds since UNIX epoch.
     pub timestamp_ms: u128,
-    /// Attacker entity uid (uuid >> 16).
-    pub attacker_uid: i64,
+    /// Attacker entity UUID, serialized as a string for JS safety.
+    pub attacker_entity_uuid: String,
     /// Monster type id of the attacker, if the attacker is a monster. None otherwise.
     pub attacker_monster_type_id: Option<i32>,
     /// Skill key produced by `damage_id::compute_damage_id`.
@@ -413,7 +422,7 @@ pub struct DamageSnapshot {
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DeathRecord {
-    pub victim_uid: i64,
+    pub victim_entity_uuid: String,
     pub death_timestamp_ms: u128,
     /// Damage snapshots in chronological order (oldest first).
     pub recent_damages: Vec<DamageSnapshot>,
@@ -423,4 +432,26 @@ pub struct DeathRecord {
 #[serde(rename_all = "camelCase")]
 pub struct DeathReplayPayload {
     pub records: Vec<DeathRecord>,
+}
+
+pub fn to_damage_snapshot(snapshot: &RuntimeDamageSnapshot) -> DamageSnapshot {
+    DamageSnapshot {
+        timestamp_ms: snapshot.timestamp_ms,
+        attacker_entity_uuid: snapshot.attacker_entity_uuid.to_string(),
+        attacker_monster_type_id: snapshot.attacker_monster_type_id,
+        skill_key: snapshot.skill_key,
+        value: snapshot.value,
+    }
+}
+
+pub fn to_death_record(record: &RuntimeDeathRecord) -> DeathRecord {
+    DeathRecord {
+        victim_entity_uuid: record.victim_entity_uuid.to_string(),
+        death_timestamp_ms: record.death_timestamp_ms,
+        recent_damages: record
+            .recent_damages
+            .iter()
+            .map(to_damage_snapshot)
+            .collect(),
+    }
 }

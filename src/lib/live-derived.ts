@@ -59,8 +59,9 @@ export function computePlayerRowsFromEntities(
       const bossTotal = Number(source.totalDmgBossOnly || 0);
 
       const row: PlayerRow = {
-        uid: entity.uid,
-        name: entity.name || `#${entity.uid}`,
+        entityUuid: entity.entityUuid,
+        displayUid: entity.displayUid,
+        name: entity.name || `#${entity.displayUid}`,
         className: entity.className,
         classSpecName: entity.classSpecName,
         abilityScore: entity.abilityScore,

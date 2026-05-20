@@ -34,7 +34,7 @@
     {/if}
 
     <div class="section-list">
-      {#each sections as section (section.bossUid)}
+      {#each sections as section (section.bossEntityUuid)}
         <section class="boss-section" class:placeholder={section.isPlaceholder}>
           <div class="boss-title">{section.title}</div>
           <div class="boss-rows" style:gap={`${styleConfig.gap}px`}>

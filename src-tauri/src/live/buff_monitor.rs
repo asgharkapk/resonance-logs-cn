@@ -1,5 +1,6 @@
 use crate::database::now_ms;
 use crate::live::commands_models::BuffUpdateState;
+use crate::live::entity_id::entity_uuid_string;
 use blueprotobuf_lib::blueprotobuf::{
     BuffChange, BuffEffectSync, BuffInfo, EBuffEffectLogicPbType, EBuffEventType,
 };
@@ -66,7 +67,7 @@ impl BuffMonitor {
         &mut self,
         raw_bytes: &[u8],
         server_clock_offset: &mut i64,
-        local_player_uid: i64,
+        local_player_uuid: i64,
     ) -> BuffProcessResult {
         let mut changes = Vec::new();
         let Ok(buff_effect_sync) = BuffEffectSync::decode(raw_bytes) else {
@@ -93,9 +94,9 @@ impl BuffMonitor {
                         let Some(base_id) = buff_info.base_id else {
                             continue;
                         };
-                        let fire_uid = buff_info.fire_uuid.unwrap_or(0) >> 16;
+                        let fire_uuid = buff_info.fire_uuid.unwrap_or(0);
                         let in_self_list = self.self_applied_buff_ids.contains(&base_id);
-                        if in_self_list && fire_uid != local_player_uid {
+                        if in_self_list && fire_uuid != local_player_uuid {
                             continue;
                         }
                         let layer = buff_info.layer.unwrap_or(1);
@@ -231,11 +232,11 @@ impl BossBuffMonitors {
         }
     }
 
-    pub(crate) fn monitor_for(&mut self, boss_uid: i64) -> &mut BuffMonitor {
+    pub(crate) fn monitor_for(&mut self, boss_uuid: i64) -> &mut BuffMonitor {
         let monitored_buff_ids = self.monitored_buff_ids.clone();
         let self_applied_buff_ids = self.self_applied_buff_ids.clone();
 
-        self.monitors.entry(boss_uid).or_insert_with(|| {
+        self.monitors.entry(boss_uuid).or_insert_with(|| {
             let mut monitor = BuffMonitor::new();
             monitor.monitored_buff_ids = monitored_buff_ids;
             monitor.self_applied_buff_ids = self_applied_buff_ids;
@@ -246,15 +247,15 @@ impl BossBuffMonitors {
     pub(crate) fn build_all_buff_snapshots(
         &self,
         server_clock_offset: i64,
-    ) -> HashMap<i64, Vec<BuffUpdateState>> {
+    ) -> HashMap<String, Vec<BuffUpdateState>> {
         let mut snapshots = HashMap::with_capacity(self.monitors.len());
 
-        for (&boss_uid, monitor) in &self.monitors {
+        for (&boss_uuid, monitor) in &self.monitors {
             let Some(buffs) = monitor.build_update_payload(server_clock_offset) else {
                 continue;
             };
             if !buffs.is_empty() {
-                snapshots.insert(boss_uid, buffs);
+                snapshots.insert(entity_uuid_string(boss_uuid), buffs);
             }
         }
 

@@ -441,7 +441,7 @@ impl BuffCounterTracker {
     pub fn on_damage_events(
         &mut self,
         events: &[LocalDamageEvent],
-        local_player_uid: i64,
+        local_player_uuid: i64,
         attr_store: &EntityAttrStore,
     ) -> bool {
         if events.is_empty() {
@@ -485,7 +485,7 @@ impl BuffCounterTracker {
                             .iter()
                             .filter(|event| {
                                 skill_keys.contains(&event.skill_key)
-                                    && event.target_uid == local_player_uid
+                                    && event.target_entity_uuid == local_player_uuid
                             })
                             .count(),
                     ),
@@ -523,7 +523,7 @@ impl BuffCounterTracker {
                     slot_config.on_reset_skill,
                     None,
                     attr_store,
-                    local_player_uid,
+                    local_player_uuid,
                 );
             }
         }
@@ -533,7 +533,7 @@ impl BuffCounterTracker {
     pub fn on_damage_taken_events(
         &mut self,
         events: &[LocalDamageTakenEvent],
-        local_player_uid: i64,
+        local_player_uuid: i64,
     ) -> bool {
         if events.is_empty() {
             return false;
@@ -557,7 +557,7 @@ impl BuffCounterTracker {
                 let matches = events
                     .iter()
                     .filter(|event| {
-                        event.attacker_uid != local_player_uid
+                        event.attacker_entity_uuid != local_player_uuid
                             && skill_keys
                                 .as_ref()
                                 .is_none_or(|keys| keys.contains(&event.skill_key))
@@ -605,7 +605,7 @@ impl BuffCounterTracker {
     pub fn on_movement_sample(
         &mut self,
         attr_store: &EntityAttrStore,
-        local_player_uid: i64,
+        local_player_uuid: i64,
     ) -> bool {
         let mut changed = false;
         for state in self.states.values_mut() {
@@ -615,7 +615,7 @@ impl BuffCounterTracker {
                     continue;
                 }
                 let Some(position) =
-                    attr_store.attr_position_by_id(local_player_uid, movement_state.attr_id)
+                    attr_store.attr_position_by_id(local_player_uuid, movement_state.attr_id)
                 else {
                     continue;
                 };
@@ -676,7 +676,7 @@ impl BuffCounterTracker {
         &mut self,
         changes: &[BuffChangeEvent],
         attr_store: &EntityAttrStore,
-        local_player_uid: i64,
+        local_player_uuid: i64,
     ) -> bool {
         let mut changed = false;
         let (rules, states) = (&self.rules, &mut self.states);
@@ -749,7 +749,7 @@ impl BuffCounterTracker {
                         action,
                         change.create_time_ms,
                         attr_store,
-                        local_player_uid,
+                        local_player_uuid,
                     );
                 }
             }
@@ -761,7 +761,7 @@ impl BuffCounterTracker {
         &mut self,
         now_ms: i64,
         attr_store: &EntityAttrStore,
-        local_player_uid: i64,
+        local_player_uuid: i64,
     ) -> bool {
         let mut changed = false;
         let (rules, states) = (&self.rules, &mut self.states);
@@ -821,7 +821,7 @@ impl BuffCounterTracker {
                     tick_state.applied_ticks = expected_ticks;
 
                     let condition_met =
-                        matches_attr_condition(attr_store, local_player_uid, tick_state);
+                        matches_attr_condition(attr_store, local_player_uuid, tick_state);
                     if condition_met {
                         let multiplier = u32::try_from(new_ticks).unwrap_or(u32::MAX);
                         let increment_total = tick_state.increment.saturating_mul(multiplier);
@@ -834,7 +834,7 @@ impl BuffCounterTracker {
                     continue;
                 }
 
-                if !matches_skill_duration_tick_state(attr_store, local_player_uid, tick_state) {
+                if !matches_skill_duration_tick_state(attr_store, local_player_uuid, tick_state) {
                     tick_state.is_active = false;
                     changed = true;
                     continue;
@@ -860,9 +860,9 @@ impl BuffCounterTracker {
                 let Some(active_id) = complete_state.active_skill_id else {
                     continue;
                 };
-                let still_casting = is_actor_state_skill(attr_store, local_player_uid)
+                let still_casting = is_actor_state_skill(attr_store, local_player_uuid)
                     && attr_store
-                        .attr(local_player_uid, AttrType::SkillId)
+                        .attr(local_player_uuid, AttrType::SkillId)
                         .and_then(AttrValue::as_int)
                         .and_then(|v| i32::try_from(v).ok())
                         == Some(active_id);
@@ -883,7 +883,7 @@ impl BuffCounterTracker {
     pub fn build_payload(
         &self,
         attr_store: &EntityAttrStore,
-        local_player_uid: i64,
+        local_player_uuid: i64,
     ) -> Vec<CounterUpdateState> {
         let mut rows: Vec<CounterUpdateState> = self
             .rules
@@ -904,7 +904,7 @@ impl BuffCounterTracker {
                                 slot.threshold,
                                 slot_config,
                                 attr_store,
-                                local_player_uid,
+                                local_player_uuid,
                             ),
                             is_counting: slot.is_counting,
                             reset_buff_active: slot.reset_buff_active,
@@ -914,7 +914,7 @@ impl BuffCounterTracker {
                                 slot_config,
                                 slot,
                                 attr_store,
-                                local_player_uid,
+                                local_player_uuid,
                             ),
                         })
                         .collect(),
@@ -1030,7 +1030,7 @@ fn default_basis_points_per_unit() -> u32 {
 fn resolve_attr_scale_bp(
     modifier: Option<&AttrModifier>,
     attr_store: &EntityAttrStore,
-    local_player_uid: i64,
+    local_player_uuid: i64,
 ) -> u32 {
     const FULL_SCALE_BASIS_POINTS: u64 = 10_000;
 
@@ -1038,7 +1038,7 @@ fn resolve_attr_scale_bp(
         return FULL_SCALE_BASIS_POINTS as u32;
     };
     let raw = attr_store
-        .attr_int_by_id(local_player_uid, modifier.attr_id)
+        .attr_int_by_id(local_player_uuid, modifier.attr_id)
         .unwrap_or(0)
         .max(0) as u64;
     let divisor = u64::from(modifier.basis_points_per_unit.max(1));
@@ -1059,13 +1059,13 @@ fn resolve_effective_threshold(
     threshold: Option<u32>,
     config: &EffectSlotConfig,
     attr_store: &EntityAttrStore,
-    local_player_uid: i64,
+    local_player_uuid: i64,
 ) -> Option<u32> {
     threshold.map(|value| {
         let scale = resolve_attr_scale_bp(
             config.threshold_modifier.as_ref(),
             attr_store,
-            local_player_uid,
+            local_player_uuid,
         );
         u32::try_from(scale_basis_points_ceil(u64::from(value), scale)).unwrap_or(u32::MAX)
     })
@@ -1091,7 +1091,9 @@ fn apply_damage_by_skill_key_once_max(
     let mut hits: HashMap<(i64, i64), u32> = HashMap::new();
     for event in events {
         if skill_keys.contains(&event.skill_key) {
-            *hits.entry((event.skill_key, event.target_uid)).or_insert(0) += 1;
+            *hits
+                .entry((event.skill_key, event.target_entity_uuid))
+                .or_insert(0) += 1;
         }
     }
 
@@ -1221,33 +1223,33 @@ fn distance_between(a: PositionAttr, b: PositionAttr) -> f32 {
 
 fn matches_attr_condition(
     attr_store: &EntityAttrStore,
-    local_player_uid: i64,
+    local_player_uuid: i64,
     tick_state: &BuffTickState,
 ) -> bool {
     let Some(condition) = tick_state.attr_condition.as_ref() else {
         return true;
     };
     attr_store
-        .attr_int_by_id(local_player_uid, condition.attr_id)
+        .attr_int_by_id(local_player_uuid, condition.attr_id)
         .and_then(|value| i32::try_from(value).ok())
         == Some(condition.required_value)
 }
 
-fn is_actor_state_skill(attr_store: &EntityAttrStore, local_player_uid: i64) -> bool {
+fn is_actor_state_skill(attr_store: &EntityAttrStore, local_player_uuid: i64) -> bool {
     attr_store
-        .attr(local_player_uid, AttrType::ActorState)
+        .attr(local_player_uuid, AttrType::ActorState)
         .and_then(AttrValue::as_int)
         .is_some_and(|value| value == i64::from(EActorState::ActorStateSkill as i32))
 }
 
 fn matches_skill_duration_tick_state(
     attr_store: &EntityAttrStore,
-    local_player_uid: i64,
+    local_player_uuid: i64,
     tick_state: &SkillCastTickState,
 ) -> bool {
-    is_actor_state_skill(attr_store, local_player_uid)
+    is_actor_state_skill(attr_store, local_player_uuid)
         && attr_store
-            .attr(local_player_uid, AttrType::SkillId)
+            .attr(local_player_uuid, AttrType::SkillId)
             .and_then(AttrValue::as_int)
             .and_then(|value| i32::try_from(value).ok())
             == Some(tick_state.skill_base_id)
@@ -1283,7 +1285,7 @@ fn resolve_freeze_duration(
     config: &EffectSlotConfig,
     state: &SlotState,
     attr_store: &EntityAttrStore,
-    local_player_uid: i64,
+    local_player_uuid: i64,
 ) -> Option<u64> {
     let duration = if let Some(alt) = &config.alt_freeze {
         if state.condition_buff_active {
@@ -1297,7 +1299,7 @@ fn resolve_freeze_duration(
     let scale = resolve_attr_scale_bp(
         config.freeze_duration_modifier.as_ref(),
         attr_store,
-        local_player_uid,
+        local_player_uuid,
     );
     Some(scale_basis_points_ceil(duration, scale))
 }
@@ -1308,7 +1310,7 @@ fn start_freeze_with_resolved_duration(
     action: CounterAction,
     event_time_ms: Option<i64>,
     attr_store: &EntityAttrStore,
-    local_player_uid: i64,
+    local_player_uuid: i64,
 ) -> bool {
     if !matches!(
         action,
@@ -1319,7 +1321,7 @@ fn start_freeze_with_resolved_duration(
         return false;
     }
     let Some(duration) =
-        resolve_freeze_duration(slot_config, slot_state, attr_store, local_player_uid)
+        resolve_freeze_duration(slot_config, slot_state, attr_store, local_player_uuid)
     else {
         return false;
     };

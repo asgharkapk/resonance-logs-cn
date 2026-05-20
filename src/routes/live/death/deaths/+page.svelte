@@ -7,21 +7,21 @@
   } from "$lib/stores/live-meter-store.svelte";
   import DeathList from "$lib/components/death-replay/death-list.svelte";
 
-  const playerUid = $derived(Number(page.url.searchParams.get("playerUid") ?? "-1"));
+  const entityUuid = $derived(page.url.searchParams.get("entityUuid") ?? "");
 
   const liveData = $derived(getLiveData());
   const deathRecords = $derived(getDeathRecords());
 
   const deaths = $derived(
-    deathRecords.filter((r) => Number(r.victimUid) === playerUid),
+    deathRecords.filter((r) => r.victimEntityUuid === entityUuid),
   );
   const entity = $derived(
-    liveData?.entities.find((e) => e.uid === playerUid) ?? null,
+    liveData?.entities.find((e) => e.entityUuid === entityUuid) ?? null,
   );
 
   function handleSelect(deathTimestampMs: number) {
     goto(
-      `/live/death/replay?playerUid=${playerUid}&deathTs=${deathTimestampMs}`,
+      `/live/death/replay?entityUuid=${entityUuid}&deathTs=${deathTimestampMs}`,
     );
   }
 </script>

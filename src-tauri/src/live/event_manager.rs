@@ -4,6 +4,7 @@ use crate::live::commands_models::{
     TrainingDummyState, to_raw_combat_stats, to_raw_skill_stats,
 };
 use crate::live::entity_attr_store::EntityAttrStore;
+use crate::live::entity_id::{entity_uuid_string, uid_from_uuid};
 use crate::live::opcodes_models::{AttrType, Encounter, class};
 use blueprotobuf_lib::blueprotobuf::EEntityType;
 use log::{trace, warn};
@@ -106,11 +107,11 @@ pub enum OutboundEvent {
     TrainingDummyUpdate(TrainingDummyState),
     LiveData(LiveDataPayload),
     BuffUpdate(Vec<BuffUpdateState>),
-    BossBuffUpdate(HashMap<i64, Vec<BuffUpdateState>>),
-    HateListUpdate(HashMap<i64, Vec<HateEntry>>),
+    BossBuffUpdate(HashMap<String, Vec<BuffUpdateState>>),
+    HateListUpdate(HashMap<String, Vec<HateEntry>>),
     EntityIdentityMap {
-        player_names: HashMap<i64, String>,
-        monster_ids: HashMap<i64, i32>,
+        player_names: HashMap<String, String>,
+        monster_ids: HashMap<String, i32>,
     },
     BuffCounterUpdate(Vec<CounterUpdateState>),
     SkillCdUpdate(Vec<SkillCdState>),
@@ -191,20 +192,20 @@ impl EventManager {
         self.outbound_events.push(OutboundEvent::BuffUpdate(buffs));
     }
 
-    pub fn emit_boss_buff_update(&mut self, boss_buffs: HashMap<i64, Vec<BuffUpdateState>>) {
+    pub fn emit_boss_buff_update(&mut self, boss_buffs: HashMap<String, Vec<BuffUpdateState>>) {
         self.outbound_events
             .push(OutboundEvent::BossBuffUpdate(boss_buffs));
     }
 
-    pub fn emit_hate_list_update(&mut self, hate_lists: HashMap<i64, Vec<HateEntry>>) {
+    pub fn emit_hate_list_update(&mut self, hate_lists: HashMap<String, Vec<HateEntry>>) {
         self.outbound_events
             .push(OutboundEvent::HateListUpdate(hate_lists));
     }
 
     pub fn emit_entity_identity_map(
         &mut self,
-        player_names: HashMap<i64, String>,
-        monster_ids: HashMap<i64, i32>,
+        player_names: HashMap<String, String>,
+        monster_ids: HashMap<String, i32>,
     ) {
         self.outbound_events.push(OutboundEvent::EntityIdentityMap {
             player_names,
@@ -294,8 +295,8 @@ pub fn generate_live_data_payload(
         .saturating_sub(encounter.time_fight_start_ms);
     let active_combat_time_ms = encounter.active_combat_time_ms.min(elapsed_ms);
 
-    let mut entities = Vec::with_capacity(encounter.entity_uid_to_entity.len());
-    for (&uid, entity) in &encounter.entity_uid_to_entity {
+    let mut entities = Vec::with_capacity(encounter.entity_uuid_to_entity.len());
+    for (&entity_uuid, entity) in &encounter.entity_uuid_to_entity {
         if entity.entity_type != EEntityType::EntChar {
             continue;
         }
@@ -306,30 +307,31 @@ pub fn generate_live_data_payload(
         }
 
         entities.push(RawEntityData {
-            uid,
+            entity_uuid: entity_uuid_string(entity_uuid),
+            display_uid: uid_from_uuid(entity_uuid),
             name: attr_store
-                .attr(uid, AttrType::Name)
+                .attr(entity_uuid, AttrType::Name)
                 .and_then(|value| value.as_string())
                 .unwrap_or(&entity.name)
                 .to_string(),
             class_id: attr_store
-                .attr(uid, AttrType::ProfessionId)
+                .attr(entity_uuid, AttrType::ProfessionId)
                 .and_then(|value| value.as_int())
                 .map_or(entity.class_id, |value| value as i32),
             class_spec: entity.class_spec as i32,
             class_name: class::get_class_name(
                 attr_store
-                    .attr(uid, AttrType::ProfessionId)
+                    .attr(entity_uuid, AttrType::ProfessionId)
                     .and_then(|value| value.as_int())
                     .map_or(entity.class_id, |value| value as i32),
             ),
             class_spec_name: class::get_class_spec(entity.class_spec),
             ability_score: attr_store
-                .attr(uid, AttrType::FightPoint)
+                .attr(entity_uuid, AttrType::FightPoint)
                 .and_then(|value| value.as_int())
                 .map_or(entity.ability_score, |value| value as i32),
             season_strength: attr_store
-                .attr(uid, AttrType::SeasonStrength)
+                .attr(entity_uuid, AttrType::SeasonStrength)
                 .and_then(|value| value.as_int())
                 .map_or(0, |value| value as i32),
             damage: to_raw_combat_stats(&entity.damage),
@@ -355,37 +357,37 @@ pub fn generate_live_data_payload(
     }
 
     let mut bosses: Vec<BossHealth> = encounter
-        .entity_uid_to_entity
+        .entity_uuid_to_entity
         .iter()
-        .filter_map(|(&uid, entity)| {
+        .filter_map(|(&entity_uuid, entity)| {
             if !entity.is_boss() {
                 return None;
             }
 
-            if attr_store.is_dead(uid) {
+            if attr_store.is_dead(entity_uuid) {
                 return None;
             }
 
             let current_hp = attr_store
-                .attr(uid, AttrType::CurrentHp)
+                .attr(entity_uuid, AttrType::CurrentHp)
                 .and_then(|value| value.as_int());
             let max_hp = attr_store
-                .attr(uid, AttrType::MaxHp)
+                .attr(entity_uuid, AttrType::MaxHp)
                 .and_then(|value| value.as_int());
             if current_hp.is_none() && max_hp.is_none() {
                 return None;
             }
 
             Some(BossHealth {
-                uid,
+                entity_uuid: entity_uuid_string(entity_uuid),
                 monster_id: entity.monster_type_id,
                 current_hp,
                 max_hp,
-                is_dead: attr_store.is_dead(uid),
+                is_dead: attr_store.is_dead(entity_uuid),
             })
         })
         .collect();
-    bosses.sort_by_key(|boss| boss.uid);
+    bosses.sort_by(|a, b| a.entity_uuid.cmp(&b.entity_uuid));
 
     LiveDataPayload {
         elapsed_ms,
@@ -395,7 +397,7 @@ pub fn generate_live_data_payload(
         total_dmg_boss_only: encounter.total_dmg_boss_only,
         total_heal: encounter.total_heal,
         total_effective_heal: encounter.total_effective_heal,
-        local_player_uid: encounter.local_player_uid,
+        local_player_uuid: entity_uuid_string(encounter.local_player_uuid),
         scene_id: encounter.current_scene_id,
         dungeon_difficulty: encounter.current_dungeon_difficulty,
         is_paused: encounter.is_encounter_paused,

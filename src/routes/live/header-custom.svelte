@@ -360,7 +360,7 @@
         class:flex-row={h.bossHealthLayout === "horizontal"}
         class:flex-nowrap={h.bossHealthLayout === "horizontal"}
       >
-        {#each displayBosses as boss (boss.uid)}
+        {#each displayBosses as boss (boss.entityUuid)}
           {@const hpPercent =
             boss.maxHp && boss.currentHp !== null
               ? Math.min(100, Math.max(0, (boss.currentHp / boss.maxHp) * 100))
@@ -828,7 +828,7 @@
                 class:flex-row={h.bossHealthLayout === "horizontal"}
                 class:flex-nowrap={h.bossHealthLayout === "horizontal"}
               >
-                {#each displayBosses as boss (boss.uid)}
+                {#each displayBosses as boss (boss.entityUuid)}
                   {@const hpPercent =
                     boss.maxHp && boss.currentHp !== null
                       ? Math.min(

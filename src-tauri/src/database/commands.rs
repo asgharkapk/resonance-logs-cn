@@ -632,7 +632,7 @@ pub fn get_encounter_by_id(encounter_id: i32) -> Result<EncounterSummaryDto, Str
 pub fn get_encounter_entities_raw(encounter_id: i32) -> Result<Vec<lc::HistoryEntityData>, String> {
     let entities = crate::database::load_encounter_data(encounter_id)?;
     let mut rows = Vec::new();
-    for (&uid, entity) in &entities {
+    for (&entity_uuid, entity) in &entities {
         if entity.entity_type != EEntityType::EntChar {
             continue;
         }
@@ -641,7 +641,8 @@ pub fn get_encounter_entities_raw(encounter_id: i32) -> Result<Vec<lc::HistoryEn
             continue;
         }
         rows.push(lc::HistoryEntityData {
-            uid,
+            entity_uuid: entity_uuid.to_string(),
+            display_uid: crate::live::entity_id::uid_from_uuid(entity_uuid),
             name: entity.name.clone(),
             class_id: entity.class_id,
             class_spec: entity.class_spec as i32,
@@ -673,10 +674,10 @@ pub fn get_encounter_entities_raw(encounter_id: i32) -> Result<Vec<lc::HistoryEn
                 Some(&entity.dmg_to_target),
             ),
             heal_per_target: lc::build_per_target_stats(&entity.skill_heal_to_target, None),
-            deaths: entity.deaths.clone(),
+            deaths: entity.deaths.iter().map(lc::to_death_record).collect(),
         });
     }
-    rows.sort_by_key(|row| row.uid);
+    rows.sort_by(|a, b| a.entity_uuid.cmp(&b.entity_uuid));
     Ok(rows)
 }
 

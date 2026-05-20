@@ -8,7 +8,7 @@
   import DeathReplayDetail from "$lib/components/death-replay/death-replay-detail.svelte";
   import { t } from "$lib/i18n/index.svelte";
 
-  const playerUid = $derived(Number(page.url.searchParams.get("playerUid") ?? "-1"));
+  const entityUuid = $derived(page.url.searchParams.get("entityUuid") ?? "");
   const deathTs = $derived(Number(page.url.searchParams.get("deathTs") ?? "-1"));
 
   const liveData = $derived(getLiveData());
@@ -17,12 +17,12 @@
   const record = $derived(
     deathRecords.find(
       (r) =>
-        Number(r.victimUid) === playerUid &&
+        r.victimEntityUuid === entityUuid &&
         Number(r.deathTimestampMs) === deathTs,
     ) ?? null,
   );
   const entity = $derived(
-    liveData?.entities.find((e) => e.uid === playerUid) ?? null,
+    liveData?.entities.find((e) => e.entityUuid === entityUuid) ?? null,
   );
 
   function handleFallback() {

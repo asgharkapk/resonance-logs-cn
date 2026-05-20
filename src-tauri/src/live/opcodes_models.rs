@@ -1,4 +1,4 @@
-use crate::live::commands_models::{DamageSnapshot, DeathRecord};
+use crate::live::entity_id::EntityUuid;
 use crate::live::monster_registry::{self, MonsterType};
 use crate::live::opcodes_models::class::ClassSpec;
 use blueprotobuf_lib::blueprotobuf::{EEntityType, SyncContainerData};
@@ -19,8 +19,8 @@ pub struct Encounter {
     pub total_dmg_boss_only: u128,
     pub total_heal: u128,
     pub total_effective_heal: u128,
-    pub local_player_uid: i64,
-    pub entity_uid_to_entity: HashMap<i64, Entity>, // key: entity uid
+    pub local_player_uuid: EntityUuid,
+    pub entity_uuid_to_entity: HashMap<EntityUuid, Entity>,
     pub local_player: SyncContainerData,
     pub current_scene_id: Option<i32>,
     pub current_dungeon_difficulty: Option<i32>,
@@ -339,8 +339,27 @@ pub struct CombatStats {
     pub hits: u128,
 }
 
+/// A single damage event recorded in the 2s sliding window used for death replay.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DamageSnapshot {
+    pub timestamp_ms: u128,
+    pub attacker_entity_uuid: EntityUuid,
+    pub attacker_monster_type_id: Option<i32>,
+    pub skill_key: i64,
+    pub value: u128,
+}
+
+/// Runtime death replay record. Keep UUIDs numeric inside Rust; convert to strings only at API boundaries.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeathRecord {
+    pub victim_entity_uuid: EntityUuid,
+    pub death_timestamp_ms: u128,
+    pub recent_damages: Vec<DamageSnapshot>,
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Entity {
+    pub uuid: EntityUuid,
     pub name: String,
     pub entity_type: EEntityType,
     pub class_id: i32,
@@ -372,6 +391,16 @@ pub struct Entity {
     #[serde(skip)]
     pub recent_taken_events: VecDeque<DamageSnapshot>,
     pub deaths: Vec<DeathRecord>,
+}
+
+impl Entity {
+    pub fn new(uuid: EntityUuid, entity_type: EEntityType) -> Self {
+        Self {
+            uuid,
+            entity_type,
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -408,9 +437,9 @@ impl Encounter {
     ///
     /// Preserves:
     /// - is_encounter_paused
-    /// - local_player_uid
+    /// - local_player_uuid
     /// - local_player (sync container data)
-    /// - entity_uid_to_entity identity fields (name, class, spec, ability score, level, type)
+    /// - entity_uuid_to_entity identity fields (name, class, spec, ability score, level, type)
     ///
     /// Clears:
     /// - encounter totals and timestamps
@@ -427,7 +456,7 @@ impl Encounter {
         self.total_effective_heal = 0;
 
         // Reset per-entity combat stats while preserving identity
-        for entity in self.entity_uid_to_entity.values_mut() {
+        for entity in self.entity_uuid_to_entity.values_mut() {
             // Damage
             entity.damage = CombatStats::default();
             entity.damage_boss_only = CombatStats::default();

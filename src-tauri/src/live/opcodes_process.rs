@@ -1,14 +1,15 @@
 // NOTE: opcodes_process works on Encounter directly; avoid importing opcodes_models at top-level.
 use crate::database::{flush_playerdata, now_ms};
-use crate::live::commands_models::{DamageSnapshot, HateEntry, ShieldDetailEntry};
+use crate::live::commands_models::{HateEntry, ShieldDetailEntry};
 use crate::live::damage_id;
 use crate::live::dungeon_log::{BattleStateMachine, EncounterResetReason};
 use crate::live::entity_attr_store::EntityAttrStore;
+use crate::live::entity_id::{canonical_player_uuid, uid_from_uuid};
 use crate::live::opcodes_models::class::{
     ClassSpec, get_class_id_from_spec, get_class_spec_from_skill_id,
 };
 use crate::live::opcodes_models::{
-    AttrType, AttrValue, Encounter, Entity, PositionAttr, Skill, attr_type,
+    AttrType, AttrValue, DamageSnapshot, Encounter, Entity, PositionAttr, Skill, attr_type,
 };
 use blueprotobuf_lib::blueprotobuf;
 use blueprotobuf_lib::blueprotobuf::{Attr, EDamageType, EEntityType};
@@ -74,13 +75,13 @@ pub struct SyncToMeDeltaResult {
 #[derive(Debug, Default, Clone)]
 pub struct LocalDamageEvent {
     pub skill_key: i64,
-    pub target_uid: i64,
+    pub target_entity_uuid: i64,
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct LocalDamageTakenEvent {
     pub skill_key: i64,
-    pub attacker_uid: i64,
+    pub attacker_entity_uuid: i64,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -197,9 +198,8 @@ pub fn process_sync_near_entities(
 ) -> Option<()> {
     for pkt_entity in sync_near_entities.appear {
         let target_uuid = pkt_entity.uuid?;
-        let target_uid = target_uuid >> 16;
         let target_entity_type = EEntityType::from(target_uuid);
-        let target_entity = match encounter.entity_uid_to_entity.entry(target_uid) {
+        let target_entity = match encounter.entity_uuid_to_entity.entry(target_uuid) {
             Entry::Occupied(mut entry) => {
                 let existing_type = entry.get().entity_type;
                 if should_overwrite_entity_type(existing_type, target_entity_type) {
@@ -207,31 +207,28 @@ pub fn process_sync_near_entities(
                 } else if existing_type != target_entity_type {
                     info!(
                         target: "app::live",
-                        "SyncNearEntities: blocked entity_type overwrite for uid={} from {:?} to {:?} (uuid=0x{:x}, low16={})",
-                        target_uid,
+                        "SyncNearEntities: blocked entity_type overwrite for uuid=0x{:x} uid={} from {:?} to {:?} (low16={})",
+                        target_uuid,
+                        uid_from_uuid(target_uuid),
                         existing_type,
                         target_entity_type,
-                        target_uuid,
                         target_uuid & 0xffff
                     );
                 }
                 entry.into_mut()
             }
-            Entry::Vacant(entry) => entry.insert(Entity {
-                entity_type: target_entity_type,
-                ..Default::default()
-            }),
+            Entry::Vacant(entry) => entry.insert(Entity::new(target_uuid, target_entity_type)),
         };
 
         let attr_collection = pkt_entity.attrs?;
         match target_entity_type {
             EEntityType::EntChar => {
-                process_player_attrs(target_uid, &attr_collection.attrs, attr_store);
+                process_player_attrs(target_uuid, &attr_collection.attrs, attr_store);
             }
             EEntityType::EntMonster => {
                 process_monster_attrs(
                     target_entity,
-                    target_uid,
+                    target_uuid,
                     &attr_collection.attrs,
                     attr_store,
                 );
@@ -251,18 +248,19 @@ pub fn process_sync_container_data(
 ) -> Option<()> {
     let v_data = sync_container_data.v_data?;
     let player_uid = v_data.char_id?;
-    encounter.local_player_uid = player_uid;
-    attr_store.set_local_uid(player_uid);
+    let player_uuid = canonical_player_uuid(player_uid);
+    encounter.local_player_uuid = player_uuid;
+    attr_store.set_local_uuid(player_uuid);
 
     let target_entity = encounter
-        .entity_uid_to_entity
-        .entry(player_uid)
-        .or_default();
+        .entity_uuid_to_entity
+        .entry(player_uuid)
+        .or_insert_with(|| Entity::new(player_uuid, EEntityType::EntChar));
     let char_base = v_data.char_base.as_ref()?;
     let name = char_base.name.clone()?;
     target_entity.name = name;
     let _ = attr_store.set_attr(
-        player_uid,
+        player_uuid,
         AttrType::Name,
         AttrValue::String(target_entity.name.clone()),
     );
@@ -274,14 +272,14 @@ pub fn process_sync_container_data(
     let class_id = profession_list.cur_profession_id?;
     target_entity.class_id = class_id;
     let _ = attr_store.set_attr(
-        player_uid,
+        player_uuid,
         AttrType::ProfessionId,
         AttrValue::Int(target_entity.class_id as i64),
     );
 
     target_entity.ability_score = char_base.fight_point?;
     let _ = attr_store.set_attr(
-        player_uid,
+        player_uuid,
         AttrType::FightPoint,
         AttrValue::Int(target_entity.ability_score as i64),
     );
@@ -289,7 +287,7 @@ pub fn process_sync_container_data(
     let role_level = v_data.role_level.as_ref()?;
     target_entity.level = role_level.level?;
     let _ = attr_store.set_attr(
-        player_uid,
+        player_uuid,
         AttrType::Level,
         AttrValue::Int(target_entity.level as i64),
     );
@@ -455,8 +453,8 @@ pub fn process_sync_to_me_delta_info(
     };
 
     if let Some(uuid) = delta_info.uuid {
-        encounter.local_player_uid = uuid >> 16; // UUID =/= uid (have to >> 16)
-        attr_store.set_local_uid(encounter.local_player_uid);
+        encounter.local_player_uuid = uuid;
+        attr_store.set_local_uuid(uuid);
     }
 
     result.skill_cds = delta_info
@@ -547,8 +545,7 @@ pub(crate) fn process_enter_scene(
             if let Some(attrs) = player_ent.attrs.as_ref() {
                 apply_panel_attrs(attr_store, attrs, monitored_panel_attr_ids);
                 if let Some(uuid) = player_ent.uuid {
-                    let player_uid = uuid >> 16;
-                    process_player_attrs(player_uid, &attrs.attrs, attr_store);
+                    process_player_attrs(uuid, &attrs.attrs, attr_store);
                 }
             }
         }
@@ -640,32 +637,28 @@ pub fn process_aoi_sync_delta(
     combat_target_filter: Option<i64>,
     collect_taken: bool,
 ) -> Option<(Vec<LocalDamageEvent>, Vec<LocalDamageTakenEvent>)> {
-    let target_uuid = aoi_sync_delta.uuid?; // UUID =/= uid (have to >> 16)
-    let target_uid = target_uuid >> 16;
+    let target_uuid = aoi_sync_delta.uuid?;
     let allow_combat = match combat_target_filter {
-        Some(locked_target_uid) => locked_target_uid == target_uid,
+        Some(locked_target_uuid) => locked_target_uuid == target_uuid,
         None => true,
     };
 
     // Process attributes
     let target_entity_type = EEntityType::from(target_uuid);
     let mut target_entity = encounter
-        .entity_uid_to_entity
-        .entry(target_uid)
-        .or_insert_with(|| Entity {
-            entity_type: target_entity_type,
-            ..Default::default()
-        });
+        .entity_uuid_to_entity
+        .entry(target_uuid)
+        .or_insert_with(|| Entity::new(target_uuid, target_entity_type));
 
     if let Some(attrs_collection) = aoi_sync_delta.attrs.as_ref() {
         match target_entity_type {
             EEntityType::EntChar => {
-                process_player_attrs(target_uid, &attrs_collection.attrs, attr_store);
+                process_player_attrs(target_uuid, &attrs_collection.attrs, attr_store);
             }
             EEntityType::EntMonster => {
                 process_monster_attrs(
                     &mut target_entity,
-                    target_uid,
+                    target_uuid,
                     &attrs_collection.attrs,
                     attr_store,
                 );
@@ -682,7 +675,7 @@ pub fn process_aoi_sync_delta(
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis();
-    let mut target_hp_state = TargetHpState::from_attr_store(attr_store, target_uid);
+    let mut target_hp_state = TargetHpState::from_attr_store(attr_store, target_uuid);
     let mut local_damage_events = Vec::new();
     let mut local_damage_taken_events = Vec::new();
     let mut had_player_damage = false;
@@ -710,7 +703,6 @@ pub fn process_aoi_sync_delta(
         let attacker_uuid = sync_damage_info
             .top_summoner_id
             .or(sync_damage_info.attacker_uuid)?;
-        let attacker_uid = attacker_uuid >> 16;
 
         // Local copies of fields needed later (avoid holding map borrows across operations)
         let owner_id = sync_damage_info.owner_id?;
@@ -721,40 +713,37 @@ pub fn process_aoi_sync_delta(
             sync_damage_info.hit_event_id,
         );
         let skill_key = damage_id;
-        if attacker_uid == encounter.local_player_uid {
+        if attacker_uuid == encounter.local_player_uuid {
             local_damage_events.push(LocalDamageEvent {
                 skill_key,
-                target_uid,
+                target_entity_uuid: target_uuid,
             });
         }
-        if collect_taken && target_uid == encounter.local_player_uid && !is_heal {
+        if collect_taken && target_uuid == encounter.local_player_uuid && !is_heal {
             local_damage_taken_events.push(LocalDamageTakenEvent {
                 skill_key,
-                attacker_uid,
+                attacker_entity_uuid: attacker_uuid,
             });
         }
         let flag = sync_damage_info.type_flag.unwrap_or_default();
         // Pre-calculate whether this target is recognized as a boss and local player id
         let is_boss_target = encounter
-            .entity_uid_to_entity
-            .get(&target_uid)
+            .entity_uuid_to_entity
+            .get(&target_uuid)
             .map(|e| e.is_boss())
             .unwrap_or(false);
 
         let target_monster_id = encounter
-            .entity_uid_to_entity
-            .get(&target_uid)
+            .entity_uuid_to_entity
+            .get(&target_uuid)
             .and_then(|entity| entity.monster_type_id);
 
         // First update attacker-side state in its own scope (single mutable borrow)
         let (is_crit, is_lucky, attacker_entity_type_copy, was_heal_event) = {
             let attacker_entity = encounter
-                .entity_uid_to_entity
-                .entry(attacker_uid)
-                .or_insert_with(|| Entity {
-                    entity_type: EEntityType::from(attacker_uuid),
-                    ..Default::default()
-                });
+                .entity_uuid_to_entity
+                .entry(attacker_uuid)
+                .or_insert_with(|| Entity::new(attacker_uuid, EEntityType::from(attacker_uuid)));
 
             let determined_spec = get_class_spec_from_skill_id(owner_id);
             if determined_spec != ClassSpec::Unknown {
@@ -802,7 +791,7 @@ pub fn process_aoi_sync_delta(
                 skill.effective_total_value += effective_heal_value;
 
                 // Track per-skill per-target stats for healing
-                let key = (skill_key, target_uid);
+                let key = (skill_key, target_uuid);
                 let stats = attacker_entity.skill_heal_to_target.entry(key).or_default();
 
                 stats.hits += 1;
@@ -872,7 +861,7 @@ pub fn process_aoi_sync_delta(
 
                 // Track per-target totals
                 use std::collections::hash_map::Entry;
-                match attacker_entity.dmg_to_target.entry(target_uid) {
+                match attacker_entity.dmg_to_target.entry(target_uuid) {
                     Entry::Occupied(mut e) => {
                         *e.get_mut() += actual_value;
                     }
@@ -882,7 +871,7 @@ pub fn process_aoi_sync_delta(
                 }
 
                 // Track per-skill per-target stats
-                let key = (skill_key, target_uid);
+                let key = (skill_key, target_uuid);
                 let stats = attacker_entity.skill_dmg_to_target.entry(key).or_default();
 
                 stats.hits += 1;
@@ -931,17 +920,14 @@ pub fn process_aoi_sync_delta(
             // Snapshot attacker's monster_type_id before mutably borrowing defender_entity,
             // so the death-replay window can surface it without needing a second lookup.
             let attacker_monster_type_id = encounter
-                .entity_uid_to_entity
-                .get(&attacker_uid)
+                .entity_uuid_to_entity
+                .get(&attacker_uuid)
                 .and_then(|e| e.monster_type_id);
 
             let defender_entity = encounter
-                .entity_uid_to_entity
-                .entry(target_uid)
-                .or_insert_with(|| Entity {
-                    entity_type: EEntityType::from(target_uuid),
-                    ..Default::default()
-                });
+                .entity_uuid_to_entity
+                .entry(target_uuid)
+                .or_insert_with(|| Entity::new(target_uuid, EEntityType::from(target_uuid)));
 
             if attacker_entity_type_copy != EEntityType::EntChar {
                 let taken_skill = defender_entity
@@ -986,7 +972,7 @@ pub fn process_aoi_sync_delta(
                     .recent_taken_events
                     .push_back(DamageSnapshot {
                         timestamp_ms,
-                        attacker_uid,
+                        attacker_entity_uuid: attacker_uuid,
                         attacker_monster_type_id,
                         skill_key,
                         value: actual_value,
@@ -1036,7 +1022,7 @@ fn parse_hate_list_into(raw: &[u8], entries: &mut Vec<HateEntry>) -> Option<()> 
 
         let entry = <HateInfoWire as prost::Message>::decode_length_delimited(&mut buf).ok()?;
         entries.push(HateEntry {
-            uid: entry.uuid >> 16,
+            entity_uuid: entry.uuid.to_string(),
             hate_val: entry.hate_val,
         });
     }
@@ -1157,7 +1143,7 @@ fn decode_position_attr(raw: Option<&[u8]>) -> Option<PositionAttr> {
     })
 }
 
-fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut EntityAttrStore) {
+fn process_player_attrs(target_uuid: i64, attrs: &[Attr], attr_store: &mut EntityAttrStore) {
     for attr in attrs {
         let Some(attr_id) = attr.id else { continue };
         let raw_bytes_opt = attr.raw_data.as_deref();
@@ -1169,7 +1155,7 @@ fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut Entity
                     .filter_map(|value| i32::try_from(value).ok())
                     .collect::<Vec<_>>()
             }) {
-                let _ = attr_store.set_fight_resource_ids(target_uid, ids);
+                let _ = attr_store.set_fight_resource_ids(target_uuid, ids);
             }
             continue;
         }
@@ -1177,8 +1163,8 @@ fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut Entity
         if attr_id == attr_type::ATTR_FIGHT_RESOURCES {
             if let Some(values) = raw_bytes_opt.and_then(parse_fight_resources) {
                 log::debug!(
-                    "Decoded ATTR_FIGHT_RESOURCES for UID {}: {:?}",
-                    target_uid,
+                    "Decoded ATTR_FIGHT_RESOURCES for entity UUID {}: {:?}",
+                    target_uuid,
                     values
                 );
             }
@@ -1196,7 +1182,7 @@ fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut Entity
                 })
                 .unwrap_or(0);
             attr_store.set_attr(
-                target_uid,
+                target_uuid,
                 AttrType::CurrentShield,
                 AttrValue::Int(total_shield),
             );
@@ -1206,7 +1192,7 @@ fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut Entity
         if attr_id == attr_type::ATTR_POS {
             if let Some(position) = decode_position_attr(raw_bytes_opt) {
                 let _ = attr_store.set_attr(
-                    target_uid,
+                    target_uuid,
                     AttrType::Position,
                     AttrValue::Position(position),
                 );
@@ -1217,7 +1203,7 @@ fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut Entity
         let decoded = if attr_id == attr_type::ATTR_NAME {
             let name = decode_prefixed_string_or_default(raw_bytes_opt);
             if !name.is_empty() {
-                info!("Found player {} with UID {}", name, target_uid);
+                info!("Found player {} with entity UUID {}", name, target_uuid);
             }
             Some((AttrType::Name, AttrValue::String(name)))
         } else if let Some(attr_type) = AttrType::from_id(attr_id) {
@@ -1228,14 +1214,14 @@ fn process_player_attrs(target_uid: i64, attrs: &[Attr], attr_store: &mut Entity
         };
 
         if let Some((attr_type, value)) = decoded {
-            attr_store.set_attr(target_uid, attr_type, value);
+            attr_store.set_attr(target_uuid, attr_type, value);
         }
     }
 }
 
 fn process_monster_attrs(
     monster_entity: &mut Entity,
-    target_uid: i64,
+    target_uuid: i64,
     attrs: &[Attr],
     attr_store: &mut EntityAttrStore,
 ) {
@@ -1250,7 +1236,7 @@ fn process_monster_attrs(
                 if monster_id > 0 {
                     monster_entity.set_monster_type(monster_id);
                     let _ = attr_store.set_attr(
-                        target_uid,
+                        target_uuid,
                         AttrType::MonsterId,
                         AttrValue::Int(i64::from(monster_id)),
                     );
@@ -1264,7 +1250,7 @@ fn process_monster_attrs(
         }
 
         if attr_id == attr_type::ATTR_HATE_LIST {
-            let hate_list = attr_store.hate_list_mut(target_uid);
+            let hate_list = attr_store.hate_list_mut(target_uuid);
             if let Some(raw) = raw_bytes_opt {
                 let _ = parse_hate_list_into(raw, hate_list);
             } else {
@@ -1275,7 +1261,79 @@ fn process_monster_attrs(
 
         if let Some(attr_type) = AttrType::from_id(attr_id) {
             let value = decode_varint_i64_or_default(raw_bytes_opt);
-            let _ = attr_store.set_attr(target_uid, attr_type, AttrValue::Int(value));
+            let _ = attr_store.set_attr(target_uuid, attr_type, AttrValue::Int(value));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::live::entity_id::{canonical_player_uuid, entity_id_to_uuid};
+    use blueprotobuf_lib::blueprotobuf::{AttrCollection, SyncNearEntities};
+
+    #[test]
+    fn sync_near_entities_keeps_same_uid_distinct_uuids() {
+        let uid = 777;
+        let player_uuid = canonical_player_uuid(uid);
+        let monster_uuid = entity_id_to_uuid(uid, EEntityType::EntMonster, false, false);
+        let mut encounter = Encounter::default();
+        let mut attr_store = EntityAttrStore::default();
+
+        process_sync_near_entities(
+            &mut encounter,
+            &mut attr_store,
+            SyncNearEntities {
+                appear: vec![
+                    blueprotobuf::Entity {
+                        uuid: Some(player_uuid),
+                        attrs: Some(AttrCollection::default()),
+                        ..Default::default()
+                    },
+                    blueprotobuf::Entity {
+                        uuid: Some(monster_uuid),
+                        attrs: Some(AttrCollection::default()),
+                        ..Default::default()
+                    },
+                ],
+                disappear: Vec::new(),
+            },
+        );
+
+        assert_eq!(encounter.entity_uuid_to_entity.len(), 2);
+        assert!(encounter.entity_uuid_to_entity.contains_key(&player_uuid));
+        assert!(encounter.entity_uuid_to_entity.contains_key(&monster_uuid));
+    }
+
+    #[test]
+    fn container_data_uses_canonical_player_uuid_boundary() {
+        let mut encounter = Encounter::default();
+        let mut attr_store = EntityAttrStore::default();
+        let char_id = 12345;
+        let player_uuid = canonical_player_uuid(char_id);
+
+        let mut sync_container_data = blueprotobuf::SyncContainerData::default();
+        let mut v_data = blueprotobuf::CharSerialize::default();
+        v_data.char_id = Some(char_id);
+        v_data.char_base = Some(blueprotobuf::CharBaseInfo {
+            name: Some("Test Player".to_string()),
+            fight_point: Some(100),
+            ..Default::default()
+        });
+        v_data.profession_list = Some(blueprotobuf::ProfessionList {
+            cur_profession_id: Some(1),
+            ..Default::default()
+        });
+        v_data.role_level = Some(blueprotobuf::RoleLevel {
+            level: Some(50),
+            ..Default::default()
+        });
+        sync_container_data.v_data = Some(v_data);
+
+        process_sync_container_data(&mut encounter, &mut attr_store, sync_container_data);
+
+        assert_eq!(encounter.local_player_uuid, player_uuid);
+        assert!(encounter.entity_uuid_to_entity.contains_key(&player_uuid));
+        assert!(encounter.entity_uuid_to_entity.get(&char_id).is_none());
     }
 }

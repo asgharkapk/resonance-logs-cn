@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone)]
 pub struct DeathEvent {
-    pub uid: i64,
+    pub entity_uuid: i64,
     pub timestamp_ms: u128,
 }
 
@@ -16,7 +16,7 @@ pub struct EntityAttrStore {
     hate_lists: HashMap<i64, Vec<HateEntry>>,
     fight_resource_ids: HashMap<i64, Vec<i32>>,
     temp_attrs: HashMap<i32, i32>,
-    local_player_uid: i64,
+    local_player_uuid: i64,
     panel_attr_values: HashMap<i32, i32>,
     cd_dirty: bool,
     panel_dirty_attrs: Vec<PanelAttrState>,
@@ -41,7 +41,7 @@ impl EntityAttrStore {
             hate_lists: HashMap::new(),
             fight_resource_ids: HashMap::new(),
             temp_attrs: HashMap::new(),
-            local_player_uid: 0,
+            local_player_uuid: 0,
             panel_attr_values: HashMap::new(),
             cd_dirty: false,
             panel_dirty_attrs: Vec::with_capacity(8),
@@ -51,12 +51,12 @@ impl EntityAttrStore {
         }
     }
 
-    pub fn set_local_uid(&mut self, uid: i64) {
-        self.local_player_uid = uid;
+    pub fn set_local_uuid(&mut self, entity_uuid: i64) {
+        self.local_player_uuid = entity_uuid;
     }
 
-    pub fn local_player_uid(&self) -> i64 {
-        self.local_player_uid
+    pub fn local_player_uuid(&self) -> i64 {
+        self.local_player_uuid
     }
 
     pub fn set_attr(&mut self, uid: i64, attr_type: AttrType, value: AttrValue) -> bool {
@@ -74,7 +74,7 @@ impl EntityAttrStore {
             return false;
         }
         self.attrs.entry(uid).or_default().insert(attr_type, value);
-        if uid == self.local_player_uid
+        if uid == self.local_player_uuid
             && matches!(
                 attr_type,
                 AttrType::SkillCd | AttrType::SkillCdPct | AttrType::CdAcceleratePct
@@ -82,7 +82,7 @@ impl EntityAttrStore {
         {
             self.cd_dirty = true;
         }
-        if uid == self.local_player_uid
+        if uid == self.local_player_uuid
             && matches!(attr_type, AttrType::CurrentHp | AttrType::MaxHp)
         {
             self.shield_detail_dirty = true;
@@ -95,7 +95,10 @@ impl EntityAttrStore {
                     .duration_since(UNIX_EPOCH)
                     .unwrap_or_default()
                     .as_millis();
-                self.death_events.push(DeathEvent { uid, timestamp_ms });
+                self.death_events.push(DeathEvent {
+                    entity_uuid: uid,
+                    timestamp_ms,
+                });
             }
         }
 
@@ -216,7 +219,7 @@ impl EntityAttrStore {
     }
 
     pub fn cd_inputs(&self) -> (f32, f32, f32) {
-        let uid = self.local_player_uid;
+        let uid = self.local_player_uuid;
         let attr_skill_cd = self
             .attr(uid, AttrType::SkillCd)
             .and_then(AttrValue::as_int)

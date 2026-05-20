@@ -386,7 +386,7 @@ pub fn save_encounter(encounter: &Encounter, metadata: &EncounterMetadata) {
     let metadata = metadata.clone();
     db_send(move |conn| {
         let combat_entities: HashMap<i64, Entity> = encounter
-            .entity_uid_to_entity
+            .entity_uuid_to_entity
             .iter()
             .filter_map(|(uid, entity)| {
                 let has_combat =

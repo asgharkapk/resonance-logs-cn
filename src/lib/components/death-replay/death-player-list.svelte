@@ -10,7 +10,8 @@
   import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
 
   export type DeathPlayerEntry = {
-    uid: number;
+    entityUuid: string;
+    displayUid: number;
     name: string;
     className: string;
     classSpecName: string;
@@ -19,14 +20,14 @@
 
   let {
     entries,
-    localPlayerUid = null,
+    localPlayerUuid = null,
     onSelect,
     emptyMessage,
     variant = "live",
   }: {
     entries: DeathPlayerEntry[];
-    localPlayerUid?: number | null;
-    onSelect: (uid: number) => void;
+    localPlayerUuid?: string | null;
+    onSelect: (entityUuid: string) => void;
     emptyMessage?: string;
     variant?: "live" | "history";
   } = $props();
@@ -128,13 +129,14 @@
   }
 
   function resolveDisplayName(entry: DeathPlayerEntry) {
-    const isLocal = localPlayerUid != null && entry.uid === localPlayerUid;
+    const isLocal = localPlayerUuid != null && entry.entityUuid === localPlayerUuid;
     return {
       isLocal,
       displayName:
         getDisplayName({
           player: {
-            uid: entry.uid,
+            entityUuid: entry.entityUuid,
+            displayUid: entry.displayUid,
             name: entry.name,
             className: entry.className,
             classSpecName: entry.classSpecName,
@@ -142,7 +144,7 @@
           showYourNameSetting: SETTINGS_YOUR_NAME,
           showOthersNameSetting: SETTINGS_OTHERS_NAME,
           isLocalPlayer: isLocal,
-        }) || `#${entry.uid}`,
+        }) || `#${entry.displayUid}`,
       className: (() => {
         const setting = normalizeNameDisplaySetting(
           isLocal ? SETTINGS_YOUR_NAME : SETTINGS_OTHERS_NAME,
@@ -204,11 +206,11 @@
             </td>
           </tr>
         {:else}
-          {#each sortedRows as row (row.entry.uid)}
+          {#each sortedRows as row (row.entry.entityUuid)}
             {@const info = resolveDisplayName(row.entry)}
             <tr
               class="relative border-t border-border/40 hover:bg-muted/60 transition-colors cursor-pointer"
-              onclick={() => onSelect(row.entry.uid)}
+              onclick={() => onSelect(row.entry.entityUuid)}
             >
               <td class="px-3 py-3 text-sm text-muted-foreground relative z-10">
                 <div class="flex items-center gap-2 h-full">
@@ -228,7 +230,7 @@
                     class="truncate"
                     {@attach tooltip(() =>
                       t("components.deathReplay.uidTooltip", {
-                        uid: row.entry.uid,
+                        uid: row.entry.displayUid,
                       }),
                     )}
                   >
@@ -315,13 +317,13 @@
           </thead>
         {/if}
         <tbody>
-          {#each sortedRows as row (row.entry.uid)}
+          {#each sortedRows as row (row.entry.entityUuid)}
             {@const info = resolveDisplayName(row.entry)}
             {#if compactMode}
               <tr
                 class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
                 style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
-                onclick={() => onSelect(row.entry.uid)}
+                onclick={() => onSelect(row.entry.entityUuid)}
               >
                 <td class="px-3 py-1 relative z-10">
                   <div class="flex items-center h-full gap-2">
@@ -393,7 +395,7 @@
               <tr
                 class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
                 style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
-                onclick={() => onSelect(row.entry.uid)}
+                onclick={() => onSelect(row.entry.entityUuid)}
               >
                 <td class="px-3 py-1 relative z-10">
                   <div class="flex items-center h-full gap-2">

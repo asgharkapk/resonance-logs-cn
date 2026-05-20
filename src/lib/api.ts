@@ -17,7 +17,7 @@ import type {
 
 // Type definitions for event payloads
 export type BossHealth = {
-  uid: number;
+  entityUuid: string;
   monsterId: number | null;
   currentHp: number | null;
   maxHp: number | null;
@@ -47,7 +47,8 @@ export type TrainingDummyState = {
 };
 
 export type PlayerRow = {
-  uid: number;
+  entityUuid: string;
+  displayUid: number;
   name: string;
   className: string;
   classSpecName: string;
@@ -136,7 +137,7 @@ export type BossBuffUpdatePayload = {
 };
 
 export type HateEntry = {
-  uid: number;
+  entityUuid: string;
   hateVal: number;
 };
 
@@ -212,7 +213,7 @@ export type LiveDataPayload = {
   totalDmgBossOnly: number;
   totalHeal: number;
   totalEffectiveHeal: number;
-  localPlayerUid: number;
+  localPlayerUuid: string;
   sceneId: number | null;
   dungeonDifficulty: number | null;
   isPaused: boolean;

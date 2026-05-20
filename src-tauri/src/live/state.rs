@@ -2,15 +2,16 @@ use crate::database::{EncounterMetadata, PlayerNameEntry, now_ms, save_encounter
 use crate::live::bootstrap_snapshot::MonitorRuntimeSnapshot;
 use crate::live::buff_monitor::{BossBuffMonitors, BuffMonitor};
 use crate::live::commands_models::{
-    CounterUpdateState, DeathRecord, FightResourceEntry, FightResourceState, PanelAttrState,
-    ShieldDetailEntry, SkillCdState, TrainingDummyState,
+    CounterUpdateState, FightResourceEntry, FightResourceState, PanelAttrState, ShieldDetailEntry,
+    SkillCdState, TrainingDummyState, to_death_record,
 };
 use crate::live::counter_tracker::{BuffCounterTracker, CounterRule};
 use crate::live::dungeon_log::{BattleStateMachine, EncounterResetReason};
 use crate::live::entity_attr_store::EntityAttrStore;
+use crate::live::entity_id::{entity_uuid_string, uid_from_uuid};
 use crate::live::event_manager::EventManager;
 use crate::live::monster_registry;
-use crate::live::opcodes_models::{AttrType, AttrValue, Encounter, Entity};
+use crate::live::opcodes_models::{AttrType, AttrValue, DeathRecord, Encounter, Entity};
 use crate::live::skill_cd_monitor::SkillCdMonitor;
 use crate::live::team::{TeamEvent, TeamRuntimeState};
 use crate::live::training_dummy::{
@@ -81,8 +82,8 @@ pub struct AppState {
     pub pending_auto_reset: Option<Instant>,
     /// Runtime state for training dummy mode.
     pub training_dummy: TrainingDummyRuntime,
-    /// UIDs whose display names have already been pushed to the monster overlay.
-    pub sent_overlay_uids: HashSet<i64>,
+    /// Entity UUIDs whose display names have already been pushed to the monster overlay.
+    pub sent_overlay_entity_uuids: HashSet<i64>,
     /// Set to true whenever a new DeathRecord has been appended to an Entity, signalling that
     /// the next emit cycle should push a full death-replay snapshot.
     pub death_snapshot_dirty: bool,
@@ -92,7 +93,7 @@ pub struct AppState {
 
 #[derive(Debug)]
 pub struct EntityMonitor {
-    pub uid: i64,
+    pub entity_uuid: i64,
     pub buff_monitor: BuffMonitor,
     pub skill_cd_monitor: SkillCdMonitor,
     pub monitored_panel_attr_ids: Vec<i32>,
@@ -101,9 +102,9 @@ pub struct EntityMonitor {
 }
 
 impl EntityMonitor {
-    fn new(uid: i64) -> Self {
+    fn new(entity_uuid: i64) -> Self {
         Self {
-            uid,
+            entity_uuid,
             buff_monitor: BuffMonitor::new(),
             skill_cd_monitor: SkillCdMonitor::new(),
             monitored_panel_attr_ids: Vec::new(),
@@ -159,7 +160,7 @@ impl AppState {
             battle_state: BattleStateMachine::default(),
             pending_auto_reset: None,
             training_dummy: TrainingDummyRuntime::default(),
-            sent_overlay_uids: HashSet::new(),
+            sent_overlay_entity_uuids: HashSet::new(),
             death_snapshot_dirty: false,
             team: TeamRuntimeState::default(),
         }
@@ -204,7 +205,7 @@ fn emit_panel_attr_update_if_needed(state: &mut AppState, payload: Vec<PanelAttr
 fn emit_shield_detail_update_if_needed(state: &mut AppState, mut entries: Vec<ShieldDetailEntry>) {
     // Note: unlike other *_if_needed emitters, empty `entries` is meaningful
     // (all shields expired) and must still be forwarded so the overlay clears.
-    let uid = state.attr_store.local_player_uid();
+    let uid = state.attr_store.local_player_uuid();
     let current_hp = state
         .attr_store
         .attr(uid, AttrType::CurrentHp)
@@ -247,18 +248,18 @@ fn emit_buff_counter_update_if_needed(state: &mut AppState, payload: Vec<Counter
 }
 
 fn hydrate_entities_from_attr_store(state: &mut AppState) {
-    for (&uid, entity) in &mut state.encounter.entity_uid_to_entity {
-        state.attr_store.hydrate_entity(uid, entity);
+    for (&entity_uuid, entity) in &mut state.encounter.entity_uuid_to_entity {
+        state.attr_store.hydrate_entity(entity_uuid, entity);
     }
 }
 
 fn resolve_player_display_name(
-    uid: i64,
+    entity_uuid: i64,
     entity: Option<&Entity>,
     attr_store: &EntityAttrStore,
 ) -> String {
     if let Some(name) = attr_store
-        .attr(uid, AttrType::Name)
+        .attr(entity_uuid, AttrType::Name)
         .and_then(|value| value.as_string())
     {
         return name.to_string();
@@ -268,15 +269,15 @@ fn resolve_player_display_name(
             return entity.name.clone();
         }
     }
-    format!("UID {uid}")
+    format!("UID {}", uid_from_uuid(entity_uuid))
 }
 
 fn collect_player_names(encounter: &Encounter) -> Vec<PlayerNameEntry> {
     let mut player_names: Vec<PlayerNameEntry> =
-        Vec::with_capacity(encounter.entity_uid_to_entity.len());
+        Vec::with_capacity(encounter.entity_uuid_to_entity.len());
     player_names.extend(
         encounter
-            .entity_uid_to_entity
+            .entity_uuid_to_entity
             .iter()
             .filter(|(_, entity)| {
                 entity.entity_type == EEntityType::EntChar
@@ -297,7 +298,7 @@ fn encounter_has_stats(encounter: &Encounter) -> bool {
     encounter.total_dmg > 0
         || encounter.total_heal > 0
         || encounter
-            .entity_uid_to_entity
+            .entity_uuid_to_entity
             .values()
             .any(|e| e.damage.hits > 0 || e.healing.hits > 0 || e.taken.hits > 0)
 }
@@ -329,7 +330,7 @@ fn build_encounter_metadata(
     EncounterMetadata {
         started_at_ms: encounter.time_fight_start_ms as i64,
         ended_at_ms: Some(now_ms()),
-        local_player_id: Some(encounter.local_player_uid),
+        local_player_id: Some(encounter.local_player_uuid),
         total_dmg: encounter.total_dmg.min(i64::MAX as u128) as i64,
         total_heal: encounter.total_heal.min(i64::MAX as u128) as i64,
         scene_id: encounter.current_scene_id,
@@ -346,7 +347,7 @@ fn persist_and_save_encounter(state: &mut AppState, is_manual: bool, source: &st
     hydrate_entities_from_attr_store(state);
     let mut boss_monster_ids: Vec<i32> = state
         .encounter
-        .entity_uid_to_entity
+        .entity_uuid_to_entity
         .values()
         .filter(|entity| entity.is_boss())
         .filter_map(|entity| entity.monster_type_id)
@@ -451,7 +452,7 @@ impl AppStateManager {
         let mut counter_dirty = state.local_monitor.counter_tracker.tick_counters(
             now_ms(),
             &state.attr_store,
-            state.encounter.local_player_uid,
+            state.encounter.local_player_uuid,
         );
         match event {
             StateEvent::EnterScene(data) => {
@@ -509,7 +510,7 @@ impl AppStateManager {
                 state
                     .local_monitor
                     .counter_tracker
-                    .build_payload(&state.attr_store, state.encounter.local_player_uid),
+                    .build_payload(&state.attr_store, state.encounter.local_player_uuid),
             );
         }
         self.apply_attr_store_changes(state);
@@ -519,12 +520,12 @@ impl AppStateManager {
         info!(target: "app::live", "team event: {:?}", event);
         state
             .team
-            .apply_event(event, state.encounter.local_player_uid);
+            .apply_event(event, state.encounter.local_player_uuid);
         info!(
             target: "app::live",
-            "team state team_id={} leader_id={} members={:?}",
+            "team state team_id={} leader_uuid={} members={:?}",
             state.team.team_id,
-            state.team.leader_id,
+            state.team.leader_uuid,
             state.team.members
         );
     }
@@ -548,7 +549,7 @@ impl AppStateManager {
             }
             LiveControlCommand::StopTrainingDummy => {
                 let previous = build_training_dummy_state(&state.training_dummy);
-                if state.training_dummy.locked_target_uid.is_some()
+                if state.training_dummy.locked_target_uuid.is_some()
                     && encounter_has_stats(&state.encounter)
                 {
                     self.reset_encounter(state, false);
@@ -757,12 +758,12 @@ impl AppStateManager {
         use crate::live::opcodes_process::process_sync_container_data;
 
         persist_and_save_encounter(state, false, "container_data_resync");
-        state.encounter.entity_uid_to_entity.clear();
+        state.encounter.entity_uuid_to_entity.clear();
         state.attr_store.clear_all_entities();
         state.encounter.reset_combat_state();
         state.local_monitor.clear_runtime_state();
         state.boss_buff_monitors.clear();
-        state.sent_overlay_uids.clear();
+        state.sent_overlay_entity_uuids.clear();
         state.battle_state = BattleStateMachine::default();
         state.pending_auto_reset = None;
         let previous = build_training_dummy_state(&state.training_dummy);
@@ -882,16 +883,15 @@ impl AppStateManager {
             .as_ref()
             .and_then(|delta| delta.base_delta.as_ref())
             .and_then(|base_delta| {
-                let local_player_uid = sync_to_me_delta_info
+                let local_player_uuid = sync_to_me_delta_info
                     .delta_info
                     .as_ref()
                     .and_then(|delta| delta.uuid)
-                    .map(|uuid| uuid >> 16)
-                    .unwrap_or(state.encounter.local_player_uid);
+                    .unwrap_or(state.encounter.local_player_uuid);
                 self.prepare_training_dummy_for_delta(
                     state,
                     base_delta,
-                    local_player_uid,
+                    local_player_uuid,
                     "SyncToMeDeltaInfo",
                 )
             });
@@ -904,8 +904,8 @@ impl AppStateManager {
             combat_target_filter,
         );
 
-        if state.local_monitor.uid != state.encounter.local_player_uid {
-            state.local_monitor.uid = state.encounter.local_player_uid;
+        if state.local_monitor.entity_uuid != state.encounter.local_player_uuid {
+            state.local_monitor.entity_uuid = state.encounter.local_player_uuid;
         }
 
         if !result.skill_cds.is_empty() {
@@ -926,7 +926,7 @@ impl AppStateManager {
         if let Some(values) = result.fight_resources {
             let ids = state
                 .attr_store
-                .fight_resource_ids(state.encounter.local_player_uid);
+                .fight_resource_ids(state.encounter.local_player_uuid);
             if !ids.is_empty() {
                 let now = crate::database::now_ms();
                 let new_state = FightResourceState {
@@ -950,7 +950,7 @@ impl AppStateManager {
         if !result.local_damage_events.is_empty() {
             counter_dirty |= state.local_monitor.counter_tracker.on_damage_events(
                 &result.local_damage_events,
-                state.encounter.local_player_uid,
+                state.encounter.local_player_uuid,
                 &state.attr_store,
             );
         }
@@ -958,7 +958,7 @@ impl AppStateManager {
         if !result.local_damage_taken_events.is_empty() {
             counter_dirty |= state.local_monitor.counter_tracker.on_damage_taken_events(
                 &result.local_damage_taken_events,
-                state.encounter.local_player_uid,
+                state.encounter.local_player_uuid,
             );
         }
 
@@ -981,7 +981,7 @@ impl AppStateManager {
             let buff_process_result = state.local_monitor.buff_monitor.process_buff_effect_bytes(
                 &raw_bytes,
                 &mut state.server_clock_offset,
-                state.encounter.local_player_uid,
+                state.encounter.local_player_uuid,
             );
             if let Some(payload) = buff_process_result.update_payload {
                 state.event_manager.emit_buff_update(payload);
@@ -989,14 +989,14 @@ impl AppStateManager {
             counter_dirty |= state.local_monitor.counter_tracker.on_buff_changes(
                 &buff_process_result.changes,
                 &state.attr_store,
-                state.encounter.local_player_uid,
+                state.encounter.local_player_uuid,
             );
         }
 
         counter_dirty |= state
             .local_monitor
             .counter_tracker
-            .on_movement_sample(&state.attr_store, state.encounter.local_player_uid);
+            .on_movement_sample(&state.attr_store, state.encounter.local_player_uuid);
 
         counter_dirty
     }
@@ -1019,10 +1019,10 @@ impl AppStateManager {
 
         let mut counter_dirty = false;
         let mut aggregated_damage_events = Vec::new();
-        let local_player_uid = state.encounter.local_player_uid;
+        let local_player_uuid = state.encounter.local_player_uuid;
         for mut aoi_sync_delta in sync_near_delta_info.delta_infos {
-            let target_uid = aoi_sync_delta.uuid.map(|uuid| uuid >> 16);
-            let is_local_player = target_uid == Some(local_player_uid) && local_player_uid != 0;
+            let target_uuid = aoi_sync_delta.uuid;
+            let is_local_player = target_uuid == Some(local_player_uuid) && local_player_uuid != 0;
 
             // Apply panel attrs for local player from AoiSyncDelta
             if is_local_player {
@@ -1043,7 +1043,7 @@ impl AppStateManager {
             let combat_target_filter = self.prepare_training_dummy_for_delta(
                 state,
                 &aoi_sync_delta,
-                local_player_uid,
+                local_player_uuid,
                 "SyncNearDeltaInfo",
             );
 
@@ -1058,11 +1058,11 @@ impl AppStateManager {
                 aggregated_damage_events.extend(events);
             }
 
-            if let (Some(target_uid), Some(raw_bytes)) = (target_uid, buff_bytes) {
+            if let (Some(target_uuid), Some(raw_bytes)) = (target_uuid, buff_bytes) {
                 let should_monitor_monster_buffs = state
                     .encounter
-                    .entity_uid_to_entity
-                    .get(&target_uid)
+                    .entity_uuid_to_entity
+                    .get(&target_uuid)
                     .map(|entity| {
                         entity.is_boss()
                             || entity
@@ -1071,12 +1071,12 @@ impl AppStateManager {
                     })
                     .unwrap_or(false);
                 if should_monitor_monster_buffs {
-                    let local_player_uid = state.encounter.local_player_uid;
-                    let monitor = state.boss_buff_monitors.monitor_for(target_uid);
+                    let local_player_uuid = state.encounter.local_player_uuid;
+                    let monitor = state.boss_buff_monitors.monitor_for(target_uuid);
                     monitor.process_buff_effect_bytes(
                         &raw_bytes,
                         &mut state.server_clock_offset,
-                        local_player_uid,
+                        local_player_uuid,
                     );
                 }
             }
@@ -1085,7 +1085,7 @@ impl AppStateManager {
         if !aggregated_damage_events.is_empty() {
             counter_dirty |= state.local_monitor.counter_tracker.on_damage_events(
                 &aggregated_damage_events,
-                state.encounter.local_player_uid,
+                state.encounter.local_player_uuid,
                 &state.attr_store,
             );
         }
@@ -1093,7 +1093,7 @@ impl AppStateManager {
         counter_dirty |= state
             .local_monitor
             .counter_tracker
-            .on_movement_sample(&state.attr_store, local_player_uid);
+            .on_movement_sample(&state.attr_store, local_player_uuid);
 
         counter_dirty
     }
@@ -1174,13 +1174,17 @@ impl AppStateManager {
         }
 
         for death in changes.death_events {
-            if let Some(entity) = state.encounter.entity_uid_to_entity.get_mut(&death.uid) {
+            if let Some(entity) = state
+                .encounter
+                .entity_uuid_to_entity
+                .get_mut(&death.entity_uuid)
+            {
                 let recent_damages: Vec<_> = entity.recent_taken_events.drain(..).collect();
                 if recent_damages.is_empty() {
                     continue;
                 }
                 entity.deaths.push(DeathRecord {
-                    victim_uid: death.uid,
+                    victim_entity_uuid: death.entity_uuid,
                     death_timestamp_ms: death.timestamp_ms,
                     recent_damages,
                 });
@@ -1336,11 +1340,11 @@ impl AppStateManager {
         state.event_manager.emit_live_data(payload);
 
         if state.death_snapshot_dirty {
-            let mut records: Vec<DeathRecord> = state
+            let mut records: Vec<_> = state
                 .encounter
-                .entity_uid_to_entity
+                .entity_uuid_to_entity
                 .values()
-                .flat_map(|entity| entity.deaths.iter().cloned())
+                .flat_map(|entity| entity.deaths.iter().map(to_death_record))
                 .collect();
             records.sort_by_key(|r| r.death_timestamp_ms);
             state.event_manager.emit_death_replay(records);
@@ -1349,11 +1353,16 @@ impl AppStateManager {
         let mut boss_buff_snapshot = state
             .boss_buff_monitors
             .build_all_buff_snapshots(state.server_clock_offset);
-        boss_buff_snapshot.retain(|&uid, _| !state.attr_store.is_dead(uid));
+        boss_buff_snapshot.retain(|entity_uuid, _| {
+            entity_uuid
+                .parse::<i64>()
+                .ok()
+                .is_some_and(|uuid| !state.attr_store.is_dead(uuid))
+        });
 
         let boss_count = state
             .encounter
-            .entity_uid_to_entity
+            .entity_uuid_to_entity
             .values()
             .filter(|entity| entity.is_boss())
             .count();
@@ -1363,57 +1372,67 @@ impl AppStateManager {
         let mut monster_ids =
             HashMap::with_capacity(boss_count.saturating_add(boss_buff_snapshot.len()));
 
-        for (&boss_uid, entity) in &state.encounter.entity_uid_to_entity {
+        for (&boss_uuid, entity) in &state.encounter.entity_uuid_to_entity {
             if !entity.is_boss() {
                 continue;
             }
-            if state.attr_store.is_dead(boss_uid) {
+            if state.attr_store.is_dead(boss_uuid) {
                 continue;
             }
 
-            if state.sent_overlay_uids.insert(boss_uid) {
+            if state.sent_overlay_entity_uuids.insert(boss_uuid) {
                 if let Some(monster_id) = entity.monster_type_id {
-                    monster_ids.insert(boss_uid, monster_id);
+                    monster_ids.insert(entity_uuid_string(boss_uuid), monster_id);
                 }
             }
 
             let entries = state
                 .attr_store
                 .hate_lists()
-                .get(&boss_uid)
+                .get(&boss_uuid)
                 .cloned()
                 .unwrap_or_default();
 
             for entry in &entries {
-                if state.sent_overlay_uids.insert(entry.uid) {
-                    let entity = state.encounter.entity_uid_to_entity.get(&entry.uid);
+                let Ok(entry_uuid) = entry.entity_uuid.parse::<i64>() else {
+                    continue;
+                };
+                if state.sent_overlay_entity_uuids.insert(entry_uuid) {
+                    let entity = state.encounter.entity_uuid_to_entity.get(&entry_uuid);
                     if let Some(monster_id) = entity.and_then(|entity| entity.monster_type_id) {
-                        monster_ids.insert(entry.uid, monster_id);
+                        monster_ids.insert(entry.entity_uuid.clone(), monster_id);
                     } else {
                         player_names.insert(
-                            entry.uid,
-                            resolve_player_display_name(entry.uid, entity, &state.attr_store),
+                            entry.entity_uuid.clone(),
+                            resolve_player_display_name(entry_uuid, entity, &state.attr_store),
                         );
                     }
                 }
             }
 
             if !entries.is_empty() {
-                all_hate_lists.insert(boss_uid, entries);
+                all_hate_lists.insert(entity_uuid_string(boss_uuid), entries);
             }
         }
 
-        for &target_uid in boss_buff_snapshot.keys() {
-            if !state.sent_overlay_uids.insert(target_uid) {
+        for target_uuid in boss_buff_snapshot.keys() {
+            let Ok(target_uuid_value) = target_uuid.parse::<i64>() else {
+                continue;
+            };
+            if !state.sent_overlay_entity_uuids.insert(target_uuid_value) {
                 continue;
             }
 
-            let Some(entity) = state.encounter.entity_uid_to_entity.get(&target_uid) else {
+            let Some(entity) = state
+                .encounter
+                .entity_uuid_to_entity
+                .get(&target_uuid_value)
+            else {
                 continue;
             };
 
             if let Some(monster_id) = entity.monster_type_id {
-                monster_ids.insert(target_uid, monster_id);
+                monster_ids.insert(target_uuid.clone(), monster_id);
             }
         }
 
@@ -1433,7 +1452,7 @@ impl AppStateManager {
         &self,
         state: &mut AppState,
         delta: &AoiSyncDelta,
-        local_player_uid: i64,
+        local_player_uuid: i64,
         source: &str,
     ) -> Option<i64> {
         if !state.training_dummy.has_selection() {
@@ -1443,7 +1462,7 @@ impl AppStateManager {
         let previous = build_training_dummy_state(&state.training_dummy);
         state.training_dummy.maybe_enter_pending_rollover();
         emit_training_dummy_update_if_changed(state, previous);
-        let matched = inspect_aoi_delta(&state.encounter, delta, local_player_uid);
+        let matched = inspect_aoi_delta(&state.encounter, delta, local_player_uuid);
 
         if let Some(matched) = matched {
             if state.training_dummy.should_lock_on_match(matched)
@@ -1452,9 +1471,9 @@ impl AppStateManager {
                 if encounter_has_stats(&state.encounter) {
                     info!(
                         target: "app::live",
-                        "training_dummy_reset_before_lock source={} target_uid={} monster_id={}",
+                        "training_dummy_reset_before_lock source={} target_uuid={} monster_id={}",
                         source,
-                        matched.target_uid,
+                        matched.target_entity_uuid,
                         matched.monster_id.id()
                     );
                     self.reset_encounter(state, false);
@@ -1464,9 +1483,9 @@ impl AppStateManager {
                 emit_training_dummy_update_if_changed(state, previous);
                 info!(
                     target: "app::live",
-                    "training_dummy_locked source={} target_uid={} monster_id={}",
+                    "training_dummy_locked source={} target_uuid={} monster_id={}",
                     source,
-                    matched.target_uid,
+                    matched.target_entity_uuid,
                     matched.monster_id.id()
                 );
             }

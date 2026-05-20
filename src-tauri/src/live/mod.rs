@@ -7,6 +7,7 @@ pub mod damage_id;
 pub mod dungeon_dirty_blob;
 pub mod dungeon_log;
 pub mod entity_attr_store;
+pub mod entity_id;
 pub mod event_manager;
 pub mod live_main;
 pub mod monster_registry;
