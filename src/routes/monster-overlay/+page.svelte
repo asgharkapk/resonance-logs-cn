@@ -59,6 +59,7 @@
 
   :global(.overlay-group) {
     position: absolute;
+    z-index: 20;
     pointer-events: auto;
   }
 
