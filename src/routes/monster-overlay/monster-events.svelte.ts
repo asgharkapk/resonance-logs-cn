@@ -71,18 +71,24 @@ export function initMonsterOverlay() {
   });
   const unlistenHateList = onHateListUpdate((event) => {
     const next = new Map<EntityId, HateEntry[]>();
-    for (const [entityUuid, entries] of Object.entries(event.payload.hateLists)) {
+    for (const [entityUuid, entries] of Object.entries(
+      event.payload.hateLists,
+    )) {
       next.set(entityUuid, entries);
     }
     monsterRuntime.bossHateMap = next;
   });
   const unlistenIdentities = onEntityIdentities((event) => {
     const nextPlayerNames = new Map(monsterRuntime.playerNameCache);
-    for (const [entityUuid, name] of Object.entries(event.payload.playerNames)) {
+    for (const [entityUuid, name] of Object.entries(
+      event.payload.playerNames,
+    )) {
       nextPlayerNames.set(entityUuid, name);
     }
     const nextMonsterIds = new Map(monsterRuntime.monsterIdCache);
-    for (const [entityUuid, monsterId] of Object.entries(event.payload.monsterIds)) {
+    for (const [entityUuid, monsterId] of Object.entries(
+      event.payload.monsterIds,
+    )) {
       nextMonsterIds.set(entityUuid, monsterId);
     }
     monsterRuntime.playerNameCache = nextPlayerNames;
@@ -104,6 +110,7 @@ export function initMonsterOverlay() {
     monsterRuntime.teammateBuffMap = new Map();
     monsterRuntime.bossHateMap = new Map();
     monsterRuntime.bossSections = [];
+    monsterRuntime.teammateRows = [];
     monsterRuntime.hateSections = [];
     unlistenEditToggle.then((fn) => fn());
     unlistenBossBuff.then((fn) => fn());

@@ -1,4 +1,5 @@
 import type { TextBuffDisplay } from "../game-overlay/overlay-types";
+import type { BuffAlertState } from "../game-overlay/overlay-types";
 import type { EntityId } from "$lib/entity-id";
 
 export type MonsterBossBuffSection = {
@@ -6,7 +7,7 @@ export type MonsterBossBuffSection = {
   title: string;
   rows: TextBuffDisplay[];
   isPlaceholder?: boolean;
-  kind?: "monster" | "teammate";
+  kind?: "monster";
 };
 
 export type MonsterHateSection = {
@@ -16,12 +17,32 @@ export type MonsterHateSection = {
   isPlaceholder?: boolean;
 };
 
+export type MonsterTeammateBuffCell = {
+  key: string;
+  buffId: number;
+  buffName: string;
+  valueText: string;
+  metaText?: string | undefined;
+  progressPercent: number;
+  hasBuff: boolean;
+  alert?: BuffAlertState | undefined;
+};
+
+export type MonsterTeammateBuffRow = {
+  teammateEntityUuid: EntityId;
+  teammateName: string;
+  cells: MonsterTeammateBuffCell[];
+  isPlaceholder?: boolean;
+};
+
 export type MonsterDragTarget =
   | { kind: "buffPanel" }
+  | { kind: "teammatePanel" }
   | { kind: "hatePanel" };
 
 export type MonsterResizeTarget =
   | { kind: "buffPanel" }
+  | { kind: "teammatePanel" }
   | { kind: "hatePanel" };
 
 export type MonsterDragState = {

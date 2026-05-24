@@ -19,7 +19,7 @@
   } from "$lib/settings-store";
 
   type SearchTarget = "global" | "self";
-  type MonsterMonitorTab = "buff" | "teammate" | "hate";
+  type MonsterMonitorTab = "buff" | "teammate" | "hate" | "overlay";
 
   const availableBuffDefinitions = getAvailableBuffDefinitions();
   const availableBuffMap = new Map<number, BuffDefinition>(
@@ -40,6 +40,16 @@
   const hatePanelStyle = $derived.by(
     () => monsterMonitor.hatePanelStyle ?? monsterMonitor.panelStyle,
   );
+  const teammatePanelStyle = $derived.by(
+    () => monsterMonitor.teammatePanelStyle ?? monsterMonitor.panelStyle,
+  );
+  const overlayVisibility = $derived.by(() => ({
+    showMonsterBuffPanel:
+      monsterMonitor.overlayVisibility?.showMonsterBuffPanel ?? true,
+    showTeammateBuffPanel:
+      monsterMonitor.overlayVisibility?.showTeammateBuffPanel ?? true,
+    showHatePanel: monsterMonitor.overlayVisibility?.showHatePanel ?? true,
+  }));
   const globalBuffIds = $derived(monsterMonitor.monitoredBuffIds);
   const selfAppliedBuffIds = $derived(monsterMonitor.selfAppliedBuffIds);
   const teammateBuffIds = $derived(monsterMonitor.teammateBuffIds);
@@ -48,12 +58,7 @@
     ensureBuffAlerts(monsterMonitor.buffAlerts),
   );
   const allConfiguredBuffIds = $derived.by(() =>
-    Array.from(
-      new Set([
-        ...globalBuffIds,
-        ...selfAppliedBuffIds,
-      ]),
-    ),
+    Array.from(new Set([...globalBuffIds, ...selfAppliedBuffIds])),
   );
   const configuredAlertBuffIds = $derived.by(() =>
     Object.keys(buffAlerts)
@@ -126,8 +131,7 @@
     updateMonsterMonitor((state) => {
       const nextGlobal = state.monitoredBuffIds.filter((id) => id !== buffId);
       const nextSelf = state.selfAppliedBuffIds.filter((id) => id !== buffId);
-      const targetIds =
-        searchTarget === "global" ? nextGlobal : nextSelf;
+      const targetIds = searchTarget === "global" ? nextGlobal : nextSelf;
       const existsInTarget =
         searchTarget === "global"
           ? state.monitoredBuffIds.includes(buffId)
@@ -140,7 +144,8 @@
         searchTarget === "self" ? nextTargetIds : nextSelf;
 
       const stillMonitored =
-        monitoredBuffIds.includes(buffId) || selfAppliedBuffIds.includes(buffId);
+        monitoredBuffIds.includes(buffId) ||
+        selfAppliedBuffIds.includes(buffId);
       const buffPriorityIds =
         !stillMonitored && state.buffPriorityIds
           ? state.buffPriorityIds.filter((id) => id !== buffId)
@@ -256,6 +261,39 @@
         [key]: value,
       },
     }));
+  }
+
+  function updateTeammatePanelStyle<K extends keyof typeof teammatePanelStyle>(
+    key: K,
+    value: (typeof teammatePanelStyle)[K],
+  ) {
+    updateMonsterMonitor((state) => ({
+      ...state,
+      teammatePanelStyle: {
+        ...(state.teammatePanelStyle ?? state.panelStyle),
+        [key]: value,
+      },
+    }));
+  }
+
+  function toggleOverlayVisibility(key: keyof typeof overlayVisibility) {
+    updateMonsterMonitor((state) => ({
+      ...state,
+      overlayVisibility: {
+        showMonsterBuffPanel:
+          state.overlayVisibility?.showMonsterBuffPanel ?? true,
+        showTeammateBuffPanel:
+          state.overlayVisibility?.showTeammateBuffPanel ?? true,
+        showHatePanel: state.overlayVisibility?.showHatePanel ?? true,
+        [key]: !(state.overlayVisibility?.[key] ?? true),
+      },
+    }));
+  }
+
+  function visibilityState(value: boolean): string {
+    return value
+      ? t("monsterMonitor.overlay.state.show")
+      : t("monsterMonitor.overlay.state.hide");
   }
 
   function isSelectedInCurrentTarget(buffId: number) {
@@ -413,6 +451,18 @@
       >
         {t("monsterMonitor.tabs.hate")}
       </button>
+      <button
+        type="button"
+        class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors {activeTab ===
+        'overlay'
+          ? 'bg-primary text-primary-foreground border-primary'
+          : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+        onclick={() => {
+          activeTab = "overlay";
+        }}
+      >
+        {t("monsterMonitor.tabs.overlay")}
+      </button>
     </div>
   </section>
 
@@ -554,7 +604,6 @@
           {/if}
         </div>
       </div>
-
     </section>
 
     <section
@@ -970,7 +1019,137 @@
         {/if}
       </div>
     </section>
-  {:else}
+    <section
+      class="border-border/60 bg-card/60 space-y-5 rounded-xl border p-5"
+    >
+      <div class="space-y-1">
+        <h2 class="text-foreground text-base font-semibold">
+          {t("monsterMonitor.teammate.styleTitle")}
+        </h2>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-3">
+        <label class="style-field">
+          <span>{t("monsterMonitor.style.gap")}</span>
+          <input
+            type="range"
+            min="0"
+            max="24"
+            value={teammatePanelStyle.gap}
+            oninput={(event) =>
+              updateTeammatePanelStyle(
+                "gap",
+                Number.parseInt(
+                  (event.currentTarget as HTMLInputElement).value,
+                  10,
+                ),
+              )}
+          />
+          <strong>{teammatePanelStyle.gap}px</strong>
+        </label>
+
+        <label class="style-field">
+          <span>{t("monsterMonitor.style.columnGap")}</span>
+          <input
+            type="range"
+            min="0"
+            max="40"
+            value={teammatePanelStyle.columnGap}
+            oninput={(event) =>
+              updateTeammatePanelStyle(
+                "columnGap",
+                Number.parseInt(
+                  (event.currentTarget as HTMLInputElement).value,
+                  10,
+                ),
+              )}
+          />
+          <strong>{teammatePanelStyle.columnGap}px</strong>
+        </label>
+
+        <label class="style-field">
+          <span>{t("monsterMonitor.style.fontSize")}</span>
+          <input
+            type="range"
+            min="10"
+            max="28"
+            value={teammatePanelStyle.fontSize}
+            oninput={(event) =>
+              updateTeammatePanelStyle(
+                "fontSize",
+                Number.parseInt(
+                  (event.currentTarget as HTMLInputElement).value,
+                  10,
+                ),
+              )}
+          />
+          <strong>{teammatePanelStyle.fontSize}px</strong>
+        </label>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <label class="color-field">
+          <span>{t("monsterMonitor.style.nameColor")}</span>
+          <input
+            type="color"
+            value={teammatePanelStyle.nameColor}
+            oninput={(event) =>
+              updateTeammatePanelStyle(
+                "nameColor",
+                (event.currentTarget as HTMLInputElement).value,
+              )}
+          />
+        </label>
+
+        <label class="color-field">
+          <span>{t("monsterMonitor.style.valueColor")}</span>
+          <input
+            type="color"
+            value={teammatePanelStyle.valueColor}
+            oninput={(event) =>
+              updateTeammatePanelStyle(
+                "valueColor",
+                (event.currentTarget as HTMLInputElement).value,
+              )}
+          />
+        </label>
+
+        <label class="color-field">
+          <span>{t("monsterMonitor.style.progressColor")}</span>
+          <input
+            type="color"
+            value={teammatePanelStyle.progressColor}
+            oninput={(event) =>
+              updateTeammatePanelStyle(
+                "progressColor",
+                (event.currentTarget as HTMLInputElement).value,
+              )}
+          />
+        </label>
+
+        <label class="color-field">
+          <span>{t("monsterMonitor.style.progressOpacity")}</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={teammatePanelStyle.progressOpacity ?? 0.4}
+            oninput={(event) =>
+              updateTeammatePanelStyle(
+                "progressOpacity",
+                Number((event.currentTarget as HTMLInputElement).value),
+              )}
+          />
+          <strong
+            >{Math.round(
+              (teammatePanelStyle.progressOpacity ?? 0.4) * 100,
+            )}%</strong
+          >
+        </label>
+      </div>
+    </section>
+  {:else if activeTab === "hate"}
     <section
       class="border-border/60 bg-card/60 space-y-5 rounded-xl border p-5"
     >
@@ -1144,6 +1323,66 @@
           >
         </label>
       </div>
+    </section>
+  {:else}
+    <section
+      class="border-border/60 bg-card/60 space-y-4 rounded-xl border p-5"
+    >
+      <div class="space-y-1">
+        <h2 class="text-foreground text-base font-semibold">
+          {t("monsterMonitor.overlay.title")}
+        </h2>
+        <p class="text-muted-foreground text-xs">
+          {t("monsterMonitor.overlay.description")}
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors {overlayVisibility.showMonsterBuffPanel
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+          onclick={() => toggleOverlayVisibility("showMonsterBuffPanel")}
+        >
+          {t("monsterMonitor.overlay.monsterBuff", {
+            state: visibilityState(overlayVisibility.showMonsterBuffPanel),
+          })}
+        </button>
+
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors {overlayVisibility.showTeammateBuffPanel
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+          onclick={() => toggleOverlayVisibility("showTeammateBuffPanel")}
+        >
+          {t("monsterMonitor.overlay.teammateBuff", {
+            state: visibilityState(overlayVisibility.showTeammateBuffPanel),
+          })}
+        </button>
+
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 {overlayVisibility.showHatePanel
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+          disabled={!monsterMonitor.hateListEnabled}
+          onclick={() => toggleOverlayVisibility("showHatePanel")}
+        >
+          {t("monsterMonitor.overlay.hate", {
+            state: visibilityState(
+              monsterMonitor.hateListEnabled && overlayVisibility.showHatePanel,
+            ),
+          })}
+        </button>
+      </div>
+
+      <p class="text-muted-foreground text-xs">
+        {monsterMonitor.hateListEnabled
+          ? t("monsterMonitor.overlay.help")
+          : t("monsterMonitor.overlay.hateDisabledHelp")}
+      </p>
     </section>
   {/if}
 </div>

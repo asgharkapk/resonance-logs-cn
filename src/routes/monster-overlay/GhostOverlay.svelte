@@ -1,14 +1,19 @@
 <script lang="ts">
+  import { SETTINGS } from "$lib/settings-store";
   import { t } from "$lib/i18n/index.svelte";
-  import { activeProfile } from "$lib/skill-monitor-profile.svelte.js";
-  import { ensureCustomPanelGroups } from "../game-overlay/overlay-utils";
   import type { GhostArea } from "./monster-types";
+  import {
+    getMonsterOverlayPositions,
+    getMonsterOverlaySizes,
+    getMonsterOverlayVisibility,
+  } from "./monster-state.svelte.js";
 
   const ghostAreas = $derived.by(() => {
-    const profile = activeProfile();
-    if (!profile) return [] as GhostArea[];
-
+    const positions = getMonsterOverlayPositions();
+    const sizes = getMonsterOverlaySizes();
+    const visibility = getMonsterOverlayVisibility();
     const next: GhostArea[] = [];
+
     const pushArea = (
       id: string,
       label: string,
@@ -21,68 +26,43 @@
       next.push({ id, label, x, y, width, height, scale });
     };
 
-    const { overlayPositions, overlaySizes, overlayVisibility } = profile;
-
-    if (overlayVisibility.showSkillCdGroup) {
-      pushArea("skillCdGroup", t("monsterOverlay.ghost.skillCd"), overlayPositions.skillCdGroup.x, overlayPositions.skillCdGroup.y, 280, 118, overlaySizes.skillCdGroupScale);
-    }
-    if (overlayVisibility.showResourceGroup) {
-      pushArea("resourceGroup", t("monsterOverlay.ghost.resource"), overlayPositions.resourceGroup.x, overlayPositions.resourceGroup.y, 250, 90, overlaySizes.resourceGroupScale);
-    }
-    if (overlayVisibility.showPanelAttrGroup) {
-      pushArea("panelAttrGroup", t("monsterOverlay.ghost.panelAttr"), overlayPositions.panelAttrGroup.x, overlayPositions.panelAttrGroup.y, 220, 130, overlaySizes.panelAttrGroupScale);
-    }
-    if (overlayVisibility.showCustomPanelGroup) {
-      for (const group of ensureCustomPanelGroups(profile)) {
-        const height = Math.max(120, group.entries.length * 34 + 24);
-        pushArea(
-          `customPanelGroup:${group.id}`,
-          group.name,
-          group.position.x,
-          group.position.y,
-          220,
-          height,
-          group.scale,
-        );
-      }
+    if (visibility.showMonsterBuffPanel) {
+      pushArea(
+        "monsterBuffPanel",
+        t("monsterOverlay.buffGroupTag"),
+        positions.monsterBuffPanel.x,
+        positions.monsterBuffPanel.y,
+        280,
+        130,
+        sizes.monsterBuffPanelScale,
+      );
     }
 
-    if (overlayVisibility?.showShieldDetailGroup !== false) {
-      const pos = overlayPositions?.shieldDetailGroup ?? { x: 40, y: 550 };
-      const scale = overlaySizes?.shieldDetailGroupScale ?? 1;
-      pushArea("shieldDetailGroup", t("monsterOverlay.ghost.shieldDetail"), pos.x, pos.y, 240, 120, scale);
+    if (visibility.showTeammateBuffPanel) {
+      pushArea(
+        "teammateBuffPanel",
+        t("monsterOverlay.teammateGroupTag"),
+        positions.teammateBuffPanel.x,
+        positions.teammateBuffPanel.y,
+        420,
+        180,
+        sizes.teammateBuffPanelScale,
+      );
     }
 
-    pushArea("textBuffPanel", t("monsterOverlay.ghost.textBuff"), overlayPositions.textBuffPanel.x, overlayPositions.textBuffPanel.y, 240, 130, overlaySizes.textBuffPanelScale);
-
-    if (profile.buffDisplayMode === "grouped") {
-      for (const group of profile.buffGroups) {
-        const width = Math.max(120, group.columns * (group.iconSize + group.gap));
-        const height = Math.max(90, group.rows * (group.iconSize + group.gap) + 26);
-        pushArea(
-          `buffGroup:${group.id}`,
-          `${group.name}${group.monitorAll ? t("monsterOverlay.ghost.allSuffix") : ""}`,
-          group.position.x,
-          group.position.y,
-          width,
-          height,
-        );
-      }
-    } else if (profile.individualMonitorAllGroup) {
-      const group = profile.individualMonitorAllGroup;
-      const width = Math.max(120, group.columns * (group.iconSize + group.gap));
-      const height = Math.max(90, group.rows * (group.iconSize + group.gap) + 26);
-      pushArea(`individualAllGroup:${group.id}`, `${group.name}${t("monsterOverlay.ghost.allSuffix")}`, group.position.x, group.position.y, width, height);
-    }
-
-    for (const [baseId, point] of Object.entries(overlayPositions.iconBuffPositions)) {
-      const size = overlaySizes.iconBuffSizes[Number(baseId)] ?? 44;
-      pushArea(`icon:${baseId}`, t("monsterOverlay.ghost.buff", { id: baseId }), point.x, point.y, size, size);
-    }
-
-    for (const [categoryKey, point] of Object.entries(overlayPositions.categoryIconPositions ?? {})) {
-      const size = overlaySizes.categoryIconSizes?.[categoryKey as keyof typeof overlaySizes.categoryIconSizes] ?? 44;
-      pushArea(`category:${categoryKey}`, t("monsterOverlay.ghost.category", { key: categoryKey }), point.x, point.y, size, size);
+    if (
+      SETTINGS.monsterMonitor.state.hateListEnabled &&
+      visibility.showHatePanel
+    ) {
+      pushArea(
+        "hatePanel",
+        t("monsterOverlay.hateGroupTag"),
+        positions.hatePanel.x,
+        positions.hatePanel.y,
+        260,
+        120,
+        sizes.hatePanelScale,
+      );
     }
 
     return next;

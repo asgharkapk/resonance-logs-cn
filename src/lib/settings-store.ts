@@ -512,12 +512,20 @@ export type ShieldDetailStyle = {
 
 export type MonsterOverlayPositions = {
   monsterBuffPanel: Point;
+  teammateBuffPanel: Point;
   hatePanel: Point;
 };
 
 export type MonsterOverlaySizes = {
   monsterBuffPanelScale: number;
+  teammateBuffPanelScale: number;
   hatePanelScale: number;
+};
+
+export type MonsterOverlayVisibility = {
+  showMonsterBuffPanel: boolean;
+  showTeammateBuffPanel: boolean;
+  showHatePanel: boolean;
 };
 
 export type BuffAlertRule = {
@@ -542,7 +550,9 @@ export type MonsterMonitorConfig = {
   buffAlerts: BuffAlertMap;
   overlayPositions: MonsterOverlayPositions;
   overlaySizes: MonsterOverlaySizes;
+  overlayVisibility: MonsterOverlayVisibility;
   panelStyle: CustomPanelStyle;
+  teammatePanelStyle: CustomPanelStyle;
   hatePanelStyle: CustomPanelStyle;
 };
 
@@ -741,6 +751,7 @@ export function createDefaultCustomPanelStyle(): CustomPanelStyle {
 function createDefaultMonsterOverlayPositions(): MonsterOverlayPositions {
   return {
     monsterBuffPanel: { x: 40, y: 40 },
+    teammateBuffPanel: { x: 420, y: 40 },
     hatePanel: { x: 40, y: 300 },
   };
 }
@@ -748,7 +759,16 @@ function createDefaultMonsterOverlayPositions(): MonsterOverlayPositions {
 function createDefaultMonsterOverlaySizes(): MonsterOverlaySizes {
   return {
     monsterBuffPanelScale: 1,
+    teammateBuffPanelScale: 1,
     hatePanelScale: 1,
+  };
+}
+
+function createDefaultMonsterOverlayVisibility(): MonsterOverlayVisibility {
+  return {
+    showMonsterBuffPanel: true,
+    showTeammateBuffPanel: true,
+    showHatePanel: true,
   };
 }
 
@@ -842,7 +862,9 @@ export function createDefaultMonsterMonitorConfig(): MonsterMonitorConfig {
     buffAlerts: {},
     overlayPositions: createDefaultMonsterOverlayPositions(),
     overlaySizes: createDefaultMonsterOverlaySizes(),
+    overlayVisibility: createDefaultMonsterOverlayVisibility(),
     panelStyle: createDefaultCustomPanelStyle(),
+    teammatePanelStyle: createDefaultCustomPanelStyle(),
     hatePanelStyle: createDefaultCustomPanelStyle(),
   };
 }

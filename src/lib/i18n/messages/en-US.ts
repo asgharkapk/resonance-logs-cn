@@ -1107,13 +1107,15 @@ export const enUSMessages = {
   "skillMonitor.overlay.help":
     "Click a button to toggle visibility. Saved per profile",
   "monsterMonitor.title": "Monster Monitor",
-  "monsterMonitor.description": "Monitor current target monster buffs and related data",
+  "monsterMonitor.description":
+    "Monitor current target monster buffs and related data",
   "monsterMonitor.actions.toggleOverlay": "Toggle Monster Overlay",
   "monsterMonitor.actions.editLayout": "Edit Monster Layout",
   "monsterMonitor.enabled": "Enable Monster Monitor",
   "monsterMonitor.tabs.buff": "Buff Monitor",
   "monsterMonitor.tabs.teammate": "Teammate Buffs",
   "monsterMonitor.tabs.hate": "Hate List",
+  "monsterMonitor.tabs.overlay": "Enable Window",
   "monsterMonitor.buffSearch.title": "Buff Search and Selection",
   "monsterMonitor.buffSearch.self": "Search and Add Self-Applied",
   "monsterMonitor.buffSearch.global": "Search and Add Global Monitor",
@@ -1139,6 +1141,7 @@ export const enUSMessages = {
   "monsterMonitor.teammate.placeholder": "Search and add teammate buffs",
   "monsterMonitor.teammate.emptySearch": "No matching teammate buffs",
   "monsterMonitor.teammate.groupTitle": "Monitored Teammate Buffs",
+  "monsterMonitor.teammate.styleTitle": "Teammate Buff Matrix Style",
   "monsterMonitor.priority.title": "Buff Priority",
   "monsterMonitor.priority.description":
     "Customize monster buff display order. Buffs higher in the list are shown first.",
@@ -1178,6 +1181,17 @@ export const enUSMessages = {
   "monsterMonitor.hate.enabled": "Enable Hate List",
   "monsterMonitor.hate.maxDisplay": "Max Visible Characters",
   "monsterMonitor.hate.styleTitle": "Hate Panel Style",
+  "monsterMonitor.overlay.title": "Overlay Area Visibility",
+  "monsterMonitor.overlay.description":
+    "Control each visible area in the monster monitor overlay.",
+  "monsterMonitor.overlay.monsterBuff": "Monster Buff Area: {state}",
+  "monsterMonitor.overlay.teammateBuff": "Teammate Buff Area: {state}",
+  "monsterMonitor.overlay.hate": "Hate List Area: {state}",
+  "monsterMonitor.overlay.state.show": "Show",
+  "monsterMonitor.overlay.state.hide": "Hide",
+  "monsterMonitor.overlay.help": "Click buttons to toggle visibility.",
+  "monsterMonitor.overlay.hateDisabledHelp":
+    "Enable the hate list on the Hate List tab before showing this area.",
   "monsterMonitor.buffFallback": "Buff {id}",
   "monsterOverlay.edit.title":
     "Edit Mode - Drag to Adjust Monster Monitor Position",
@@ -1187,13 +1201,17 @@ export const enUSMessages = {
   "monsterOverlay.edit.dragHint":
     "Drag here to move the Monster Overlay window",
   "monsterOverlay.buffGroupTag": "Monster Buff Area",
+  "monsterOverlay.teammateGroupTag": "Teammate Buff Area",
   "monsterOverlay.hateGroupTag": "Hate Area",
   "monsterOverlay.hateSectionTitle": "{title} - Hate",
   "monsterOverlay.placeholder.selectBuff":
     "Select buffs on the Monster Monitor page",
   "monsterOverlay.placeholder.preview": "Preview",
   "monsterOverlay.placeholder.target": "Target {uid}",
+  "monsterOverlay.placeholder.teammate": "Teammate Preview",
+  "monsterOverlay.placeholder.buffName": "Sample Buff",
   "monsterOverlay.entity.uid": "UID {uid}",
+  "monsterOverlay.teammate.nameHeader": "Teammate",
   "monsterOverlay.ghost.skillCd": "Skill CD Area",
   "monsterOverlay.ghost.resource": "Resource Area",
   "monsterOverlay.ghost.panelAttr": "Character Attribute Area",

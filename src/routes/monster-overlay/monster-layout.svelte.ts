@@ -2,23 +2,29 @@ import { SETTINGS } from "$lib/settings-store";
 import {
   DEFAULT_MONSTER_OVERLAY_POSITIONS,
   DEFAULT_MONSTER_OVERLAY_SIZES,
+  DEFAULT_MONSTER_OVERLAY_VISIBILITY,
   MAX_MONSTER_PANEL_SCALE,
   MIN_MONSTER_PANEL_SCALE,
 } from "./monster-constants";
 import { monsterRuntime } from "./monster-runtime.svelte.js";
-import type {
-  MonsterDragTarget,
-  MonsterResizeTarget,
-} from "./monster-types";
+import type { MonsterDragTarget, MonsterResizeTarget } from "./monster-types";
 
 function patchMonsterMonitor(
-  updater: (state: typeof SETTINGS.monsterMonitor.state) => Partial<typeof SETTINGS.monsterMonitor.state>,
+  updater: (
+    state: typeof SETTINGS.monsterMonitor.state,
+  ) => Partial<typeof SETTINGS.monsterMonitor.state>,
 ) {
-  Object.assign(SETTINGS.monsterMonitor.state, updater(SETTINGS.monsterMonitor.state));
+  Object.assign(
+    SETTINGS.monsterMonitor.state,
+    updater(SETTINGS.monsterMonitor.state),
+  );
 }
 
 function clampPanelScale(value: number) {
-  return Math.max(MIN_MONSTER_PANEL_SCALE, Math.min(MAX_MONSTER_PANEL_SCALE, value));
+  return Math.max(
+    MIN_MONSTER_PANEL_SCALE,
+    Math.min(MAX_MONSTER_PANEL_SCALE, value),
+  );
 }
 
 export function setMonsterOverlayWindow(
@@ -41,12 +47,27 @@ export function getMonsterOverlaySizes() {
   };
 }
 
+export function getMonsterOverlayVisibility() {
+  return {
+    ...DEFAULT_MONSTER_OVERLAY_VISIBILITY,
+    ...(SETTINGS.monsterMonitor.state.overlayVisibility ?? {}),
+  };
+}
+
 export function getMonsterPanelPosition() {
   return getMonsterOverlayPositions().monsterBuffPanel;
 }
 
 export function getMonsterPanelScale() {
   return getMonsterOverlaySizes().monsterBuffPanelScale;
+}
+
+export function getTeammatePanelPosition() {
+  return getMonsterOverlayPositions().teammateBuffPanel;
+}
+
+export function getTeammatePanelScale() {
+  return getMonsterOverlaySizes().teammateBuffPanelScale;
 }
 
 export function getHatePanelPosition() {
@@ -62,8 +83,17 @@ export function monsterPanelStyle() {
 }
 
 export function hatePanelStyle() {
-  return SETTINGS.monsterMonitor.state.hatePanelStyle
-    ?? SETTINGS.monsterMonitor.state.panelStyle;
+  return (
+    SETTINGS.monsterMonitor.state.hatePanelStyle ??
+    SETTINGS.monsterMonitor.state.panelStyle
+  );
+}
+
+export function teammatePanelStyle() {
+  return (
+    SETTINGS.monsterMonitor.state.teammatePanelStyle ??
+    SETTINGS.monsterMonitor.state.panelStyle
+  );
 }
 
 export function setMonsterPanelPosition(nextPos: { x: number; y: number }) {
@@ -80,6 +110,24 @@ export function setMonsterPanelScale(value: number) {
     overlaySizes: {
       ...getMonsterOverlaySizes(),
       monsterBuffPanelScale: clampPanelScale(value),
+    },
+  }));
+}
+
+export function setTeammatePanelPosition(nextPos: { x: number; y: number }) {
+  patchMonsterMonitor(() => ({
+    overlayPositions: {
+      ...getMonsterOverlayPositions(),
+      teammateBuffPanel: nextPos,
+    },
+  }));
+}
+
+export function setTeammatePanelScale(value: number) {
+  patchMonsterMonitor(() => ({
+    overlaySizes: {
+      ...getMonsterOverlaySizes(),
+      teammateBuffPanelScale: clampPanelScale(value),
     },
   }));
 }
@@ -151,6 +199,8 @@ export function onGlobalPointerMove(event: PointerEvent) {
     };
     if (monsterRuntime.dragState.target.kind === "buffPanel") {
       setMonsterPanelPosition(nextPos);
+    } else if (monsterRuntime.dragState.target.kind === "teammatePanel") {
+      setTeammatePanelPosition(nextPos);
     } else {
       setHatePanelPosition(nextPos);
     }
@@ -162,6 +212,8 @@ export function onGlobalPointerMove(event: PointerEvent) {
     const delta = (deltaX + deltaY) / 300;
     if (monsterRuntime.resizeState.target.kind === "buffPanel") {
       setMonsterPanelScale(monsterRuntime.resizeState.startValue + delta);
+    } else if (monsterRuntime.resizeState.target.kind === "teammatePanel") {
+      setTeammatePanelScale(monsterRuntime.resizeState.startValue + delta);
     } else {
       setHatePanelScale(monsterRuntime.resizeState.startValue + delta);
     }
