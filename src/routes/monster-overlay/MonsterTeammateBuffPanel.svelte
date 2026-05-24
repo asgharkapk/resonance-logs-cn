@@ -46,9 +46,7 @@
         style:--font-size={`${styleConfig.fontSize}px`}
         style:--column-gap={`${styleConfig.columnGap}px`}
       >
-        <div class="teammate-header">
-          {t("monsterOverlay.teammate.nameHeader")}
-        </div>
+        <div class="teammate-header" aria-hidden="true"></div>
         {#each headers as header (header.buffId)}
           <div class="buff-header" title={header.name}>{header.name}</div>
         {/each}
@@ -155,7 +153,7 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
   }
 
   .teammate-header,
@@ -178,7 +176,6 @@
 
   .buff-header {
     display: -webkit-box;
-    min-height: 28px;
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
