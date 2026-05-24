@@ -1272,6 +1272,12 @@ mod tests {
     use crate::live::entity_id::{canonical_player_uuid, entity_id_to_uuid};
     use blueprotobuf_lib::blueprotobuf::{AttrCollection, SyncNearEntities};
 
+    fn encode_varint_i64(value: i64) -> Vec<u8> {
+        let mut buf = Vec::new();
+        prost::encoding::encode_varint(value as u64, &mut buf);
+        buf
+    }
+
     #[test]
     fn sync_near_entities_keeps_same_uid_distinct_uuids() {
         let uid = 777;
@@ -1335,5 +1341,44 @@ mod tests {
         assert_eq!(encounter.local_player_uuid, player_uuid);
         assert!(encounter.entity_uuid_to_entity.contains_key(&player_uuid));
         assert!(encounter.entity_uuid_to_entity.get(&char_id).is_none());
+    }
+
+    #[test]
+    fn sync_to_me_delta_captures_target_id_through_player_attr_parser() {
+        let mut encounter = Encounter::default();
+        let mut attr_store = EntityAttrStore::default();
+        let local_player_uuid = canonical_player_uuid(12345);
+        let target_uuid = entity_id_to_uuid(9988, EEntityType::EntMonster, false, false);
+
+        process_sync_to_me_delta_info(
+            &mut encounter,
+            &mut attr_store,
+            blueprotobuf::SyncToMeDeltaInfo {
+                delta_info: Some(blueprotobuf::AoiSyncToMeDelta {
+                    uuid: Some(local_player_uuid),
+                    base_delta: Some(blueprotobuf::AoiSyncDelta {
+                        uuid: Some(local_player_uuid),
+                        attrs: Some(AttrCollection {
+                            attrs: vec![blueprotobuf::Attr {
+                                id: Some(attr_type::ATTR_TARGET_ID),
+                                raw_data: Some(encode_varint_i64(target_uuid)),
+                            }],
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
+            },
+            &[],
+            None,
+        );
+
+        assert_eq!(
+            attr_store
+                .attr(local_player_uuid, AttrType::TargetId)
+                .and_then(AttrValue::as_int),
+            Some(target_uuid)
+        );
     }
 }

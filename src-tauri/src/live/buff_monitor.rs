@@ -96,8 +96,7 @@ impl BuffWatchProfile {
         {
             return true;
         }
-        self.target_self_source_ids.contains(&buff.base_id)
-            && buff.fire_uuid == Some(target_uuid)
+        self.target_self_source_ids.contains(&buff.base_id) && buff.fire_uuid == Some(target_uuid)
     }
 }
 
@@ -358,28 +357,15 @@ mod tests {
     fn profile_matches_independent_source_lists() {
         let local_player_uuid = 100;
         let target_uuid = 200;
-        let profile = BuffWatchProfile::from_all_sources(
-            vec![1],
-            vec![2],
-            vec![3],
-            false,
-        );
+        let profile = BuffWatchProfile::from_all_sources(vec![1], vec![2], vec![3], false);
 
-        assert!(profile.matches(
-            target_uuid,
-            local_player_uuid,
-            &active_buff(1, Some(999))
-        ));
+        assert!(profile.matches(target_uuid, local_player_uuid, &active_buff(1, Some(999))));
         assert!(profile.matches(
             target_uuid,
             local_player_uuid,
             &active_buff(2, Some(local_player_uuid))
         ));
-        assert!(!profile.matches(
-            target_uuid,
-            local_player_uuid,
-            &active_buff(2, Some(999))
-        ));
+        assert!(!profile.matches(target_uuid, local_player_uuid, &active_buff(2, Some(999))));
         assert!(profile.matches(
             target_uuid,
             local_player_uuid,
@@ -395,8 +381,14 @@ mod tests {
     #[test]
     fn entity_snapshots_use_target_kind_profile() {
         let mut monitors = EntityBuffMonitors::new();
-        monitors.monitor_for(10).active_buffs.insert(1, active_buff(1, None));
-        monitors.monitor_for(20).active_buffs.insert(1, active_buff(2, None));
+        monitors
+            .monitor_for(10)
+            .active_buffs
+            .insert(1, active_buff(1, None));
+        monitors
+            .monitor_for(20)
+            .active_buffs
+            .insert(1, active_buff(2, None));
 
         let config = EntityBuffMonitorConfig {
             local_player: BuffWatchProfile::from_any_source_ids(vec![1], false),
@@ -404,19 +396,14 @@ mod tests {
             teammate: BuffWatchProfile::default(),
         };
 
-        let monster_snapshot = monitors.build_snapshots_for_kind(
-            BuffTargetKind::Monster,
-            &config,
-            10,
-            0,
-            |uuid| {
+        let monster_snapshot =
+            monitors.build_snapshots_for_kind(BuffTargetKind::Monster, &config, 10, 0, |uuid| {
                 if uuid == 20 {
                     Some(BuffTargetKind::Monster)
                 } else {
                     Some(BuffTargetKind::LocalPlayer)
                 }
-            },
-        );
+            });
 
         assert_eq!(monster_snapshot.len(), 1);
         assert!(monster_snapshot.contains_key("20"));

@@ -55,6 +55,8 @@ pub enum AttrType {
     Name,
     MonsterId,
     ActorState,
+    TargetId,
+    /// Legacy name kept only so old serialized attr maps can still deserialize.
     GuildId,
     AttackPower,
     DefensePower,
@@ -128,7 +130,7 @@ impl AttrType {
             attr_type::ATTR_NAME => Some(AttrType::Name),
             attr_type::ATTR_ID => Some(AttrType::MonsterId),
             attr_type::ATTR_ACTOR_STATE => Some(AttrType::ActorState),
-            attr_type::ATTR_GUILD_ID => Some(AttrType::GuildId),
+            attr_type::ATTR_TARGET_ID => Some(AttrType::TargetId),
             attr_type::ATTR_ATTACK_POWER => Some(AttrType::AttackPower),
             attr_type::ATTR_DEFENSE_POWER => Some(AttrType::DefensePower),
             attr_type::ATTR_POS => Some(AttrType::Position),
@@ -200,7 +202,7 @@ impl AttrType {
             AttrType::Name => attr_type::ATTR_NAME,
             AttrType::MonsterId => attr_type::ATTR_ID,
             AttrType::ActorState => attr_type::ATTR_ACTOR_STATE,
-            AttrType::GuildId => attr_type::ATTR_GUILD_ID,
+            AttrType::TargetId | AttrType::GuildId => attr_type::ATTR_TARGET_ID,
             AttrType::AttackPower => attr_type::ATTR_ATTACK_POWER,
             AttrType::DefensePower => attr_type::ATTR_DEFENSE_POWER,
             AttrType::GearTier => attr_type::ATTR_GEAR_TIER,
@@ -486,7 +488,7 @@ pub mod attr_type {
     pub const ATTR_ID: i32 = 0x0a;
     pub const ATTR_SCENE_BASIC_ID: i32 = 0x155; // Scene basic ID (341)
     pub const ATTR_ACTOR_STATE: i32 = 0x0b; // Actor state, see EActorState
-    pub const ATTR_GUILD_ID: i32 = 0x1e; // Guild/clan ID
+    pub const ATTR_TARGET_ID: i32 = 0x1e; // AttrTargetId: current attack target entity UUID
     pub const ATTR_ATTACK_POWER: i32 = 0x32; // Attack stat
     pub const ATTR_DEFENSE_POWER: i32 = 0x33; // Defense stat
     pub const ATTR_POS: i32 = 0x34; // Position vector
@@ -745,6 +747,7 @@ mod tests {
     fn attr_type_id_conversion() {
         assert_eq!(AttrType::from_id(0x01), Some(AttrType::Name));
         assert_eq!(AttrType::from_id(0x0b), Some(AttrType::ActorState));
+        assert_eq!(AttrType::from_id(0x1e), Some(AttrType::TargetId));
         assert_eq!(AttrType::from_id(0x32), Some(AttrType::AttackPower));
         assert_eq!(AttrType::from_id(0x33), Some(AttrType::DefensePower));
         assert_eq!(AttrType::from_id(0x34), Some(AttrType::Position));
@@ -765,6 +768,7 @@ mod tests {
     fn attr_type_to_id_conversion() {
         assert_eq!(AttrType::Name.to_id(), 0x01);
         assert_eq!(AttrType::ActorState.to_id(), 0x0b);
+        assert_eq!(AttrType::TargetId.to_id(), 0x1e);
         assert_eq!(AttrType::AttackPower.to_id(), 0x32);
         assert_eq!(AttrType::DefensePower.to_id(), 0x33);
         assert_eq!(AttrType::Position.to_id(), 0x34);

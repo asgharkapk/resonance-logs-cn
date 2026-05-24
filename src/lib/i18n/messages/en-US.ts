@@ -1107,7 +1107,7 @@ export const enUSMessages = {
   "skillMonitor.overlay.help":
     "Click a button to toggle visibility. Saved per profile",
   "monsterMonitor.title": "Monster Monitor",
-  "monsterMonitor.description": "Monitor Boss buffs and related data",
+  "monsterMonitor.description": "Monitor current target monster buffs and related data",
   "monsterMonitor.actions.toggleOverlay": "Toggle Monster Overlay",
   "monsterMonitor.actions.editLayout": "Edit Monster Layout",
   "monsterMonitor.enabled": "Enable Monster Monitor",
@@ -1118,10 +1118,10 @@ export const enUSMessages = {
   "monsterMonitor.buffSearch.self": "Search and Add Self-Applied",
   "monsterMonitor.buffSearch.global": "Search and Add Global Monitor",
   "monsterMonitor.buffSearch.placeholderSelf":
-    "Search Boss buffs to add as self-applied",
+    "Search monster buffs to add as self-applied",
   "monsterMonitor.buffSearch.placeholderGlobal":
-    "Search Boss buffs to add to global monitor",
-  "monsterMonitor.buffSearch.empty": "No matching Boss buffs",
+    "Search monster buffs to add to global monitor",
+  "monsterMonitor.buffSearch.empty": "No matching monster buffs",
   "monsterMonitor.buffSearch.status.addedGlobal": "Added globally",
   "monsterMonitor.buffSearch.status.currentSelf": "Currently self-applied",
   "monsterMonitor.buffSearch.status.addedSelf": "Added as self-applied",
@@ -1129,10 +1129,10 @@ export const enUSMessages = {
   "monsterMonitor.buffSearch.status.addedTeammate": "Added to teammate buffs",
   "monsterMonitor.buffGroups.self.title": "Self-Applied",
   "monsterMonitor.buffGroups.self.description":
-    "Only track buffs this character applies to the Boss",
+    "Only track buffs this character applies to the current target monster",
   "monsterMonitor.buffGroups.global.title": "Global Monitor",
   "monsterMonitor.buffGroups.global.description":
-    "Show the buff whenever it appears on the Boss, regardless of source",
+    "Show the buff whenever it appears on the current target monster, regardless of source",
   "monsterMonitor.buffGroups.removeTitle": "Click to remove",
   "monsterMonitor.buffGroups.empty": "No buffs selected",
   "monsterMonitor.teammate.title": "Teammate Buff Monitor",
