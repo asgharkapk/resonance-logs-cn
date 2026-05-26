@@ -5,6 +5,7 @@ import type {
   MonsterBossBuffSection,
   MonsterDragState,
   MonsterHateSection,
+  MonsterTeammateBuffColumn,
   MonsterTeammateBuffRow,
   MonsterResizeState,
 } from "./monster-types";
@@ -21,6 +22,7 @@ export const monsterRuntime = $state({
   teammateBuffMap: new Map<EntityId, Map<number, BuffUpdateState>>(),
   bossHateMap: new Map<EntityId, HateEntry[]>(),
   bossSections: [] as MonsterBossBuffSection[],
+  teammateColumns: [] as MonsterTeammateBuffColumn[],
   teammateRows: [] as MonsterTeammateBuffRow[],
   hateSections: [] as MonsterHateSection[],
   isEditing: false,
@@ -38,6 +40,10 @@ export function monsterHateSections() {
 
 export function monsterTeammateRows() {
   return monsterRuntime.teammateRows;
+}
+
+export function monsterTeammateColumns() {
+  return monsterRuntime.teammateColumns;
 }
 
 export function isMonsterEditing() {

@@ -110,6 +110,7 @@ export function initMonsterOverlay() {
     monsterRuntime.teammateBuffMap = new Map();
     monsterRuntime.bossHateMap = new Map();
     monsterRuntime.bossSections = [];
+    monsterRuntime.teammateColumns = [];
     monsterRuntime.teammateRows = [];
     monsterRuntime.hateSections = [];
     unlistenEditToggle.then((fn) => fn());

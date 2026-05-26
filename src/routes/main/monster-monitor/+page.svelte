@@ -2,10 +2,12 @@
   import SettingsSwitch from "../dps/settings/settings-switch.svelte";
   import BuffSearchResultGrid from "$lib/components/BuffSearchResultGrid.svelte";
   import {
+    getBuffCategoryDefinitions,
     getAvailableBuffDefinitions,
     lookupDefaultBuffName,
     resolveBuffDisplayName,
     searchBuffsByName,
+    type BuffCategoryKey,
     type BuffDefinition,
     type BuffNameInfo,
   } from "$lib/config/buff-name-table";
@@ -25,6 +27,7 @@
   const availableBuffMap = new Map<number, BuffDefinition>(
     availableBuffDefinitions.map((buff) => [buff.baseId, buff]),
   );
+  const buffCategoryDefinitions = getBuffCategoryDefinitions();
 
   let searchKeyword = $state("");
   let teammateSearchKeyword = $state("");
@@ -53,9 +56,17 @@
   const globalBuffIds = $derived(monsterMonitor.monitoredBuffIds);
   const selfAppliedBuffIds = $derived(monsterMonitor.selfAppliedBuffIds);
   const teammateBuffIds = $derived(monsterMonitor.teammateBuffIds);
+  const teammateBuffCategories = $derived(
+    monsterMonitor.teammateBuffCategories ?? [],
+  );
   const buffPriorityIds = $derived(monsterMonitor.buffPriorityIds ?? []);
   const buffAlerts = $derived.by(() =>
     ensureBuffAlerts(monsterMonitor.buffAlerts),
+  );
+  const selectedTeammateBuffCategories = $derived.by(() =>
+    buffCategoryDefinitions.filter((category) =>
+      teammateBuffCategories.includes(category.key),
+    ),
   );
   const allConfiguredBuffIds = $derived.by(() =>
     Array.from(new Set([...globalBuffIds, ...selfAppliedBuffIds])),
@@ -214,10 +225,32 @@
     });
   }
 
+  function toggleTeammateBuffCategory(categoryKey: BuffCategoryKey) {
+    updateMonsterMonitor((state) => {
+      const current = state.teammateBuffCategories ?? [];
+      const exists = current.includes(categoryKey);
+      return {
+        ...state,
+        teammateBuffCategories: exists
+          ? current.filter((key) => key !== categoryKey)
+          : [...current, categoryKey],
+      };
+    });
+  }
+
   function removeTeammateBuff(buffId: number) {
     updateMonsterMonitor((state) => ({
       ...state,
       teammateBuffIds: state.teammateBuffIds.filter((id) => id !== buffId),
+    }));
+  }
+
+  function removeTeammateBuffCategory(categoryKey: BuffCategoryKey) {
+    updateMonsterMonitor((state) => ({
+      ...state,
+      teammateBuffCategories: (state.teammateBuffCategories ?? []).filter(
+        (key) => key !== categoryKey,
+      ),
     }));
   }
 
@@ -304,6 +337,10 @@
 
   function isSelectedTeammateBuff(buffId: number) {
     return teammateBuffIds.includes(buffId);
+  }
+
+  function isSelectedTeammateBuffCategory(categoryKey: BuffCategoryKey) {
+    return teammateBuffCategories.includes(categoryKey);
   }
 
   function searchStatusLabel(buffId: number): string | null {
@@ -971,6 +1008,22 @@
           class="border-border bg-background focus:border-primary w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
         />
 
+        <div class="flex flex-wrap gap-2">
+          {#each buffCategoryDefinitions as category (category.key)}
+            <button
+              type="button"
+              class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors {isSelectedTeammateBuffCategory(
+                category.key,
+              )
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+              onclick={() => toggleTeammateBuffCategory(category.key)}
+            >
+              {category.label} ({category.count})
+            </button>
+          {/each}
+        </div>
+
         {#if teammateSearchKeyword.trim().length > 0}
           <BuffSearchResultGrid
             items={teammateSearchResults}
@@ -991,7 +1044,7 @@
             {t("monsterMonitor.teammate.groupTitle")}
           </div>
         </div>
-        {#if teammateBuffIds.length > 0}
+        {#if teammateBuffIds.length > 0 || selectedTeammateBuffCategories.length > 0}
           <div class="flex flex-wrap gap-2">
             {#each teammateBuffIds as buffId (buffId)}
               {@const iconBuff = availableBuffMap.get(buffId)}
@@ -1009,6 +1062,16 @@
                   />
                 {/if}
                 <span>{buffName(buffId)}</span>
+              </button>
+            {/each}
+            {#each selectedTeammateBuffCategories as category (category.key)}
+              <button
+                type="button"
+                class="selected-buff"
+                onclick={() => removeTeammateBuffCategory(category.key)}
+                title={t("monsterMonitor.buffGroups.removeTitle")}
+              >
+                <span>{category.label}</span>
               </button>
             {/each}
           </div>

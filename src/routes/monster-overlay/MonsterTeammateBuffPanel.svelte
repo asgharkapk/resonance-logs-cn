@@ -4,6 +4,7 @@
     getTeammatePanelPosition,
     getTeammatePanelScale,
     isMonsterEditing,
+    monsterTeammateColumns,
     monsterTeammateRows,
     startMonsterDrag,
     startMonsterResize,
@@ -12,15 +13,18 @@
 
   const editing = $derived(isMonsterEditing());
   const rows = $derived(monsterTeammateRows());
+  const columns = $derived(monsterTeammateColumns());
   const styleConfig = $derived(teammatePanelStyle());
   const panelPos = $derived(getTeammatePanelPosition());
   const panelScale = $derived(getTeammatePanelScale());
-  const headers = $derived.by(
+  const displayColumns = $derived.by(
     () =>
-      rows[0]?.cells.map((cell) => ({
-        buffId: cell.buffId,
-        name: cell.buffName,
-      })) ?? [],
+      columns.length > 0
+        ? columns
+        : rows[0]?.cells.map((cell) => ({
+            key: cell.key,
+            label: cell.buffName,
+          })) ?? [],
   );
 </script>
 
@@ -42,13 +46,13 @@
     <div class="matrix-shell">
       <div
         class="matrix-grid matrix-header"
-        style:--buff-count={Math.max(headers.length, 1)}
+        style:--buff-count={Math.max(displayColumns.length, 1)}
         style:--font-size={`${styleConfig.fontSize}px`}
         style:--column-gap={`${styleConfig.columnGap}px`}
       >
         <div class="teammate-header" aria-hidden="true"></div>
-        {#each headers as header (header.buffId)}
-          <div class="buff-header" title={header.name}>{header.name}</div>
+        {#each displayColumns as column (column.key)}
+          <div class="buff-header" title={column.label}>{column.label}</div>
         {/each}
       </div>
 
@@ -57,7 +61,7 @@
           <div
             class="matrix-grid teammate-row"
             class:placeholder={row.isPlaceholder}
-            style:--buff-count={Math.max(row.cells.length, 1)}
+            style:--buff-count={Math.max(displayColumns.length, 1)}
             style:--font-size={`${styleConfig.fontSize}px`}
             style:--column-gap={`${styleConfig.columnGap}px`}
           >
@@ -71,7 +75,7 @@
                 class:empty={!cell.hasBuff}
                 class:alert-flash={cell.alert?.flash === true}
                 title={cell.hasBuff
-                  ? `${cell.buffName} ${cell.metaText ? `${cell.metaText} ` : ""}${cell.valueText}`.trim()
+                  ? `${cell.categoryKey ? `${cell.buffName} ` : ""}${cell.metaText ? `${cell.metaText} ` : ""}${cell.valueText}`.trim()
                   : cell.buffName}
                 style:--alert-color={cell.alert?.highlightColor}
                 style:--alert-flash-duration={cell.alert

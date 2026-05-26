@@ -545,6 +545,7 @@ export type MonsterMonitorConfig = {
   monitoredBuffIds: number[];
   selfAppliedBuffIds: number[];
   teammateBuffIds: number[];
+  teammateBuffCategories?: BuffCategoryKey[];
   buffPriorityIds: number[];
   buffAliases: BuffAliasMap;
   buffAlerts: BuffAlertMap;
@@ -862,6 +863,7 @@ export function createDefaultMonsterMonitorConfig(): MonsterMonitorConfig {
     monitoredBuffIds: [],
     selfAppliedBuffIds: [],
     teammateBuffIds: [],
+    teammateBuffCategories: [],
     buffPriorityIds: [],
     buffAliases: {},
     buffAlerts: {},

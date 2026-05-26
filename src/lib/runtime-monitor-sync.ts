@@ -197,7 +197,10 @@ function buildMonsterRuntimeSnapshot(): MonitorRuntimeSnapshot["monster"] {
 function buildTeammateRuntimeSnapshot(): MonitorRuntimeSnapshot["teammate"] {
   const enabled = SETTINGS.monsterMonitor.state.enabled;
   const anySourceIds = uniqueSortedNumbers(
-    SETTINGS.monsterMonitor.state.teammateBuffIds,
+    expandBuffSelection(
+      SETTINGS.monsterMonitor.state.teammateBuffIds,
+      SETTINGS.monsterMonitor.state.teammateBuffCategories,
+    ),
   );
   if (!enabled) {
     return {
