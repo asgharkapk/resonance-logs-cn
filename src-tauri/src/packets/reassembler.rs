@@ -60,13 +60,26 @@ impl Reassembler {
     /// Feed an owned Vec<u8> into the reassembler without copying when possible.
     /// If the internal buffer is empty we take ownership of the
     /// provided Vec to avoid an extra copy. Otherwise we extend the buffer.
+    #[allow(dead_code)] // Kept as compat entry; primary path is feed_bytes()
     pub fn feed_owned(&mut self, bytes: Vec<u8>) {
         if self.buffer.is_empty() {
-            // reuse the allocation
             self.buffer = Bytes::from(bytes).into();
             return;
         }
         self.buffer.extend_from_slice(&bytes);
+    }
+
+    /// Feed `Bytes` into the reassembler. When the internal buffer is empty the
+    /// data is adopted in-place; otherwise the bytes are appended.
+    pub fn feed_bytes(&mut self, b: Bytes) {
+        if self.buffer.is_empty() {
+            self.buffer = BytesMut::from(b.as_ref());
+            return;
+        }
+        self.buffer.extend_from_slice(&b);
+        if self.buffer.len() > self.max_buffer_size {
+            self.buffer.clear();
+        }
     }
 
     /// Take and return the remaining unconsumed bytes and

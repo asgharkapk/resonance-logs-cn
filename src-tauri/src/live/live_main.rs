@@ -1,5 +1,4 @@
 use crate::live::state::{AppState, AppStateManager, StateEvent};
-use crate::live::team::decode_team_event;
 use crate::live::{
     commands_models::{
         BossBuffUpdatePayload, BuffCounterUpdatePayload, BuffUpdatePayload, DeathReplayPayload,
@@ -11,12 +10,9 @@ use crate::live::{
     event_manager::{OutboundEvent, safe_emit_to},
 };
 use crate::packets;
-use crate::packets::opcodes::{CaptureEvent, GRPC_TEAM_NTF_SERVICE_ID, WORLD_NTF_SERVICE_ID};
-use blueprotobuf_lib::blueprotobuf;
-use bytes::Bytes;
-use log::{debug, info, trace, warn};
-use prost::Message;
-use std::sync::atomic::Ordering;
+use log::{info, warn};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -69,176 +65,7 @@ fn log_queue_depth_if_needed(
     }
 }
 
-/// Decodes packet payload into a state event.
-fn decode_state_event(op: packets::opcodes::Pkt, data: Bytes) -> Option<StateEvent> {
-    match op {
-        packets::opcodes::Pkt::EnterScene => {
-            info!(target: "app::live", "Received EnterScene packet");
-            match blueprotobuf::EnterScene::decode(data) {
-                Ok(v) => Some(StateEvent::EnterScene(v)),
-                Err(e) => {
-                    warn!("Error decoding EnterScene.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::SyncNearEntities => {
-            match blueprotobuf::SyncNearEntities::decode(data) {
-                Ok(v) => Some(StateEvent::SyncNearEntities(v)),
-                Err(e) => {
-                    warn!("Error decoding SyncNearEntities.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::SyncContainerData => {
-            match blueprotobuf::SyncContainerData::decode(data) {
-                Ok(v) => Some(StateEvent::SyncContainerData(v)),
-                Err(e) => {
-                    warn!("Error decoding SyncContainerData.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::SyncContainerDirtyData => {
-            match blueprotobuf::SyncContainerDirtyData::decode(data) {
-                Ok(v) => Some(StateEvent::SyncContainerDirtyData(v)),
-                Err(e) => {
-                    warn!("Error decoding SyncContainerDirtyData.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::SyncServerTime => match blueprotobuf::SyncServerTime::decode(data) {
-            Ok(v) => Some(StateEvent::SyncServerTime(v)),
-            Err(e) => {
-                warn!("Error decoding SyncServerTime.. ignoring: {e}");
-                None
-            }
-        },
-        packets::opcodes::Pkt::SyncDungeonData => {
-            info!(target: "app::live", "Received SyncDungeonData packet");
-            match blueprotobuf::SyncDungeonData::decode(data) {
-                Ok(v) => {
-                    let has_flow = v
-                        .v_data
-                        .as_ref()
-                        .and_then(|d| d.flow_info.as_ref())
-                        .is_some();
-                    let target_count = v
-                        .v_data
-                        .as_ref()
-                        .and_then(|d| d.target.as_ref())
-                        .map(|t| t.target_data.len())
-                        .unwrap_or(0);
-                    info!(
-                        target: "app::live",
-                        "Decoded SyncDungeonData (has_flow_info={}, target_entries={})",
-                        has_flow,
-                        target_count
-                    );
-                    Some(StateEvent::SyncDungeonData(v))
-                }
-                Err(e) => {
-                    warn!("Error decoding SyncDungeonData.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::SyncDungeonDirtyData => {
-            info!(target: "app::live", "Received SyncDungeonDirtyData packet");
-            match blueprotobuf::SyncDungeonDirtyData::decode(data) {
-                Ok(v) => {
-                    let buffer_len = v
-                        .v_data
-                        .as_ref()
-                        .and_then(|s| s.buffer.as_ref())
-                        .map(|b| b.len())
-                        .unwrap_or(0);
-                    info!(
-                        target: "app::live",
-                        "Decoded SyncDungeonDirtyData (buffer_len={})",
-                        buffer_len
-                    );
-                    Some(StateEvent::SyncDungeonDirtyData(v))
-                }
-                Err(e) => {
-                    warn!("Error decoding SyncDungeonDirtyData.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::SyncToMeDeltaInfo => {
-            match blueprotobuf::SyncToMeDeltaInfo::decode(data) {
-                Ok(v) => Some(StateEvent::SyncToMeDeltaInfo(v)),
-                Err(e) => {
-                    warn!("Error decoding SyncToMeDeltaInfo.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::SyncNearDeltaInfo => {
-            match blueprotobuf::SyncNearDeltaInfo::decode(data) {
-                Ok(v) => Some(StateEvent::SyncNearDeltaInfo(v)),
-                Err(e) => {
-                    warn!("Error decoding SyncNearDeltaInfo.. ignoring: {e}");
-                    None
-                }
-            }
-        }
-        packets::opcodes::Pkt::BuffInfoSync => match blueprotobuf::BuffInfoSync::decode(data) {
-            Ok(v) => {
-                // Dump the packet as JSON for debugging
-                match serde_json::to_string_pretty(&v) {
-                    Ok(json) => {
-                        debug!(target: "app::live", "BuffInfoSync packet received:\n{}", json);
-                    }
-                    Err(e) => {
-                        debug!(
-                            target: "app::live",
-                            "BuffInfoSync packet received (JSON serialization failed: {}): {:?}",
-                            e, v
-                        );
-                    }
-                }
-                None // Not processed further for now
-            }
-            Err(e) => {
-                warn!("Error decoding BuffInfoSync.. ignoring: {e}");
-                None
-            }
-        },
-        _ => {
-            trace!("Unhandled packet opcode: {op:?}");
-            None
-        }
-    }
-}
-
-fn decode_capture_event(event: CaptureEvent) -> Option<StateEvent> {
-    match event {
-        CaptureEvent::Notify { key, payload } if key.service_id == WORLD_NTF_SERVICE_ID => {
-            let op = match packets::opcodes::Pkt::try_from(key.method_id) {
-                Ok(op) => op,
-                Err(_) => {
-                    trace!("Unhandled WorldNtf method_id={}", key.method_id);
-                    return None;
-                }
-            };
-            decode_state_event(op, payload)
-        }
-        CaptureEvent::Notify { key, payload } if key.service_id == GRPC_TEAM_NTF_SERVICE_ID => {
-            decode_team_event(key, payload).map(StateEvent::Team)
-        }
-        CaptureEvent::Notify { key, .. } => {
-            trace!(
-                "Unhandled notify service_id={} method_id={}",
-                key.service_id, key.method_id
-            );
-            None
-        }
-    }
-}
+const DECODE_CHANNEL_CAP: usize = 4096;
 
 /// Starts the live meter.
 ///
@@ -275,13 +102,18 @@ pub async fn start(
     // to prevent frontend from thinking the connection is dead
     let heartbeat_duration = Duration::from_secs(2);
 
-    // 1. Start capturing packets and send to rx
+    // 1. Start capturing packets → decode worker → state_rx
     let npcap_device = get_npcap_device(&app_handle);
-    let (mut rx, queue_depth) = packets::packet_capture::start_capture(npcap_device);
+    let capture_rx = packets::packet_capture::start_capture(npcap_device);
+    let queue_depth: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
+    let (state_tx, mut state_rx) =
+        tokio::sync::mpsc::channel::<StateEvent>(DECODE_CHANNEL_CAP);
+    packets::decode_worker::spawn_decode_worker(capture_rx, state_tx, Arc::clone(&queue_depth));
+
     let mut queue_depth_warn_counter = 0usize;
     let mut queue_depth_last_log_at = Instant::now();
 
-    // 2. Use channels to receive packets and control commands, and process whichever arrives first
+    // 2. Use channels to receive decoded state events and control commands
     loop {
         log_queue_depth_if_needed(
             queue_depth.as_ref(),
@@ -296,23 +128,20 @@ pub async fn start(
                 state_manager.drain_control_commands(&mut state, &mut control_rx);
                 flush_outbound_events(&app_handle, &mut state);
             }
-            packet = rx.recv() => match packet {
+            event = state_rx.recv() => match event {
             Some(event) => {
                 queue_depth
                     .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |depth| {
                         Some(depth.saturating_sub(1))
                     })
                     .ok();
-                // Process the first packet immediately (low-latency path)
-                let mut batch_events = Vec::new();
-                if let Some(event) = decode_capture_event(event) {
-                    batch_events.push(event);
-                }
 
-                // Drain additional queued packets quickly but with a strict time budget
+                let mut batch_events = Vec::with_capacity(64);
+                batch_events.push(event);
+
                 let drain_start = Instant::now();
                 let drain_time_budget = Duration::from_millis(20);
-                const MAX_DRAIN: usize = 20;
+                const MAX_DRAIN: usize = 64;
                 let mut drained = 0usize;
 
                 loop {
@@ -323,30 +152,26 @@ pub async fn start(
                         break;
                     }
 
-                    match rx.try_recv() {
+                    match state_rx.try_recv() {
                         Ok(event) => {
                             queue_depth
                                 .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |depth| {
                                     Some(depth.saturating_sub(1))
                                 })
                                 .ok();
-                            if let Some(event) = decode_capture_event(event) {
-                                let is_container_resync =
-                                    matches!(event, StateEvent::SyncContainerData(_));
-                                batch_events.push(event);
-                                drained += 1;
-                                if is_container_resync {
-                                    break;
-                                }
-                            } else {
-                                drained += 1;
+                            let is_container_resync =
+                                matches!(event, StateEvent::SyncContainerData(_));
+                            batch_events.push(event);
+                            drained += 1;
+                            if is_container_resync {
+                                break;
                             }
                         }
                         Err(tokio::sync::mpsc::error::TryRecvError::Empty) => break,
                         Err(tokio::sync::mpsc::error::TryRecvError::Disconnected) => {
                             warn!(
                                 target: "app::live",
-                                "Packet capture channel closed (disconnected) while draining"
+                                "Decode worker channel closed while draining"
                             );
                             break;
                         }
@@ -357,8 +182,6 @@ pub async fn start(
                 state_manager.drain_control_commands(&mut state, &mut control_rx);
                 flush_outbound_events(&app_handle, &mut state);
 
-                // Check if we should emit events (throttling)
-                // Read current event update rate from state dynamically
                 let emit_rate_ms = state.event_update_rate_ms;
                 let emit_throttle_duration = Duration::from_millis(emit_rate_ms);
                 let now = Instant::now();
@@ -377,7 +200,6 @@ pub async fn start(
             }
             },
             _ = tokio::time::sleep(heartbeat_duration) => {
-                // Timeout occurred - read rate dynamically
                 let emit_rate_ms = state.event_update_rate_ms;
                 let emit_throttle_duration = Duration::from_millis(emit_rate_ms);
                 let now = Instant::now();

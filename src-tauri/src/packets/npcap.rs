@@ -21,11 +21,15 @@ type PcapDataLink = unsafe extern "C" fn(*mut PcapT) -> i32;
 type PcapCompile = unsafe extern "C" fn(*mut PcapT, *mut BpfProgram, *const i8, i32, u32) -> i32;
 type PcapSetFilter = unsafe extern "C" fn(*mut PcapT, *mut BpfProgram) -> i32;
 type PcapFreeCode = unsafe extern "C" fn(*mut BpfProgram);
+type PcapSetImmediateMode = unsafe extern "C" fn(*mut PcapT, i32) -> i32;
+type PcapHandler = unsafe extern "C" fn(*mut u8, *const PcapPkthdr, *const u8);
+type PcapDispatch = unsafe extern "C" fn(*mut PcapT, i32, PcapHandler, *mut u8) -> i32;
 
 const NPCAP_SNAPLEN: i32 = 65_536;
 const NPCAP_PROMISC: i32 = 1;
 const NPCAP_TIMEOUT_MS: i32 = 1_000;
 const NPCAP_BUFFER_SIZE: i32 = 64 * 1024 * 1024;
+const NPCAP_IMMEDIATE: i32 = 1;
 
 #[repr(C)]
 pub struct PcapIf {
@@ -146,8 +150,14 @@ pub fn check_npcap_status() -> bool {
 
 pub struct NpcapCapture {
     handle: *mut PcapT,
+    #[allow(dead_code)] // Kept alive to ensure fn ptrs remain valid
     lib: Arc<Library>,
     data_link: i32,
+    #[allow(dead_code)] // Legacy fallback for next_packet()
+    fn_next_ex: PcapNextEx,
+    fn_get_err: PcapGetErr,
+    fn_close: PcapClose,
+    fn_dispatch: PcapDispatch,
 }
 
 unsafe impl Send for NpcapCapture {}
@@ -174,6 +184,10 @@ impl NpcapCapture {
                 .lib
                 .get(b"pcap_set_buffer_size")
                 .map_err(|e| e.to_string())?;
+            let set_immediate: Symbol<PcapSetImmediateMode> = context
+                .lib
+                .get(b"pcap_set_immediate_mode")
+                .map_err(|e| e.to_string())?;
             let activate: Symbol<PcapActivate> = context
                 .lib
                 .get(b"pcap_activate")
@@ -197,6 +211,18 @@ impl NpcapCapture {
             let free_code: Symbol<PcapFreeCode> = context
                 .lib
                 .get(b"pcap_freecode")
+                .map_err(|e| e.to_string())?;
+
+            // Cache hot-path fn ptrs once; valid as long as Arc<Library> is alive.
+            let fn_next_ex: PcapNextEx = *context
+                .lib
+                .get::<PcapNextEx>(b"pcap_next_ex")
+                .map_err(|e| e.to_string())?;
+            let fn_get_err: PcapGetErr = *get_err;
+            let fn_close: PcapClose = *close;
+            let fn_dispatch: PcapDispatch = *context
+                .lib
+                .get::<PcapDispatch>(b"pcap_dispatch")
                 .map_err(|e| e.to_string())?;
 
             let device_c = CString::new(device_name).map_err(|e| e.to_string())?;
@@ -226,6 +252,12 @@ impl NpcapCapture {
                 if set_timeout(handle, NPCAP_TIMEOUT_MS) != 0 {
                     return Err(format!(
                         "pcap_set_timeout failed: {}",
+                        pcap_error(*get_err, handle)
+                    ));
+                }
+                if set_immediate(handle, NPCAP_IMMEDIATE) != 0 {
+                    return Err(format!(
+                        "pcap_set_immediate_mode failed: {}",
                         pcap_error(*get_err, handle)
                     ));
                 }
@@ -271,11 +303,12 @@ impl NpcapCapture {
             }
 
             info!(
-                "Npcap handle configured device={} buffer_size={} bytes snaplen={} timeout_ms={} filter={}",
+                "Npcap handle configured device={} buffer_size={} bytes snaplen={} timeout_ms={} immediate={} filter={}",
                 device_name,
                 NPCAP_BUFFER_SIZE,
                 NPCAP_SNAPLEN,
                 NPCAP_TIMEOUT_MS,
+                NPCAP_IMMEDIATE,
                 "tcp and not portrange 0-1000"
             );
 
@@ -292,6 +325,10 @@ impl NpcapCapture {
                 handle,
                 lib: context.lib,
                 data_link,
+                fn_next_ex,
+                fn_get_err,
+                fn_close,
+                fn_dispatch,
             })
         }
     }
@@ -300,35 +337,80 @@ impl NpcapCapture {
         self.data_link
     }
 
+    #[inline]
+    #[allow(dead_code)] // Legacy fallback; dispatch_batch is the primary path
     pub fn next_packet(&self) -> Result<Option<Vec<u8>>, String> {
         unsafe {
-            let next_ex: Symbol<PcapNextEx> =
-                self.lib.get(b"pcap_next_ex").map_err(|e| e.to_string())?;
-
             let mut header: *mut PcapPkthdr = ptr::null_mut();
             let mut data: *const u8 = ptr::null();
 
-            let res = next_ex(self.handle, &mut header, &mut data);
+            let res = (self.fn_next_ex)(self.handle, &mut header, &mut data);
 
             match res {
                 1 => {
-                    // Success
                     let len = (*header).caplen as usize;
                     let packet_data = std::slice::from_raw_parts(data, len).to_vec();
                     Ok(Some(packet_data))
                 }
-                0 => Ok(None), // Timeout
-                -1 => {
-                    let get_err: Symbol<PcapGetErr> =
-                        self.lib.get(b"pcap_geterr").map_err(|e| e.to_string())?;
-                    Err(format!(
-                        "Error reading packet: {}",
-                        pcap_error(*get_err, self.handle)
-                    ))
-                }
-                -2 => Ok(None), // EOF
+                0 => Ok(None),
+                -1 => Err(format!(
+                    "Error reading packet: {}",
+                    pcap_error(self.fn_get_err, self.handle)
+                )),
+                -2 => Ok(None),
                 _ => Err(format!("Unknown pcap_next_ex return code: {}", res)),
             }
+        }
+    }
+
+    /// Dispatch up to `max` packets via a callback, returning the number processed.
+    ///
+    /// The callback receives the raw packet bytes (lifetime limited to the call).
+    /// Pass `max = -1` to drain the entire kernel buffer in one syscall.
+    ///
+    /// # Safety
+    /// The `&[u8]` passed to `on_packet` is only valid for the duration of the
+    /// callback invocation. The closure **must not** store the slice beyond return.
+    /// Panics inside `on_packet` are caught via `catch_unwind` to avoid UB across
+    /// the FFI boundary.
+    pub fn dispatch_batch<F: FnMut(&[u8])>(
+        &self,
+        max: i32,
+        on_packet: &mut F,
+    ) -> Result<i32, String> {
+        unsafe extern "C" fn trampoline<F: FnMut(&[u8])>(
+            user: *mut u8,
+            header: *const PcapPkthdr,
+            data: *const u8,
+        ) {
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                // SAFETY: `user` is the `&mut F` pointer we passed to pcap_dispatch.
+                // `header`/`data` are valid for the duration of this callback per libpcap.
+                unsafe {
+                    let f = &mut *(user as *mut F);
+                    let len = (*header).caplen as usize;
+                    let slice = std::slice::from_raw_parts(data, len);
+                    f(slice);
+                }
+            }));
+            if result.is_err() {
+                log::error!("panic caught inside pcap_dispatch callback");
+            }
+        }
+
+        let user_ptr = on_packet as *mut F as *mut u8;
+        let res = unsafe {
+            (self.fn_dispatch)(self.handle, max, trampoline::<F>, user_ptr)
+        };
+
+        match res {
+            n if n >= 0 => Ok(n),
+            -1 => Err(format!(
+                "pcap_dispatch error: {}",
+                unsafe { pcap_error(self.fn_get_err, self.handle) }
+            )),
+            -2 => Ok(0), // breakloop (treat as zero processed)
+            other => Err(format!("pcap_dispatch unknown return: {}", other)),
         }
     }
 }
@@ -386,9 +468,7 @@ fn set_bpf_filter(
 impl Drop for NpcapCapture {
     fn drop(&mut self) {
         unsafe {
-            if let Ok(close) = self.lib.get::<PcapClose>(b"pcap_close") {
-                close(self.handle);
-            }
+            (self.fn_close)(self.handle);
         }
     }
 }

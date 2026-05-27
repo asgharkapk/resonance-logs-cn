@@ -11,7 +11,7 @@ use log::{error, info, warn};
 use once_cell::sync::OnceCell;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicUsize;
-use std::sync::{Arc, OnceLock};
+use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 use tokio::sync::watch;
 
@@ -34,11 +34,6 @@ enum PacketFormat {
     Unsupported,
 }
 
-trait PacketSource: Send {
-    fn next_packet(&mut self) -> Result<Option<Vec<u8>>, String>;
-    fn packet_format(&self) -> PacketFormat;
-}
-
 struct NpcapSource {
     capture: NpcapCapture,
 }
@@ -54,7 +49,7 @@ impl NpcapSource {
         Ok(Self { capture })
     }
 
-    fn packet_format_for_datalink(&self) -> PacketFormat {
+    fn packet_format(&self) -> PacketFormat {
         match self.capture.datalink() {
             DLT_EN10MB => PacketFormat::Ethernet,
             DLT_RAW | DLT_NULL | DLT_LOOP => PacketFormat::RawIp,
@@ -65,7 +60,10 @@ impl NpcapSource {
         }
     }
 
-    fn normalize_packet(&self, data: Vec<u8>) -> Option<Vec<u8>> {
+    /// Returns a sub-slice of `data` with any link-layer header stripped,
+    /// or `None` if the packet should be dropped. Zero-copy.
+    #[inline]
+    fn normalize_slice<'a>(&self, data: &'a [u8]) -> Option<&'a [u8]> {
         match self.capture.datalink() {
             DLT_EN10MB | DLT_RAW => Some(data),
             DLT_NULL | DLT_LOOP => {
@@ -74,8 +72,8 @@ impl NpcapSource {
                 }
                 let family = u32::from_ne_bytes([data[0], data[1], data[2], data[3]]);
                 match family {
-                    2 => Some(data[4..].to_vec()), // AF_INET on Windows
-                    23 | 24 => None,               // IPv6 families, ignored for now
+                    2 => Some(&data[4..]),
+                    23 | 24 => None,
                     other => {
                         log_unsupported_loopback_family(other, self.capture.datalink());
                         None
@@ -87,19 +85,6 @@ impl NpcapSource {
                 None
             }
         }
-    }
-}
-
-impl PacketSource for NpcapSource {
-    fn next_packet(&mut self) -> Result<Option<Vec<u8>>, String> {
-        match self.capture.next_packet()? {
-            Some(data) => Ok(self.normalize_packet(data)),
-            None => Ok(None),
-        }
-    }
-
-    fn packet_format(&self) -> PacketFormat {
-        self.packet_format_for_datalink()
     }
 }
 
@@ -119,21 +104,19 @@ impl SessionState {
     }
 }
 
+const CAPTURE_CHANNEL_CAP: usize = 4096;
+
 pub fn start_capture(
     npcap_device: String,
-) -> (
-    tokio::sync::mpsc::UnboundedReceiver<CaptureEvent>,
-    Arc<AtomicUsize>,
-) {
-    let (packet_sender, packet_receiver) = tokio::sync::mpsc::unbounded_channel::<CaptureEvent>();
-    let queue_depth = Arc::new(AtomicUsize::new(0));
-    let capture_queue_depth = Arc::clone(&queue_depth);
+) -> tokio::sync::mpsc::Receiver<CaptureEvent> {
+    let (packet_sender, packet_receiver) =
+        tokio::sync::mpsc::channel::<CaptureEvent>(CAPTURE_CHANNEL_CAP);
     let (restart_sender, mut restart_receiver) = watch::channel(false);
     RESTART_SENDER.set(restart_sender.clone()).ok();
 
     if npcap_device.trim().is_empty() {
         error!(target: "app::capture", "capture_start_failed method=Npcap err=empty_device");
-        return (packet_receiver, queue_depth);
+        return packet_receiver;
     }
 
     info!(target: "app::capture", "capture_start method=Npcap device={}", npcap_device);
@@ -146,10 +129,11 @@ pub fn start_capture(
             device = %npcap_device
         );
         let _capture_guard = capture_span.enter();
+        let dropped_total = AtomicUsize::new(0);
         loop {
             read_packets(
                 &packet_sender,
-                &capture_queue_depth,
+                &dropped_total,
                 &mut restart_receiver,
                 &npcap_device,
             );
@@ -169,12 +153,12 @@ pub fn start_capture(
             let _ = restart_sender.send(false);
         }
     });
-    (packet_receiver, queue_depth)
+    packet_receiver
 }
 
 fn read_packets(
-    packet_sender: &tokio::sync::mpsc::UnboundedSender<CaptureEvent>,
-    queue_depth: &AtomicUsize,
+    packet_sender: &tokio::sync::mpsc::Sender<CaptureEvent>,
+    dropped_total: &AtomicUsize,
     restart_receiver: &mut watch::Receiver<bool>,
     npcap_device: &str,
 ) {
@@ -182,8 +166,8 @@ fn read_packets(
         tracing::info_span!(target: "app::capture", "capture_read_loop", method = "Npcap");
     let _read_guard = read_span.enter();
 
-    let mut source: Box<dyn PacketSource> = match NpcapSource::new(npcap_device) {
-        Ok(s) => Box::new(s),
+    let source = match NpcapSource::new(npcap_device) {
+        Ok(s) => s,
         Err(e) => {
             error!(
                 target: "app::capture",
@@ -199,61 +183,78 @@ fn read_packets(
     let mut game_connections = GameConnectionFilter::new();
     let mut cleanup_last_run = Instant::now();
 
+    // Shared mutable flag: set to `true` by the dispatch callback when it
+    // encounters a packet that requires a session cleanup pass.
+    let mut needs_cleanup = false;
+
     loop {
-        let packet_data = match source.next_packet() {
-            Ok(Some(data)) => data,
-            Ok(None) => continue, // Timeout or ignored packet
+        let dispatch_result = source.capture.dispatch_batch(-1, &mut |raw_pkt: &[u8]| {
+            let Some(pkt) = source.normalize_slice(raw_pkt) else {
+                return;
+            };
+
+            let packet_format = source.packet_format();
+            let network_slices = match packet_format {
+                PacketFormat::RawIp => SlicedPacket::from_ip(pkt),
+                PacketFormat::Ethernet => SlicedPacket::from_ethernet(pkt),
+                PacketFormat::Unsupported => return,
+            };
+            let Ok(network_slices) = network_slices else {
+                return;
+            };
+            let Some(Ipv4(ip_packet)) = network_slices.net else {
+                return;
+            };
+            let Some(Tcp(tcp_packet)) = network_slices.transport else {
+                return;
+            };
+
+            let curr_server = Server::new(
+                ip_packet.header().source(),
+                tcp_packet.to_header().source_port,
+                ip_packet.header().destination(),
+                tcp_packet.to_header().destination_port,
+            );
+            let verdict = game_connections.classify(curr_server);
+            let session_known = sessions.contains_key(&curr_server);
+            if !matches!(verdict, Verdict::Game) && !session_known {
+                return;
+            }
+
+            let now = Instant::now();
+            let session = sessions
+                .entry(curr_server)
+                .or_insert_with(|| SessionState::new(now));
+            session.last_seen = now;
+
+            process_tcp_packet(
+                curr_server,
+                &tcp_packet,
+                packet_sender,
+                dropped_total,
+                session,
+                &mut game_connections,
+            );
+
+            if cleanup_last_run.elapsed() >= Duration::from_secs(30) {
+                needs_cleanup = true;
+            }
+        });
+
+        match dispatch_result {
+            Ok(0) => {
+                // Timeout with no packets; yield briefly to avoid a hot spin.
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            Ok(_) => {}
             Err(e) => {
                 error!(target: "app::capture", "capture_error err={}", e);
                 break;
             }
-        };
-
-        let packet_format = source.packet_format();
-        let network_slices = match packet_format {
-            PacketFormat::RawIp => SlicedPacket::from_ip(&packet_data),
-            PacketFormat::Ethernet => SlicedPacket::from_ethernet(&packet_data),
-            PacketFormat::Unsupported => continue,
-        };
-        let Ok(network_slices) = network_slices else {
-            continue;
-        };
-        let Some(Ipv4(ip_packet)) = network_slices.net else {
-            continue;
-        };
-        let Some(Tcp(tcp_packet)) = network_slices.transport else {
-            continue;
-        };
-
-        let curr_server = Server::new(
-            ip_packet.header().source(),
-            tcp_packet.to_header().source_port,
-            ip_packet.header().destination(),
-            tcp_packet.to_header().destination_port,
-        );
-        let verdict = game_connections.classify(curr_server);
-        let session_known = sessions.contains_key(&curr_server);
-        let allow_processing = matches!(verdict, Verdict::Game) || session_known;
-        if !allow_processing {
-            continue;
         }
 
-        let now = Instant::now();
-        let session = sessions
-            .entry(curr_server)
-            .or_insert_with(|| SessionState::new(now));
-        session.last_seen = now;
-
-        process_tcp_packet(
-            curr_server,
-            &tcp_packet,
-            packet_sender,
-            queue_depth,
-            session,
-            &mut game_connections,
-        );
-
-        if cleanup_last_run.elapsed() >= Duration::from_secs(30) {
+        if needs_cleanup {
+            needs_cleanup = false;
             let before = sessions.len();
             sessions.retain(|_, session| session.last_seen.elapsed() < SESSION_IDLE_TIMEOUT);
             let removed = before.saturating_sub(sessions.len());
@@ -272,8 +273,8 @@ fn read_packets(
 fn process_tcp_packet(
     curr_server: Server,
     tcp_packet: &etherparse::TcpSlice<'_>,
-    packet_sender: &tokio::sync::mpsc::UnboundedSender<CaptureEvent>,
-    queue_depth: &AtomicUsize,
+    packet_sender: &tokio::sync::mpsc::Sender<CaptureEvent>,
+    dropped_total: &AtomicUsize,
     session: &mut SessionState,
     game_connections: &mut GameConnectionFilter,
 ) {
@@ -332,7 +333,7 @@ fn process_tcp_packet(
         .insert_segment(sequence_number, payload)
     {
         TcpInsertResult::Contiguous(buffer) => {
-            session.reassembler.feed_owned(buffer);
+            session.reassembler.feed_bytes(bytes::Bytes::from(buffer));
         }
         TcpInsertResult::SkippedGap {
             from,
@@ -346,14 +347,14 @@ fn process_tcp_packet(
             );
             session.reassembler.take_remaining();
             if !data.is_empty() {
-                session.reassembler.feed_owned(data);
+                session.reassembler.feed_bytes(bytes::Bytes::from(data));
             }
         }
         TcpInsertResult::Gap | TcpInsertResult::NoData => {}
     }
 
     while let Some(packet) = session.reassembler.try_next() {
-        process_packet(&packet, packet_sender, queue_depth);
+        process_packet(&packet, packet_sender, dropped_total);
     }
 
     if defer_reset {

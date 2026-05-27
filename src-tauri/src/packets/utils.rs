@@ -71,6 +71,8 @@ pub struct TCPReassembler {
     buffered_bytes: usize,         // Total bytes currently in the cache
     gap_started_at: Option<Instant>,
     gap_bytes: usize,
+    #[cfg(test)]
+    fast_path_hits: usize,
 }
 
 const MAX_TCP_CACHE_SIZE: usize = 5 * 1024 * 1024; // 5MB limit
@@ -112,6 +114,8 @@ impl TCPReassembler {
             buffered_bytes: 0,
             gap_started_at: None,
             gap_bytes: 0,
+            #[cfg(test)]
+            fast_path_hits: 0,
         }
     }
 
@@ -120,6 +124,24 @@ impl TCPReassembler {
     pub fn insert_segment(&mut self, sequence_number: u32, payload: &[u8]) -> TcpInsertResult {
         if payload.is_empty() {
             return TcpInsertResult::NoData;
+        }
+
+        // Fast-path: cache is empty and sequence aligns (common steady-state).
+        // Avoids BTreeMap insert + drain round-trip for in-order segments.
+        if self.cache.is_empty() {
+            let aligned = self
+                .next_seq
+                .map(|s| s == sequence_number)
+                .unwrap_or(true);
+            if aligned {
+                self.next_seq = Some(sequence_number.wrapping_add(payload.len() as u32));
+                self.clear_gap_state();
+                #[cfg(test)]
+                {
+                    self.fast_path_hits += 1;
+                }
+                return TcpInsertResult::Contiguous(payload.to_vec());
+            }
         }
 
         let expected = match self.next_seq {
@@ -273,6 +295,11 @@ impl TCPReassembler {
             self.gap_started_at = started_at.checked_sub(duration);
         }
     }
+
+    #[cfg(test)]
+    pub fn fast_path_hits(&self) -> usize {
+        self.fast_path_hits
+    }
 }
 
 #[cfg(test)]
@@ -395,5 +422,47 @@ mod tests {
                 data: b"abcdef".to_vec()
             }
         );
+    }
+
+    #[test]
+    fn fast_path_hits_for_in_order_segments() {
+        let mut reassembler = TCPReassembler::new();
+        assert_eq!(reassembler.fast_path_hits(), 0);
+
+        assert_eq!(
+            reassembler.insert_segment(10, b"abc"),
+            TcpInsertResult::Contiguous(b"abc".to_vec())
+        );
+        assert_eq!(reassembler.fast_path_hits(), 1);
+
+        assert_eq!(
+            reassembler.insert_segment(13, b"def"),
+            TcpInsertResult::Contiguous(b"def".to_vec())
+        );
+        assert_eq!(reassembler.fast_path_hits(), 2);
+    }
+
+    #[test]
+    fn fast_path_not_hit_for_out_of_order() {
+        let mut reassembler = TCPReassembler::new();
+        assert_eq!(
+            reassembler.insert_segment(100, b"abc"),
+            TcpInsertResult::Contiguous(b"abc".to_vec())
+        );
+        assert_eq!(reassembler.fast_path_hits(), 1);
+
+        // Out-of-order: skip ahead, should NOT hit fast-path
+        assert_eq!(
+            reassembler.insert_segment(106, b"ghi"),
+            TcpInsertResult::Gap
+        );
+        assert_eq!(reassembler.fast_path_hits(), 1);
+
+        // Fill the gap: cache is not empty, so fast-path is not taken
+        assert_eq!(
+            reassembler.insert_segment(103, b"def"),
+            TcpInsertResult::Contiguous(b"defghi".to_vec())
+        );
+        assert_eq!(reassembler.fast_path_hits(), 1);
     }
 }
