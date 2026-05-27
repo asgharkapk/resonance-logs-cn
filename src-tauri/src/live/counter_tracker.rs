@@ -194,7 +194,7 @@ pub(crate) struct BuffTickState {
     pub active_buff_uuid: i32,
     pub is_active: bool,
     pub start_time_ms: i64,
-    pub buff_duration_ms: i64,
+    pub expires_at_ms: Option<i64>,
     pub applied_ticks: u64,
     pub tick_interval_ms: u64,
     pub increment: u32,
@@ -339,7 +339,7 @@ impl BuffCounterTracker {
                         active_buff_uuid: 0,
                         is_active: false,
                         start_time_ms: 0,
-                        buff_duration_ms: 0,
+                        expires_at_ms: None,
                         applied_ticks: 0,
                         tick_interval_ms: (*tick_interval_ms).max(1),
                         increment: *increment,
@@ -751,7 +751,7 @@ impl BuffCounterTracker {
                         slot_config,
                         slot_state,
                         action,
-                        change.create_time_ms,
+                        Some(change.event_time_ms),
                         attr_store,
                         local_player_uuid,
                     );
@@ -794,29 +794,24 @@ impl BuffCounterTracker {
                     continue;
                 }
 
-                let elapsed_ms = if tick_state.buff_duration_ms <= 0 {
-                    now_ms.saturating_sub(tick_state.start_time_ms) as u64
-                } else {
-                    let effective_end = tick_state
-                        .start_time_ms
-                        .saturating_add(tick_state.buff_duration_ms);
-                    let effective_now = now_ms.min(effective_end.saturating_sub(1));
+                let elapsed_ms = if let Some(expires_at_ms) = tick_state.expires_at_ms {
+                    let effective_now = now_ms.min(expires_at_ms.saturating_sub(1));
                     if effective_now < tick_state.start_time_ms {
-                        if now_ms >= effective_end && tick_state.is_active {
+                        if now_ms >= expires_at_ms && tick_state.is_active {
                             tick_state.is_active = false;
-                            tick_state.active_buff_uuid = 0;
                             changed = true;
                         }
                         continue;
                     }
 
                     let elapsed_ms = effective_now.saturating_sub(tick_state.start_time_ms) as u64;
-                    if now_ms >= effective_end && tick_state.is_active {
+                    if now_ms >= expires_at_ms && tick_state.is_active {
                         tick_state.is_active = false;
-                        tick_state.active_buff_uuid = 0;
                         changed = true;
                     }
                     elapsed_ms
+                } else {
+                    now_ms.saturating_sub(tick_state.start_time_ms) as u64
                 };
                 let expected_ticks = elapsed_ms / tick_state.tick_interval_ms.max(1) + 1;
 
@@ -942,7 +937,7 @@ impl BuffCounterTracker {
                 tick.is_active = false;
                 tick.active_buff_uuid = 0;
                 tick.start_time_ms = 0;
-                tick.buff_duration_ms = 0;
+                tick.expires_at_ms = None;
                 tick.applied_ticks = 0;
             }
             for tick in &mut state.skill_tick_states {
@@ -1357,52 +1352,65 @@ fn apply_tick_change(tick_state: &mut BuffTickState, change: &BuffChangeEvent) -
                 tick_state.is_active = true;
                 changed = true;
             }
-            if let Some(create_time_ms) = change.create_time_ms {
-                tick_state.start_time_ms = create_time_ms;
+            if tick_state.start_time_ms != change.event_time_ms || tick_state.applied_ticks != 0 {
+                tick_state.start_time_ms = change.event_time_ms;
                 tick_state.applied_ticks = 0;
                 changed = true;
             }
-            if let Some(duration_ms) = change.duration_ms {
-                let duration_ms = i64::from(duration_ms.max(0));
-                if tick_state.buff_duration_ms != duration_ms {
-                    tick_state.buff_duration_ms = duration_ms;
-                    changed = true;
-                }
+            let expires_at_ms = duration_expires_at(change.event_time_ms, change.duration_ms);
+            if tick_state.expires_at_ms != expires_at_ms {
+                tick_state.expires_at_ms = expires_at_ms;
+                changed = true;
             }
         }
         BuffChangeType::Changed => {
             if tick_state.active_buff_uuid != change.buff_uuid {
                 tick_state.active_buff_uuid = change.buff_uuid;
+                tick_state.start_time_ms = change.event_time_ms;
+                tick_state.applied_ticks = 0;
+                tick_state.expires_at_ms =
+                    duration_expires_at(change.event_time_ms, change.duration_ms);
                 changed = true;
-            }
-            if let Some(create_time_ms) = change.create_time_ms {
-                if tick_state.start_time_ms != create_time_ms {
-                    tick_state.start_time_ms = create_time_ms;
-                    tick_state.applied_ticks = 0;
+            } else if let Some(duration_ms) = change.duration_ms {
+                let expires_at_ms = duration_expires_at(change.event_time_ms, Some(duration_ms));
+                if tick_state.expires_at_ms != expires_at_ms {
+                    tick_state.expires_at_ms = expires_at_ms;
                     changed = true;
                 }
             }
-            if let Some(duration_ms) = change.duration_ms {
-                let duration_ms = i64::from(duration_ms.max(0));
-                if tick_state.buff_duration_ms != duration_ms {
-                    tick_state.buff_duration_ms = duration_ms;
-                    changed = true;
-                }
-            }
-            if !tick_state.is_active {
+            let refreshed_to_future = tick_state
+                .expires_at_ms
+                .is_none_or(|expires_at_ms| change.event_time_ms < expires_at_ms);
+            if !tick_state.is_active && refreshed_to_future {
                 tick_state.is_active = true;
                 changed = true;
             }
         }
         BuffChangeType::Removed => {
-            if tick_state.active_buff_uuid == change.buff_uuid && tick_state.is_active {
-                tick_state.is_active = false;
-                tick_state.active_buff_uuid = 0;
-                changed = true;
+            if tick_state.active_buff_uuid == change.buff_uuid {
+                if tick_state.is_active {
+                    tick_state.is_active = false;
+                    changed = true;
+                }
+                if tick_state.active_buff_uuid != 0 {
+                    tick_state.active_buff_uuid = 0;
+                    changed = true;
+                }
+                if tick_state.expires_at_ms.take().is_some() {
+                    changed = true;
+                }
             }
         }
     }
     changed
+}
+
+fn duration_expires_at(event_time_ms: i64, duration_ms: Option<i32>) -> Option<i64> {
+    let duration_ms = duration_ms?;
+    if duration_ms <= 0 {
+        return None;
+    }
+    Some(event_time_ms.saturating_add(i64::from(duration_ms)))
 }
 
 fn apply_action(state: &mut SlotState, action: CounterAction) -> bool {

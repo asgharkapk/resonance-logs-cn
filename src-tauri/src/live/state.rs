@@ -1643,7 +1643,6 @@ mod tests {
             layer: 1,
             duration: 1000,
             create_time: 10,
-            received_time_ms: 20,
             fire_uuid: None,
             source_config_id: None,
         }
