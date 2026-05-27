@@ -51,6 +51,8 @@ pub enum CounterSource {
         increment: u32,
         #[serde(default, rename = "hitsRequired")]
         hits_required: Option<u32>,
+        #[serde(default, rename = "requiredTypeFlags")]
+        required_type_flags: Option<i32>,
     },
     FightResourceSpent {
         #[serde(rename = "resourceId")]
@@ -550,6 +552,7 @@ impl BuffCounterTracker {
                     skill_keys,
                     increment,
                     hits_required,
+                    required_type_flags,
                 } = source
                 else {
                     continue;
@@ -561,6 +564,7 @@ impl BuffCounterTracker {
                             && skill_keys
                                 .as_ref()
                                 .is_none_or(|keys| keys.contains(&event.skill_key))
+                            && matches_required_type_flags(event.type_flag, *required_type_flags)
                     })
                     .count();
                 let Some(increment) = apply_damage_hits_required(
@@ -1136,6 +1140,11 @@ fn apply_damage_hits_required(
         }
         _ => Some(increment.saturating_mul(matches)),
     }
+}
+
+#[inline]
+fn matches_required_type_flags(type_flag: i32, required_type_flags: Option<i32>) -> bool {
+    required_type_flags.is_none_or(|required| (type_flag & required) == required)
 }
 
 fn apply_fight_resource_spent(state: &mut FightResourceSpentState, current_value: i64) -> u32 {

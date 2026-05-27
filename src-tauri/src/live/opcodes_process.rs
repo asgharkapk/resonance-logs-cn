@@ -10,6 +10,7 @@ use crate::live::opcodes_models::class::{
 };
 use crate::live::opcodes_models::{
     AttrType, AttrValue, DamageSnapshot, Encounter, Entity, PositionAttr, Skill, attr_type,
+    damage_type_flag,
 };
 use blueprotobuf_lib::blueprotobuf;
 use blueprotobuf_lib::blueprotobuf::{Attr, EDamageType, EEntityType};
@@ -82,6 +83,7 @@ pub struct LocalDamageEvent {
 pub struct LocalDamageTakenEvent {
     pub skill_key: i64,
     pub source: DamageTakenSource,
+    pub type_flag: i32,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -746,13 +748,14 @@ pub fn process_aoi_sync_delta(
                 target_entity_uuid: target_uuid,
             });
         }
+        let flag = sync_damage_info.type_flag.unwrap_or_default();
         if collect_taken && target_uuid == encounter.local_player_uuid && !is_heal {
             local_damage_taken_events.push(LocalDamageTakenEvent {
                 skill_key,
                 source: attacker_uuid.map_or(DamageTakenSource::Unknown, DamageTakenSource::Entity),
+                type_flag: flag,
             });
         }
-        let flag = sync_damage_info.type_flag.unwrap_or_default();
         // Pre-calculate whether this target is recognized as a boss and local player id
         let is_boss_target = encounter
             .entity_uuid_to_entity
@@ -766,8 +769,7 @@ pub fn process_aoi_sync_delta(
             .and_then(|entity| entity.monster_type_id);
 
         let is_lucky = lucky_value.is_some();
-        const CRIT_BIT: i32 = 0b00_00_00_01;
-        let is_crit = (flag & CRIT_BIT) != 0;
+        let is_crit = (flag & damage_type_flag::CRIT) != 0;
         let mut was_heal_event = is_heal;
         let mut attacker_entity_type = None;
 

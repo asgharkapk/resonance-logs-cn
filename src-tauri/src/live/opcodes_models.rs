@@ -6,6 +6,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use tokio::sync::RwLock;
 
+pub mod damage_type_flag {
+    pub const CRIT: i32 = 0b0001;
+    pub const BLOCK: i32 = 0b0010;
+    pub const ATTACKER_LUCK: i32 = 0b0100;
+    pub const ATTACKED_LUCK: i32 = 0b1000;
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Encounter {
     pub is_encounter_paused: bool,
