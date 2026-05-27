@@ -132,6 +132,8 @@ pub struct BuffChangeEvent {
     pub event_time_ms: i64,
     pub duration_ms: Option<i32>,
     pub source_config_id: Option<i32>,
+    pub previous_layer: Option<i32>,
+    pub current_layer: Option<i32>,
 }
 
 #[derive(Debug, Default)]
@@ -210,6 +212,8 @@ impl BuffMonitor {
                             event_time_ms: now,
                             duration_ms: Some(duration),
                             source_config_id,
+                            previous_layer: None,
+                            current_layer: Some(layer),
                         });
                     }
                 } else if effect_type == EBuffEffectLogicPbType::BuffEffectBuffChange as i32 {
@@ -217,8 +221,10 @@ impl BuffMonitor {
                         if let Some(entry) = self.active_buffs.get_mut(&buff_uuid) {
                             let base_id = entry.base_id;
                             let source_config_id = entry.source_config_id;
+                            let previous_layer = change_info.layer.map(|_| entry.layer);
+                            let current_layer = change_info.layer;
                             let duration_ms = change_info.duration;
-                            if let Some(layer) = change_info.layer {
+                            if let Some(layer) = current_layer {
                                 entry.layer = layer;
                             }
                             if let Some(duration) = duration_ms {
@@ -234,6 +240,8 @@ impl BuffMonitor {
                                 event_time_ms: now,
                                 duration_ms,
                                 source_config_id,
+                                previous_layer,
+                                current_layer,
                             });
                         }
                     }
@@ -250,6 +258,8 @@ impl BuffMonitor {
                         event_time_ms: now,
                         duration_ms: Some(removed_buff.duration),
                         source_config_id: removed_buff.source_config_id,
+                        previous_layer: Some(removed_buff.layer),
+                        current_layer: None,
                     });
                 }
             }

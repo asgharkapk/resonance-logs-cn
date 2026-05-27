@@ -40,6 +40,12 @@ function getCounterConfigBuffIds(rule: {
     if ("buffDurationTick" in source) {
       result.push(source.buffDurationTick.buffId);
     }
+    if ("buffAdded" in source) {
+      result.push(source.buffAdded.buffId);
+    }
+    if ("buffLayerSpent" in source) {
+      result.push(source.buffLayerSpent.buffId);
+    }
     if ("movementDistance" in source) {
       result.push(source.movementDistance.buffId);
     }

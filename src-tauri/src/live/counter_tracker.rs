@@ -61,6 +61,20 @@ pub enum CounterSource {
         units_required: u32,
         increment: u32,
     },
+    BuffAdded {
+        #[serde(rename = "buffId")]
+        buff_id: i32,
+        #[serde(default, rename = "sourceConfigId")]
+        source_config_id: Option<i32>,
+        increment: u32,
+    },
+    BuffLayerSpent {
+        #[serde(rename = "buffId")]
+        buff_id: i32,
+        #[serde(rename = "unitsRequired")]
+        units_required: u32,
+        increment: u32,
+    },
     BuffDurationTick {
         #[serde(rename = "buffId")]
         buff_id: i32,
@@ -172,6 +186,7 @@ pub(crate) struct CounterModelState {
     pub skill_tick_states: Vec<SkillCastTickState>,
     pub skill_complete_states: Vec<SkillCastCompleteState>,
     pub fight_resource_spent_states: Vec<FightResourceSpentState>,
+    pub buff_layer_spent_states: Vec<BuffLayerSpentState>,
     pub movement_distance_states: Vec<MovementDistanceState>,
     pub damage_hit_accumulators: Vec<u32>,
 }
@@ -222,6 +237,14 @@ pub(crate) struct SkillCastCompleteState {
 pub(crate) struct FightResourceSpentState {
     pub resource_id: i32,
     pub previous_value: Option<i64>,
+    pub accumulated_spent: u32,
+    pub units_required: u32,
+    pub increment: u32,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct BuffLayerSpentState {
+    pub buff_id: i32,
     pub accumulated_spent: u32,
     pub units_required: u32,
     pub increment: u32,
@@ -400,6 +423,23 @@ impl BuffCounterTracker {
                     _ => None,
                 })
                 .collect();
+            let buff_layer_spent_states = rule
+                .sources
+                .iter()
+                .filter_map(|source| match source {
+                    CounterSource::BuffLayerSpent {
+                        buff_id,
+                        units_required,
+                        increment,
+                    } => Some(BuffLayerSpentState {
+                        buff_id: *buff_id,
+                        accumulated_spent: 0,
+                        units_required: (*units_required).max(1),
+                        increment: *increment,
+                    }),
+                    _ => None,
+                })
+                .collect();
             let movement_distance_states = rule
                 .sources
                 .iter()
@@ -430,6 +470,7 @@ impl BuffCounterTracker {
                     skill_tick_states,
                     skill_complete_states,
                     fight_resource_spent_states,
+                    buff_layer_spent_states,
                     movement_distance_states,
                     damage_hit_accumulators: vec![0; rule.sources.len()],
                 },
@@ -698,6 +739,31 @@ impl BuffCounterTracker {
                 for movement_state in &mut state.movement_distance_states {
                     apply_movement_buff_change(movement_state, change);
                 }
+                let mut pending_increment = 0u32;
+                for source in &rule.sources {
+                    let CounterSource::BuffAdded {
+                        buff_id,
+                        source_config_id,
+                        increment,
+                    } = source
+                    else {
+                        continue;
+                    };
+                    if change.change_type == BuffChangeType::Added
+                        && change.base_id == *buff_id
+                        && source_config_id
+                            .is_none_or(|required| change.source_config_id == Some(required))
+                    {
+                        pending_increment = pending_increment.saturating_add(*increment);
+                    }
+                }
+                for layer_spent_state in &mut state.buff_layer_spent_states {
+                    pending_increment = pending_increment
+                        .saturating_add(apply_buff_layer_spent(layer_spent_state, change));
+                }
+                if pending_increment > 0 {
+                    changed |= add_increment_to_slots(state, pending_increment);
+                }
                 for (slot_config, slot_state) in
                     rule.effect_slots.iter().zip(&mut state.slot_states)
                 {
@@ -952,6 +1018,9 @@ impl BuffCounterTracker {
                 resource.previous_value = None;
                 resource.accumulated_spent = 0;
             }
+            for layer_spent in &mut state.buff_layer_spent_states {
+                layer_spent.accumulated_spent = 0;
+            }
             for movement in &mut state.movement_distance_states {
                 movement.is_active = false;
                 movement.last_position = None;
@@ -1154,6 +1223,26 @@ fn apply_fight_resource_spent(state: &mut FightResourceSpentState, current_value
     state.accumulated_spent = state.accumulated_spent.saturating_add(spent);
     let triggers = state.accumulated_spent / state.units_required.max(1);
     state.accumulated_spent %= state.units_required.max(1);
+    state.increment.saturating_mul(triggers)
+}
+
+fn apply_buff_layer_spent(state: &mut BuffLayerSpentState, change: &BuffChangeEvent) -> u32 {
+    if change.change_type != BuffChangeType::Changed || change.base_id != state.buff_id {
+        return 0;
+    }
+    let (Some(previous_layer), Some(current_layer)) = (change.previous_layer, change.current_layer)
+    else {
+        return 0;
+    };
+    if previous_layer <= current_layer {
+        return 0;
+    }
+
+    let spent = u32::try_from(previous_layer.saturating_sub(current_layer)).unwrap_or(u32::MAX);
+    state.accumulated_spent = state.accumulated_spent.saturating_add(spent);
+    let units_required = state.units_required.max(1);
+    let triggers = state.accumulated_spent / units_required;
+    state.accumulated_spent %= units_required;
     state.increment.saturating_mul(triggers)
 }
 
