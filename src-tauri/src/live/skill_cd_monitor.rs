@@ -2,7 +2,7 @@ use crate::database::now_ms;
 use crate::live::commands_models::SkillCdState;
 use crate::live::entity_attr_store::EntityAttrStore;
 use crate::live::opcodes_process::ParsedSkillCd;
-use log::{info, warn};
+use log::warn;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -237,23 +237,7 @@ fn calculate_skill_cd(
     attr_skill_cd_pct: f32,
     attr_cd_accelerate_pct: f32,
 ) -> (f32, f32) {
-    let temp_attrs_nonzero: Vec<(i32, i32)> = temp_attr_values
-        .iter()
-        .filter(|(_, v)| **v != 0)
-        .map(|(k, v)| (*k, *v))
-        .collect();
-    info!(
-        "[skill-cd] calc skill_level_id={} base_cd={} attr_skill_cd={} attr_skill_cd_pct={} attr_cd_accelerate_pct={} temp_attrs={:?}",
-        skill_level_id,
-        base_cd,
-        attr_skill_cd,
-        attr_skill_cd_pct,
-        attr_cd_accelerate_pct,
-        temp_attrs_nonzero
-    );
-
     if base_cd <= 0.0 {
-        info!("[skill-cd]   base_cd<=0, return (0.0, 0.0)");
         return (0.0, 0.0);
     }
 
@@ -264,44 +248,24 @@ fn calculate_skill_cd(
         .cloned()
         .unwrap_or_default();
     let skill_tags: HashSet<i32> = skill_tags_vec.iter().copied().collect();
-    info!(
-        "[skill-cd]   skill_id={} tag_lookup={} skill_tags={:?}",
-        skill_id, tag_lookup_skill_level_id, skill_tags_vec
-    );
 
     if skill_tags.contains(&TAG_NO_CD_REDUCE) {
-        info!(
-            "[skill-cd]   skill has TAG_NO_CD_REDUCE(103), no reduction applied, return (base_cd={}, accelerate=0.0)",
-            base_cd
-        );
         return (base_cd.max(0.0), 0.0);
     }
 
     let mut flat_reduce = attr_skill_cd;
     let mut pct_reduce = attr_skill_cd_pct / 10000.0;
     let mut accelerate = attr_cd_accelerate_pct / 10000.0;
-    info!(
-        "[skill-cd]   init flat_reduce={} pct_reduce={} accelerate={}",
-        flat_reduce, pct_reduce, accelerate
-    );
 
     for (temp_attr_id, value) in temp_attr_values {
         if *value == 0 {
             continue;
         }
         let Some(def) = CD_TEMP_ATTR_DEFS.get(temp_attr_id) else {
-            info!(
-                "[skill-cd]   temp_attr {} value={} def_found=false (not in CD_TEMP_ATTR_DEFS), skip",
-                temp_attr_id, value
-            );
             continue;
         };
         let matches = temp_attr_matches(def, skill_id, &skill_tags);
         if !matches {
-            info!(
-                "[skill-cd]   temp_attr {} value={} def_found=true matches=false (attr_type={} logic_type={} params={:?}), skip",
-                temp_attr_id, value, def.attr_type, def.logic_type, def.attr_params
-            );
             continue;
         }
 
@@ -309,45 +273,19 @@ fn calculate_skill_cd(
             101 => {
                 let contrib = *value as f32 / 1000.0;
                 flat_reduce += contrib;
-                info!(
-                    "[skill-cd]   temp_attr {} value={} attr_type=101(flat) contrib={} -> flat_reduce={}",
-                    temp_attr_id, value, contrib, flat_reduce
-                );
             }
             100 => {
                 let contrib = *value as f32 / 10000.0;
                 pct_reduce += contrib;
-                info!(
-                    "[skill-cd]   temp_attr {} value={} attr_type=100(pct) contrib={} -> pct_reduce={}",
-                    temp_attr_id, value, contrib, pct_reduce
-                );
             }
             103 => {
                 let contrib = *value as f32 / 10000.0;
                 accelerate += contrib;
-                info!(
-                    "[skill-cd]   temp_attr {} value={} attr_type=103(accelerate) contrib={} -> accelerate={}",
-                    temp_attr_id, value, contrib, accelerate
-                );
             }
             _ => {}
         }
     }
 
-    info!(
-        "[skill-cd]   final flat_reduce={} pct_reduce={} accelerate={}",
-        flat_reduce, pct_reduce, accelerate
-    );
-
     let reduced_cd = ((1.0 - pct_reduce) * (base_cd - flat_reduce)).max(0.0);
-    info!(
-        "[skill-cd]   reduced_cd=(1-{})*({}-{})={}",
-        pct_reduce, base_cd, flat_reduce, reduced_cd
-    );
-
-    info!(
-        "[skill-cd]   final_result actual_cd={} accelerate_rate={}",
-        reduced_cd, accelerate
-    );
     (reduced_cd, accelerate)
 }

@@ -27,6 +27,23 @@ use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 
+const APPLY_EVENT_KIND_COUNT: usize = 11;
+const APPLY_EVENT_STATS_WINDOW: Duration = Duration::from_secs(20);
+const APPLY_EVENT_SLOW_THRESHOLD: Duration = Duration::from_millis(1);
+const APPLY_EVENT_KIND_NAMES: [&str; APPLY_EVENT_KIND_COUNT] = [
+    "EnterScene",
+    "SyncNearEntities",
+    "SyncContainerData",
+    "SyncContainerDirtyData",
+    "SyncServerTime",
+    "SyncDungeonData",
+    "SyncDungeonDirtyData",
+    "SyncToMeDeltaInfo",
+    "SyncNearDeltaInfo",
+    "Team",
+    "ResetEncounter",
+];
+
 /// Represents the possible events that can be handled by the state manager.
 #[derive(Debug, Clone)]
 pub enum StateEvent {
@@ -56,6 +73,28 @@ pub enum StateEvent {
         /// Whether this was a manual reset by the user (true) vs automatic (false).
         is_manual: bool,
     },
+}
+
+impl StateEvent {
+    fn kind(&self) -> &'static str {
+        APPLY_EVENT_KIND_NAMES[self.timing_index()]
+    }
+
+    fn timing_index(&self) -> usize {
+        match self {
+            StateEvent::EnterScene(_) => 0,
+            StateEvent::SyncNearEntities(_) => 1,
+            StateEvent::SyncContainerData(_) => 2,
+            StateEvent::SyncContainerDirtyData(_) => 3,
+            StateEvent::SyncServerTime(_) => 4,
+            StateEvent::SyncDungeonData(_) => 5,
+            StateEvent::SyncDungeonDirtyData(_) => 6,
+            StateEvent::SyncToMeDeltaInfo(_) => 7,
+            StateEvent::SyncNearDeltaInfo(_) => 8,
+            StateEvent::Team(_) => 9,
+            StateEvent::ResetEncounter { .. } => 10,
+        }
+    }
 }
 
 /// Represents the state of the application.
@@ -93,6 +132,68 @@ pub struct AppState {
     pub death_snapshot_dirty: bool,
     /// Runtime state from GrpcTeamNtf packets, which can arrive on a separate TCP link.
     pub team: TeamRuntimeState,
+    apply_event_timing: ApplyEventTimingStats,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+struct ApplyEventTimingBucket {
+    count: u64,
+    dropped_count: u64,
+    total_us: u128,
+    max_us: u128,
+}
+
+#[derive(Debug)]
+struct ApplyEventTimingStats {
+    window_started_at: Instant,
+    buckets: [ApplyEventTimingBucket; APPLY_EVENT_KIND_COUNT],
+}
+
+impl ApplyEventTimingStats {
+    fn new() -> Self {
+        Self {
+            window_started_at: Instant::now(),
+            buckets: [ApplyEventTimingBucket::default(); APPLY_EVENT_KIND_COUNT],
+        }
+    }
+
+    fn record(&mut self, event_index: usize, elapsed: Duration, dropped: bool) {
+        let elapsed_us = elapsed.as_micros();
+        let bucket = &mut self.buckets[event_index];
+        bucket.count += 1;
+        bucket.total_us += elapsed_us;
+        bucket.max_us = bucket.max_us.max(elapsed_us);
+        if dropped {
+            bucket.dropped_count += 1;
+        }
+
+        let window_elapsed = self.window_started_at.elapsed();
+        if window_elapsed >= APPLY_EVENT_STATS_WINDOW {
+            self.log_and_reset(window_elapsed);
+        }
+    }
+
+    fn log_and_reset(&mut self, window_elapsed: Duration) {
+        for (event_index, bucket) in self.buckets.iter().enumerate() {
+            if bucket.count == 0 {
+                continue;
+            }
+
+            info!(
+                target: "app::live",
+                "apply_event stats window_ms={} event={} count={} dropped={} avg_us={:.1} max_us={}",
+                window_elapsed.as_millis(),
+                APPLY_EVENT_KIND_NAMES[event_index],
+                bucket.count,
+                bucket.dropped_count,
+                bucket.total_us as f64 / bucket.count as f64,
+                bucket.max_us
+            );
+        }
+
+        self.window_started_at = Instant::now();
+        self.buckets = [ApplyEventTimingBucket::default(); APPLY_EVENT_KIND_COUNT];
+    }
 }
 
 #[derive(Debug)]
@@ -177,6 +278,7 @@ impl AppState {
             sent_overlay_entity_uuids: HashSet::new(),
             death_snapshot_dirty: false,
             team: TeamRuntimeState::default(),
+            apply_event_timing: ApplyEventTimingStats::new(),
         }
     }
 
@@ -200,12 +302,6 @@ fn emit_skill_cd_update_if_needed(state: &mut AppState, payload: Vec<SkillCdStat
     if payload.is_empty() {
         return;
     }
-    info!(
-        "[skill-cd] emit update for {} skills (monitored={:?})",
-        payload.len(),
-        state.local_monitor.skill_cd_monitor.monitored_skill_ids
-    );
-    info!("[skill-cd] payload={:?}", payload);
     state.event_manager.emit_skill_cd_update(payload);
 }
 
@@ -523,6 +619,28 @@ fn persist_and_save_encounter(state: &mut AppState, is_manual: bool, source: &st
     }
 }
 
+fn record_apply_event_elapsed(
+    state: &mut AppState,
+    event_kind: &str,
+    event_index: usize,
+    elapsed: Duration,
+    dropped: bool,
+) {
+    if elapsed > APPLY_EVENT_SLOW_THRESHOLD {
+        info!(
+            target: "app::live",
+            "apply_event slow event={} elapsed_us={} elapsed_ms={:.3} dropped={}",
+            event_kind,
+            elapsed.as_micros(),
+            elapsed.as_secs_f64() * 1000.0,
+            dropped
+        );
+    }
+    state
+        .apply_event_timing
+        .record(event_index, elapsed, dropped);
+}
+
 /// Manages the state of the application.
 #[derive(Clone)]
 pub struct AppStateManager {
@@ -573,6 +691,10 @@ impl AppStateManager {
     }
 
     fn apply_event(&self, state: &mut AppState, event: StateEvent) {
+        let apply_started_at = Instant::now();
+        let event_kind = event.kind();
+        let event_index = event.timing_index();
+
         // Check if encounter is paused for events that should be dropped
         if state.is_encounter_paused()
             && matches!(
@@ -583,6 +705,13 @@ impl AppStateManager {
                     | StateEvent::SyncNearDeltaInfo(_)
             )
         {
+            record_apply_event_elapsed(
+                state,
+                event_kind,
+                event_index,
+                apply_started_at.elapsed(),
+                true,
+            );
             info!("packet dropped due to encounter paused");
             return;
         }
@@ -689,6 +818,13 @@ impl AppStateManager {
             emit_season_cultivate_factor_counter_update(state);
         }
         self.apply_attr_store_changes(state);
+        record_apply_event_elapsed(
+            state,
+            event_kind,
+            event_index,
+            apply_started_at.elapsed(),
+            false,
+        );
     }
 
     fn process_team_event(&self, state: &mut AppState, event: TeamEvent) {
@@ -1150,19 +1286,6 @@ impl AppStateManager {
 
         if state.local_monitor.entity_uuid != state.encounter.local_player_uuid {
             state.local_monitor.entity_uuid = state.encounter.local_player_uuid;
-        }
-
-        if !result.skill_cds.is_empty() {
-            let ids: Vec<i32> = result
-                .skill_cds
-                .iter()
-                .filter_map(|cd| cd.skill_level_id)
-                .collect();
-            info!(
-                "[skill-cd] received {} cd entries, ids={:?}",
-                ids.len(),
-                ids
-            );
         }
 
         let mut counter_dirty = false;
