@@ -11,8 +11,8 @@ use crate::live::{
 };
 use crate::packets;
 use log::{info, warn};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -106,8 +106,7 @@ pub async fn start(
     let npcap_device = get_npcap_device(&app_handle);
     let capture_rx = packets::packet_capture::start_capture(npcap_device);
     let queue_depth: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let (state_tx, mut state_rx) =
-        tokio::sync::mpsc::channel::<StateEvent>(DECODE_CHANNEL_CAP);
+    let (state_tx, mut state_rx) = tokio::sync::mpsc::channel::<StateEvent>(DECODE_CHANNEL_CAP);
     packets::decode_worker::spawn_decode_worker(capture_rx, state_tx, Arc::clone(&queue_depth));
 
     let mut queue_depth_warn_counter = 0usize;

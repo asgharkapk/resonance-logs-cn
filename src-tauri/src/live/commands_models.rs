@@ -90,6 +90,7 @@ pub struct RawEntityData {
     pub dmg_skills: HashMap<i64, RawSkillStats>,
     pub heal_skills: HashMap<i64, RawSkillStats>,
     pub taken_skills: HashMap<i64, RawSkillStats>,
+    pub taken_per_source: Vec<PerSourceStats>,
 }
 
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Default, Clone)]
@@ -111,6 +112,7 @@ pub struct HistoryEntityData {
     pub dmg_skills: HashMap<i64, RawSkillStats>,
     pub heal_skills: HashMap<i64, RawSkillStats>,
     pub taken_skills: HashMap<i64, RawSkillStats>,
+    pub taken_per_source: Vec<PerSourceStats>,
     pub dmg_per_target: Vec<PerTargetStats>,
     pub heal_per_target: Vec<PerTargetStats>,
     pub deaths: Vec<DeathRecord>,
@@ -156,6 +158,17 @@ pub struct PerTargetStats {
     pub target_monster_id: Option<i32>,
     pub total_value: u128,
     pub damage: RawCombatStats,
+    pub skills: HashMap<i64, RawSkillStats>,
+}
+
+/// Damage taken by a defender, aggregated by the attacking monster's template.
+#[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Default, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PerSourceStats {
+    /// Monster template id of the attacker. None when the source was unknown.
+    pub source_monster_id: Option<i32>,
+    pub total_value: u128,
+    pub taken: RawCombatStats,
     pub skills: HashMap<i64, RawSkillStats>,
 }
 
@@ -250,6 +263,44 @@ pub fn build_per_target_stats(
     }
 
     let mut rows: Vec<PerTargetStats> = grouped.into_values().collect();
+    rows.sort_by(|a, b| b.total_value.cmp(&a.total_value));
+    rows
+}
+
+/// Group a defender's per-(skill, source) taken skills into per-source rows.
+///
+/// The map key's second element is the attacker's monster template id, where 0
+/// represents an unknown source (mapped to `None` in the output). Rows are
+/// sorted by total taken value, descending.
+pub fn build_taken_per_source(by_skill_source: &HashMap<(i64, i32), Skill>) -> Vec<PerSourceStats> {
+    let mut grouped = HashMap::<i32, PerSourceStats>::new();
+
+    for (&(skill_id, source_monster_id), skill) in by_skill_source {
+        let entry = grouped
+            .entry(source_monster_id)
+            .or_insert_with(|| PerSourceStats {
+                source_monster_id: (source_monster_id != 0).then_some(source_monster_id),
+                total_value: 0,
+                taken: RawCombatStats::default(),
+                skills: HashMap::new(),
+            });
+
+        entry.skills.insert(skill_id, to_raw_skill_stats(skill));
+
+        entry.total_value += skill.total_value;
+        entry.taken.total += skill.total_value;
+        entry.taken.effective_total += skill.effective_total_value;
+        entry.taken.hits += skill.hits;
+        entry.taken.crit_hits += skill.crit_hits;
+        entry.taken.crit_total += skill.crit_total_value;
+        entry.taken.lucky_hits += skill.lucky_hits;
+        entry.taken.lucky_total += skill.lucky_total_value;
+        entry.taken.trigger_hits += skill.trigger_hits;
+        entry.taken.block_hits += skill.block_hits;
+        entry.taken.lucky_block_hits += skill.lucky_block_hits;
+    }
+
+    let mut rows: Vec<PerSourceStats> = grouped.into_values().collect();
     rows.sort_by(|a, b| b.total_value.cmp(&a.total_value));
     rows
 }

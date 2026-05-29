@@ -669,6 +669,7 @@ pub fn get_encounter_entities_raw(encounter_id: i32) -> Result<Vec<lc::HistoryEn
                 .iter()
                 .map(|(skill_id, stats)| (*skill_id, lc::to_raw_skill_stats(stats)))
                 .collect(),
+            taken_per_source: lc::build_taken_per_source(&entity.skill_taken_from_source),
             dmg_per_target: lc::build_per_target_stats(
                 &entity.skill_dmg_to_target,
                 Some(&entity.dmg_to_target),

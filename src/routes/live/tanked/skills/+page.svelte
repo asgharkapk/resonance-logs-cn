@@ -17,8 +17,11 @@
   import { liveTankedSkillColumns } from "$lib/column-data";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatNumber } from "$lib/i18n/index.svelte";
+  import { findSourceByKey } from "$lib/tanked-source-derived";
 
   const entityUuid = page.url.searchParams.get("entityUuid") ?? "";
+  // null or "total" => combined across all monsters; otherwise a specific source.
+  const monsterId = page.url.searchParams.get("monsterId");
   const emptyGroupedSkills = {
     groups: [] as RecountGroup[],
     ungrouped: [] as SkillDisplayRow[],
@@ -28,30 +31,51 @@
   let tankedPlayers = $derived(
     liveData ? computePlayerRows(liveData, "tanked") : [],
   );
-  let currPlayer = $derived(tankedPlayers.find((player) => player.entityUuid === entityUuid));
+  let currPlayer = $derived(
+    tankedPlayers.find((player) => player.entityUuid === entityUuid),
+  );
   let currEntity = $derived(
-    liveData?.entities.find((entity) => entity.entityUuid === entityUuid) ?? null,
+    liveData?.entities.find((entity) => entity.entityUuid === entityUuid) ??
+      null,
   );
   let elapsedSecs = $derived((liveData?.elapsedMs ?? 0) / 1000);
 
+  // When a specific monster is selected, drill into its per-source skills;
+  // otherwise ("total" or absent) show the combined taken breakdown.
+  let selectedSource = $derived(
+    monsterId && monsterId !== "total"
+      ? findSourceByKey(currEntity?.takenPerSource, monsterId)
+      : null,
+  );
+
   let groupedSkills = $derived(
     currEntity
-      ? groupSkillsByRecount(
-          currEntity.takenSkills,
-          elapsedSecs,
-          currEntity.taken.total,
-        )
+      ? selectedSource
+        ? groupSkillsByRecount(
+            selectedSource.skills,
+            elapsedSecs,
+            selectedSource.taken.total,
+          )
+        : groupSkillsByRecount(
+            currEntity.takenSkills,
+            elapsedSecs,
+            currEntity.taken.total,
+          )
       : emptyGroupedSkills,
   );
 
   let SETTINGS_YOUR_NAME = $derived(settings.state.live.general.showYourName);
-  let SETTINGS_OTHERS_NAME = $derived(settings.state.live.general.showOthersName);
+  let SETTINGS_OTHERS_NAME = $derived(
+    settings.state.live.general.showOthersName,
+  );
 
   let tableSettings = $derived(SETTINGS.live.tableCustomization.state);
   let abbreviatedDecimalPlaces = $derived(
     SETTINGS.live.general.state.abbreviatedDecimalPlaces ?? 1,
   );
-  let abbreviationStyle = $derived(SETTINGS.live.general.state.abbreviationStyle);
+  let abbreviationStyle = $derived(
+    SETTINGS.live.general.state.abbreviationStyle,
+  );
   let customThemeColors = $derived(
     SETTINGS.accessibility.state.customThemeColors,
   );
@@ -92,12 +116,14 @@
   const glowClassName = $derived.by(() => {
     if (!currPlayer) return "";
     const isLocalPlayer =
-      liveData?.localPlayerUuid != null && currPlayer.entityUuid === liveData.localPlayerUuid;
+      liveData?.localPlayerUuid != null &&
+      currPlayer.entityUuid === liveData.localPlayerUuid;
     return isLocalPlayer
       ? normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) !== "Hide Your Name"
         ? currPlayer.className
         : ""
-      : normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) !== "Hide Others' Name"
+      : normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) !==
+          "Hide Others' Name"
         ? currPlayer.className
         : "";
   });
@@ -122,7 +148,7 @@
   {customThemeColors}
   {abbreviatedDecimalPlaces}
   {abbreviationStyle}
-  glowClassName={glowClassName}
+  {glowClassName}
   classSpecName={currPlayer?.classSpecName ?? ""}
   relativeToTop={SETTINGS.live.general.state.relativeToTopTankedSkill}
   shortenValues={SETTINGS.live.general.state.shortenTps}

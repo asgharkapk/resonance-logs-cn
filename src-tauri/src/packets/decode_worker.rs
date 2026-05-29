@@ -5,9 +5,9 @@ use crate::packets::opcodes::{CaptureEvent, GRPC_TEAM_NTF_SERVICE_ID, WORLD_NTF_
 use blueprotobuf_lib::blueprotobuf;
 use bytes::Bytes;
 use log::{debug, info, trace, warn};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
 use prost::Message;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Decodes packet payload into a state event.
 fn decode_state_event(op: packets::opcodes::Pkt, data: Bytes) -> Option<StateEvent> {
@@ -49,15 +49,13 @@ fn decode_state_event(op: packets::opcodes::Pkt, data: Bytes) -> Option<StateEve
                 }
             }
         }
-        packets::opcodes::Pkt::SyncServerTime => {
-            match blueprotobuf::SyncServerTime::decode(data) {
-                Ok(v) => Some(StateEvent::SyncServerTime(v)),
-                Err(e) => {
-                    warn!("Error decoding SyncServerTime.. ignoring: {e}");
-                    None
-                }
+        packets::opcodes::Pkt::SyncServerTime => match blueprotobuf::SyncServerTime::decode(data) {
+            Ok(v) => Some(StateEvent::SyncServerTime(v)),
+            Err(e) => {
+                warn!("Error decoding SyncServerTime.. ignoring: {e}");
+                None
             }
-        }
+        },
         packets::opcodes::Pkt::SyncDungeonData => {
             info!(target: "app::live", "Received SyncDungeonData packet");
             match blueprotobuf::SyncDungeonData::decode(data) {
@@ -174,8 +172,7 @@ pub fn decode_capture_event(event: CaptureEvent) -> Option<StateEvent> {
         CaptureEvent::Notify { key, .. } => {
             trace!(
                 "Unhandled notify service_id={} method_id={}",
-                key.service_id,
-                key.method_id
+                key.service_id, key.method_id
             );
             None
         }

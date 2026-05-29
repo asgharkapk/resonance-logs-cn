@@ -399,16 +399,13 @@ impl NpcapCapture {
         }
 
         let user_ptr = on_packet as *mut F as *mut u8;
-        let res = unsafe {
-            (self.fn_dispatch)(self.handle, max, trampoline::<F>, user_ptr)
-        };
+        let res = unsafe { (self.fn_dispatch)(self.handle, max, trampoline::<F>, user_ptr) };
 
         match res {
             n if n >= 0 => Ok(n),
-            -1 => Err(format!(
-                "pcap_dispatch error: {}",
-                unsafe { pcap_error(self.fn_get_err, self.handle) }
-            )),
+            -1 => Err(format!("pcap_dispatch error: {}", unsafe {
+                pcap_error(self.fn_get_err, self.handle)
+            })),
             -2 => Ok(0), // breakloop (treat as zero processed)
             other => Err(format!("pcap_dispatch unknown return: {}", other)),
         }

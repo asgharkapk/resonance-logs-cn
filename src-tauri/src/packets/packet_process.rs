@@ -84,11 +84,7 @@ pub fn process_packet(
                     match zstd::decode_all(nested_packet) {
                         Ok(tcp_fragment_decompressed) => {
                             let nested_bytes = Bytes::from(tcp_fragment_decompressed);
-                            process_packet(
-                                &nested_bytes,
-                                packet_sender,
-                                dropped_total,
-                            );
+                            process_packet(&nested_bytes, packet_sender, dropped_total);
                         }
                         Err(_e) => {
                             debug!("FrameDown: zstd decompression failed");

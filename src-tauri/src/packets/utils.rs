@@ -129,10 +129,7 @@ impl TCPReassembler {
         // Fast-path: cache is empty and sequence aligns (common steady-state).
         // Avoids BTreeMap insert + drain round-trip for in-order segments.
         if self.cache.is_empty() {
-            let aligned = self
-                .next_seq
-                .map(|s| s == sequence_number)
-                .unwrap_or(true);
+            let aligned = self.next_seq.map(|s| s == sequence_number).unwrap_or(true);
             if aligned {
                 self.next_seq = Some(sequence_number.wrapping_add(payload.len() as u32));
                 self.clear_gap_state();

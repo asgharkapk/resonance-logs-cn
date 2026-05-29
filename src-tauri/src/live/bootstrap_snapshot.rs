@@ -44,9 +44,9 @@ impl MonitorRuntimeSnapshot {
         self.skill
             .buff_counter_rules
             .dedup_by_key(|rule| rule.rule_id);
-        self.skill.season_cultivate_factor_templates = normalize_factor_templates(
-            std::mem::take(&mut self.skill.season_cultivate_factor_templates),
-        );
+        self.skill.season_cultivate_factor_templates = normalize_factor_templates(std::mem::take(
+            &mut self.skill.season_cultivate_factor_templates,
+        ));
         self.skill
             .season_cultivate_factor_templates
             .sort_by_key(|template| {

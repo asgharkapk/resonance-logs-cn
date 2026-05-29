@@ -1,7 +1,7 @@
 use crate::live::commands_models::{
     BossHealth, BuffUpdateState, CounterUpdateState, DeathRecord, FightResourceState, HateEntry,
     HeaderInfo, LiveDataPayload, PanelAttrState, RawEntityData, ShieldDetailEntry, SkillCdState,
-    TrainingDummyState, to_raw_combat_stats, to_raw_skill_stats,
+    TrainingDummyState, build_taken_per_source, to_raw_combat_stats, to_raw_skill_stats,
 };
 use crate::live::entity_attr_store::EntityAttrStore;
 use crate::live::entity_id::{entity_uuid_string, uid_from_uuid};
@@ -379,6 +379,7 @@ pub fn generate_live_data_payload(
                 .iter()
                 .map(|(skill_id, stats)| (*skill_id, to_raw_skill_stats(stats)))
                 .collect(),
+            taken_per_source: build_taken_per_source(&entity.skill_taken_from_source),
         });
     }
 

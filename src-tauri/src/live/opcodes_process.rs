@@ -657,6 +657,50 @@ pub fn apply_panel_attrs(
     }
 }
 
+/// Apply one taken-damage event to a per-skill `Skill` accumulator.
+///
+/// Used for both the combined per-skill map and the per-source (per attacking
+/// monster template) map so the two stay in sync. Entity-level `taken` totals
+/// are accumulated separately by the caller so they are counted exactly once.
+#[allow(clippy::too_many_arguments)]
+fn apply_taken_skill_delta(
+    skill: &mut Skill,
+    effective_value: u128,
+    is_crit: bool,
+    is_lucky_bonus_only: bool,
+    is_attacked_lucky_trigger: bool,
+    is_block: bool,
+    property: Option<i32>,
+    damage_mode: Option<i32>,
+) {
+    if skill.property.is_none() {
+        skill.property = property;
+    }
+    if skill.damage_mode.is_none() {
+        skill.damage_mode = damage_mode;
+    }
+    if is_crit {
+        skill.crit_hits += 1;
+        skill.crit_total_value += effective_value;
+    }
+    if !is_lucky_bonus_only {
+        skill.trigger_hits += 1;
+        if is_attacked_lucky_trigger {
+            skill.lucky_hits += 1;
+        }
+        if is_block {
+            skill.block_hits += 1;
+            if is_attacked_lucky_trigger {
+                skill.lucky_block_hits += 1;
+            }
+        }
+    } else {
+        skill.lucky_total_value += effective_value;
+    }
+    skill.hits += 1;
+    skill.total_value += effective_value;
+}
+
 pub fn process_aoi_sync_delta(
     encounter: &mut Encounter,
     attr_store: &mut EntityAttrStore,
@@ -979,45 +1023,59 @@ pub fn process_aoi_sync_delta(
                 .or_insert_with(|| Entity::new(target_uuid, EEntityType::from(target_uuid)));
 
             if attacker_entity_type != Some(EEntityType::EntChar) {
-                let taken_skill = defender_entity
-                    .skill_uid_to_taken_skill
-                    .entry(skill_key)
-                    .or_insert_with(|| Skill::default());
-                if taken_skill.property.is_none() {
-                    taken_skill.property = sync_damage_info.property;
-                }
-                if taken_skill.damage_mode.is_none() {
-                    taken_skill.damage_mode = sync_damage_info.damage_mode;
-                }
+                // Entity-level taken totals (counted exactly once per event).
                 if is_crit {
                     defender_entity.taken.crit_hits += 1;
                     defender_entity.taken.crit_total += effective_value;
-                    taken_skill.crit_hits += 1;
-                    taken_skill.crit_total_value += effective_value;
                 }
                 if !is_lucky_bonus_only {
                     defender_entity.taken.trigger_hits += 1;
-                    taken_skill.trigger_hits += 1;
                     if is_attacked_lucky_trigger {
                         defender_entity.taken.lucky_hits += 1;
-                        taken_skill.lucky_hits += 1;
                     }
                     if is_block {
                         defender_entity.taken.block_hits += 1;
-                        taken_skill.block_hits += 1;
                         if is_attacked_lucky_trigger {
                             defender_entity.taken.lucky_block_hits += 1;
-                            taken_skill.lucky_block_hits += 1;
                         }
                     }
                 } else {
                     defender_entity.taken.lucky_total += effective_value;
-                    taken_skill.lucky_total_value += effective_value;
                 }
                 defender_entity.taken.hits += 1;
                 defender_entity.taken.total += effective_value;
-                taken_skill.hits += 1;
-                taken_skill.total_value += effective_value;
+
+                // Combined per-skill taken (all attackers merged).
+                let taken_skill = defender_entity
+                    .skill_uid_to_taken_skill
+                    .entry(skill_key)
+                    .or_default();
+                apply_taken_skill_delta(
+                    taken_skill,
+                    effective_value,
+                    is_crit,
+                    is_lucky_bonus_only,
+                    is_attacked_lucky_trigger,
+                    is_block,
+                    sync_damage_info.property,
+                    sync_damage_info.damage_mode,
+                );
+
+                // Per-source taken (grouped by attacking monster template; 0 = unknown).
+                let source_skill = defender_entity
+                    .skill_taken_from_source
+                    .entry((skill_key, attacker_monster_type_id.unwrap_or(0)))
+                    .or_default();
+                apply_taken_skill_delta(
+                    source_skill,
+                    effective_value,
+                    is_crit,
+                    is_lucky_bonus_only,
+                    is_attacked_lucky_trigger,
+                    is_block,
+                    sync_damage_info.property,
+                    sync_damage_info.damage_mode,
+                );
 
                 // Maintain a 2s sliding window of recent damage taken for death replay.
                 const REPLAY_WINDOW_MS: u128 = 2000;

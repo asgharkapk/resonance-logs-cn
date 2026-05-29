@@ -72,7 +72,9 @@
   let abbreviatedDecimalPlaces = $derived(
     SETTINGS.live.general.state.abbreviatedDecimalPlaces ?? 1,
   );
-  let abbreviationStyle = $derived(SETTINGS.live.general.state.abbreviationStyle);
+  let abbreviationStyle = $derived(
+    SETTINGS.live.general.state.abbreviationStyle,
+  );
   let customThemeColors = $derived(
     SETTINGS.accessibility.state.customThemeColors,
   );
@@ -125,7 +127,8 @@
     {#if compactMode}
       <tbody>
         {#each compactData as player (player.entityUuid)}
-          {@const isLocalPlayer = liveData?.localPlayerUuid != null &&
+          {@const isLocalPlayer =
+            liveData?.localPlayerUuid != null &&
             player.entityUuid === liveData.localPlayerUuid}
           {@const displayName = getDisplayName({
             player: {
@@ -140,7 +143,8 @@
             isLocalPlayer,
           })}
           {@const className = isLocalPlayer
-            ? normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) !== "Hide Your Name"
+            ? normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) !==
+              "Hide Your Name"
               ? player.className
               : ""
             : normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) !==
@@ -150,7 +154,8 @@
           <tr
             class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
-            onclick={() => goto(`/live/tanked/skills?entityUuid=${player.entityUuid}`)}
+            onclick={() =>
+              goto(`/live/tanked/monsters?entityUuid=${player.entityUuid}`)}
           >
             <td class="px-3 py-1 relative z-10">
               <div class="flex items-center h-full gap-2">
@@ -161,8 +166,10 @@
                   alt={t("live.table.classIconAlt")}
                   {@attach tooltip(
                     () =>
-                      formatClassSpecLabel(player.className, player.classSpecName) ||
-                      t("live.player.unknownClass"),
+                      formatClassSpecLabel(
+                        player.className,
+                        player.classSpecName,
+                      ) || t("live.player.unknownClass"),
                   )}
                 />
                 <div class="flex flex-1 min-w-0 items-center gap-1">
@@ -235,180 +242,187 @@
         {/each}
       </tbody>
     {:else}
-    {#if tableSettings.showTableHeader}
-      <thead>
-        <tr
-          class="bg-popover/60"
-          style="height: {tableSettings.tableHeaderHeight}px;"
-        >
-          <th
-            class="px-3 py-1 text-left font-medium uppercase tracking-wide"
-            style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-            >{t("live.table.player")}</th
+      {#if tableSettings.showTableHeader}
+        <thead>
+          <tr
+            class="bg-popover/60"
+            style="height: {tableSettings.tableHeaderHeight}px;"
           >
-          {#each visiblePlayerColumns as col (col.key)}
             <th
-              class="px-3 py-1 text-right font-medium uppercase tracking-wide cursor-pointer select-none hover:bg-muted/40 transition-colors"
+              class="px-3 py-1 text-left font-medium uppercase tracking-wide"
               style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
-              onclick={() => handleSort(col.key)}
+              >{t("live.table.player")}</th
             >
-              <span class="inline-flex items-center gap-1 justify-end">
-                {col.header}
-                {#if sortKey === col.key}
-                  <span class="text-primary">{sortDesc ? "v" : "^"}</span>
-                {/if}
-              </span>
-            </th>
-          {/each}
-        </tr>
-      </thead>
-    {/if}
-    <tbody>
-      {#each tankedData as player (player.entityUuid)}
-        {@const isLocalPlayer = liveData?.localPlayerUuid != null &&
-          player.entityUuid === liveData.localPlayerUuid}
-        {@const displayName = getDisplayName({
-          player: {
-            entityUuid: player.entityUuid,
-            displayUid: player.displayUid,
-            name: player.name,
-            className: player.className,
-            classSpecName: player.classSpecName,
-          },
-          showYourNameSetting: SETTINGS_YOUR_NAME,
-          showOthersNameSetting: SETTINGS_OTHERS_NAME,
-          isLocalPlayer,
-        })}
-        {@const className = isLocalPlayer
-          ? normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) !== "Hide Your Name"
-            ? player.className
-            : ""
-          : normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) !==
-              "Hide Others' Name"
-            ? player.className
-            : ""}
-        {@const showAbilityScore =
-          player.abilityScore > 0 &&
-          (isLocalPlayer
-            ? SETTINGS.live.general.state.showYourAbilityScore
-            : SETTINGS.live.general.state.showOthersAbilityScore)}
-        {@const showSeasonStrength =
-          player.seasonStrength > 0 &&
-          (isLocalPlayer
-            ? SETTINGS.live.general.state.showYourSeasonStrength
-            : SETTINGS.live.general.state.showOthersSeasonStrength)}
-        <tr
-          class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
-          style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
-          onclick={() => goto(`/live/tanked/skills?entityUuid=${player.entityUuid}`)}
-        >
-          <td class="px-3 py-1 relative z-10">
-            <div class="flex items-center h-full gap-2">
-              <img
-                style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
-                class="object-contain"
-                src={getClassIcon(className)}
-                alt={t("live.table.classIconAlt")}
-                {@attach tooltip(
-                  () =>
-                    formatClassSpecLabel(player.className, player.classSpecName) ||
-                    t("live.player.unknownClass"),
-                )}
-              />
-              {#if showAbilityScore || showSeasonStrength}
-                <span
-                  class="inline-flex items-center gap-0 tabular-nums"
-                  style="color: {customThemeColors.tableTextColor};"
-                >
-                  {#if showAbilityScore}
-                    {#if SETTINGS.live.general.state.shortenAbilityScore}
-                      <AbbreviatedNumber
-                        num={player.abilityScore}
-                        suffixFontSize={tableSettings.abbreviatedFontSize}
-                        suffixColor={customThemeColors.tableAbbreviatedColor}
-                      />
-                    {:else}
-                      <span>{player.abilityScore}</span>
-                    {/if}
-                  {/if}
-                  {#if showSeasonStrength}
-                    <span
-                      class={showAbilityScore ? "ml-0 tabular-nums" : "tabular-nums"}
-                      style="color: {customThemeColors.tableTextColor};"
-                      >({player.seasonStrength})</span
-                    >
+            {#each visiblePlayerColumns as col (col.key)}
+              <th
+                class="px-3 py-1 text-right font-medium uppercase tracking-wide cursor-pointer select-none hover:bg-muted/40 transition-colors"
+                style="font-size: {tableSettings.tableHeaderFontSize}px; color: {tableSettings.tableHeaderTextColor};"
+                onclick={() => handleSort(col.key)}
+              >
+                <span class="inline-flex items-center gap-1 justify-end">
+                  {col.header}
+                  {#if sortKey === col.key}
+                    <span class="text-primary">{sortDesc ? "v" : "^"}</span>
                   {/if}
                 </span>
-              {/if}
-              <span
-                class="truncate font-medium"
-                style="color: {customThemeColors.tableTextColor};"
-                >{displayName || `#${player.displayUid}`}</span
-              >
-            </div>
-          </td>
-          {#each visiblePlayerColumns as col (col.key)}
-            <td
-              class="px-3 py-1 text-right relative z-10 tabular-nums font-medium"
-              style="color: {customThemeColors.tableTextColor};"
-            >
-              {#if col.key === "totalDmg"}
-                {#if SETTINGS_SHORTEN_TPS}
-                  <AbbreviatedNumber
-                    num={player.totalDmg}
-                    decimalPlaces={abbreviatedDecimalPlaces}
-                    {abbreviationStyle}
-                    suffixFontSize={tableSettings.abbreviatedFontSize}
-                    suffixColor={customThemeColors.tableAbbreviatedColor}
-                  />
-                {:else}
-                  {formatNumber(player.totalDmg)}
-                {/if}
-              {:else if col.key === "dps"}
-                {#if SETTINGS_SHORTEN_TPS}
-                  <AbbreviatedNumber
-                    num={player.dps}
-                    decimalPlaces={abbreviatedDecimalPlaces}
-                    {abbreviationStyle}
-                    suffixFontSize={tableSettings.abbreviatedFontSize}
-                    suffixColor={customThemeColors.tableAbbreviatedColor}
-                  />
-                {:else}
-                  {formatNumber(player.dps, {
-                    minimumFractionDigits: 1,
-                    maximumFractionDigits: 1,
-                  })}
-                {/if}
-              {:else if col.key === "dmgPct"}
-                <PercentFormat
-                  val={player.dmgPct}
-                  fractionDigits={0}
-                  suffixFontSize={tableSettings.abbreviatedFontSize}
-                  suffixColor={customThemeColors.tableAbbreviatedColor}
+              </th>
+            {/each}
+          </tr>
+        </thead>
+      {/if}
+      <tbody>
+        {#each tankedData as player (player.entityUuid)}
+          {@const isLocalPlayer =
+            liveData?.localPlayerUuid != null &&
+            player.entityUuid === liveData.localPlayerUuid}
+          {@const displayName = getDisplayName({
+            player: {
+              entityUuid: player.entityUuid,
+              displayUid: player.displayUid,
+              name: player.name,
+              className: player.className,
+              classSpecName: player.classSpecName,
+            },
+            showYourNameSetting: SETTINGS_YOUR_NAME,
+            showOthersNameSetting: SETTINGS_OTHERS_NAME,
+            isLocalPlayer,
+          })}
+          {@const className = isLocalPlayer
+            ? normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) !==
+              "Hide Your Name"
+              ? player.className
+              : ""
+            : normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) !==
+                "Hide Others' Name"
+              ? player.className
+              : ""}
+          {@const showAbilityScore =
+            player.abilityScore > 0 &&
+            (isLocalPlayer
+              ? SETTINGS.live.general.state.showYourAbilityScore
+              : SETTINGS.live.general.state.showOthersAbilityScore)}
+          {@const showSeasonStrength =
+            player.seasonStrength > 0 &&
+            (isLocalPlayer
+              ? SETTINGS.live.general.state.showYourSeasonStrength
+              : SETTINGS.live.general.state.showOthersSeasonStrength)}
+          <tr
+            class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+            style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
+            onclick={() =>
+              goto(`/live/tanked/monsters?entityUuid=${player.entityUuid}`)}
+          >
+            <td class="px-3 py-1 relative z-10">
+              <div class="flex items-center h-full gap-2">
+                <img
+                  style="width: {tableSettings.playerIconSize}px; height: {tableSettings.playerIconSize}px;"
+                  class="object-contain"
+                  src={getClassIcon(className)}
+                  alt={t("live.table.classIconAlt")}
+                  {@attach tooltip(
+                    () =>
+                      formatClassSpecLabel(
+                        player.className,
+                        player.classSpecName,
+                      ) || t("live.player.unknownClass"),
+                  )}
                 />
-              {:else if col.key === "critRate" || col.key === "critDmgRate" || col.key === "luckyRate" || col.key === "luckyDmgRate" || col.key === "blockRate" || col.key === "luckyBlockRate"}
-                <PercentFormat
-                  val={player[col.key]}
-                  suffixFontSize={tableSettings.abbreviatedFontSize}
-                  suffixColor={customThemeColors.tableAbbreviatedColor}
-                />
-              {:else}
-                {col.format(player[col.key] ?? 0)}
-              {/if}
+                {#if showAbilityScore || showSeasonStrength}
+                  <span
+                    class="inline-flex items-center gap-0 tabular-nums"
+                    style="color: {customThemeColors.tableTextColor};"
+                  >
+                    {#if showAbilityScore}
+                      {#if SETTINGS.live.general.state.shortenAbilityScore}
+                        <AbbreviatedNumber
+                          num={player.abilityScore}
+                          suffixFontSize={tableSettings.abbreviatedFontSize}
+                          suffixColor={customThemeColors.tableAbbreviatedColor}
+                        />
+                      {:else}
+                        <span>{player.abilityScore}</span>
+                      {/if}
+                    {/if}
+                    {#if showSeasonStrength}
+                      <span
+                        class={showAbilityScore
+                          ? "ml-0 tabular-nums"
+                          : "tabular-nums"}
+                        style="color: {customThemeColors.tableTextColor};"
+                        >({player.seasonStrength})</span
+                      >
+                    {/if}
+                  </span>
+                {/if}
+                <span
+                  class="truncate font-medium"
+                  style="color: {customThemeColors.tableTextColor};"
+                  >{displayName || `#${player.displayUid}`}</span
+                >
+              </div>
             </td>
-          {/each}
-          <TableRowGlow
-            {className}
-            classSpecName={player.classSpecName}
-            percentage={SETTINGS_RELATIVE_TO_TOP_TANKED_PLAYER
-              ? maxTaken > 0
-                ? (player.totalDmg / maxTaken) * 100
-                : 0
-              : player.dmgPct}
-          />
-        </tr>
-      {/each}
-    </tbody>
+            {#each visiblePlayerColumns as col (col.key)}
+              <td
+                class="px-3 py-1 text-right relative z-10 tabular-nums font-medium"
+                style="color: {customThemeColors.tableTextColor};"
+              >
+                {#if col.key === "totalDmg"}
+                  {#if SETTINGS_SHORTEN_TPS}
+                    <AbbreviatedNumber
+                      num={player.totalDmg}
+                      decimalPlaces={abbreviatedDecimalPlaces}
+                      {abbreviationStyle}
+                      suffixFontSize={tableSettings.abbreviatedFontSize}
+                      suffixColor={customThemeColors.tableAbbreviatedColor}
+                    />
+                  {:else}
+                    {formatNumber(player.totalDmg)}
+                  {/if}
+                {:else if col.key === "dps"}
+                  {#if SETTINGS_SHORTEN_TPS}
+                    <AbbreviatedNumber
+                      num={player.dps}
+                      decimalPlaces={abbreviatedDecimalPlaces}
+                      {abbreviationStyle}
+                      suffixFontSize={tableSettings.abbreviatedFontSize}
+                      suffixColor={customThemeColors.tableAbbreviatedColor}
+                    />
+                  {:else}
+                    {formatNumber(player.dps, {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}
+                  {/if}
+                {:else if col.key === "dmgPct"}
+                  <PercentFormat
+                    val={player.dmgPct}
+                    fractionDigits={0}
+                    suffixFontSize={tableSettings.abbreviatedFontSize}
+                    suffixColor={customThemeColors.tableAbbreviatedColor}
+                  />
+                {:else if col.key === "critRate" || col.key === "critDmgRate" || col.key === "luckyRate" || col.key === "luckyDmgRate" || col.key === "blockRate" || col.key === "luckyBlockRate"}
+                  <PercentFormat
+                    val={player[col.key]}
+                    suffixFontSize={tableSettings.abbreviatedFontSize}
+                    suffixColor={customThemeColors.tableAbbreviatedColor}
+                  />
+                {:else}
+                  {col.format(player[col.key] ?? 0)}
+                {/if}
+              </td>
+            {/each}
+            <TableRowGlow
+              {className}
+              classSpecName={player.classSpecName}
+              percentage={SETTINGS_RELATIVE_TO_TOP_TANKED_PLAYER
+                ? maxTaken > 0
+                  ? (player.totalDmg / maxTaken) * 100
+                  : 0
+                : player.dmgPct}
+            />
+          </tr>
+        {/each}
+      </tbody>
     {/if}
   </table>
 </div>

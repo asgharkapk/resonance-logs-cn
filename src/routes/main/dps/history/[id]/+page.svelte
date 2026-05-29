@@ -31,6 +31,10 @@
     type SkillDisplayRow,
   } from "$lib/config/recount-table";
   import { resolveMonsterName, resolveSceneName } from "$lib/config/game-names";
+  import {
+    buildSourceEntities,
+    findSourceByKey,
+  } from "$lib/tanked-source-derived";
   import { formatClassSpecLabel } from "$lib/class-labels";
   import {
     formatDateTime,
@@ -357,7 +361,9 @@
       const targetEntities = rawEntities.map((entity) => {
         const perTarget = perTargetByEntityUuid
           .get(entity.entityUuid)
-          ?.dmgTargets.find((target) => target.targetEntityUuid === overviewTargetUuid);
+          ?.dmgTargets.find(
+            (target) => target.targetEntityUuid === overviewTargetUuid,
+          );
         const damage = perTarget?.damage ?? zeroCombatStats();
         return {
           ...entity,
@@ -392,13 +398,50 @@
 
   let selectedEntity = $derived.by(() => {
     if (!entityUuid) return null;
-    return rawEntities.find((entity) => entity.entityUuid === entityUuid) ?? null;
+    return (
+      rawEntities.find((entity) => entity.entityUuid === entityUuid) ?? null
+    );
   });
 
   let selectedSkillTargetUuid = $derived.by(() => {
     const raw = $page.url.searchParams.get("targetEntityUuid");
     return raw || null;
   });
+
+  // Tanked drill-down: null => show the monster-aggregation middle layer;
+  // "total" => combined skills; otherwise a specific monster source key.
+  let selectedTakenMonsterId = $derived.by(() => {
+    const raw = $page.url.searchParams.get("takenMonsterId");
+    return raw || null;
+  });
+
+  // One row per attacking monster template for the selected (tanked) player,
+  // reusing the tanked overview metric + columns via synthetic entities.
+  let takenSourceRows = $derived.by(() => {
+    if (!selectedEntity || skillType !== "tanked") return [];
+    const entities = buildSourceEntities(
+      selectedEntity,
+      selectedEntity.takenPerSource,
+    );
+    return buildHistoryPlayers(
+      entities,
+      Math.max(1, encounterDurationSeconds),
+      encounter?.activeCombatDuration ?? null,
+      localPlayerUuid,
+    ).sort((a, b) => b.damageTaken - a.damageTaken);
+  });
+
+  // Columns for the tanked monster-aggregation table, reusing the tanked player
+  // overview's column settings (independent of the current overview tab).
+  let takenSourceColumns = $derived(
+    historyTankedPlayerColumns.filter((col) => {
+      const defaultValue =
+        DEFAULT_HISTORY_TANKED_STATS[
+          col.key as keyof typeof DEFAULT_HISTORY_TANKED_STATS
+        ] ?? false;
+      return settings.state.history.tanked.players[col.key] ?? defaultValue;
+    }),
+  );
 
   let selectedDeathTs = $derived.by(() => {
     const raw = $page.url.searchParams.get("deathTs");
@@ -498,6 +541,23 @@
         targetStats.totalValue,
       );
     }
+    if (
+      skillType === "tanked" &&
+      selectedTakenMonsterId !== null &&
+      selectedTakenMonsterId !== "total"
+    ) {
+      const source = findSourceByKey(
+        selectedEntity.takenPerSource,
+        selectedTakenMonsterId,
+      );
+      if (source) {
+        return groupSkillsByRecount(
+          source.skills,
+          durationSecs,
+          source.taken.total,
+        );
+      }
+    }
     const skills =
       skillType === "heal"
         ? selectedEntity.healSkills
@@ -518,7 +578,10 @@
   let healTargetSummary = $derived.by(() => {
     if (!selectedPlayer || skillType !== "heal")
       return [] as DisplayPerTargetStats[];
-    return [...(perTargetByEntityUuid.get(selectedPlayer.entityUuid)?.healTargets ?? [])]
+    return [
+      ...(perTargetByEntityUuid.get(selectedPlayer.entityUuid)?.healTargets ??
+        []),
+    ]
       .map((target) => ({
         ...target,
         targetName: resolveTargetDisplayName(target),
@@ -705,8 +768,24 @@
     } else {
       sp.delete("targetEntityUuid");
     }
-    // Always drop any previous deathTs when navigating to a new player/type.
+    // Always drop any previous deathTs/takenMonsterId when navigating to a new player/type.
     sp.delete("deathTs");
+    sp.delete("takenMonsterId");
+    goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
+  }
+
+  function viewTakenMonster(monsterKey: string) {
+    const sp = new URLSearchParams($page.url.searchParams);
+    sp.set("skillType", "tanked");
+    sp.set("takenMonsterId", monsterKey);
+    sp.delete("targetEntityUuid");
+    sp.delete("deathTs");
+    goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
+  }
+
+  function backToTakenMonsters() {
+    const sp = new URLSearchParams($page.url.searchParams);
+    sp.delete("takenMonsterId");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
 
@@ -716,6 +795,7 @@
     sp.set("skillType", "death");
     sp.set("deathTs", String(deathTs));
     sp.delete("targetEntityUuid");
+    sp.delete("takenMonsterId");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
 
@@ -724,6 +804,7 @@
     sp.delete("entityUuid");
     sp.delete("deathTs");
     sp.delete("targetEntityUuid");
+    sp.delete("takenMonsterId");
     sp.set("skillType", "death");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
@@ -732,6 +813,7 @@
     const sp = new URLSearchParams($page.url.searchParams);
     sp.delete("deathTs");
     sp.delete("targetEntityUuid");
+    sp.delete("takenMonsterId");
     sp.set("skillType", "death");
     goto(`/main/dps/history/${encounterId}?${sp.toString()}`);
   }
@@ -742,6 +824,7 @@
     sp.delete("skillType");
     sp.delete("targetEntityUuid");
     sp.delete("deathTs");
+    sp.delete("takenMonsterId");
     const qs = sp.toString();
     goto(`/main/dps/history/${encounterId}${qs ? `?${qs}` : ""}`);
   }
@@ -753,6 +836,7 @@
     sp.delete("skillType");
     sp.delete("targetEntityUuid");
     sp.delete("deathTs");
+    sp.delete("takenMonsterId");
     const qs = sp.toString();
     goto(`/main/dps/history${qs ? `?${qs}` : ""}`);
   }
@@ -1028,7 +1112,9 @@
               ? 'bg-muted/40 text-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}"
             onclick={() => (overviewTargetUuid = target.targetEntityUuid)}
-            title={t("history.detail.target.title", { uid: target.targetDisplayUid })}
+            title={t("history.detail.target.title", {
+              uid: target.targetDisplayUid,
+            })}
           >
             {target.targetName}
           </button>
@@ -1040,7 +1126,8 @@
       <DeathPlayerList
         entries={deathEntries}
         {localPlayerUuid}
-        onSelect={(selectedEntityUuid) => viewPlayerSkills(selectedEntityUuid, "death")}
+        onSelect={(selectedEntityUuid) =>
+          viewPlayerSkills(selectedEntityUuid, "death")}
         emptyMessage={t("history.detail.death.empty")}
         variant="history"
       />
@@ -1234,12 +1321,143 @@
         </div>
       {/if}
     </div>
+  {:else if entityUuid && selectedPlayer && selectedEntity && skillType === "tanked" && selectedTakenMonsterId === null}
+    <!-- Tanked: per-monster aggregation (middle layer) -->
+    <div class="mb-4">
+      <div class="mb-2 flex items-center gap-3">
+        <button
+          onclick={backToEncounter}
+          class="rounded p-1.5 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
+          aria-label={t("history.detail.actions.backToOverview")}
+        >
+          <svg
+            class="h-5 w-5"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <div>
+          <h2 class="text-foreground text-xl font-semibold">
+            {t("live.tanked.monsters.title")}
+          </h2>
+          <div class="text-sm text-neutral-400">
+            {t("history.detail.player.label")}
+            {getDisplayName({
+              player: {
+                entityUuid: selectedPlayer.entityUuid,
+                displayUid: selectedPlayer.displayUid,
+                name: selectedPlayer.name,
+                className: selectedPlayer.className,
+                classSpecName: selectedPlayer.classSpecName,
+              },
+              showYourNameSetting: settings.state.history.general.showYourName,
+              showOthersNameSetting:
+                settings.state.history.general.showOthersName,
+              isLocalPlayer: selectedPlayer.isLocalPlayer,
+            })}
+            <span class="text-neutral-500">#{selectedPlayer.displayUid}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-border/60 bg-card/30 overflow-x-auto rounded border">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-popover/60">
+            <th
+              class="text-muted-foreground px-3 py-3 text-left text-xs font-medium tracking-wider uppercase"
+              >{t("live.tanked.monsters.title")}</th
+            >
+            {#each takenSourceColumns as col (col.key)}
+              <th
+                class="text-muted-foreground px-3 py-3 text-right text-xs font-medium tracking-wider uppercase"
+                >{col.header}</th
+              >
+            {/each}
+          </tr>
+        </thead>
+        <tbody class="bg-background/40">
+          <tr
+            class="border-border/40 hover:bg-muted/60 relative cursor-pointer border-t transition-colors"
+            onclick={() => viewTakenMonster("total")}
+          >
+            <td class="text-muted-foreground relative z-10 px-3 py-3 text-sm">
+              {t("history.detail.target.total")}
+            </td>
+            {#each takenSourceColumns as col (col.key)}
+              <td
+                class="text-muted-foreground relative z-10 px-3 py-3 text-right text-sm"
+              >
+                {#if (col.key === "damageTaken" || col.key === "tankedPS") && SETTINGS.history.general.state.shortenTps}
+                  <AbbreviatedNumber
+                    num={selectedPlayer[col.key] ?? 0}
+                    decimalPlaces={abbreviatedDecimalPlaces}
+                    {abbreviationStyle}
+                  />
+                {:else}
+                  {col.format(selectedPlayer[col.key] ?? 0)}
+                {/if}
+              </td>
+            {/each}
+            <TableRowGlow
+              className={selectedPlayer.className}
+              percentage={100}
+            />
+          </tr>
+          {#each takenSourceRows as row (row.entityUuid)}
+            <tr
+              class="border-border/40 hover:bg-muted/60 relative cursor-pointer border-t transition-colors"
+              onclick={() => viewTakenMonster(row.entityUuid)}
+            >
+              <td class="text-muted-foreground relative z-10 px-3 py-3 text-sm">
+                <span class="truncate">{row.name}</span>
+              </td>
+              {#each takenSourceColumns as col (col.key)}
+                <td
+                  class="text-muted-foreground relative z-10 px-3 py-3 text-right text-sm"
+                >
+                  {#if (col.key === "damageTaken" || col.key === "tankedPS") && SETTINGS.history.general.state.shortenTps}
+                    <AbbreviatedNumber
+                      num={row[col.key] ?? 0}
+                      decimalPlaces={abbreviatedDecimalPlaces}
+                      {abbreviationStyle}
+                    />
+                  {:else}
+                    {col.format(row[col.key] ?? 0)}
+                  {/if}
+                </td>
+              {/each}
+              <TableRowGlow
+                className={selectedPlayer.className}
+                percentage={SETTINGS.history.general.state
+                  .relativeToTopTankedPlayer
+                  ? (row.damageTaken / (takenSourceRows[0]?.damageTaken || 1)) *
+                    100
+                  : row.tankedPct}
+              />
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
   {:else if entityUuid && selectedPlayer && selectedEntity}
     <!-- Player Skills View -->
     <div class="mb-4">
       <div class="mb-2 flex items-center gap-3">
         <button
-          onclick={backToEncounter}
+          onclick={skillType === "tanked"
+            ? backToTakenMonsters
+            : backToEncounter}
           class="rounded p-1.5 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
           aria-label={t("history.detail.actions.backToOverview")}
         >
@@ -1276,7 +1494,8 @@
               showOthersNameSetting:
                 settings.state.history.general.showOthersName,
               isLocalPlayer: selectedPlayer.isLocalPlayer,
-            })} <span class="text-neutral-500">#{selectedPlayer.displayUid}</span>
+            })}
+            <span class="text-neutral-500">#{selectedPlayer.displayUid}</span>
           </div>
         </div>
       </div>

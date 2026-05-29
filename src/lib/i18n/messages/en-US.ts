@@ -388,6 +388,8 @@ export const enUSMessages = {
   "history.detail.encounter.duration": "Duration: {duration}",
   "history.detail.target.total": "Total",
   "history.detail.target.title": "Target #{uid}",
+  "tanked.monster.unknownSource": "Unknown source",
+  "live.tanked.monsters.title": "Damage source",
   "history.detail.table.player": "Player",
   "history.detail.table.skill": "Skill",
   "history.detail.table.classIconAlt": "Class icon",

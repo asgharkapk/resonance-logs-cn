@@ -395,6 +395,10 @@ pub struct Entity {
     // Tanked/Taken (damage received)
     pub taken: CombatStats,
     pub skill_uid_to_taken_skill: HashMap<i64, Skill>,
+    // Per-source taken aggregation keyed by (skill_key, source_monster_id);
+    // source_monster_id == 0 means the attacker's monster template was unknown.
+    #[serde(default)]
+    pub skill_taken_from_source: HashMap<(i64, i32), Skill>,
 
     // Monster metadata and per-target aggregates (for boss-only filtering)
     pub monster_type_id: Option<i32>,
@@ -495,6 +499,7 @@ impl Encounter {
             // Taken
             entity.taken = CombatStats::default();
             entity.skill_uid_to_taken_skill.clear();
+            entity.skill_taken_from_source.clear();
 
             // Death replay window
             entity.recent_taken_events.clear();

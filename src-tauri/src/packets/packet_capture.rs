@@ -10,8 +10,8 @@ use etherparse::TransportSlice::Tcp;
 use log::{error, info, warn};
 use once_cell::sync::OnceCell;
 use std::collections::HashMap;
-use std::sync::atomic::AtomicUsize;
 use std::sync::OnceLock;
+use std::sync::atomic::AtomicUsize;
 use std::time::{Duration, Instant};
 use tokio::sync::watch;
 
@@ -106,9 +106,7 @@ impl SessionState {
 
 const CAPTURE_CHANNEL_CAP: usize = 4096;
 
-pub fn start_capture(
-    npcap_device: String,
-) -> tokio::sync::mpsc::Receiver<CaptureEvent> {
+pub fn start_capture(npcap_device: String) -> tokio::sync::mpsc::Receiver<CaptureEvent> {
     let (packet_sender, packet_receiver) =
         tokio::sync::mpsc::channel::<CaptureEvent>(CAPTURE_CHANNEL_CAP);
     let (restart_sender, mut restart_receiver) = watch::channel(false);
