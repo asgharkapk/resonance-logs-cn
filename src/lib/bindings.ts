@@ -540,7 +540,7 @@ export type ModuleInfo = { name: string; config_id: number; uuid: number; qualit
 export type ModulePart = { id: number; name: string; value: number }
 export type ModuleSolution = { modules: ModuleInfo[]; score: number; attr_breakdown: Partial<{ [key in string]: number }> }
 export type MonitorRuntimeSnapshot = { live: LiveRuntimeSnapshot; skill: SkillRuntimeSnapshot; monster: MonsterRuntimeSnapshot; teammate: TeammateRuntimeSnapshot }
-export type MonsterRuntimeSnapshot = { enabled: boolean; globalIds: number[]; selfAppliedIds: number[] }
+export type MonsterRuntimeSnapshot = { enabled: boolean; globalIds: number[]; selfAppliedIds: number[]; monitorAllSelfApplied: boolean }
 /**
  * Damage taken by a defender, aggregated by the attacking monster's template.
  */

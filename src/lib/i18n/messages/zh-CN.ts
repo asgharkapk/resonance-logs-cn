@@ -1041,6 +1041,11 @@ export const zhCNMessages = {
   "monsterMonitor.buffGroups.self.title": "仅自身施加",
   "monsterMonitor.buffGroups.self.description":
     "只追踪本角色施加到 Boss 身上的 Buff",
+  "monsterMonitor.buffGroups.self.monitorAll": "监控本角色施加的全部 Buff",
+  "monsterMonitor.buffGroups.self.monitorAllDesc":
+    "开启后，本角色施加到怪物身上的所有 Buff 都会显示，用于快速找到对应 Buff 名",
+  "monsterMonitor.buffGroups.self.monitorAllActive":
+    "已监控本角色施加的全部 Buff，以下单独配置可忽略",
   "monsterMonitor.buffGroups.global.title": "全局监控",
   "monsterMonitor.buffGroups.global.description":
     "无论是谁施加，只要 Boss 身上出现就显示",

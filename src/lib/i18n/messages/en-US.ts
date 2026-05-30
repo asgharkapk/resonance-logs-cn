@@ -1148,6 +1148,11 @@ export const enUSMessages = {
   "monsterMonitor.buffGroups.self.title": "Self-Applied",
   "monsterMonitor.buffGroups.self.description":
     "Only track buffs this character applies to the current target monster",
+  "monsterMonitor.buffGroups.self.monitorAll": "Monitor all self-applied buffs",
+  "monsterMonitor.buffGroups.self.monitorAllDesc":
+    "When enabled, every buff this character applies to the monster is shown, with no need to add them one by one",
+  "monsterMonitor.buffGroups.self.monitorAllActive":
+    "All self-applied buffs are monitored; the individual entries below can be ignored",
   "monsterMonitor.buffGroups.global.title": "Global Monitor",
   "monsterMonitor.buffGroups.global.description":
     "Show the buff whenever it appears on the current target monster, regardless of source",

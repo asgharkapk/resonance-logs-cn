@@ -243,6 +243,7 @@ pub enum LiveControlCommand {
     SetBossMonitoredBuffs {
         global_ids: Vec<i32>,
         self_applied_ids: Vec<i32>,
+        monitor_all_self_applied: bool,
     },
     SetTeammateMonitoredBuffs {
         any_source_ids: Vec<i32>,
@@ -899,11 +900,13 @@ impl AppStateManager {
             LiveControlCommand::SetBossMonitoredBuffs {
                 global_ids,
                 self_applied_ids,
+                monitor_all_self_applied,
             } => {
                 state.entity_buff_config.monster =
                     BuffWatchProfile::from_any_and_local_player_source_ids(
                         global_ids,
                         self_applied_ids,
+                        monitor_all_self_applied,
                     );
             }
             LiveControlCommand::SetTeammateMonitoredBuffs {
@@ -1012,9 +1015,10 @@ impl AppStateManager {
         );
         info!(
             target: "app::live",
-            "[boss-buff] set monitored buffs: global={:?} self_applied={:?}",
+            "[boss-buff] set monitored buffs: global={:?} self_applied={:?} monitor_all_self={:?}",
             monster.global_ids,
-            monster.self_applied_ids
+            monster.self_applied_ids,
+            monster.monitor_all_self_applied
         );
         info!(
             target: "app::live",
@@ -1060,6 +1064,7 @@ impl AppStateManager {
             LiveControlCommand::SetBossMonitoredBuffs {
                 global_ids: monster.global_ids,
                 self_applied_ids: monster.self_applied_ids,
+                monitor_all_self_applied: monster.monitor_all_self_applied,
             },
         );
         self.apply_control_command(

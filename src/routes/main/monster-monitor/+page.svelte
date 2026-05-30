@@ -574,8 +574,21 @@
               {t("monsterMonitor.buffGroups.self.description")}
             </div>
           </div>
+          <SettingsSwitch
+            label={t("monsterMonitor.buffGroups.self.monitorAll")}
+            description={t("monsterMonitor.buffGroups.self.monitorAllDesc")}
+            bind:checked={SETTINGS.monsterMonitor.state.selfAppliedMonitorAll}
+          />
+          {#if monsterMonitor.selfAppliedMonitorAll}
+            <div class="text-muted-foreground text-xs">
+              {t("monsterMonitor.buffGroups.self.monitorAllActive")}
+            </div>
+          {/if}
           {#if selfAppliedBuffIds.length > 0}
-            <div class="flex flex-wrap gap-2">
+            <div
+              class="flex flex-wrap gap-2"
+              class:opacity-50={monsterMonitor.selfAppliedMonitorAll}
+            >
               {#each selfAppliedBuffIds as buffId (buffId)}
                 {@const iconBuff = availableBuffMap.get(buffId)}
                 <button

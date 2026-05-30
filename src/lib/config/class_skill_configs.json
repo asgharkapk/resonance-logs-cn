@@ -359,8 +359,15 @@
     "classKey": "beat_performer",
     "className": "灵魂乐手",
     "classId": 13,
-    "defaultMonitoredBuffIds": [510072, 2207241, 55332, 2207011],
+    "defaultMonitoredBuffIds": [510072, 2207241, 55332, 2207011, 2207171],
     "derivations": [
+      {
+        "sourceSkillId": 2309,
+        "derivedSkillId": 2309,
+        "triggerBuffBaseId": 2207171,
+        "derivedName": "重启",
+        "derivedImagePath": "/images/beat_performer/skill/weapon_jt-01_kx02_-3177198704358744543.png"
+      },
       {
         "sourceSkillId": 2313,
         "derivedSkillId": 2313,
@@ -390,9 +397,25 @@
         "imagePath": "/images/beat_performer/skill/weapon_jt-01_ult02_-4439127223253359714.png"
       },
       {
+        "skillId": 2335,
+        "name": "升格·无限狂想",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_ult01_-5919892973084268531.png"
+      },
+      {
+        "skillId": 2316,
+        "name": "万众瞩目",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx08_2193884571674385388.png"
+      },
+      {
         "skillId": 2315,
         "name": "安可",
         "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx07_6080503737517248499.png"
+      },
+      {
+        "skillId": 2308,
+        "name": "聚合乐章",
+        "imagePath": "/images/beat_performer/skill/weapon_jt-01_kx01_6790195387100573474.png",
+        "maxCharges": 2
       },
       {
         "skillId": 2309,

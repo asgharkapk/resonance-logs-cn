@@ -186,6 +186,7 @@ function buildMonsterRuntimeSnapshot(): MonitorRuntimeSnapshot["monster"] {
       enabled: false,
       globalIds: [],
       selfAppliedIds: [],
+      monitorAllSelfApplied: false,
     };
   }
 
@@ -197,6 +198,7 @@ function buildMonsterRuntimeSnapshot(): MonitorRuntimeSnapshot["monster"] {
     selfAppliedIds: uniqueSortedNumbers(
       SETTINGS.monsterMonitor.state.selfAppliedBuffIds,
     ),
+    monitorAllSelfApplied: SETTINGS.monsterMonitor.state.selfAppliedMonitorAll,
   };
 }
 
