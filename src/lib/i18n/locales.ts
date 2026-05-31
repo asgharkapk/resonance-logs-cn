@@ -1,4 +1,4 @@
-export const APP_LOCALES = ["zh-CN", "en-US"] as const;
+export const APP_LOCALES = ["zh-CN", "en-US", "ja-JP"] as const;
 
 export type AppLocale = (typeof APP_LOCALES)[number];
 
@@ -7,6 +7,7 @@ export const DEFAULT_LOCALE: AppLocale = "zh-CN";
 export const FALLBACK_LOCALES: Record<AppLocale, AppLocale[]> = {
   "zh-CN": [],
   "en-US": ["zh-CN"],
+  "ja-JP": ["zh-CN"],
 };
 
 export function isAppLocale(value: unknown): value is AppLocale {

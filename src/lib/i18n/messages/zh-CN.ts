@@ -74,6 +74,7 @@ export const zhCNMessages = {
   "settings.language.current": "当前语言",
   "settings.language.zhCN": "简体中文（CN）",
   "settings.language.enUS": "English (NA)",
+  "settings.language.jaJP": "日本語（JP）",
   "settings.language.note": "当前语言动态显示名称。",
   "components.unifiedSearch.type.boss": "首领",
   "components.unifiedSearch.type.player": "玩家",

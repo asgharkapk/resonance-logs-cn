@@ -1,0 +1,187 @@
+[
+  {
+    "slotTemplateId": "stormablade_x1",
+    "name": "ストームブレイド 真因子 X1、居合斬発動時に雷切刀気を1回追加",
+    "description": "居合斬を発動すると雷切刀気を1回追加"
+  },
+  {
+    "slotTemplateId": "stormablade_x2",
+    "name": "ストームブレイド 真因子 X2、追加で雷印を獲得",
+    "description": "追加で雷印を獲得"
+  },
+  {
+    "slotTemplateId": "stormablade_s3_x3",
+    "name": "ストームブレイド 真因子 X3、次の必殺技は必ずクリティカルになりダメージが増加",
+    "description": "次の必殺技は必ずクリティカルになり、虚妄ダメージが増加"
+  },
+  {
+    "slotTemplateId": "stormablade_s3_x5",
+    "name": "ストームブレイド 真因子 X5、幸運一撃倍率と月刃の幸運発動率が上昇",
+    "description": "10秒間、幸運一撃倍率が上昇し、月刃の幸運発動率が上昇"
+  },
+  {
+    "slotTemplateId": "stormablade_s3_x6",
+    "name": "ストームブレイド 真因子 X6、雷霆の鎌を発動",
+    "description": "雷霆の鎌を発動"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x1",
+    "name": "フレイムバーサーカー 真因子 X1、チャージ後の炎舞斬は必ずクリティカル",
+    "description": "チャージ後の炎舞斬は必ずクリティカル"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x2",
+    "name": "フレイムバーサーカー 真因子 X2、次の斧風の消費が50%減少し射程が2m増加",
+    "description": "次の斧風の消費が50%減少し、射程が2m増加"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x3",
+    "name": "フレイムバーサーカー 真因子 X3、チャージ後10秒間、炎舞斬の最終ダメージが増加",
+    "description": "チャージ後10秒間、炎舞斬の最終ダメージが増加"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x4",
+    "name": "フレイムバーサーカー 真因子 X4、大紅蓮丸を発動",
+    "description": "大紅蓮丸を発動"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x5",
+    "name": "フレイムバーサーカー 真因子 X5、10秒間、野火の舞の最終ダメージが増加",
+    "description": "10秒間、野火の舞の最終ダメージが増加"
+  },
+  {
+    "slotTemplateId": "beat_performer_s3_x2",
+    "name": "ビートパフォーマー 真因子 X2、次のコンサートサーキットは情熱を消費してダメージ増加",
+    "description": "次のコンサートサーキットはすべての演奏情熱を消費し、消費したスタック1つごとにコンサートサーキットの最終ダメージが増加"
+  },
+  {
+    "slotTemplateId": "beat_performer_x3",
+    "name": "ビートパフォーマー 真因子 X3、炎の狂詩を発動、クールダウン2秒",
+    "description": "炎の狂詩を発動、クールダウン2秒"
+  },
+  {
+    "slotTemplateId": "beat_performer_s3_x4",
+    "name": "ビートパフォーマー 真因子 X4、激湧治癒を発動",
+    "description": "激湧治癒を1回発動"
+  },
+  {
+    "slotTemplateId": "beat_performer_x5",
+    "name": "ビートパフォーマー 真因子 X5、スピーカーを召喚、クールダウン15秒",
+    "description": "スピーカーを召喚"
+  },
+  {
+    "slotTemplateId": "beat_performer_s3_x6",
+    "name": "ビートパフォーマー 真因子 X6、演奏情熱消費時に演奏情熱を回復",
+    "description": "次に演奏情熱を消費した際、演奏情熱を1回復"
+  },
+  {
+    "slotTemplateId": "marksman_x1",
+    "name": "マークスマン 真因子 X1、狼を召喚してダメージ増加、クールダウン30秒",
+    "description": "狼を召喚してダメージ増加、クールダウン30秒"
+  },
+  {
+    "slotTemplateId": "marksman_x2",
+    "name": "マークスマン 真因子 X2、次の矢の雨で光エネルギーを全回復、クールダウン12秒",
+    "description": "次の矢の雨で光エネルギーを全回復、クールダウン12秒"
+  },
+  {
+    "slotTemplateId": "marksman_s3_x3",
+    "name": "マークスマン 真因子 X3、嵐矢は必ずクリティカルになりダメージ増加",
+    "description": "10秒間、嵐矢は必ずクリティカルになり、嵐矢の虚妄ダメージが増加"
+  },
+  {
+    "slotTemplateId": "marksman_x5",
+    "name": "マークスマン 真因子 X5、鷹を召喚、クールダウン30秒",
+    "description": "鷹を召喚"
+  },
+  {
+    "slotTemplateId": "marksman_x6",
+    "name": "マークスマン 真因子 X6、天界の鷹を召喚",
+    "description": "天界の鷹を召喚"
+  },
+  {
+    "slotTemplateId": "frost_mage_x1",
+    "name": "フロストメイジ 真因子 X1、次の氷注入中、氷片上限が2増加",
+    "description": "次の氷注入中、氷片上限が2増加"
+  },
+  {
+    "slotTemplateId": "frost_mage_x2",
+    "name": "フロストメイジ 真因子 X2、ダメージを与えた対象の位置に吹雪を召喚、クールダウン8秒",
+    "description": "ダメージを与えた対象の位置に吹雪を召喚、クールダウン8秒"
+  },
+  {
+    "slotTemplateId": "frost_mage_x3",
+    "name": "フロストメイジ 真因子 X3、水球を放ち極寒状態を付与、クールダウン10秒",
+    "description": "水球を放ち極寒状態を付与、クールダウン10秒"
+  },
+  {
+    "slotTemplateId": "frost_mage_x4",
+    "name": "フロストメイジ 真因子 X4、次の潮溜はクールダウンに入らない、クールダウン7秒",
+    "description": "次の潮溜はクールダウンに入らない、クールダウン7秒"
+  },
+  {
+    "slotTemplateId": "frost_mage_x5",
+    "name": "フロストメイジ 真因子 X5、15秒間、氷片上限+3",
+    "description": "15秒間、氷片上限+3"
+  },
+  {
+    "slotTemplateId": "frost_mage_s3_x6",
+    "name": "フロストメイジ 真因子 X6、氷箭が幸運一撃を発動できダメージ増加",
+    "description": "次の氷注入中、フロストビームをチャネリング中に氷箭が幸運一撃を発動でき、幸運一撃の最終ダメージが増加"
+  },
+  {
+    "slotTemplateId": "wind_knight_s3_x2",
+    "name": "ウインドナイト 真因子 X2、龍砲を発動",
+    "description": "龍砲を発動"
+  },
+  {
+    "slotTemplateId": "wind_knight_x4",
+    "name": "ウインドナイト 真因子 X4、15秒間、特殊攻撃のクリティカル率が上昇",
+    "description": "15秒間、特殊攻撃のクリティカル率が上昇"
+  },
+  {
+    "slotTemplateId": "wind_knight_x5",
+    "name": "ウインドナイト 真因子 X5、次の追撃移動スキルで幸運発動率が上昇",
+    "description": "次の追撃移動スキルで幸運発動率が上昇"
+  },
+  {
+    "slotTemplateId": "holy_shield_s3_x2",
+    "name": "シールドナイト 真因子 X2、次の聖環のサイズが2倍に",
+    "description": "次の聖環のサイズが2倍になり、回復量に現在の最大HPが加算"
+  },
+  {
+    "slotTemplateId": "holy_shield_s3_x4",
+    "name": "シールドナイト 真因子 X4、被ダメージと与ダメージが増加",
+    "description": "一定時間、被ダメージと与ダメージが増加"
+  },
+  {
+    "slotTemplateId": "holy_shield_s3_x5",
+    "name": "シールドナイト 真因子 X5、聖剣を発動",
+    "description": "次にダメージを与えた際、聖剣を発動。聖剣に最大HP割合ダメージが追加"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x1",
+    "name": "ヘビーガーディアン 真因子 X1、次のシールド付与時に最終シールド量が増加",
+    "description": "次のシールド付与時に最終シールド量が増加"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x2",
+    "name": "ヘビーガーディアン 真因子 X2、大地裂を発動",
+    "description": "大地裂を発動し、大地裂のダメージが増加"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x4",
+    "name": "ヘビーガーディアン 真因子 X4、最大HPが増加",
+    "description": "最大HPが増加し、スタック可能"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x5",
+    "name": "ヘビーガーディアン 真因子 X5、カウンタークラッシュを発動",
+    "description": "カウンタークラッシュを発動し、カウンタークラッシュのダメージが増加"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x6",
+    "name": "ヘビーガーディアン 真因子 X6、ブロック軽減が低下しクラススキルの最終ダメージが増加",
+    "description": "一定時間、ブロック軽減が低下し、すべてのクラススキルの最終ダメージが増加"
+  }
+]

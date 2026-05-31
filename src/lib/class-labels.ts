@@ -12,6 +12,18 @@ const CLASS_LABELS_ZH: Record<string, string> = {
   "Beat Performer": "灵魂乐手",
 };
 
+const CLASS_LABELS_JA: Record<string, string> = {
+  "Heavy Guardian": "ヘビーガーディアン",
+  "Shield Knight": "シールドナイト",
+  Stormblade: "ストームブレイド",
+  "Wind Knight": "ウインドナイト",
+  Marksman: "マークスマン",
+  "Frost Mage": "フロストメイジ",
+  "Flame Berserker": "フレイムバーサーカー",
+  "Verdant Oracle": "ヴァーダントオラクル",
+  "Beat Performer": "ビートパフォーマー",
+};
+
 const SPEC_LABELS_ZH: Record<string, string> = {
   Earthfort: "岩盾",
   Block: "格挡",
@@ -35,14 +47,53 @@ const SPEC_LABELS_ZH: Record<string, string> = {
   Dissonance: "狂音",
 };
 
+const SPEC_LABELS_JA: Record<string, string> = {
+  Earthfort: "アースフォート",
+  Block: "ブロック",
+  Iaido: "居合",
+  "Iaido Slash": "居合",
+  Moonstrike: "月撃",
+  Vanguard: "ヴァンガード",
+  Skyward: "スカイワード",
+  Wildpack: "ワイルドパック",
+  Falconry: "ファルコナリー",
+  Icicle: "アイシクル",
+  Frostbeam: "フロストビーム",
+  Voidflame: "ヴォイドフレイム",
+  Blazecrimson: "ブレイズクリムゾン",
+  Smite: "スマイト",
+  Lifebind: "ライフバインド",
+  Recovery: "リカバリー",
+  Shield: "シールド",
+  "Light Shield": "ライトシールド",
+  Concerto: "コンチェルト",
+  Dissonance: "ディソナンス",
+};
+
+function getClassLabelMap() {
+  const locale = getLocale();
+  if (locale === "zh-CN") return CLASS_LABELS_ZH;
+  if (locale === "ja-JP") return CLASS_LABELS_JA;
+  return null;
+}
+
+function getSpecLabelMap() {
+  const locale = getLocale();
+  if (locale === "zh-CN") return SPEC_LABELS_ZH;
+  if (locale === "ja-JP") return SPEC_LABELS_JA;
+  return null;
+}
+
 export function toClassLabel(className: string): string {
-  if (getLocale() !== "zh-CN") return className;
-  return CLASS_LABELS_ZH[className] ?? className;
+  const labels = getClassLabelMap();
+  if (!labels) return className;
+  return labels[className] ?? className;
 }
 
 export function toSpecLabel(specName: string): string {
-  if (getLocale() !== "zh-CN") return specName;
-  return SPEC_LABELS_ZH[specName] ?? specName;
+  const labels = getSpecLabelMap();
+  if (!labels) return specName;
+  return labels[specName] ?? specName;
 }
 
 export function formatClassSpecLabel(

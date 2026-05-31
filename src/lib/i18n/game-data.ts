@@ -8,6 +8,11 @@ import monsterIdNameTypeEnUS from "$lib/config/en-US/MonsterIdNameType.json";
 import recountTableEnUS from "$lib/config/en-US/RecountTable.json";
 import sceneNamesEnUS from "$lib/config/en-US/SceneName.json";
 import buffNamesEnUS from "$lib/config/en-US/BuffName.json";
+import damageAttrIdNamesJaJP from "$lib/config/ja-JP/DamageAttrIdName.json";
+import monsterIdNameTypeJaJP from "$lib/config/ja-JP/MonsterIdNameType.json";
+import recountTableJaJP from "$lib/config/ja-JP/RecountTable.json";
+import sceneNamesJaJP from "$lib/config/ja-JP/SceneName.json";
+import buffNamesJaJP from "$lib/config/ja-JP/BuffName.json";
 import {
   getLocaleFallbackChain,
   normalizeLocale,
@@ -54,6 +59,13 @@ export const GAME_DATA_BY_LOCALE = {
     recountTable: recountTableEnUS,
     damageAttrIdNames: damageAttrIdNamesEnUS,
     buffNames: buffNamesEnUS,
+  },
+  "ja-JP": {
+    sceneNames: sceneNamesJaJP,
+    monsterInfoById: monsterIdNameTypeJaJP,
+    recountTable: recountTableJaJP,
+    damageAttrIdNames: damageAttrIdNamesJaJP,
+    buffNames: buffNamesJaJP,
   },
 } satisfies Record<AppLocale, GameDataBundle>;
 

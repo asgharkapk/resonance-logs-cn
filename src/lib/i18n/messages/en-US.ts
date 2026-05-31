@@ -78,6 +78,7 @@ export const enUSMessages = {
   "settings.language.current": "Current Language",
   "settings.language.zhCN": "Simplified Chinese (CN)",
   "settings.language.enUS": "English (NA)",
+  "settings.language.jaJP": "日本語（JP）",
   "settings.language.note": "displayed with the current language.",
   "components.unifiedSearch.type.boss": "Boss",
   "components.unifiedSearch.type.player": "Player",

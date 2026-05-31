@@ -11,6 +11,7 @@
   const localeLabelKeys: Record<AppLocale, MessageKey> = {
     "zh-CN": "settings.language.zhCN",
     "en-US": "settings.language.enUS",
+    "ja-JP": "settings.language.jaJP",
   };
 
   function selectLocale(locale: AppLocale) {
