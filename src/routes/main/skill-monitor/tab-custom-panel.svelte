@@ -8,10 +8,12 @@
     InlineBuffEntry,
     UserCounterRule,
   } from "$lib/settings-store";
-  import type {
-    CounterRulePreset,
-    SlotTemplate,
-    SourceTemplate,
+  import {
+    getCounterDisplayLabel,
+    type CounterDisplayLabelInput,
+    type CounterRulePreset,
+    type SlotTemplate,
+    type SourceTemplate,
   } from "$lib/skill-mappings";
   import { t } from "$lib/i18n/index.svelte";
 
@@ -255,13 +257,17 @@
   function getUserRuleSourceNames(rule: UserCounterRule): string {
     return rule.sourceRefs
       .map((ref) => sourceTemplateMap.get(ref)?.name ?? ref)
-      .join("、");
+      .join(", ");
   }
 
   function getUserRuleSlotNames(rule: UserCounterRule): string {
     return rule.slotRefs
       .map((ref) => slotTemplateMap.get(ref)?.name ?? ref)
-      .join("、");
+      .join(", ");
+  }
+
+  function getCounterEntryLabel(entry: CounterDisplayLabelInput): string {
+    return getCounterDisplayLabel(entry);
   }
 </script>
 
@@ -676,6 +682,14 @@
           ? counterRule?.effectSlots.find((slot) => slot.slotId === entry.counterSlotId)
           : null}
         {@const buffName = entry.sourceType === "buff" ? getBuffDisplayName(entry.sourceId) : null}
+        {@const counterEntryLabel = entry.sourceType === "counter"
+          ? getCounterEntryLabel({
+            sourceId: entry.sourceId,
+            counterSlotId: entry.counterSlotId,
+            label: entry.label,
+            ruleName: counterRule?.name,
+          })
+          : null}
         <div class="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
           <div class="text-xs text-muted-foreground">
             {entry.sourceType === "counter"
@@ -687,7 +701,7 @@
           {#if entry.sourceType === "counter"}
             <input
               class="w-full rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              value={entry.label}
+              value={counterEntryLabel ?? ""}
               placeholder={t("skillMonitor.customPanel.entries.labelPlaceholder")}
               oninput={(event) =>
                 setCustomPanelEntryLabel(

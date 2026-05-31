@@ -1,0 +1,187 @@
+[
+  {
+    "slotTemplateId": "stormablade_x1",
+    "name": "Stormblade True Factor X1, casting Iaido Slash adds 1 Thundercut blade wave",
+    "description": "Casting Iaido Slash adds 1 Thundercut blade wave"
+  },
+  {
+    "slotTemplateId": "stormablade_x2",
+    "name": "Stormblade True Factor X2, gain an extra Thunder Sigil",
+    "description": "Gain an extra Thunder Sigil"
+  },
+  {
+    "slotTemplateId": "stormablade_s3_x3",
+    "name": "Stormblade True Factor X3, next ultimate is guaranteed to crit and deals increased damage",
+    "description": "Next ultimate is guaranteed to crit and deals increased Void damage"
+  },
+  {
+    "slotTemplateId": "stormablade_s3_x5",
+    "name": "Stormblade True Factor X5, Lucky Strike multiplier and Moonblade lucky chance increased",
+    "description": "For 10s, Lucky Strike multiplier increases and Moonblade lucky chance increases"
+  },
+  {
+    "slotTemplateId": "stormablade_s3_x6",
+    "name": "Stormblade True Factor X6, trigger Thunder Scythe",
+    "description": "Trigger Thunder Scythe"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x1",
+    "name": "Flame Berserker True Factor X1, Formless Flame Slash is guaranteed to crit after charging",
+    "description": "Formless Flame Slash is guaranteed to crit after charging"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x2",
+    "name": "Flame Berserker True Factor X2, next Axe Wind costs 50% less and gains 2m range",
+    "description": "Next Axe Wind costs 50% less and gains 2m range"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x3",
+    "name": "Flame Berserker True Factor X3, Formless Flame Slash final damage increases for 10s after charging",
+    "description": "Formless Flame Slash final damage increases for 10s after charging"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x4",
+    "name": "Flame Berserker True Factor X4, trigger Great Crimson Lotus",
+    "description": "Trigger Great Crimson Lotus"
+  },
+  {
+    "slotTemplateId": "flame_berserker_x5",
+    "name": "Flame Berserker True Factor X5, Wildfire Dance final damage increases for 10s",
+    "description": "Wildfire Dance final damage increases for 10s"
+  },
+  {
+    "slotTemplateId": "beat_performer_s3_x2",
+    "name": "Beat Performer True Factor X2, next Concert Circuit consumes Passion and gains damage",
+    "description": "Next Concert Circuit consumes all Performance Passion; each stack consumed increases Concert Circuit final damage"
+  },
+  {
+    "slotTemplateId": "beat_performer_x3",
+    "name": "Beat Performer True Factor X3, trigger Rhapsody of Flame, 2s cooldown",
+    "description": "Trigger Rhapsody of Flame, 2s cooldown"
+  },
+  {
+    "slotTemplateId": "beat_performer_s3_x4",
+    "name": "Beat Performer True Factor X4, trigger Surging Heal",
+    "description": "Trigger one Surging Heal"
+  },
+  {
+    "slotTemplateId": "beat_performer_x5",
+    "name": "Beat Performer True Factor X5, summon a speaker, 15s cooldown",
+    "description": "Summon a speaker"
+  },
+  {
+    "slotTemplateId": "beat_performer_s3_x6",
+    "name": "Beat Performer True Factor X6, restore Performance Passion when consuming Performance Passion",
+    "description": "The next time Performance Passion is consumed, restore 1 Performance Passion"
+  },
+  {
+    "slotTemplateId": "marksman_x1",
+    "name": "Marksman True Factor X1, summon a wolf and gain damage, 30s cooldown",
+    "description": "Summon a wolf and gain damage, 30s cooldown"
+  },
+  {
+    "slotTemplateId": "marksman_x2",
+    "name": "Marksman True Factor X2, next Arrow Rain restores all Light Energy, 12s cooldown",
+    "description": "Next Arrow Rain restores all Light Energy, 12s cooldown"
+  },
+  {
+    "slotTemplateId": "marksman_s3_x3",
+    "name": "Marksman True Factor X3, Storm Arrow is guaranteed to crit and gains damage",
+    "description": "For 10s, Storm Arrow is guaranteed to crit and Storm Arrow Void damage increases"
+  },
+  {
+    "slotTemplateId": "marksman_x5",
+    "name": "Marksman True Factor X5, summon a falcon, 30s cooldown",
+    "description": "Summon a falcon"
+  },
+  {
+    "slotTemplateId": "marksman_x6",
+    "name": "Marksman True Factor X6, summon Celestial Eagle",
+    "description": "Summon Celestial Eagle"
+  },
+  {
+    "slotTemplateId": "frost_mage_x1",
+    "name": "Frost Mage True Factor X1, next Ice Infusion increases max Ice Shards by 2",
+    "description": "During the next Ice Infusion, max Ice Shards increases by 2"
+  },
+  {
+    "slotTemplateId": "frost_mage_x2",
+    "name": "Frost Mage True Factor X2, summon Blizzard at the damaged target's location, 8s cooldown",
+    "description": "Summon Blizzard at the damaged target's location, 8s cooldown"
+  },
+  {
+    "slotTemplateId": "frost_mage_x3",
+    "name": "Frost Mage True Factor X3, release Water Orb and apply Extreme Cold, 10s cooldown",
+    "description": "Release Water Orb and apply Extreme Cold, 10s cooldown"
+  },
+  {
+    "slotTemplateId": "frost_mage_x4",
+    "name": "Frost Mage True Factor X4, next Tidepool does not enter cooldown, 7s cooldown",
+    "description": "Next Tidepool does not enter cooldown, 7s cooldown"
+  },
+  {
+    "slotTemplateId": "frost_mage_x5",
+    "name": "Frost Mage True Factor X5, max Ice Shards +3 for 15s",
+    "description": "Max Ice Shards +3 for 15s"
+  },
+  {
+    "slotTemplateId": "frost_mage_s3_x6",
+    "name": "Frost Mage True Factor X6, Ice Arrow can trigger Lucky Strike and gains damage",
+    "description": "During the next Ice Infusion, Ice Arrow can trigger Lucky Strike while channeling Frostbeam, and Lucky Strike final damage increases"
+  },
+  {
+    "slotTemplateId": "wind_knight_s3_x2",
+    "name": "Wind Knight True Factor X2, trigger Drake Cannon",
+    "description": "Trigger Drake Cannon"
+  },
+  {
+    "slotTemplateId": "wind_knight_x4",
+    "name": "Wind Knight True Factor X4, special attack crit increases for 15s",
+    "description": "Special attack crit increases for 15s"
+  },
+  {
+    "slotTemplateId": "wind_knight_x5",
+    "name": "Wind Knight True Factor X5, next pursuit mobility skill increases lucky chance",
+    "description": "Next pursuit mobility skill increases lucky chance"
+  },
+  {
+    "slotTemplateId": "holy_shield_s3_x2",
+    "name": "Shield Knight True Factor X2, next Divine Circle doubles in size",
+    "description": "Next Divine Circle doubles in size and healing adds current max HP"
+  },
+  {
+    "slotTemplateId": "holy_shield_s3_x4",
+    "name": "Shield Knight True Factor X4, incoming damage and outgoing damage increase",
+    "description": "For a period of time, incoming damage and outgoing damage increase"
+  },
+  {
+    "slotTemplateId": "holy_shield_s3_x5",
+    "name": "Shield Knight True Factor X5, trigger Sacred Blade",
+    "description": "The next time damage is dealt, trigger Sacred Blade; Sacred Blade adds max-HP percentage damage"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x1",
+    "name": "Heavy Guardian True Factor X1, next shield application increases final shield value",
+    "description": "Next shield application increases final shield value"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x2",
+    "name": "Heavy Guardian True Factor X2, trigger Terra Sunder",
+    "description": "Trigger Terra Sunder, increasing Terra Sunder damage"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x4",
+    "name": "Heavy Guardian True Factor X4, max HP increases",
+    "description": "Max HP increases and can stack"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x5",
+    "name": "Heavy Guardian True Factor X5, trigger Countercrush",
+    "description": "Trigger Countercrush, increasing Countercrush damage"
+  },
+  {
+    "slotTemplateId": "giant_blade_s3_x6",
+    "name": "Heavy Guardian True Factor X6, block damage reduction decreases and class skill final damage increases",
+    "description": "For a period of time, block damage reduction decreases and all class skill final damage increases"
+  }
+]

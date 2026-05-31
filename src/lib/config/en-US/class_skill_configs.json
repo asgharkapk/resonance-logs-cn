@@ -1,0 +1,196 @@
+{
+  "wind_knight": {
+    "className": "Wind Knight",
+    "skills": [
+      { "skillId": 1420, "name": "Windborne Grace" },
+      { "skillId": 1426, "name": "Ultimate (No Banner)" },
+      { "skillId": 1410, "name": "Ultimate (Banner)" },
+      { "skillId": 1419, "name": "Skyfall" },
+      { "skillId": 1421, "name": "Spiral Thrust" },
+      { "skillId": 1422, "name": "Breach Pursuit" },
+      { "skillId": 1425, "name": "Falcon Toss" },
+      { "skillId": 1424, "name": "Instant Edge" },
+      { "skillId": 1401, "name": "Basic Attack" },
+      { "skillId": 1418, "name": "Gale Thrust" },
+      { "skillId": 1423, "name": "Aegis Gale" },
+      { "skillId": 1430, "name": "Valor Cyclone" },
+      { "skillId": 1431, "name": "Sharp Impact" }
+    ],
+    "derivations": [
+      {
+        "sourceSkillId": 1425,
+        "derivedSkillId": 1433,
+        "triggerBuffBaseId": 2205561,
+        "derivedName": "Azure Sever"
+      },
+      {
+        "sourceSkillId": 1418,
+        "derivedSkillId": 1418,
+        "triggerBuffBaseId": 2205401,
+        "derivedName": "Free Gale Thrust"
+      },
+      {
+        "sourceSkillId": 1421,
+        "derivedSkillId": 1434,
+        "triggerBuffBaseId": 2205134,
+        "derivedName": "Vortex Strike"
+      },
+      {
+        "sourceSkillId": 1401,
+        "derivedSkillId": 1435,
+        "triggerBuffBaseId": 2205521,
+        "derivedName": "Drake Cannon"
+      },
+      {
+        "sourceSkillId": 1430,
+        "derivedSkillId": 1430,
+        "triggerBuffBaseId": 31901,
+        "derivedName": "Valor Cyclone Duration"
+      }
+    ]
+  },
+  "frost_mage": {
+    "className": "Frost Mage",
+    "skills": [
+      { "skillId": 1239, "name": "Meteor Storm" },
+      { "skillId": 1211, "name": "Raincall Surge" },
+      { "skillId": 1242, "name": "Frost Lance" },
+      { "skillId": 1210, "name": "Maelstrom" },
+      { "skillId": 1246, "name": "Tidepool" },
+      { "skillId": 1245, "name": "Frost Shelter" },
+      { "skillId": 1243, "name": "Ice Infusion" },
+      { "skillId": 1244, "name": "Blizzard" },
+      { "skillId": 1240, "name": "Frozen Gale" },
+      { "skillId": 1248, "name": "Glacier Hymn" }
+    ],
+    "derivations": [
+      {
+        "sourceSkillId": 1244,
+        "derivedSkillId": 1244,
+        "triggerBuffBaseId": 2204191,
+        "derivedName": "Instant Blizzard"
+      }
+    ]
+  },
+  "flame_berserker": {
+    "className": "Flame Berserker",
+    "skills": [
+      { "skillId": 1606, "name": "Blazing Swing" },
+      { "skillId": 1613, "name": "Wildfire Dance" },
+      { "skillId": 1617, "name": "Endless Flamefiend" },
+      { "skillId": 1614, "name": "Unbound Meteor" },
+      { "skillId": 1616, "name": "Flowing Splendor Slash" }
+    ],
+    "derivations": [
+      {
+        "sourceSkillId": 1614,
+        "derivedSkillId": 1621,
+        "triggerBuffBaseId": 2208483,
+        "derivedName": "Hellfire Meteor"
+      }
+    ]
+  },
+  "stormblade": {
+    "className": "Stormblade",
+    "skills": [
+      { "skillId": 1730, "name": "Infinite Thunder" },
+      { "skillId": 1731, "name": "Thousand Thunder Flashes" },
+      { "skillId": 1713, "name": "Apex: Oblivion Combo" },
+      { "skillId": 1728, "name": "Apex: Oblivion Combo - Iaido Talent" },
+      { "skillId": 1720, "name": "True Sight" },
+      { "skillId": 1701, "name": "My-Style Sword Art: Vice" },
+      { "skillId": 1718, "name": "Raijin Dash" },
+      { "skillId": 1719, "name": "Scythe Wheel" },
+      { "skillId": 1717, "name": "Flash Strike" },
+      { "skillId": 1715, "name": "Moonstrike" },
+      { "skillId": 1714, "name": "Iaido Slash" },
+      { "skillId": 1705, "name": "Overdrive" },
+      { "skillId": 1724, "name": "Thundercleave" }
+    ],
+    "derivations": [
+      {
+        "sourceSkillId": 1701,
+        "derivedSkillId": 1737,
+        "triggerBuffBaseId": 2200601,
+        "derivedName": "Divine Sickle"
+      },
+      {
+        "sourceSkillId": 1718,
+        "derivedSkillId": 1736,
+        "triggerBuffBaseId": 2200431,
+        "derivedName": "Phantom Slash"
+      },
+      {
+        "sourceSkillId": 1717,
+        "derivedSkillId": 1735,
+        "triggerBuffBaseId": 2200431,
+        "derivedName": "Dracoflash"
+      },
+      {
+        "sourceSkillId": 1715,
+        "derivedSkillId": 1738,
+        "triggerBuffBaseId": 2200641,
+        "derivedName": "Stormflash"
+      },
+      {
+        "sourceSkillId": 1714,
+        "derivedSkillId": 1734,
+        "triggerBuffBaseId": 2200121,
+        "derivedName": "Thundercut"
+      },
+      {
+        "sourceSkillId": 1705,
+        "derivedSkillId": 1739,
+        "triggerBuffBaseId": 2200051,
+        "derivedName": "Judgment Cut"
+      },
+      {
+        "sourceSkillId": 1724,
+        "derivedSkillId": 1742,
+        "triggerBuffBaseId": 2200231,
+        "derivedName": "Storm Scythe"
+      }
+    ]
+  },
+  "beat_performer": {
+    "className": "Beat Performer",
+    "skills": [
+      { "skillId": 2336, "name": "Ascended: Tour Song" },
+      { "skillId": 2335, "name": "Ascended: Infinite Rhapsody" },
+      { "skillId": 2316, "name": "Center Stage" },
+      { "skillId": 2315, "name": "Encore" },
+      { "skillId": 2308, "name": "Concert Circuit" },
+      { "skillId": 2309, "name": "Rhapsody of Flame" },
+      { "skillId": 2313, "name": "Passion Burst" },
+      { "skillId": 2312, "name": "Fivefold Crescendo" },
+      { "skillId": 2311, "name": "Healing Melody" },
+      { "skillId": 2307, "name": "Healing Beat" }
+    ],
+    "derivations": [
+      {
+        "sourceSkillId": 2309,
+        "derivedSkillId": 2309,
+        "triggerBuffBaseId": 2207171,
+        "derivedName": "Restart"
+      },
+      {
+        "sourceSkillId": 2313,
+        "derivedSkillId": 2313,
+        "triggerBuffBaseId": 2207241,
+        "derivedName": "Passion Burst"
+      },
+      {
+        "sourceSkillId": 2311,
+        "derivedSkillId": 2318,
+        "triggerBuffBaseId": 55332,
+        "derivedName": "Healing Melody"
+      },
+      {
+        "sourceSkillId": 2307,
+        "derivedSkillId": 2307,
+        "triggerBuffBaseId": 2207011,
+        "derivedName": "Healing Beat"
+      }
+    ]
+  }
+}

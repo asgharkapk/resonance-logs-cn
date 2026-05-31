@@ -1,0 +1,42 @@
+[
+  {
+    "ruleId": 1,
+    "name": "Transcendence Trigger Count"
+  },
+  {
+    "ruleId": 2,
+    "name": "Fantasia Impact Stacks - 30 - Frost Mage"
+  },
+  {
+    "ruleId": 3,
+    "name": "Fantasia Impact Stacks - 30 - Beat Performer"
+  },
+  {
+    "ruleId": 4,
+    "name": "Flamehorn - Passive"
+  },
+  {
+    "ruleId": 5,
+    "name": "Heart of Stone Trigger Count"
+  },
+  {
+    "ruleId": 6,
+    "name": "Frenzied Cleave Combo Count"
+  },
+  {
+    "ruleId": 7,
+    "name": "Bash Pursuit Count"
+  },
+  {
+    "ruleId": 8,
+    "name": "Granite Fury Pursuit Count"
+  },
+  {
+    "ruleId": 9,
+    "name": "Judgment Pursuit Count - Light Shield"
+  },
+  {
+    "ruleId": 10,
+    "name": "Judgment Pursuit Count - Defense Shield"
+  }
+]

@@ -1,6 +1,7 @@
 import {
   findAnySkillByBaseId,
   findSpecialBuffDisplays,
+  getCounterDisplayLabel,
   getCounterRules,
   getSeasonCultivateFactorConfiguredEffectBuffIds,
   getSeasonCultivateFactorEffectBuffIdMap,
@@ -365,8 +366,22 @@ const _buffSnapshot = $derived.by(() => {
       }
     } else {
       for (const entry of group.entries) {
+        const counterRule =
+          entry.sourceType === "counter"
+            ? _counterRuleMap.get(entry.sourceId)
+            : undefined;
+        const displayEntry =
+          entry.sourceType === "counter"
+            ? {
+                ...entry,
+                label: getCounterDisplayLabel({
+                  ...entry,
+                  ruleName: counterRule?.name,
+                }),
+              }
+            : entry;
         const row = getCustomPanelDisplayRow(
-          entry,
+          displayEntry,
           now,
           buffMap(),
           counterMap(),

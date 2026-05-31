@@ -41,10 +41,15 @@ export type BuffCategoryDefinition = {
 type BuffCatalog = {
   metaMap: Map<number, BuffMeta>;
   availableDefinitions: BuffDefinition[];
+};
+
+type BuffCategoryCatalog = {
   categoryCatalog: Record<BuffCategoryKey, { buffIds: number[] }>;
+  categoryByBuffId: Map<number, BuffCategoryKey[]>;
 };
 
 const BUFF_CATALOG_BY_LOCALE = new Map<AppLocale, BuffCatalog>();
+let BUFF_CATEGORY_CATALOG: BuffCategoryCatalog | null = null;
 
 const BUFF_CATEGORY_LABEL_KEYS: Record<
   BuffCategoryKey,
@@ -54,49 +59,29 @@ const BUFF_CATEGORY_LABEL_KEYS: Record<
   alchemy: "game.buffCategory.alchemy",
 };
 
-const BUFF_NAME_KEYWORDS: Record<
-  AppLocale,
-  Record<BuffCategoryKey, string[]>
-> = {
-  "zh-CN": {
-    food: ["物攻", "魔攻", "护甲", "耐力", "生命恢复"],
-    alchemy: ["元素强度", "元素抗性", "增效强度"],
-  },
-  "en-US": {
-    food: [
-      "physical attack",
-      "magic attack",
-      "armor",
-      "stamina",
-      "health recovery",
-    ],
-    alchemy: ["elemental strength", "elemental resistance", "amplification"],
-  },
+const BUFF_CATEGORY_MATCH_LOCALE: AppLocale = "zh-CN";
+
+const BUFF_CATEGORY_NAME_KEYWORDS: Record<BuffCategoryKey, string[]> = {
+  food: ["物攻", "魔攻", "护甲", "耐力", "生命恢复"],
+  alchemy: ["元素强度", "元素抗性", "增效强度"],
 };
 
-function isAlchemyBuffName(defaultName: string, locale: AppLocale): boolean {
+function isAlchemyBuffName(defaultName: string): boolean {
   const normalizedName = normalizeText(defaultName);
-  return getBuffNameKeywords(locale).alchemy.some((keyword) =>
+  return BUFF_CATEGORY_NAME_KEYWORDS.alchemy.some((keyword) =>
     normalizedName.includes(normalizeText(keyword)),
   );
-}
-
-function getBuffNameKeywords(
-  locale: AppLocale,
-): Record<BuffCategoryKey, string[]> {
-  return BUFF_NAME_KEYWORDS[locale] ?? BUFF_NAME_KEYWORDS["zh-CN"];
 }
 
 function resolveBuffCategories(
   defaultName: string,
   iconKey: string | null,
-  locale: AppLocale,
 ): BuffCategoryKey[] {
   const categories: BuffCategoryKey[] = [];
   const normalizedName = normalizeText(defaultName);
   if (
     iconKey?.startsWith("buff_food_up") &&
-    getBuffNameKeywords(locale).food.some((keyword) =>
+    BUFF_CATEGORY_NAME_KEYWORDS.food.some((keyword) =>
       normalizedName.includes(normalizeText(keyword)),
     )
   ) {
@@ -104,7 +89,7 @@ function resolveBuffCategories(
   }
   if (
     iconKey?.startsWith("buff_agentia_up") &&
-    isAlchemyBuffName(defaultName, locale)
+    isAlchemyBuffName(defaultName)
   ) {
     categories.push("alchemy");
   }
@@ -121,13 +106,45 @@ function mergeBuffEntries(locale: AppLocale): RawBuffEntry[] {
   return [...entriesById.values()];
 }
 
-function buildBuffCatalog(locale: AppLocale): BuffCatalog {
-  const metaMap = new Map<number, BuffMeta>();
-  const availableDefinitions: BuffDefinition[] = [];
+function buildBuffCategoryCatalog(): BuffCategoryCatalog {
   const categoryCatalog: Record<BuffCategoryKey, { buffIds: number[] }> = {
     food: { buffIds: [] },
     alchemy: { buffIds: [] },
   };
+  const categoryByBuffId = new Map<number, BuffCategoryKey[]>();
+
+  for (const entry of mergeBuffEntries(BUFF_CATEGORY_MATCH_LOCALE)) {
+    const defaultName = normalizeGameDataText(entry.NameDesign);
+    if (!defaultName) continue;
+
+    const iconKey = normalizeGameDataText(entry.Icon);
+    const categories = resolveBuffCategories(defaultName, iconKey);
+    if (categories.length === 0) continue;
+
+    categoryByBuffId.set(entry.Id, categories);
+    for (const category of categories) {
+      categoryCatalog[category].buffIds.push(entry.Id);
+    }
+  }
+
+  for (const category of Object.values(categoryCatalog)) {
+    category.buffIds.sort((a, b) => a - b);
+  }
+
+  return { categoryCatalog, categoryByBuffId };
+}
+
+function getBuffCategoryCatalog(): BuffCategoryCatalog {
+  if (BUFF_CATEGORY_CATALOG) return BUFF_CATEGORY_CATALOG;
+
+  BUFF_CATEGORY_CATALOG = buildBuffCategoryCatalog();
+  return BUFF_CATEGORY_CATALOG;
+}
+
+function buildBuffCatalog(locale: AppLocale): BuffCatalog {
+  const metaMap = new Map<number, BuffMeta>();
+  const availableDefinitions: BuffDefinition[] = [];
+  const { categoryByBuffId } = getBuffCategoryCatalog();
 
   for (const entry of mergeBuffEntries(locale)) {
     const defaultName = normalizeGameDataText(entry.NameDesign);
@@ -135,7 +152,7 @@ function buildBuffCatalog(locale: AppLocale): BuffCatalog {
 
     const iconKey = normalizeGameDataText(entry.Icon);
     const spriteFile = normalizeGameDataText(entry.SpriteFile);
-    const categories = resolveBuffCategories(defaultName, iconKey, locale);
+    const categories = categoryByBuffId.get(entry.Id) ?? [];
     const searchKeywords = [defaultName];
     const meta: BuffMeta = {
       baseId: entry.Id,
@@ -147,9 +164,6 @@ function buildBuffCatalog(locale: AppLocale): BuffCatalog {
       searchKeywords,
     };
     metaMap.set(entry.Id, meta);
-    for (const category of categories) {
-      categoryCatalog[category].buffIds.push(entry.Id);
-    }
 
     if (spriteFile) {
       availableDefinitions.push({
@@ -162,11 +176,8 @@ function buildBuffCatalog(locale: AppLocale): BuffCatalog {
   }
 
   availableDefinitions.sort((a, b) => a.baseId - b.baseId);
-  for (const category of Object.values(categoryCatalog)) {
-    category.buffIds.sort((a, b) => a - b);
-  }
 
-  return { metaMap, availableDefinitions, categoryCatalog };
+  return { metaMap, availableDefinitions };
 }
 
 function getBuffCatalog(locale = getLocale()): BuffCatalog {
@@ -246,9 +257,9 @@ export function getAvailableBuffDefinitions(
 }
 
 export function getBuffCategoryDefinitions(
-  locale = getLocale(),
+  _locale = getLocale(),
 ): BuffCategoryDefinition[] {
-  const categoryCatalog = getBuffCatalog(locale).categoryCatalog;
+  const categoryCatalog = getBuffCategoryCatalog().categoryCatalog;
   return (
     Object.entries(categoryCatalog) as Array<
       [BuffCategoryKey, { buffIds: number[] }]
@@ -262,9 +273,11 @@ export function getBuffCategoryDefinitions(
 
 export function getBuffIdsByCategory(
   category: BuffCategoryKey,
-  locale = getLocale(),
+  _locale = getLocale(),
 ): number[] {
-  return [...(getBuffCatalog(locale).categoryCatalog[category]?.buffIds ?? [])];
+  return [
+    ...(getBuffCategoryCatalog().categoryCatalog[category]?.buffIds ?? []),
+  ];
 }
 
 export function getBuffCategoryLabel(category: BuffCategoryKey): string {
@@ -273,21 +286,21 @@ export function getBuffCategoryLabel(category: BuffCategoryKey): string {
 
 export function resolveBuffCategoryKey(
   baseId: number,
-  locale = getLocale(),
+  _locale = getLocale(),
 ): BuffCategoryKey | undefined {
-  return lookupBuffMeta(baseId, locale)?.categories[0];
+  return getBuffCategoryCatalog().categoryByBuffId.get(baseId)?.[0];
 }
 
 export function expandBuffSelection(
   buffIds: number[],
   categories?: BuffCategoryKey[] | null,
-  locale = getLocale(),
+  _locale = getLocale(),
 ): number[] {
   return Array.from(
     new Set([
       ...buffIds,
       ...normalizeBuffCategoryKeys(categories).flatMap((category) =>
-        getBuffIdsByCategory(category, locale),
+        getBuffIdsByCategory(category),
       ),
     ]),
   );

@@ -3,6 +3,11 @@ import monsterIdNameTypeZhCN from "$lib/config/MonsterIdNameType.json";
 import recountTableZhCN from "$lib/config/RecountTable.json";
 import sceneNamesZhCN from "$lib/config/SceneName.json";
 import buffNamesZhCN from "$lib/config/BuffName.json";
+import damageAttrIdNamesEnUS from "$lib/config/en-US/DamageAttrIdName.json";
+import monsterIdNameTypeEnUS from "$lib/config/en-US/MonsterIdNameType.json";
+import recountTableEnUS from "$lib/config/en-US/RecountTable.json";
+import sceneNamesEnUS from "$lib/config/en-US/SceneName.json";
+import buffNamesEnUS from "$lib/config/en-US/BuffName.json";
 import {
   getLocaleFallbackChain,
   normalizeLocale,
@@ -35,14 +40,6 @@ export type GameDataBundle = {
   buffNames: RawBuffEntry[];
 };
 
-const EMPTY_GAME_DATA: GameDataBundle = {
-  sceneNames: {},
-  monsterInfoById: {},
-  recountTable: {},
-  damageAttrIdNames: {},
-  buffNames: [],
-};
-
 export const GAME_DATA_BY_LOCALE = {
   "zh-CN": {
     sceneNames: sceneNamesZhCN,
@@ -51,7 +48,13 @@ export const GAME_DATA_BY_LOCALE = {
     damageAttrIdNames: damageAttrIdNamesZhCN,
     buffNames: buffNamesZhCN,
   },
-  "en-US": EMPTY_GAME_DATA,
+  "en-US": {
+    sceneNames: sceneNamesEnUS,
+    monsterInfoById: monsterIdNameTypeEnUS,
+    recountTable: recountTableEnUS,
+    damageAttrIdNames: damageAttrIdNamesEnUS,
+    buffNames: buffNamesEnUS,
+  },
 } satisfies Record<AppLocale, GameDataBundle>;
 
 export function getGameData(locale: unknown): GameDataBundle {

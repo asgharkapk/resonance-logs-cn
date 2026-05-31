@@ -1,4 +1,4 @@
-import resonanceSkillIcons from "$lib/config/skill_aoyi_icons.json";
+import resonanceSkillIconsRaw from "$lib/config/skill_aoyi_icons.json";
 import classSkillConfigsRaw from "$lib/config/class_skill_configs.json";
 import classResourcesRaw from "$lib/config/class_resources.json";
 import classSpecialBuffDisplaysRaw from "$lib/config/class_special_buff_displays.json";
@@ -10,6 +10,8 @@ import type {
   CounterSource,
   FactorCounterTemplate,
 } from "$lib/bindings";
+import { getLocale, type AppLocale } from "$lib/i18n/index.svelte";
+import { APP_LOCALES } from "$lib/i18n/locales";
 import type { UserCounterRule } from "$lib/settings-store";
 
 export type SkillDisplayInfo = {
@@ -117,6 +119,29 @@ export type SlotTemplate = {
   slot: Omit<CounterEffectSlotPreset, "slotId">;
 };
 
+export type CounterDisplayLabelInput = {
+  sourceId: number;
+  counterSlotId?: number | undefined;
+  label?: string | null | undefined;
+  ruleName?: string | null | undefined;
+};
+
+type ClassSkillConfigOverride = Partial<ClassSkillConfig> & {
+  classKey?: string;
+  skills?: Array<Partial<SkillDefinition> & { skillId?: number }>;
+  derivations?: Array<Partial<SkillDerivation>>;
+};
+
+type ResourceOverride = Partial<ResourceDefinition>;
+type CounterRuleOverride = Partial<CounterRulePreset> & { ruleId?: number };
+type SourceTemplateOverride = Partial<SourceTemplate> & { sourceId?: string };
+type SlotTemplateOverride = Partial<SlotTemplate> & {
+  slotTemplateId?: string;
+};
+type ResonanceSkillIconOverride = Partial<ResonanceSkillIconRaw> & {
+  id?: number;
+};
+
 export const FACTOR_RULE_ID_BASE = 900_000_000;
 
 export const CLASS_RESOURCES: Record<string, ResourceDefinition[]> =
@@ -137,17 +162,11 @@ export type SkillDerivation = {
   keepCdWhenDerived?: boolean;
 };
 
-export const RESONANCE_SKILLS: ResonanceSkillDefinition[] = (
-  resonanceSkillIcons as ResonanceSkillIconRaw[]
-).map((skill) => ({
-  skillId: skill.id,
-  name: skill.NameDesign,
-  imagePath: `/images/resonance_skill/${skill.Icon}`,
-  ...(skill.maxCharges !== undefined ? { maxCharges: skill.maxCharges } : {}),
-  ...(skill.maxValidCdTime !== undefined
-    ? { maxValidCdTime: skill.maxValidCdTime }
-    : {}),
-}));
+const RESONANCE_SKILL_ICONS =
+  resonanceSkillIconsRaw as ResonanceSkillIconRaw[];
+
+export const RESONANCE_SKILLS: ResonanceSkillDefinition[] =
+  buildResonanceSkills(RESONANCE_SKILL_ICONS, new Map());
 
 export const COUNTER_RULES: CounterRulePreset[] =
   counterRulesRaw as CounterRulePreset[];
@@ -156,20 +175,418 @@ export const SOURCE_TEMPLATES: SourceTemplate[] =
 export const SLOT_TEMPLATES: SlotTemplate[] =
   counterSlotTemplatesRaw as SlotTemplate[];
 
-export function getClassConfigs(): ClassSkillConfig[] {
-  return Object.values(CLASS_SKILL_CONFIGS);
+const LOCALE_CONFIG_MODULES = import.meta.glob("./config/*/*.json", {
+  eager: true,
+  import: "default",
+}) as Record<string, unknown>;
+
+const CLASS_CONFIGS_BY_LOCALE = new Map<
+  AppLocale,
+  Record<string, ClassSkillConfig>
+>();
+const CLASS_RESOURCES_BY_LOCALE = new Map<
+  AppLocale,
+  Record<string, ResourceDefinition[]>
+>();
+const COUNTER_RULES_BY_LOCALE = new Map<AppLocale, CounterRulePreset[]>();
+const SOURCE_TEMPLATES_BY_LOCALE = new Map<AppLocale, SourceTemplate[]>();
+const SLOT_TEMPLATES_BY_LOCALE = new Map<AppLocale, SlotTemplate[]>();
+const RESONANCE_SKILLS_BY_LOCALE = new Map<
+  AppLocale,
+  ResonanceSkillDefinition[]
+>();
+
+function getLocaleConfig<T>(locale: AppLocale, fileName: string): T | null {
+  const config = LOCALE_CONFIG_MODULES[`./config/${locale}/${fileName}`];
+  return config === undefined ? null : (config as T);
 }
 
-export function getCounterRules(): CounterRulePreset[] {
-  return COUNTER_RULES;
+function normalizeDisplayText(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
 }
 
-export function getSourceTemplates(): SourceTemplate[] {
-  return SOURCE_TEMPLATES;
+function localizedText(value: unknown, fallback: string): string {
+  return normalizeDisplayText(value) ?? fallback;
 }
 
-export function getSlotTemplates(): SlotTemplate[] {
-  return SLOT_TEMPLATES;
+function numberKey(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function stringKey(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function valuesFromMaybeRecord<T>(
+  value: unknown,
+  getKey: (item: T, recordKey?: string) => string | null,
+): Map<string, T> {
+  const map = new Map<string, T>();
+  if (Array.isArray(value)) {
+    for (const item of value as T[]) {
+      const key = getKey(item);
+      if (key) map.set(key, item);
+    }
+    return map;
+  }
+
+  if (!value || typeof value !== "object") return map;
+  for (const [recordKey, item] of Object.entries(value)) {
+    if (!item || typeof item !== "object") continue;
+    const typedItem = item as T;
+    const key = getKey(typedItem, recordKey);
+    if (key) map.set(key, typedItem);
+  }
+  return map;
+}
+
+function mapByNumber<T>(
+  items: readonly T[] | undefined,
+  getKey: (item: T) => number | null,
+): Map<number, T> {
+  const map = new Map<number, T>();
+  for (const item of items ?? []) {
+    const key = getKey(item);
+    if (key !== null) map.set(key, item);
+  }
+  return map;
+}
+
+function derivationKey(
+  item: Pick<
+    Partial<SkillDerivation>,
+    "sourceSkillId" | "derivedSkillId" | "triggerBuffBaseId"
+  >,
+): string | null {
+  const sourceSkillId = numberKey(item.sourceSkillId);
+  const derivedSkillId = numberKey(item.derivedSkillId);
+  const triggerBuffBaseId = numberKey(item.triggerBuffBaseId);
+  if (
+    sourceSkillId === null ||
+    derivedSkillId === null ||
+    triggerBuffBaseId === null
+  ) {
+    return null;
+  }
+  return `${sourceSkillId}:${derivedSkillId}:${triggerBuffBaseId}`;
+}
+
+function resourceKey(
+  item: Pick<
+    Partial<ResourceDefinition>,
+    "type" | "currentId" | "maxId"
+  >,
+): string | null {
+  const type = item.type === "bar" || item.type === "charges" ? item.type : null;
+  const currentId = numberKey(item.currentId);
+  const maxId = numberKey(item.maxId);
+  if (!type || currentId === null || maxId === null) return null;
+  return `${type}:${currentId}:${maxId}`;
+}
+
+function counterRuleSlotLabel(
+  rule: CounterRulePreset | undefined,
+  slotId?: number,
+): string | null {
+  if (!rule) return null;
+  if (slotId === undefined) return rule.name;
+  return `${rule.name} #${slotId}`;
+}
+
+function counterRuleNameSlotLabel(
+  ruleName: string | null | undefined,
+  slotId?: number,
+): string | null {
+  const normalized = normalizeDisplayText(ruleName);
+  if (!normalized) return null;
+  if (slotId === undefined) return normalized;
+  return `${normalized} #${slotId}`;
+}
+
+function isCounterDefaultLabel(
+  label: string,
+  sourceId: number,
+  counterSlotId?: number,
+): boolean {
+  const canonicalRule = COUNTER_RULES.find((rule) => rule.ruleId === sourceId);
+  if (label === counterRuleSlotLabel(canonicalRule, counterSlotId)) return true;
+
+  return APP_LOCALES.some((locale) => {
+    const localizedRule = findCounterRule(sourceId, locale);
+    return label === counterRuleSlotLabel(localizedRule, counterSlotId);
+  });
+}
+
+function getClassConfigOverrides(
+  locale: AppLocale,
+): Map<string, ClassSkillConfigOverride> {
+  return valuesFromMaybeRecord<ClassSkillConfigOverride>(
+    getLocaleConfig(locale, "class_skill_configs.json"),
+    (item, recordKey) => stringKey(item.classKey) ?? recordKey ?? null,
+  );
+}
+
+function getClassResourceOverrides(
+  locale: AppLocale,
+): Map<string, ResourceOverride[]> {
+  const config = getLocaleConfig(locale, "class_resources.json");
+  const map = new Map<string, ResourceOverride[]>();
+  if (!config || typeof config !== "object" || Array.isArray(config)) {
+    return map;
+  }
+  for (const [classKey, resources] of Object.entries(config)) {
+    if (Array.isArray(resources)) {
+      map.set(classKey, resources as ResourceOverride[]);
+    }
+  }
+  return map;
+}
+
+function getCounterRuleOverrides(
+  locale: AppLocale,
+): Map<number, CounterRuleOverride> {
+  const overrides = valuesFromMaybeRecord<CounterRuleOverride>(
+    getLocaleConfig(locale, "counter_rules.json"),
+    (item, recordKey) => {
+      const id = numberKey(item.ruleId);
+      if (id !== null) return String(id);
+      const recordId = Number(recordKey);
+      return Number.isFinite(recordId) ? String(recordId) : null;
+    },
+  );
+  return new Map(
+    [...overrides.entries()]
+      .map(([key, value]) => [Number(key), value] as const)
+      .filter(([key]) => Number.isFinite(key)),
+  );
+}
+
+function getSourceTemplateOverrides(
+  locale: AppLocale,
+): Map<string, SourceTemplateOverride> {
+  return valuesFromMaybeRecord<SourceTemplateOverride>(
+    getLocaleConfig(locale, "counter_source_templates.json"),
+    (item) => stringKey(item.sourceId),
+  );
+}
+
+function getSlotTemplateOverrides(
+  locale: AppLocale,
+): Map<string, SlotTemplateOverride> {
+  return valuesFromMaybeRecord<SlotTemplateOverride>(
+    getLocaleConfig(locale, "counter_slot_templates.json"),
+    (item) => stringKey(item.slotTemplateId),
+  );
+}
+
+function getResonanceSkillOverrides(
+  locale: AppLocale,
+): Map<number, ResonanceSkillIconOverride> {
+  return mapByNumber(
+    getLocaleConfig<ResonanceSkillIconOverride[]>(
+      locale,
+      "skill_aoyi_icons.json",
+    ) ?? [],
+    (item) => numberKey(item.id),
+  );
+}
+
+function buildLocalizedClassConfig(
+  config: ClassSkillConfig,
+  override: ClassSkillConfigOverride | undefined,
+): ClassSkillConfig {
+  const skillOverrides = mapByNumber(override?.skills, (item) =>
+    numberKey(item.skillId),
+  );
+  const derivationOverrides = new Map<string, Partial<SkillDerivation>>();
+  for (const item of override?.derivations ?? []) {
+    const key = derivationKey(item);
+    if (key) derivationOverrides.set(key, item);
+  }
+
+  return {
+    ...config,
+    className: localizedText(override?.className, config.className),
+    skills: config.skills.map((skill) => ({
+      ...skill,
+      name: localizedText(skillOverrides.get(skill.skillId)?.name, skill.name),
+    })),
+    ...(config.derivations
+      ? {
+          derivations: config.derivations.map((derivation) => {
+            const key = derivationKey(derivation);
+            const localized = key ? derivationOverrides.get(key) : undefined;
+            return {
+              ...derivation,
+              derivedName: localizedText(
+                localized?.derivedName,
+                derivation.derivedName,
+              ),
+            };
+          }),
+        }
+      : {}),
+  };
+}
+
+function getClassConfigMap(locale = getLocale()): Record<string, ClassSkillConfig> {
+  const cached = CLASS_CONFIGS_BY_LOCALE.get(locale);
+  if (cached) return cached;
+
+  const overrides = getClassConfigOverrides(locale);
+  const localized: Record<string, ClassSkillConfig> = {};
+  for (const [classKey, config] of Object.entries(CLASS_SKILL_CONFIGS)) {
+    localized[classKey] = buildLocalizedClassConfig(
+      config,
+      overrides.get(classKey),
+    );
+  }
+  CLASS_CONFIGS_BY_LOCALE.set(locale, localized);
+  return localized;
+}
+
+function getClassResourceMap(
+  locale = getLocale(),
+): Record<string, ResourceDefinition[]> {
+  const cached = CLASS_RESOURCES_BY_LOCALE.get(locale);
+  if (cached) return cached;
+
+  const overrides = getClassResourceOverrides(locale);
+  const localized: Record<string, ResourceDefinition[]> = {};
+  for (const [classKey, resources] of Object.entries(CLASS_RESOURCES)) {
+    const localizedByKey = new Map<string, ResourceOverride>();
+    for (const resource of overrides.get(classKey) ?? []) {
+      const key = resourceKey(resource);
+      if (key) localizedByKey.set(key, resource);
+    }
+    localized[classKey] = resources.map((resource) => {
+      const key = resourceKey(resource);
+      const override = key ? localizedByKey.get(key) : undefined;
+      return {
+        ...resource,
+        label: localizedText(override?.label, resource.label),
+      };
+    });
+  }
+  CLASS_RESOURCES_BY_LOCALE.set(locale, localized);
+  return localized;
+}
+
+function getResonanceSkills(locale = getLocale()): ResonanceSkillDefinition[] {
+  const cached = RESONANCE_SKILLS_BY_LOCALE.get(locale);
+  if (cached) return cached;
+
+  const localized = buildResonanceSkills(
+    RESONANCE_SKILL_ICONS,
+    getResonanceSkillOverrides(locale),
+  );
+  RESONANCE_SKILLS_BY_LOCALE.set(locale, localized);
+  return localized;
+}
+
+function buildResonanceSkills(
+  skills: ResonanceSkillIconRaw[],
+  overrides: Map<number, ResonanceSkillIconOverride>,
+): ResonanceSkillDefinition[] {
+  return skills.map((skill) => {
+    const override = overrides.get(skill.id);
+    return {
+      skillId: skill.id,
+      name: localizedText(override?.NameDesign, skill.NameDesign),
+      imagePath: `/images/resonance_skill/${skill.Icon}`,
+      ...(skill.maxCharges !== undefined
+        ? { maxCharges: skill.maxCharges }
+        : {}),
+      ...(skill.maxValidCdTime !== undefined
+        ? { maxValidCdTime: skill.maxValidCdTime }
+        : {}),
+    };
+  });
+}
+
+export function getClassConfigs(locale = getLocale()): ClassSkillConfig[] {
+  return Object.values(getClassConfigMap(locale));
+}
+
+export function getCounterRules(locale = getLocale()): CounterRulePreset[] {
+  const cached = COUNTER_RULES_BY_LOCALE.get(locale);
+  if (cached) return cached;
+
+  const overrides = getCounterRuleOverrides(locale);
+  const localized = COUNTER_RULES.map((rule) => ({
+    ...rule,
+    name: localizedText(overrides.get(rule.ruleId)?.name, rule.name),
+  }));
+  COUNTER_RULES_BY_LOCALE.set(locale, localized);
+  return localized;
+}
+
+export function findCounterRule(
+  ruleId: number,
+  locale = getLocale(),
+): CounterRulePreset | undefined {
+  return getCounterRules(locale).find((rule) => rule.ruleId === ruleId);
+}
+
+export function getCounterDisplayLabel(
+  entry: CounterDisplayLabelInput,
+  locale = getLocale(),
+): string {
+  const localizedRule = findCounterRule(entry.sourceId, locale);
+  const localizedDefault =
+    counterRuleNameSlotLabel(entry.ruleName, entry.counterSlotId) ??
+    counterRuleSlotLabel(localizedRule, entry.counterSlotId) ??
+    `#${entry.sourceId}`;
+  const savedLabel = normalizeDisplayText(entry.label);
+  if (
+    !savedLabel ||
+    isCounterDefaultLabel(savedLabel, entry.sourceId, entry.counterSlotId)
+  ) {
+    return localizedDefault;
+  }
+  return savedLabel;
+}
+
+export function getSourceTemplates(locale = getLocale()): SourceTemplate[] {
+  const cached = SOURCE_TEMPLATES_BY_LOCALE.get(locale);
+  if (cached) return cached;
+
+  const overrides = getSourceTemplateOverrides(locale);
+  const localized = SOURCE_TEMPLATES.map((template) => {
+    const override = overrides.get(template.sourceId);
+    return {
+      ...template,
+      name: localizedText(override?.name, template.name),
+      description: localizedText(
+        override?.description,
+        template.description,
+      ),
+    };
+  });
+  SOURCE_TEMPLATES_BY_LOCALE.set(locale, localized);
+  return localized;
+}
+
+export function getSlotTemplates(locale = getLocale()): SlotTemplate[] {
+  const cached = SLOT_TEMPLATES_BY_LOCALE.get(locale);
+  if (cached) return cached;
+
+  const overrides = getSlotTemplateOverrides(locale);
+  const localized = SLOT_TEMPLATES.map((template) => {
+    const override = overrides.get(template.slotTemplateId);
+    return {
+      ...template,
+      name: localizedText(override?.name, template.name),
+      description: localizedText(
+        override?.description,
+        template.description,
+      ),
+    };
+  });
+  SLOT_TEMPLATES_BY_LOCALE.set(locale, localized);
+  return localized;
 }
 
 export function getSeasonCultivateFactorRuleId(itemId: number): number {
@@ -216,12 +633,11 @@ export function getSeasonCultivateFactorTemplates(): FactorCounterTemplate[] {
   ];
 }
 
-export function getSeasonCultivateFactorRuleMap(): Map<
-  number,
-  CounterRulePreset
-> {
+export function getSeasonCultivateFactorRuleMap(
+  locale = getLocale(),
+): Map<number, CounterRulePreset> {
   const map = new Map<number, CounterRulePreset>();
-  for (const template of SLOT_TEMPLATES) {
+  for (const template of getSlotTemplates(locale)) {
     const itemIds = normalizeTemplateItemIds(template);
     const effectSlots = resolveCounterEffectSlots([template.slotTemplateId]);
     for (const itemId of itemIds) {
@@ -379,12 +795,18 @@ export function resolveUserCounterRulesToPresets(
   });
 }
 
-export function getSkillsByClass(classKey: string): SkillDefinition[] {
-  return CLASS_SKILL_CONFIGS[classKey]?.skills ?? [];
+export function getSkillsByClass(
+  classKey: string,
+  locale = getLocale(),
+): SkillDefinition[] {
+  return getClassConfigMap(locale)[classKey]?.skills ?? [];
 }
 
-export function getDurationSkillsByClass(classKey: string): SkillDefinition[] {
-  return getSkillsByClass(classKey).filter(
+export function getDurationSkillsByClass(
+  classKey: string,
+  locale = getLocale(),
+): SkillDefinition[] {
+  return getSkillsByClass(classKey, locale).filter(
     (skill) => skill.effectDurationMs !== undefined,
   );
 }
@@ -392,14 +814,18 @@ export function getDurationSkillsByClass(classKey: string): SkillDefinition[] {
 export function findSkillById(
   classKey: string,
   skillId: number,
+  locale = getLocale(),
 ): SkillDefinition | undefined {
-  return CLASS_SKILL_CONFIGS[classKey]?.skills.find(
+  return getClassConfigMap(locale)[classKey]?.skills.find(
     (skill) => skill.skillId === skillId,
   );
 }
 
-export function findResourcesByClass(classKey: string): ResourceDefinition[] {
-  return CLASS_RESOURCES[classKey] || [];
+export function findResourcesByClass(
+  classKey: string,
+  locale = getLocale(),
+): ResourceDefinition[] {
+  return getClassResourceMap(locale)[classKey] || [];
 }
 
 export function findSpecialBuffDisplays(
@@ -415,24 +841,27 @@ export function getDefaultMonitoredBuffIds(classKey: string): number[] {
 export function findSkillDerivationBySource(
   classKey: string,
   sourceSkillId: number,
+  locale = getLocale(),
 ): SkillDerivation | undefined {
-  return CLASS_SKILL_CONFIGS[classKey]?.derivations?.find(
+  return getClassConfigMap(locale)[classKey]?.derivations?.find(
     (derivation) => derivation.sourceSkillId === sourceSkillId,
   );
 }
 
 export function findResonanceSkill(
   skillId: number,
+  locale = getLocale(),
 ): ResonanceSkillDefinition | undefined {
-  return RESONANCE_SKILLS.find((skill) => skill.skillId === skillId);
+  return getResonanceSkills(locale).find((skill) => skill.skillId === skillId);
 }
 
 export function searchResonanceSkills(
   keyword: string,
+  locale = getLocale(),
 ): ResonanceSkillDefinition[] {
   const normalized = keyword.trim().toLowerCase();
   if (!normalized) return [];
-  return RESONANCE_SKILLS.filter((skill) =>
+  return getResonanceSkills(locale).filter((skill) =>
     skill.name.toLowerCase().includes(normalized),
   );
 }
@@ -440,6 +869,10 @@ export function searchResonanceSkills(
 export function findAnySkillByBaseId(
   classKey: string,
   skillId: number,
+  locale = getLocale(),
 ): SkillDisplayInfo | undefined {
-  return findSkillById(classKey, skillId) ?? findResonanceSkill(skillId);
+  return (
+    findSkillById(classKey, skillId, locale) ??
+    findResonanceSkill(skillId, locale)
+  );
 }

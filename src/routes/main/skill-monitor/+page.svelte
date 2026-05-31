@@ -43,6 +43,7 @@
   import {
     findResonanceSkill,
     ensureUserCounterRules,
+    getCounterDisplayLabel,
     getCounterRules,
     getClassConfigs,
     getDurationSkillsByClass,
@@ -986,9 +987,11 @@
       );
       const label =
         sourceType === "counter"
-          ? counterSlot
-            ? `${counterRule?.name ?? `#${sourceId}`} #${counterSlot.slotId}`
-            : (counterRule?.name ?? `#${sourceId}`)
+          ? getCounterDisplayLabel({
+              sourceId,
+              counterSlotId: counterSlot?.slotId,
+              ruleName: counterRule?.name,
+            })
           : "";
       const nextEntry: InlineBuffEntry = {
         id: `inline_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
@@ -1047,7 +1050,10 @@
     entryId: string,
     label: string,
   ) {
-    updateCustomPanelEntry(groupId, entryId, (entry) => ({ ...entry, label }));
+    updateCustomPanelEntry(groupId, entryId, (entry) => ({
+      ...entry,
+      label: label.trim(),
+    }));
   }
 
   function movePanelAreaRow(row: PanelAreaRowRef, direction: "up" | "down") {
