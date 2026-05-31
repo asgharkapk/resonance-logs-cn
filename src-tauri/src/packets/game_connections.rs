@@ -7,6 +7,7 @@ const GAME_PROCESS_NAMES: &[&str] = &[
     "bpsr_epic",
     "starsea",
     "starasia",
+    "startw",
     "starsea_steam",
     "starasia_steam",
     "star",
