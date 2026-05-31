@@ -1,5 +1,7 @@
 # FAQ · DPS 与布局
 
+**详细说明**：[DPS 总览](../features/dps/README.md) · [主题](../features/dps/themes.md) · [历史记录](../features/dps/history.md) · [设置](../features/dps/settings.md)
+
 ## DPS 相关
 
 ### 秒伤和真秒伤有什么区别？
