@@ -4,13 +4,18 @@
 仅记录 4 位数的 skillId（1000–9999）。
 输出 JSON 到 scripts/output：保留 id、NameDesign、Icon；若 SkillType==5 则增加 maxCharges（取 MaxEnergyChargeNum）。
 
+- 多语言：Id/Icon/maxCharges 始终以中文 ZTable 为模板源；各语言 NameDesign 由
+  overrides / overrides_en / overrides_jp 下的 skill_aoyi_name_overrides.json 覆盖。
+
 用法:
   python extract_skill_aoyi_icons.py
+  python extract_skill_aoyi_icons.py --lang en
   python extract_skill_aoyi_icons.py -o custom_output.json
 """
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -19,6 +24,30 @@ ZTABLE_DIR = PROJECT_ROOT / "ZTable"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 SKILL_TABLE_PATH = ZTABLE_DIR / "SkillTable.json"
 ICON_PREFIX = "ui/textures/skill_aoyi/skill_aoyi_skill_icon"
+
+LANG_CONFIGS = {
+    "zh": {
+        "overrides_dir": SCRIPT_DIR / "overrides",
+        "output_name": "skill_aoyi_icons.json",
+    },
+    "en": {
+        "overrides_dir": SCRIPT_DIR / "overrides_en",
+        "output_name": "skill_aoyi_icons_en.json",
+    },
+    "jp": {
+        "overrides_dir": SCRIPT_DIR / "overrides_jp",
+        "output_name": "skill_aoyi_icons_jp.json",
+    },
+}
+
+OVERRIDE_FILE_NAME = "skill_aoyi_name_overrides.json"
+
+
+def load_json(path: Path) -> dict | list:
+    if not path.exists():
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 def extract_icon_filename(icon_path: str) -> str:
@@ -29,22 +58,7 @@ def extract_icon_filename(icon_path: str) -> str:
     return f"{name}.png"
 
 
-def main():
-    parser = argparse.ArgumentParser(description="提取 skill_aoyi 技能图标信息")
-    parser.add_argument(
-        "-o", "--output",
-        default=str(OUTPUT_DIR / "skill_aoyi_icons.json"),
-        help="输出 JSON 路径",
-    )
-    args = parser.parse_args()
-
-    if not SKILL_TABLE_PATH.exists():
-        print(f"错误: 未找到 {SKILL_TABLE_PATH}")
-        return 1
-
-    with open(SKILL_TABLE_PATH, "r", encoding="utf-8") as f:
-        skill_table = json.load(f)
-
+def build_base_entries(skill_table: dict) -> list[dict]:
     results = []
     for key, entry in skill_table.items():
         if not isinstance(entry, dict):
@@ -56,7 +70,6 @@ def main():
         if skill_id is None:
             skill_id = key
         skill_id = int(skill_id)
-        # 只记录 4 位数的 skillId（1000–9999）
         if not (1000 <= skill_id <= 9999):
             continue
         item = {
@@ -69,13 +82,89 @@ def main():
         results.append(item)
 
     results.sort(key=lambda x: (x["id"], x["Icon"]))
+    return results
 
-    out_path = Path(args.output)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"已提取 {len(results)} 条记录 -> {out_path}")
+def apply_language_names(
+    base_entries: list[dict],
+    name_overrides: dict,
+) -> tuple[list[dict], int]:
+    localized_entries = []
+    with_name_override = 0
+
+    for item in base_entries:
+        entry = dict(item)
+        override_key = str(entry["id"])
+
+        if override_key in name_overrides:
+            entry["NameDesign"] = name_overrides[override_key]
+            with_name_override += 1
+
+        localized_entries.append(entry)
+
+    return localized_entries, with_name_override
+
+
+def write_output(lang: str, output_data: list[dict], with_name_override: int) -> Path:
+    output_path = OUTPUT_DIR / LANG_CONFIGS[lang]["output_name"]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(output_data, f, ensure_ascii=False, indent=2)
+    print(
+        f"已生成: {output_path}，共 {len(output_data)} 条"
+        f"（{with_name_override} 条由例外文件覆盖）"
+    )
+    return output_path
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="提取 skill_aoyi 技能图标信息")
+    parser.add_argument(
+        "-o", "--output",
+        help="仅单语言模式时指定输出 JSON 路径（默认使用 output 目录下的语言文件名）",
+    )
+    parser.add_argument(
+        "--lang",
+        choices=sorted(LANG_CONFIGS.keys()),
+        help="只生成指定语言；默认生成所有语言。",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    langs = [args.lang] if args.lang else list(LANG_CONFIGS.keys())
+
+    if not SKILL_TABLE_PATH.exists():
+        print(f"错误: 未找到 {SKILL_TABLE_PATH}", file=sys.stderr)
+        return 1
+
+    skill_table = load_json(SKILL_TABLE_PATH)
+    base_entries = build_base_entries(skill_table)
+    if not base_entries:
+        print("未找到任何 skill_aoyi 条目")
+        return 0
+
+    for lang in langs:
+        lang_config = LANG_CONFIGS[lang]
+        name_overrides = load_json(lang_config["overrides_dir"] / OVERRIDE_FILE_NAME)
+        if not isinstance(name_overrides, dict):
+            name_overrides = {}
+
+        output_data, with_name_override = apply_language_names(
+            base_entries,
+            name_overrides,
+        )
+
+        if args.output and len(langs) == 1:
+            out_path = Path(args.output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump(output_data, f, ensure_ascii=False, indent=2)
+            print(f"已提取 {len(output_data)} 条记录 -> {out_path}")
+        else:
+            write_output(lang, output_data, with_name_override)
+
     return 0
 
 

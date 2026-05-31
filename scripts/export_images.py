@@ -1,4 +1,12 @@
+"""
+Batch-export Texture2D/Sprite PNGs from Unity bundles via UnityPy.
+
+Optional --manifest: main process writes JSONL after workers return ManifestRow tuples
+(source bundle, Unity container/name/path_id, out_rel relative to task out_base, plus out_rel_output).
+"""
+
 import argparse
+import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 import os
@@ -8,11 +16,23 @@ from typing import Optional
 
 import UnityPy
 
-
 DEFAULT_EXTS = (".ab", ".unity3d", ".bundle", ".assets")
 DEFAULT_TYPES = ("Texture2D", "Sprite")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+
+@dataclass(frozen=True)
+class ManifestRow:
+    """One exported PNG; written to JSONL by the main process only."""
+
+    task_index: int
+    source_rel: str
+    asset_type: str
+    container_path: str
+    unity_name: str
+    path_id: int
+    out_rel: str
 
 
 @dataclass(frozen=True)
@@ -33,6 +53,7 @@ class ExportResult:
     rel_src: str
     exported: int = 0
     error: Optional[str] = None
+    manifest_rows: tuple[ManifestRow, ...] = ()
 
 
 def non_negative_int(value: str) -> int:
@@ -174,14 +195,25 @@ def export_env_images(
     flat: bool,
     quiet: bool,
     png_compress_level: Optional[int],
-) -> int:
+    task_index: int,
+    source_rel: str,
+) -> tuple[int, list[ManifestRow]]:
     exported = 0
+    rows: list[ManifestRow] = []
     made_dirs: set[str] = set()
     save_kwargs = {}
     if png_compress_level is not None:
         save_kwargs["compress_level"] = png_compress_level
 
-    def export_one(image, rel_path_no_ext: str) -> None:
+    def export_one(
+        image,
+        rel_path_no_ext: str,
+        *,
+        asset_type: str,
+        container_path: str,
+        unity_name: str,
+        path_id: int,
+    ) -> None:
         nonlocal exported
         if flat:
             name = rel_path_no_ext.replace("\\", "_").replace("/", "_")
@@ -202,8 +234,20 @@ def export_env_images(
                 pass
             raise
         exported += 1
+        out_rel = os.path.relpath(out_path, out_base)
+        rows.append(
+            ManifestRow(
+                task_index=task_index,
+                source_rel=source_rel,
+                asset_type=asset_type,
+                container_path=container_path,
+                unity_name=unity_name,
+                path_id=path_id,
+                out_rel=out_rel,
+            )
+        )
         if not quiet:
-            print("  +", os.path.relpath(out_path, out_base))
+            print("  +", out_rel)
 
     # Prefer container paths (more meaningful, often includes folders)
     if getattr(env, "container", None):
@@ -216,7 +260,14 @@ def export_env_images(
                 continue
             unity_name = get_unity_name(data, obj=obj)
             rel = best_rel_path_no_ext(container_path, unity_name)
-            export_one(img, rel)
+            export_one(
+                img,
+                rel,
+                asset_type=obj.type.name,
+                container_path=str(container_path),
+                unity_name=unity_name,
+                path_id=int(obj.path_id),
+            )
 
     # Fallback: scan all objects (names may be less structured)
     if exported == 0:
@@ -229,25 +280,68 @@ def export_env_images(
                 continue
             name = get_unity_name(data, obj=obj)
             rel = os.path.join("__no_container", obj.type.name, f"{name}_{obj.path_id}")
-            export_one(img, rel)
+            export_one(
+                img,
+                rel,
+                asset_type=obj.type.name,
+                container_path="",
+                unity_name=name,
+                path_id=int(obj.path_id),
+            )
 
-    return exported
+    return exported, rows
 
 
 def process_source_file(task: ExportTask) -> ExportResult:
     try:
         env = UnityPy.load(task.src)
-        exported = export_env_images(
+        exported, rows = export_env_images(
             env=env,
             out_base=task.out_base,
             asset_types=set(task.asset_types),
             flat=task.flat,
             quiet=task.quiet,
             png_compress_level=task.png_compress_level,
+            task_index=task.index,
+            source_rel=task.rel_src,
         )
-        return ExportResult(index=task.index, rel_src=task.rel_src, exported=exported)
+        return ExportResult(
+            index=task.index,
+            rel_src=task.rel_src,
+            exported=exported,
+            manifest_rows=tuple(rows),
+        )
     except Exception as e:
         return ExportResult(index=task.index, rel_src=task.rel_src, error=str(e))
+
+
+def write_manifest_jsonl(
+    path: str,
+    rows: list[ManifestRow],
+    tasks_by_index: dict[int, ExportTask],
+    out_dir: str,
+) -> None:
+    parent = os.path.dirname(os.path.abspath(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    sorted_rows = sorted(rows, key=lambda r: (r.task_index, r.source_rel, r.path_id, r.out_rel))
+    with open(path, "w", encoding="utf-8") as f:
+        for row in sorted_rows:
+            task = tasks_by_index[row.task_index]
+            out_rel_output = os.path.normpath(
+                os.path.join(os.path.relpath(task.out_base, out_dir), row.out_rel)
+            )
+            rec = {
+                "task_index": row.task_index,
+                "source_rel": row.source_rel,
+                "asset_type": row.asset_type,
+                "container_path": row.container_path,
+                "unity_name": row.unity_name,
+                "path_id": row.path_id,
+                "out_rel": row.out_rel,
+                "out_rel_output": out_rel_output,
+            }
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
 def main(argv: list[str]) -> int:
@@ -302,6 +396,14 @@ def main(argv: list[str]) -> int:
         type=png_compress_level,
         default=None,
         help="PNG compression level 0-9; lower is faster but larger (default: Pillow default)",
+    )
+    p.add_argument(
+        "--manifest",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="PATH",
+        help="Write JSONL manifest after export; PATH defaults to OUTPUT/export_manifest.jsonl when flag is used without a path",
     )
 
     args = p.parse_args(argv)
@@ -363,6 +465,7 @@ def main(argv: list[str]) -> int:
 
     total_exported = 0
     failed = 0
+    all_manifest_rows: list[ManifestRow] = []
 
     def handle_result(result: ExportResult) -> None:
         nonlocal total_exported, failed
@@ -372,23 +475,15 @@ def main(argv: list[str]) -> int:
             print(f"  !! FAIL: {result.error}", file=sys.stderr)
             return
         total_exported += result.exported
+        all_manifest_rows.extend(result.manifest_rows)
         if not args.quiet:
             print(f"[{result.index}/{total_files}] {result.rel_src}")
             print(f"  => exported: {result.exported}")
 
     if workers == 1:
         for task in tasks:
-            if not args.quiet:
-                print(f"[{task.index}/{total_files}] {task.rel_src}")
             result = process_source_file(task)
-            if not args.quiet and not result.error:
-                total_exported += result.exported
-                print(f"  => exported: {result.exported}")
-            elif result.error:
-                failed += 1
-                print(f"  !! FAIL: {result.error}", file=sys.stderr)
-            else:
-                total_exported += result.exported
+            handle_result(result)
     else:
         with ProcessPoolExecutor(max_workers=workers) as executor:
             future_to_task = {
@@ -405,6 +500,26 @@ def main(argv: list[str]) -> int:
                         error=str(e),
                     )
                 handle_result(result)
+
+    manifest_path: Optional[str] = None
+    if args.manifest is not None:
+        manifest_path = (
+            os.path.join(out_dir, "export_manifest.jsonl")
+            if args.manifest == ""
+            else os.path.abspath(args.manifest)
+        )
+
+    if manifest_path is not None:
+        if failed > 0:
+            print(
+                "Warning: manifest lists only successfully exported images; "
+                "some source files failed.",
+                file=sys.stderr,
+            )
+        tasks_by_index = {t.index: t for t in tasks}
+        write_manifest_jsonl(manifest_path, all_manifest_rows, tasks_by_index, out_dir)
+        if not args.quiet:
+            print(f"Manifest: {manifest_path} ({len(all_manifest_rows)} rows)")
 
     print("")
     print(f"Done. scanned_files={total_files}, exported_images={total_exported}, failed_files={failed}")

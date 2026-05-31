@@ -7,11 +7,14 @@
 - Buff 组：主 buff 组根 base_id=(id//10)*10，子 buff 为 +1,+2,...，不同组一般相差 10。
 - 天赋关联：从 TalentTable 的 TalentEffect（类型 3 为 buff）得到天赋关联的 buff；若 buff/子 buff 的
   NameDesign 中不包含该天赋名，则在名称后拼接「-天赋名」；若该 buff 没有对应图片，则用天赋图标替代。
-- 名称例外：最后应用 scripts/overrides/buff_name_overrides.json 里的名称覆盖。
+- 名称例外：最后应用各语言 overrides 目录里的 buff_name_overrides.json。
+- 多语言：Id/Icon/SpriteFile 始终以中文 ZTable 为模板源；en/jp 名称由
+  overrides_en/overrides_jp 下的 buff_name_overrides.json 覆盖。
 
 用法:
   python extract_buff_icons.py
   python extract_buff_icons.py --id 997110
+  python extract_buff_icons.py --lang en
 """
 
 import argparse
@@ -27,14 +30,28 @@ BUFF_TABLE_PATH = ZTABLE_DIR / "BuffTable.json"
 MOD_EFFECT_TABLE_PATH = ZTABLE_DIR / "ModEffectTable.json"
 TALENT_TABLE_PATH = ZTABLE_DIR / "TalentTable.json"
 OUTPUT_DIR = SCRIPT_DIR / "output"
-OUTPUT_JSON_PATH = OUTPUT_DIR / "BuffName.json"
 SPRITE_DIR = SCRIPT_DIR / "exported_images" / "__no_container" / "Sprite"
-NAME_OVERRIDES_PATH = SCRIPT_DIR / "overrides" / "buff_name_overrides.json"
 
+LANG_CONFIGS = {
+    "zh": {
+        "overrides_dir": SCRIPT_DIR / "overrides",
+        "output_name": "BuffName.json",
+    },
+    "en": {
+        "overrides_dir": SCRIPT_DIR / "overrides_en",
+        "output_name": "BuffName_en.json",
+    },
+    "jp": {
+        "overrides_dir": SCRIPT_DIR / "overrides_jp",
+        "output_name": "BuffName_jp.json",
+    },
+}
+
+OVERRIDE_FILE_NAME = "buff_name_overrides.json"
 EFFECT_CONFIG_TYPE_BUFF = 3
 
 
-def load_json(path: Path) -> dict:
+def load_json(path: Path) -> dict | list:
     if not path.exists():
         return {}
     with open(path, "r", encoding="utf-8") as f:
@@ -146,11 +163,9 @@ def get_talent_for_buff(entry_id: int, base_id_to_talents: dict) -> tuple[str, s
     talents = base_id_to_talents.get(base_id)
     if not talents:
         return None
-    # 优先：TalentEffect 中直接包含 entry_id 的天赋
     for talent_name, _icon_short, sprite_file, buff_ids_set in talents:
         if entry_id in buff_ids_set:
             return (talent_name, sprite_file)
-    # 否则用该组第一个天赋
     first = talents[0]
     return (first[0], first[2])
 
@@ -179,52 +194,25 @@ def build_mod_effect_buff_fallback(mod_effect_table: dict | None) -> dict[int, s
     return result
 
 
-def main():
-    parser = argparse.ArgumentParser(description="从 BuffTable 提取 Id/Icon/NameDesign，支持 ModEffect 与天赋回退")
-    parser.add_argument("--id", type=int, default=None, help="仅提取指定 Id（可选）")
-    parser.add_argument("--no-copy", action="store_true", help="不复制图片到 output")
-    args = parser.parse_args()
-
-    if not BUFF_TABLE_PATH.exists():
-        print(f"错误: BuffTable.json 不存在: {BUFF_TABLE_PATH}", file=sys.stderr)
-        return 2
-
-    buff_table = load_json(BUFF_TABLE_PATH)
-    name_overrides = load_json(NAME_OVERRIDES_PATH)
-
-    valid_buff_ids = load_buff_ids(buff_table)
-
-    mod_effect_table = None
-    if MOD_EFFECT_TABLE_PATH.exists():
-        with open(MOD_EFFECT_TABLE_PATH, "r", encoding="utf-8") as f:
-            mod_effect_table = json.load(f)
-    buff_id_to_mod_icon = build_mod_effect_buff_fallback(mod_effect_table)
-
-    talent_table = None
-    if TALENT_TABLE_PATH.exists():
-        with open(TALENT_TABLE_PATH, "r", encoding="utf-8") as f:
-            talent_table = json.load(f)
-    base_id_to_talents, _talent_id_to_sprite = build_talent_fallback(talent_table, valid_buff_ids, SPRITE_DIR)
-
-    entries = extract_buff_entries(buff_table, target_id=args.id)
-    if not entries:
-        print("未找到任何 Buff 条目")
-        return 0
-
-    output_dir = OUTPUT_DIR
-    output_dir.mkdir(parents=True, exist_ok=True)
-    image_output_dir = output_dir / "buff_icons"
+def build_base_entries(
+    buff_table: dict,
+    buff_id_to_mod_icon: dict[int, str],
+    base_id_to_talents: dict,
+    target_id: int | None = None,
+) -> tuple[list[dict], dict[str, int]]:
+    """以中文 ZTable 为模板源，构建 Id/Icon/SpriteFile/NameDesign 基础条目。"""
+    entries = extract_buff_entries(buff_table, target_id=target_id)
     output_data = []
-    with_talent_name_fix = 0
-    with_talent_icon_fallback = 0
-    with_name_override = 0
+    stats = {
+        "with_talent_name_fix": 0,
+        "with_talent_icon_fallback": 0,
+    }
 
     for entry_id, icon_short, name_design in entries:
         sprites = find_sprite_images(SPRITE_DIR, icon_short) if icon_short else []
         sprite_file = sprites[0].name if sprites else None
         base_id = (entry_id // 10) * 10
 
-        # 1) ModEffect Level 6 回退
         mod_ref_id = None
         if not icon_short and not sprite_file:
             if entry_id in buff_id_to_mod_icon:
@@ -243,21 +231,15 @@ def main():
                 if parent_name:
                     name_design = f"{parent_name}-{name_design}" if name_design else parent_name
 
-        # 2) 天赋关联：名称与图标
         talent_info = get_talent_for_buff(entry_id, base_id_to_talents)
         if talent_info:
             talent_name, talent_sprite = talent_info
             if talent_name and talent_name not in (name_design or ""):
                 name_design = f"{name_design}-{talent_name}" if name_design else talent_name
-                with_talent_name_fix += 1
+                stats["with_talent_name_fix"] += 1
             if not sprite_file and talent_sprite:
                 sprite_file = talent_sprite
-                with_talent_icon_fallback += 1
-
-        override_key = str(entry_id)
-        if override_key in name_overrides:
-            name_design = name_overrides[override_key]
-            with_name_override += 1
+                stats["with_talent_icon_fallback"] += 1
 
         output_data.append({
             "Id": entry_id,
@@ -267,38 +249,132 @@ def main():
         })
 
     output_data.sort(key=lambda item: str(item["Id"]))
-    output_json = OUTPUT_JSON_PATH
-    with open(output_json, "w", encoding="utf-8") as f:
+    return output_data, stats
+
+
+def apply_language_names(
+    base_entries: list[dict],
+    lang: str,
+    name_overrides: dict,
+) -> tuple[list[dict], int]:
+    """按语言生成最终 NameDesign，保持 Id/Icon/SpriteFile 与中文模板一致。"""
+    localized_entries = []
+    with_name_override = 0
+
+    for item in base_entries:
+        entry = dict(item)
+        entry_id = entry["Id"]
+        override_key = str(entry_id)
+
+        if override_key in name_overrides:
+            entry["NameDesign"] = name_overrides[override_key]
+            with_name_override += 1
+
+        localized_entries.append(entry)
+
+    return localized_entries, with_name_override
+
+
+def copy_sprite_images(output_data: list[dict]) -> tuple[int, Path]:
+    """复制 Sprite 图片到 output/buff_icons。"""
+    image_output_dir = OUTPUT_DIR / "buff_icons"
+    image_output_dir.mkdir(parents=True, exist_ok=True)
+    copied = 0
+    copied_files: set[str] = set()
+
+    for item in output_data:
+        fname = item.get("SpriteFile")
+        if fname and fname not in copied_files:
+            src = SPRITE_DIR / fname
+            if src.exists():
+                dst = image_output_dir / fname
+                if not dst.exists() or dst.stat().st_size != src.stat().st_size:
+                    shutil.copy2(src, dst)
+                    copied += 1
+                    copied_files.add(fname)
+
+    return copied, image_output_dir
+
+
+def write_buff_output(lang: str, output_data: list[dict], with_name_override: int) -> Path:
+    output_path = OUTPUT_DIR / LANG_CONFIGS[lang]["output_name"]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2, sort_keys=True)
+    print(
+        f"已生成: {output_path}，共 {len(output_data)} 条"
+        f"（{with_name_override} 条由例外文件覆盖）"
+    )
+    return output_path
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="从 BuffTable 提取 Id/Icon/NameDesign，支持 ModEffect 与天赋回退")
+    parser.add_argument("--id", type=int, default=None, help="仅提取指定 Id（可选）")
+    parser.add_argument("--no-copy", action="store_true", help="不复制图片到 output")
+    parser.add_argument(
+        "--lang",
+        choices=sorted(LANG_CONFIGS.keys()),
+        help="只生成指定语言；默认生成所有语言。",
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    langs = [args.lang] if args.lang else list(LANG_CONFIGS.keys())
+
+    if not BUFF_TABLE_PATH.exists():
+        print(f"错误: BuffTable.json 不存在: {BUFF_TABLE_PATH}", file=sys.stderr)
+        return 2
+
+    buff_table = load_json(BUFF_TABLE_PATH)
+    valid_buff_ids = load_buff_ids(buff_table)
+
+    mod_effect_table = load_json(MOD_EFFECT_TABLE_PATH) if MOD_EFFECT_TABLE_PATH.exists() else None
+    buff_id_to_mod_icon = build_mod_effect_buff_fallback(mod_effect_table)
+
+    talent_table = load_json(TALENT_TABLE_PATH) if TALENT_TABLE_PATH.exists() else None
+    base_id_to_talents, _talent_id_to_sprite = build_talent_fallback(talent_table, valid_buff_ids, SPRITE_DIR)
+
+    base_entries, build_stats = build_base_entries(
+        buff_table,
+        buff_id_to_mod_icon,
+        base_id_to_talents,
+        target_id=args.id,
+    )
+    if not base_entries:
+        print("未找到任何 Buff 条目")
+        return 0
+
+    for lang in langs:
+        name_overrides = load_json(LANG_CONFIGS[lang]["overrides_dir"] / OVERRIDE_FILE_NAME)
+        if not isinstance(name_overrides, dict):
+            name_overrides = {}
+
+        output_data, with_name_override = apply_language_names(
+            base_entries,
+            lang,
+            name_overrides,
+        )
+        write_buff_output(lang, output_data, with_name_override)
 
     copied = 0
-    copied_files = set()
+    image_output_dir = OUTPUT_DIR / "buff_icons"
     if not args.no_copy:
-        image_output_dir.mkdir(parents=True, exist_ok=True)
-        for item in output_data:
-            fname = item.get("SpriteFile")
-            if fname and fname not in copied_files:
-                src = SPRITE_DIR / fname
-                if src.exists():
-                    dst = image_output_dir / fname
-                    if not dst.exists() or dst.stat().st_size != src.stat().st_size:
-                        shutil.copy2(src, dst)
-                        copied += 1
-                        copied_files.add(fname)
+        copied, image_output_dir = copy_sprite_images(base_entries)
 
-    with_sprite = len([x for x in output_data if x["SpriteFile"]])
+    with_sprite = len([x for x in base_entries if x["SpriteFile"]])
     with_mod_fallback = sum(
-        1 for x in output_data
+        1 for x in base_entries
         if not x["Icon"] and x["SpriteFile"]
         and (x["Id"] in buff_id_to_mod_icon or ((x["Id"] // 10) * 10) in buff_id_to_mod_icon)
     )
-    print(f"提取到 {len(entries)} 条 Buff 条目")
+    print(f"提取到 {len(base_entries)} 条 Buff 条目（中文模板源）")
     print(f"其中找到对应 Sprite 图片的: {with_sprite} 个")
     print(f"通过 Level 6 ModEffect 回退图标的: {with_mod_fallback} 个")
-    print(f"通过天赋补全名称的: {with_talent_name_fix} 个")
-    print(f"通过天赋回退图标的: {with_talent_icon_fallback} 个")
-    print(f"通过例外文件覆盖名称的: {with_name_override} 个")
-    print(f"输出: {output_json}")
+    print(f"通过天赋补全名称的: {build_stats['with_talent_name_fix']} 个")
+    print(f"通过天赋回退图标的: {build_stats['with_talent_icon_fallback']} 个")
     if copied > 0:
         print(f"已复制 {copied} 个图片到 {image_output_dir}")
 
