@@ -14,6 +14,8 @@ use std::sync::OnceLock;
 use std::sync::atomic::AtomicUsize;
 use std::time::{Duration, Instant};
 use tokio::sync::watch;
+use windivert::WinDivert;
+use windivert::prelude::{NetworkLayer, WinDivertFlags};
 
 // Global sender for restart signal.
 static RESTART_SENDER: OnceCell<watch::Sender<bool>> = OnceCell::new();
@@ -34,6 +36,50 @@ enum PacketFormat {
     Unsupported,
 }
 
+#[derive(Clone, Debug)]
+pub enum CaptureMethod {
+    WinDivert,
+    Npcap(String),
+}
+
+trait PacketSource: Send {
+    fn pump(&mut self, on_packet: &mut dyn FnMut(PacketFormat, &[u8])) -> Result<i32, String>;
+}
+
+struct WinDivertSource {
+    handle: WinDivert<NetworkLayer>,
+    buffer: Vec<u8>,
+}
+
+impl WinDivertSource {
+    fn new() -> Result<Self, String> {
+        let handle = WinDivert::network(
+            "!loopback && ip && tcp",
+            0,
+            WinDivertFlags::new().set_sniff(),
+        )
+        .map_err(|e| format!("failed to initialize WinDivert: {e}"))?;
+
+        info!(target: "app::capture", "WinDivert handle opened");
+
+        Ok(Self {
+            handle,
+            buffer: vec![0u8; 10 * 1024 * 1024],
+        })
+    }
+}
+
+impl PacketSource for WinDivertSource {
+    fn pump(&mut self, on_packet: &mut dyn FnMut(PacketFormat, &[u8])) -> Result<i32, String> {
+        let packet = self
+            .handle
+            .recv(Some(&mut self.buffer))
+            .map_err(|e| e.to_string())?;
+        on_packet(PacketFormat::RawIp, packet.data.as_ref());
+        Ok(1)
+    }
+}
+
 struct NpcapSource {
     capture: NpcapCapture,
 }
@@ -48,43 +94,18 @@ impl NpcapSource {
         info!(target: "app::capture", "Npcap handle opened device={}", device);
         Ok(Self { capture })
     }
+}
 
-    fn packet_format(&self) -> PacketFormat {
-        match self.capture.datalink() {
-            DLT_EN10MB => PacketFormat::Ethernet,
-            DLT_RAW | DLT_NULL | DLT_LOOP => PacketFormat::RawIp,
-            other => {
-                log_unsupported_datalink(other);
-                PacketFormat::Unsupported
-            }
-        }
-    }
-
-    /// Returns a sub-slice of `data` with any link-layer header stripped,
-    /// or `None` if the packet should be dropped. Zero-copy.
-    #[inline]
-    fn normalize_slice<'a>(&self, data: &'a [u8]) -> Option<&'a [u8]> {
-        match self.capture.datalink() {
-            DLT_EN10MB | DLT_RAW => Some(data),
-            DLT_NULL | DLT_LOOP => {
-                if data.len() <= 4 {
-                    return None;
-                }
-                let family = u32::from_ne_bytes([data[0], data[1], data[2], data[3]]);
-                match family {
-                    2 => Some(&data[4..]),
-                    23 | 24 => None,
-                    other => {
-                        log_unsupported_loopback_family(other, self.capture.datalink());
-                        None
-                    }
-                }
-            }
-            other => {
-                log_unsupported_datalink(other);
-                None
-            }
-        }
+impl PacketSource for NpcapSource {
+    fn pump(&mut self, on_packet: &mut dyn FnMut(PacketFormat, &[u8])) -> Result<i32, String> {
+        let datalink = self.capture.datalink();
+        let packet_format = packet_format_for_datalink(datalink);
+        self.capture.dispatch_batch(-1, &mut |raw_pkt: &[u8]| {
+            let Some(pkt) = normalize_slice_for_datalink(raw_pkt, datalink) else {
+                return;
+            };
+            on_packet(packet_format, pkt);
+        })
     }
 }
 
@@ -106,25 +127,30 @@ impl SessionState {
 
 const CAPTURE_CHANNEL_CAP: usize = 4096;
 
-pub fn start_capture(npcap_device: String) -> tokio::sync::mpsc::Receiver<CaptureEvent> {
+pub fn start_capture(method: CaptureMethod) -> tokio::sync::mpsc::Receiver<CaptureEvent> {
     let (packet_sender, packet_receiver) =
         tokio::sync::mpsc::channel::<CaptureEvent>(CAPTURE_CHANNEL_CAP);
     let (restart_sender, mut restart_receiver) = watch::channel(false);
     RESTART_SENDER.set(restart_sender.clone()).ok();
 
-    if npcap_device.trim().is_empty() {
-        error!(target: "app::capture", "capture_start_failed method=Npcap err=empty_device");
-        return packet_receiver;
+    match &method {
+        CaptureMethod::WinDivert => {
+            info!(target: "app::capture", "capture_start method=WinDivert");
+        }
+        CaptureMethod::Npcap(device) => {
+            if device.trim().is_empty() {
+                error!(target: "app::capture", "capture_start_failed method=Npcap err=empty_device");
+                return packet_receiver;
+            }
+            info!(target: "app::capture", "capture_start method=Npcap device={device}");
+        }
     }
-
-    info!(target: "app::capture", "capture_start method=Npcap device={}", npcap_device);
 
     std::thread::spawn(move || {
         let capture_span = tracing::info_span!(
             target: "app::capture",
             "capture_thread",
-            method = "Npcap",
-            device = %npcap_device
+            method = ?method
         );
         let _capture_guard = capture_span.enter();
         let dropped_total = AtomicUsize::new(0);
@@ -133,7 +159,7 @@ pub fn start_capture(npcap_device: String) -> tokio::sync::mpsc::Receiver<Captur
                 &packet_sender,
                 &dropped_total,
                 &mut restart_receiver,
-                &npcap_device,
+                method.clone(),
             );
 
             // Check if this was a requested restart or a crash/exit.
@@ -158,23 +184,32 @@ fn read_packets(
     packet_sender: &tokio::sync::mpsc::Sender<CaptureEvent>,
     dropped_total: &AtomicUsize,
     restart_receiver: &mut watch::Receiver<bool>,
-    npcap_device: &str,
+    method: CaptureMethod,
 ) {
     let read_span =
-        tracing::info_span!(target: "app::capture", "capture_read_loop", method = "Npcap");
+        tracing::info_span!(target: "app::capture", "capture_read_loop", method = ?method);
     let _read_guard = read_span.enter();
 
-    let source = match NpcapSource::new(npcap_device) {
-        Ok(s) => s,
-        Err(e) => {
-            error!(
-                target: "app::capture",
-                "capture_source_init_failed method=Npcap device={} err={}",
-                npcap_device,
-                e
-            );
-            return;
-        }
+    let mut source: Box<dyn PacketSource> = match &method {
+        CaptureMethod::WinDivert => match WinDivertSource::new() {
+            Ok(s) => Box::new(s),
+            Err(e) => {
+                error!(target: "app::capture", "capture_source_init_failed method=WinDivert err={e}");
+                return;
+            }
+        },
+        CaptureMethod::Npcap(device) => match NpcapSource::new(device) {
+            Ok(s) => Box::new(s),
+            Err(e) => {
+                error!(
+                    target: "app::capture",
+                    "capture_source_init_failed method=Npcap device={} err={}",
+                    device,
+                    e
+                );
+                return;
+            }
+        },
     };
 
     let mut sessions: HashMap<Server, SessionState> = HashMap::new();
@@ -186,12 +221,7 @@ fn read_packets(
     let mut needs_cleanup = false;
 
     loop {
-        let dispatch_result = source.capture.dispatch_batch(-1, &mut |raw_pkt: &[u8]| {
-            let Some(pkt) = source.normalize_slice(raw_pkt) else {
-                return;
-            };
-
-            let packet_format = source.packet_format();
+        let dispatch_result = source.pump(&mut |packet_format, pkt| {
             let network_slices = match packet_format {
                 PacketFormat::RawIp => SlicedPacket::from_ip(pkt),
                 PacketFormat::Ethernet => SlicedPacket::from_ethernet(pkt),
@@ -375,6 +405,42 @@ fn reset_stream(
 ) {
     reassembler.take_remaining();
     tcp_reassembler.reset(next_seq);
+}
+
+fn packet_format_for_datalink(datalink: i32) -> PacketFormat {
+    match datalink {
+        DLT_EN10MB => PacketFormat::Ethernet,
+        DLT_RAW | DLT_NULL | DLT_LOOP => PacketFormat::RawIp,
+        other => {
+            log_unsupported_datalink(other);
+            PacketFormat::Unsupported
+        }
+    }
+}
+
+#[inline]
+fn normalize_slice_for_datalink(data: &[u8], datalink: i32) -> Option<&[u8]> {
+    match datalink {
+        DLT_EN10MB | DLT_RAW => Some(data),
+        DLT_NULL | DLT_LOOP => {
+            if data.len() <= 4 {
+                return None;
+            }
+            let family = u32::from_ne_bytes([data[0], data[1], data[2], data[3]]);
+            match family {
+                2 => Some(&data[4..]),
+                23 | 24 => None,
+                other => {
+                    log_unsupported_loopback_family(other, datalink);
+                    None
+                }
+            }
+        }
+        other => {
+            log_unsupported_datalink(other);
+            None
+        }
+    }
 }
 
 fn log_unsupported_loopback_family(family: u32, datalink: i32) {

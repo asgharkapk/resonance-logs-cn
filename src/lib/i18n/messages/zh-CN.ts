@@ -446,6 +446,9 @@ export const zhCNMessages = {
   "settings.live.refreshRateDescription":
     "实时统计刷新间隔（50-2000ms）。越低越流畅，但更耗 CPU。",
   "settings.network.packetCapture": "抓包",
+  "settings.network.method": "捕获方式",
+  "settings.network.methodDescription":
+    "选择用于捕获网络数据包的方法（需要重启应用）。",
   "settings.network.npcapMissing.prefix": "未检测到 Npcap。请从 ",
   "settings.network.npcapMissing.suffix": " 安装 Npcap 以使用该功能。",
   "settings.network.device": "网络设备",
@@ -453,7 +456,7 @@ export const zhCNMessages = {
   "settings.network.deviceLoading": "正在加载设备...",
   "settings.network.devicePlaceholder": "选择设备",
   "settings.network.restartHint":
-    "更换网卡后需完全退出并重新启动应用，新设置才会生效。",
+    "更改捕获方式或网卡后需完全退出并重新启动应用，新设置才会生效。",
   "settings.shortcuts.clearHint": "右键可清除快捷键",
   "settings.shortcuts.pressKey": "请按键",
   "settings.shortcuts.unbound": "未绑定",

@@ -10,7 +10,9 @@ use crate::live::{
     event_manager::{OutboundEvent, safe_emit_to},
 };
 use crate::packets;
+use crate::packets::packet_capture::CaptureMethod;
 use log::{info, warn};
+use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
@@ -103,8 +105,8 @@ pub async fn start(
     let heartbeat_duration = Duration::from_secs(2);
 
     // 1. Start capturing packets → decode worker → state_rx
-    let npcap_device = get_npcap_device(&app_handle);
-    let capture_rx = packets::packet_capture::start_capture(npcap_device);
+    let capture_method = get_capture_method(&app_handle);
+    let capture_rx = packets::packet_capture::start_capture(capture_method);
     let queue_depth: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     let (state_tx, mut state_rx) = tokio::sync::mpsc::channel::<StateEvent>(DECODE_CHANNEL_CAP);
     packets::decode_worker::spawn_decode_worker(capture_rx, state_tx, Arc::clone(&queue_depth));
@@ -386,7 +388,7 @@ fn flush_outbound_events(app_handle: &AppHandle, state: &mut AppState) {
     }
 }
 
-fn get_npcap_device(app: &AppHandle) -> String {
+fn get_capture_method(app: &AppHandle) -> CaptureMethod {
     let filename_candidates = ["packetCapture.json", "packetCapture.bin", "packetCapture"];
     let mut dir_candidates = Vec::new();
     if let Some(dir) = app.path().app_data_dir().ok() {
@@ -406,20 +408,7 @@ fn get_npcap_device(app: &AppHandle) -> String {
             }
             if let Ok(file) = std::fs::File::open(&path) {
                 if let Ok(json) = serde_json::from_reader::<_, serde_json::Value>(file) {
-                    let device = json
-                        .get("npcapDevice")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("");
-
-                    info!(
-                        target: "app::capture",
-                        "Packet capture config found at {} (device={})",
-                        path.display(),
-                        device
-                    );
-
-                    info!(target: "app::capture", "Using Npcap capture device={}", device);
-                    return device.to_string();
+                    return capture_method_from_json(&json, &path);
                 } else {
                     warn!(
                         "Failed to parse packet capture config at {}",
@@ -440,20 +429,7 @@ fn get_npcap_device(app: &AppHandle) -> String {
                 }
                 if let Ok(file) = std::fs::File::open(&path) {
                     if let Ok(json) = serde_json::from_reader::<_, serde_json::Value>(file) {
-                        let device = json
-                            .get("npcapDevice")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("");
-
-                        info!(
-                            target: "app::capture",
-                            "Packet capture config found at {} (device={})",
-                            path.display(),
-                            device
-                        );
-
-                        info!(target: "app::capture", "Using Npcap capture device={}", device);
-                        return device.to_string();
+                        return capture_method_from_json(&json, &path);
                     } else {
                         warn!(
                             "Failed to parse packet capture config at {}",
@@ -465,6 +441,108 @@ fn get_npcap_device(app: &AppHandle) -> String {
         }
     }
 
-    warn!(target: "app::capture", "No packetCapture config found in app data dirs; Npcap device is empty");
-    String::new()
+    warn!(target: "app::capture", "No packetCapture config found in app data dirs; using WinDivert");
+    CaptureMethod::WinDivert
+}
+
+fn capture_method_from_json(json: &serde_json::Value, path: &Path) -> CaptureMethod {
+    let method = json.get("method").and_then(|v| v.as_str());
+    let device = json
+        .get("npcapDevice")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let (capture_method, method_source) = resolve_capture_method(method, device);
+
+    info!(
+        target: "app::capture",
+        "Packet capture config found at {} (method={} device={} method_source={})",
+        path.display(),
+        method.unwrap_or("<missing>"),
+        device,
+        method_source
+    );
+
+    match &capture_method {
+        CaptureMethod::WinDivert => {
+            info!(target: "app::capture", "Using WinDivert capture");
+        }
+        CaptureMethod::Npcap(device) => {
+            info!(target: "app::capture", "Using Npcap capture device={device}");
+        }
+    }
+
+    if let Some(other) = method.filter(|value| *value != "WinDivert" && *value != "Npcap") {
+        warn!(
+            target: "app::capture",
+            "Unknown packet capture method {}; selected fallback source={}",
+            other,
+            method_source
+        );
+    }
+
+    capture_method
+}
+
+fn resolve_capture_method(method: Option<&str>, device: &str) -> (CaptureMethod, &'static str) {
+    match method {
+        Some("WinDivert") => (CaptureMethod::WinDivert, "explicit"),
+        Some("Npcap") => (CaptureMethod::Npcap(device.to_string()), "explicit"),
+        Some(_) | None => {
+            if device.trim().is_empty() {
+                (CaptureMethod::WinDivert, "default_windivert")
+            } else {
+                (
+                    CaptureMethod::Npcap(device.to_string()),
+                    "legacy_npcap_device",
+                )
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::resolve_capture_method;
+    use crate::packets::packet_capture::CaptureMethod;
+
+    fn assert_npcap(method: Option<&str>, device: &str) {
+        match resolve_capture_method(method, device).0 {
+            CaptureMethod::Npcap(actual) => assert_eq!(actual, device),
+            CaptureMethod::WinDivert => panic!("expected Npcap"),
+        }
+    }
+
+    fn assert_windivert(method: Option<&str>, device: &str) {
+        match resolve_capture_method(method, device).0 {
+            CaptureMethod::WinDivert => {}
+            CaptureMethod::Npcap(actual) => panic!("expected WinDivert, got Npcap({actual})"),
+        }
+    }
+
+    #[test]
+    fn explicit_windivert_wins() {
+        assert_windivert(Some("WinDivert"), "npcap-device");
+    }
+
+    #[test]
+    fn explicit_npcap_wins() {
+        assert_npcap(Some("Npcap"), "npcap-device");
+    }
+
+    #[test]
+    fn legacy_npcap_device_selects_npcap() {
+        assert_npcap(None, "npcap-device");
+    }
+
+    #[test]
+    fn empty_or_missing_legacy_config_defaults_to_windivert() {
+        assert_windivert(None, "");
+        assert_windivert(None, "   ");
+    }
+
+    #[test]
+    fn unknown_method_falls_back_by_device_presence() {
+        assert_npcap(Some("Other"), "npcap-device");
+        assert_windivert(Some("Other"), "");
+    }
 }

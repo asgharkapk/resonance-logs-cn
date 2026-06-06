@@ -4,7 +4,7 @@
 
 | 文档 | 说明 |
 |------|------|
-| [应用运行](./faq/app-runtime.md) | 安装、Npcap、网卡、重启、日志、分享配置 |
+| [应用运行](./faq/app-runtime.md) | 安装、WinDivert / Npcap、网卡、重启、日志、分享配置 |
 | [DPS 与布局](./faq/dps-layout.md) | 秒伤与真秒伤、历史清理、布局/主题/列设置 |
 | [实时监控](./faq/live-monitor.md) | Buff / 技能 CD、别名、快捷监听 |
 | [怪物监控](./faq/monster-monitor.md) | 主目标 Buff、仇恨、与实时监控区别 |

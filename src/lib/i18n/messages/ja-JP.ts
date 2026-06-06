@@ -503,6 +503,9 @@ export const jaJPMessages = {
   "settings.live.refreshRateDescription":
     "ライブ統計の更新間隔（50-2000ms）。低いほど滑らかですが CPU 使用量が増えます。",
   "settings.network.packetCapture": "パケットキャプチャ",
+  "settings.network.method": "キャプチャ方式",
+  "settings.network.methodDescription":
+    "ネットワークパケットのキャプチャ方式を選択します（アプリの再起動が必要です）。",
   "settings.network.npcapMissing.prefix":
     "Npcap が検出されませんでした。",
   "settings.network.npcapMissing.suffix": " からインストールしてこの機能を使用してください。",
@@ -512,7 +515,7 @@ export const jaJPMessages = {
   "settings.network.deviceLoading": "デバイスを読み込み中...",
   "settings.network.devicePlaceholder": "デバイスを選択",
   "settings.network.restartHint":
-    "ネットワークアダプタを変更した後は、アプリを完全に終了して再起動しないと新しい設定は反映されません。",
+    "キャプチャ方式またはネットワークアダプタを変更した後は、アプリを完全に終了して再起動しないと新しい設定は反映されません。",
   "settings.shortcuts.clearHint": "右クリックでショートカットをクリア",
   "settings.shortcuts.pressKey": "キーを押してください",
   "settings.shortcuts.unbound": "未割り当て",

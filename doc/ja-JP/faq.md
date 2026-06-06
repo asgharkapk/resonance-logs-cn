@@ -4,7 +4,7 @@
 
 | ドキュメント | 説明 |
 |------|------|
-| [アプリの実行](./faq/app-runtime.md) | インストール、Npcap、NIC、再起動、ログ、設定の共有 |
+| [アプリの実行](./faq/app-runtime.md) | インストール、WinDivert / Npcap、NIC、再起動、ログ、設定の共有 |
 | [DPS とレイアウト](./faq/dps-layout.md) | 秒間ダメージと真秒間ダメージ、履歴のクリーンアップ、レイアウト / テーマ / 列設定 |
 | [リアルタイム監視](./faq/live-monitor.md) | Buff / スキル CD、エイリアス、ショートカット監視 |
 | [モンスター監視](./faq/monster-monitor.md) | メインターゲット Buff、ヘイト、リアルタイム監視との違い |

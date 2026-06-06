@@ -505,6 +505,9 @@ export const enUSMessages = {
   "settings.live.refreshRateDescription":
     "Live stats refresh interval (50-2000ms). Lower values feel smoother but use more CPU.",
   "settings.network.packetCapture": "Packet Capture",
+  "settings.network.method": "Capture Method",
+  "settings.network.methodDescription":
+    "Choose the network packet capture method (requires app restart).",
   "settings.network.npcapMissing.prefix":
     "Npcap was not detected. Install it from ",
   "settings.network.npcapMissing.suffix": " to use this feature.",
@@ -514,7 +517,7 @@ export const enUSMessages = {
   "settings.network.deviceLoading": "Loading devices...",
   "settings.network.devicePlaceholder": "Select device",
   "settings.network.restartHint":
-    "Fully quit and restart the app after changing the network adapter for the new setting to take effect.",
+    "Fully quit and restart the app after changing the capture method or network adapter for the new setting to take effect.",
   "settings.shortcuts.clearHint": "Right-click to clear a shortcut",
   "settings.shortcuts.pressKey": "Press a key",
   "settings.shortcuts.unbound": "Unbound",

@@ -30,15 +30,38 @@ In **DPS Meter → Settings → Shortcuts**, set a shortcut for **Toggle Overlay
 
 ## Packet Capture
 
-### What do I need for packet capture? {#packet-capture}
+### WinDivert or Npcap?
 
-The app now uses **Npcap** only for capture. Install [Npcap](https://npcap.com/) first, then go to **DPS Meter → Settings → Network** and select the correct network adapter.
+| Method | Description |
+|--------|-------------|
+| **WinDivert** | Built-in driver; usually no separate Npcap install. Requires administrator privileges and may be flagged or quarantined by antivirus software |
+| **Npcap** | Requires installing [Npcap](https://npcap.com/) and selecting the correct network adapter in settings |
+
+Settings path: **DPS Meter → Settings → Network**.
+
+If you do not want to install Npcap, you can use WinDivert. If WinDivert is falsely flagged or quarantined, switch to Npcap or add the app directory and WinDivert-related files to your security software trust list.
 
 See [Getting Started](../getting-started.md) for the full steps.
 
-### No data / capture not working? {#no-data--capture-not-working}
+### No data / capture not working?
 
 1. Confirm the game is running
-2. Confirm Npcap is installed and the correct interface is selected under **Network**
-3. **Fully quit and restart the app** (required after changing the adapter)
-4. Disable conflicting VPN, proxy, or other capture tools and try again
+2. Check the capture method under **DPS Meter → Settings → Network**
+3. If using Npcap: confirm Npcap is installed and the correct interface is selected under **Network**
+4. If using WinDivert: run as administrator and check whether a firewall or antivirus blocked or quarantined the driver
+5. **Fully quit and restart the app** (required after changing capture method or network adapter)
+6. Disable conflicting VPN, proxy, or other capture tools and try again
+
+### WinDivert blocked by firewall or antivirus?
+
+WinDivert loads a network capture driver. Some firewalls or antivirus products may treat this as risky behavior. If blocked or quarantined, capture may not start and live data will stay empty.
+
+Try the following:
+
+1. Allow the app through Windows Firewall, or temporarily disable the firewall to confirm interception is the cause
+2. Check the antivirus quarantine area for `WinDivert.dll`, `WinDivert64.sys`, or the app install directory
+3. If using Huorong (火绒), open **Protection Center → Virus Protection → Trust List**, add the app install directory to trust; if WinDivert files are already quarantined, restore them first, then add trust
+4. Fully quit and restart the app
+5. If quarantine keeps happening, switch to Npcap capture
+
+![WinDivert firewall block example](../../shared/img/faq/faq_1.png)

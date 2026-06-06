@@ -6,7 +6,7 @@ mod packets;
 use crate::build_app::build_and_run;
 use log::{info, warn};
 use specta_typescript::{BigIntExportBehavior, Typescript};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
@@ -109,6 +109,8 @@ pub fn run() {
             let _setup_guard = setup_span.enter();
 
             log::info!(target: "app::startup", "starting app v{}", app.package_info().version);
+            stop_windivert();
+            remove_windivert();
 
             // Initialize database and background writer early to avoid startup races where
             // multiple background tasks/commands trigger migrations concurrently.
@@ -171,6 +173,8 @@ pub fn run() {
                     warn!("panic: failed to resolve app_log_dir; printing dump content to logs");
                     warn!("Crash dump:\n{}", dump_content);
                 }
+                // Attempt a clean up of resources (driver) before handing off to default handler.
+                unload_and_remove_windivert();
                 // Call the previously installed panic hook (prints to stderr etc)
                 default_hook(info);
             }));
@@ -210,6 +214,7 @@ mod packet_settings_commands {
     #[tauri::command]
     #[specta::specta]
     pub fn save_packet_capture_settings(
+        method: String,
         npcap_device: String,
         app_handle: tauri::AppHandle,
     ) -> Result<(), String> {
@@ -227,6 +232,7 @@ mod packet_settings_commands {
             }
             let path = target_dir.join("packetCapture.json");
             let payload = json!({
+                "method": method,
                 "npcapDevice": npcap_device,
             });
             match std::fs::write(
@@ -242,6 +248,88 @@ mod packet_settings_commands {
         }
 
         Err(last_err.unwrap_or_else(|| "Failed to save packet capture config".to_string()))
+    }
+}
+
+/// Starts the WinDivert driver.
+///
+/// This function executes a shell command to create and start the WinDivert driver service.
+#[allow(dead_code)]
+fn start_windivert() {
+    let mut cmd = Command::new("sc");
+    cmd.args([
+        "create",
+        "windivert",
+        "type=",
+        "kernel",
+        "binPath=",
+        "WinDivert64.sys",
+        "start=",
+        "demand",
+    ]);
+    let status = run_command_silently(&mut cmd);
+    if status.is_ok_and(|status| status.success()) {
+        info!("started driver");
+    } else {
+        warn!("could not execute command to start driver");
+    }
+}
+
+/// Stops the WinDivert driver.
+///
+/// This function executes a shell command to stop the WinDivert driver service.
+fn stop_windivert() {
+    let mut cmd = Command::new("sc");
+    cmd.args(["stop", "windivert"]);
+    let status = run_command_silently(&mut cmd);
+    if status.is_ok_and(|status| status.success()) {
+        info!("stopped driver");
+    } else {
+        warn!("could not execute command to stop driver");
+    }
+}
+
+/// Removes the WinDivert driver.
+///
+/// This function executes a shell command to delete the WinDivert driver service.
+fn remove_windivert() {
+    let mut cmd = Command::new("sc");
+    cmd.args(["delete", "windivert", "start=", "demand"]);
+    let status = run_command_silently(&mut cmd);
+    if status.is_ok_and(|status| status.success()) {
+        info!("deleted driver");
+    } else {
+        warn!("could not execute command to delete driver");
+    }
+}
+
+/// Helper to unload and remove the WinDivert driver.
+fn unload_and_remove_windivert() {
+    #[cfg(windows)]
+    {
+        stop_windivert();
+        remove_windivert();
+    }
+}
+
+/// Runs a prepared command with stdio redirected to null and no console window on Windows.
+fn run_command_silently(cmd: &mut Command) -> std::io::Result<std::process::ExitStatus> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .stdin(Stdio::null())
+            .status()
+    }
+
+    #[cfg(not(windows))]
+    {
+        cmd.stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .stdin(Stdio::null())
+            .status()
     }
 }
 
@@ -671,6 +759,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
                 disable_live_clickthrough(tray_app, &live_meter_window);
             }
             "quit" => {
+                stop_windivert();
                 tray_app.exit(0);
             }
             _ => {}

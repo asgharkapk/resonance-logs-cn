@@ -1574,7 +1574,7 @@ export const SETTINGS = {
   appVersion: new RuneStore("appVersion", { value: "" }, RUNE_STORE_OPTIONS),
   packetCapture: new RuneStore(
     "packetCapture",
-    { npcapDevice: "" },
+    { method: "Npcap", npcapDevice: "" },
     RUNE_STORE_OPTIONS,
   ),
 };
