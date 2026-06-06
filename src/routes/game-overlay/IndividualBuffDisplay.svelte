@@ -8,12 +8,14 @@
     individualModeIconBuffs,
     individualMonitorAllGroup,
     isEditing,
+    isLayoutScaffold,
     startDrag,
     startResize,
   } from "./overlay-state.svelte.js";
   import { t } from "$lib/i18n/index.svelte";
 
   const editing = $derived(isEditing());
+  const scaffold = $derived(isLayoutScaffold());
   const individualBuffs = $derived(individualModeIconBuffs());
   const allGroup = $derived(individualMonitorAllGroup());
   const allGroupBuffs = $derived(individualAllGroupBuffs());
@@ -52,7 +54,7 @@
   />
 {/each}
 
-{#if allGroup && (allGroupBuffs.length > 0 || editing)}
+{#if allGroup && (allGroupBuffs.length > 0 || scaffold)}
   {@const group = allGroup}
   {@const maxVisible = Math.max(1, group.columns * group.rows)}
   <BuffGroupGrid

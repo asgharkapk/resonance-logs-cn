@@ -4,6 +4,7 @@
     getTeammatePanelPosition,
     getTeammatePanelScale,
     isMonsterEditing,
+    isMonsterLayoutScaffold,
     monsterTeammateColumns,
     monsterTeammateRows,
     startMonsterDrag,
@@ -12,6 +13,7 @@
   } from "./monster-state.svelte.js";
 
   const editing = $derived(isMonsterEditing());
+  const scaffold = $derived(isMonsterLayoutScaffold());
   const rows = $derived(monsterTeammateRows());
   const columns = $derived(monsterTeammateColumns());
   const styleConfig = $derived(teammatePanelStyle());
@@ -28,7 +30,7 @@
   );
 </script>
 
-{#if rows.length > 0 || editing}
+{#if rows.length > 0 || scaffold}
   <div
     class="overlay-group teammate-buff-panel"
     class:editable={editing}
@@ -39,7 +41,7 @@
     onpointerdown={(event) =>
       startMonsterDrag(event, { kind: "teammatePanel" }, panelPos)}
   >
-    {#if editing}
+    {#if scaffold}
       <div class="group-tag">{t("monsterOverlay.teammateGroupTag")}</div>
     {/if}
 

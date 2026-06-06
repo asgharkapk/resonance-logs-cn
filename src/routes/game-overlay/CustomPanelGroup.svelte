@@ -4,12 +4,14 @@
     customPanelGroups,
     customPanelRowsByGroup,
     isEditing,
+    isLayoutScaffold,
     startDrag,
     startResize,
   } from "./overlay-state.svelte.js";
   import { t } from "$lib/i18n/index.svelte";
 
   const editing = $derived(isEditing());
+  const scaffold = $derived(isLayoutScaffold());
   const groups = $derived(customPanelGroups());
   const rowsByGroup = $derived(customPanelRowsByGroup());
 
@@ -26,7 +28,7 @@
 {#each groups as group, groupIndex (group.id)}
   {@const rows = rowsByGroup.get(group.id) ?? []}
   {@const styleConfig = group.style}
-  {#if rows.length > 0 || editing}
+  {#if rows.length > 0 || scaffold}
     <div
       class="overlay-group custom-panel-group"
       class:editable={editing}
@@ -41,7 +43,7 @@
           group.position,
         )}
     >
-      {#if editing}
+      {#if scaffold}
         <div class="group-tag">{getGroupName(group, groupIndex)}</div>
       {/if}
 

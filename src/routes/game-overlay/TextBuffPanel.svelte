@@ -6,6 +6,7 @@
     getGroupPosition,
     getGroupScale,
     isEditing,
+    isLayoutScaffold,
     limitedTextBuffs,
     startDrag,
     startResize,
@@ -13,13 +14,14 @@
   } from "./overlay-state.svelte.js";
 
   const editing = $derived(isEditing());
+  const scaffold = $derived(isLayoutScaffold());
   const buffs = $derived(limitedTextBuffs());
   const styleConfig = $derived(textBuffPanelStyle());
   const groupPos = $derived(getGroupPosition("textBuffPanel"));
   const groupScale = $derived(getGroupScale("textBuffPanelScale"));
 </script>
 
-{#if buffs.length > 0 || editing}
+{#if buffs.length > 0 || scaffold}
   <div
     class="overlay-group text-buff-panel"
     class:editable={editing}
@@ -31,7 +33,7 @@
     onpointerdown={(e) =>
       startDrag(e, { kind: "group", key: "textBuffPanel" }, groupPos)}
   >
-    {#if editing}
+    {#if scaffold}
       <div class="group-tag">{t("gameOverlay.group.textBuff")}</div>
     {/if}
 

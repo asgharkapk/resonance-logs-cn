@@ -14,17 +14,19 @@
     buffDisplayMode,
     initOverlay,
     isEditing,
+    isReferenceMode,
     overlayVisibility,
   } from "./overlay-state.svelte.js";
 
   const editing = $derived(isEditing());
+  const referenceMode = $derived(isReferenceMode());
   const visibility = $derived(overlayVisibility());
   const displayMode = $derived(buffDisplayMode());
 
   onMount(initOverlay);
 </script>
 
-<div class="overlay-root" class:editing={editing}>
+<div class="overlay-root" class:editing={editing} class:reference={referenceMode}>
   {#if editing}
     <EditBanner />
   {/if}
@@ -79,6 +81,12 @@
       linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
     background-size: 20px 20px;
     box-shadow: inset 0 0 0 3px rgba(255, 214, 102, 0.9);
+  }
+
+  /* Reference mode: shown beneath monster-overlay during its editing as a
+     live alignment reference. No grid; render at full opacity for clarity. */
+  .overlay-root.reference {
+    opacity: 1;
   }
 
   :global(.overlay-group) {

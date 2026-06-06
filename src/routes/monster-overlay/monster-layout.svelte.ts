@@ -1,5 +1,10 @@
 import { SETTINGS } from "$lib/settings-store";
 import {
+  createReferenceSession,
+  disableSiblingReference,
+  enableSiblingReference,
+} from "$lib/overlay-reference";
+import {
   DEFAULT_MONSTER_OVERLAY_POSITIONS,
   DEFAULT_MONSTER_OVERLAY_SIZES,
   DEFAULT_MONSTER_OVERLAY_VISIBILITY,
@@ -8,6 +13,11 @@ import {
 } from "./monster-constants";
 import { monsterRuntime } from "./monster-runtime.svelte.js";
 import type { MonsterDragTarget, MonsterResizeTarget } from "./monster-types";
+
+const GAME_OVERLAY_LABEL = "game-overlay";
+const GAME_OVERLAY_REFERENCE_EVENT = "game-overlay-reference-toggle";
+// Active-role session: this overlay driving the game-overlay as its reference.
+const referenceSession = createReferenceSession();
 
 function patchMonsterMonitor(
   updater: (
@@ -155,6 +165,26 @@ export async function setMonsterEditMode(editing: boolean) {
   if (monsterRuntime.currentWindow) {
     await monsterRuntime.currentWindow.setIgnoreCursorEvents(!editing);
   }
+  if (editing) {
+    await enableSiblingReference({
+      self: monsterRuntime.currentWindow,
+      siblingLabel: GAME_OVERLAY_LABEL,
+      referenceEvent: GAME_OVERLAY_REFERENCE_EVENT,
+      session: referenceSession,
+    });
+  } else {
+    await disableSiblingReference({
+      siblingLabel: GAME_OVERLAY_LABEL,
+      referenceEvent: GAME_OVERLAY_REFERENCE_EVENT,
+      session: referenceSession,
+    });
+  }
+}
+
+// Passive role: this overlay is shown beneath the game-overlay as its reference
+// layer. Only toggles the scaffold flag; does not touch cursor events.
+export function setMonsterReferenceMode(enabled: boolean) {
+  monsterRuntime.isReferenceMode = enabled;
 }
 
 export function startMonsterDrag(

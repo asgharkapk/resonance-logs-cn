@@ -30,6 +30,7 @@ export const overlayRuntime = $state({
   shieldDetailEntries: [] as ShieldDetailEntry[],
   buffDefinitions: new Map<number, BuffDefinition>(),
   isEditing: false,
+  isReferenceMode: false,
   dragState: null as DragState | null,
   resizeState: null as ResizeState | null,
 });
@@ -84,6 +85,17 @@ export function buffDefinitions() {
 
 export function isEditing() {
   return overlayRuntime.isEditing;
+}
+
+export function isReferenceMode() {
+  return overlayRuntime.isReferenceMode;
+}
+
+// Whether to render the full layout scaffold (placeholders for configured-but-
+// inactive slots). True both in this overlay's own edit mode AND when it is used
+// as a reference layer beneath the monster-overlay, so empty slots stay visible.
+export function isLayoutScaffold() {
+  return overlayRuntime.isEditing || overlayRuntime.isReferenceMode;
 }
 
 export function dragState() {

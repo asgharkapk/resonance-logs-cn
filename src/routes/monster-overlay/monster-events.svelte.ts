@@ -13,6 +13,7 @@ import {
   onGlobalPointerUp,
   setMonsterEditMode,
   setMonsterOverlayWindow,
+  setMonsterReferenceMode,
 } from "./monster-layout.svelte.js";
 import type { EntityId } from "$lib/entity-id";
 import { updateMonsterDisplay } from "./monster-display.svelte.js";
@@ -53,6 +54,12 @@ export function initMonsterOverlay() {
   const unlistenEditToggle = listen("monster-overlay-edit-toggle", () => {
     void setMonsterEditMode(!monsterRuntime.isEditing);
   });
+  const unlistenReferenceToggle = listen<boolean>(
+    "monster-overlay-reference-toggle",
+    (event) => {
+      setMonsterReferenceMode(event.payload);
+    },
+  );
   const unlistenBossBuff = onBossBuffUpdate((event) => {
     const next = new Map<EntityId, Map<number, BuffUpdateState>>();
     for (const [entityUuid, buffs] of Object.entries(event.payload.bossBuffs)) {
@@ -114,6 +121,7 @@ export function initMonsterOverlay() {
     monsterRuntime.teammateRows = [];
     monsterRuntime.hateSections = [];
     unlistenEditToggle.then((fn) => fn());
+    unlistenReferenceToggle.then((fn) => fn());
     unlistenBossBuff.then((fn) => fn());
     unlistenTeammateBuff.then((fn) => fn());
     unlistenHateList.then((fn) => fn());

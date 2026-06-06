@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import { SETTINGS } from "$lib/settings-store";
   import EditBanner from "./EditBanner.svelte";
-  import GhostOverlay from "./GhostOverlay.svelte";
   import MonsterBuffPanel from "./MonsterBuffPanel.svelte";
   import MonsterHatePanel from "./MonsterHatePanel.svelte";
   import MonsterTeammateBuffPanel from "./MonsterTeammateBuffPanel.svelte";
@@ -10,9 +9,11 @@
     getMonsterOverlayVisibility,
     initMonsterOverlay,
     isMonsterEditing,
+    isMonsterReferenceMode,
   } from "./monster-state.svelte.js";
 
   const editing = $derived(isMonsterEditing());
+  const referenceMode = $derived(isMonsterReferenceMode());
   const visibility = $derived(getMonsterOverlayVisibility());
   const hateEnabled = $derived(
     SETTINGS.monsterMonitor.state.hateListEnabled && visibility.showHatePanel,
@@ -21,9 +22,8 @@
   onMount(initMonsterOverlay);
 </script>
 
-<div class="overlay-root" class:editing>
+<div class="overlay-root" class:editing class:reference={referenceMode}>
   {#if editing}
-    <GhostOverlay />
     <EditBanner />
   {/if}
 
@@ -55,6 +55,13 @@
       linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
     background-size: 20px 20px;
     box-shadow: inset 0 0 0 3px rgba(102, 204, 255, 0.85);
+  }
+
+  /* Reference mode: shown beneath game-overlay during its editing as a live
+     alignment reference. No grid; full opacity so it reads as the real overlay
+     (the layout scaffold carries its own placeholder styling). */
+  .overlay-root.reference {
+    opacity: 1;
   }
 
   :global(.overlay-group) {

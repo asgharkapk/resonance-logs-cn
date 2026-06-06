@@ -58,6 +58,7 @@ import {
   cdMap,
   counterMap,
   factorCounterMap,
+  isLayoutScaffold,
   overlayRuntime,
   seasonCultivateFactorSlotItemIds,
   skillDurationMap,
@@ -228,7 +229,7 @@ const _buffSnapshot = $derived.by(() => {
     }
   }
 
-  if (overlayRuntime.isEditing) {
+  if (isLayoutScaffold()) {
     const iconIds = new Set(nextIconBuffs.map((buff) => buff.baseId));
     const textIds = new Set(nextTextBuffs.map((buff) => buff.key));
     for (const baseId of explicitSelectedBuffIds) {
@@ -347,7 +348,7 @@ const _buffSnapshot = $derived.by(() => {
           nextRows.push(row);
           continue;
         }
-        if (!overlayRuntime.isEditing) continue;
+        if (!isLayoutScaffold()) continue;
         const placeholderRow = buildBuffTextRow(
           `inline_buff_${entry.id}`,
           entry.label,
@@ -437,7 +438,7 @@ const _skillSnapshot = $derived.by(() => {
       }
     }
 
-    if (overlayRuntime.isEditing) {
+    if (isLayoutScaffold()) {
       nextSkillDurationDisplays.push({
         skillId,
         name: skill.name,
@@ -522,7 +523,7 @@ const _individualModeIconBuffs = $derived.by(() => {
       });
       continue;
     }
-    if (!overlayRuntime.isEditing) continue;
+    if (!isLayoutScaffold()) continue;
     const representativeId = getBuffIdsByCategory(categoryKey)[0];
     if (representativeId === undefined) continue;
     const definition = buffDefinitions().get(representativeId);

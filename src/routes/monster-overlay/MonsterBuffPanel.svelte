@@ -5,6 +5,7 @@
     getMonsterPanelPosition,
     getMonsterPanelScale,
     isMonsterEditing,
+    isMonsterLayoutScaffold,
     monsterBossSections,
     monsterPanelStyle,
     startMonsterDrag,
@@ -12,13 +13,14 @@
   } from "./monster-state.svelte.js";
 
   const editing = $derived(isMonsterEditing());
+  const scaffold = $derived(isMonsterLayoutScaffold());
   const sections = $derived(monsterBossSections());
   const styleConfig = $derived(monsterPanelStyle());
   const panelPos = $derived(getMonsterPanelPosition());
   const panelScale = $derived(getMonsterPanelScale());
 </script>
 
-{#if sections.length > 0 || editing}
+{#if sections.length > 0 || scaffold}
   <div
     class="overlay-group monster-buff-panel"
     class:editable={editing}
@@ -29,7 +31,7 @@
     onpointerdown={(event) =>
       startMonsterDrag(event, { kind: "buffPanel" }, panelPos)}
   >
-    {#if editing}
+    {#if scaffold}
       <div class="group-tag">{t("monsterOverlay.buffGroupTag")}</div>
     {/if}
 

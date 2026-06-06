@@ -18,7 +18,10 @@ import {
   resolveAlertState,
 } from "../game-overlay/overlay-utils";
 import type { TextBuffDisplay } from "../game-overlay/overlay-types";
-import { monsterRuntime } from "./monster-runtime.svelte.js";
+import {
+  isMonsterLayoutScaffold,
+  monsterRuntime,
+} from "./monster-runtime.svelte.js";
 import type {
   MonsterBossBuffSection,
   MonsterHateSection,
@@ -514,7 +517,7 @@ export function updateMonsterDisplay() {
     }
   }
 
-  if (nextSections.length === 0 && monsterRuntime.isEditing) {
+  if (nextSections.length === 0 && isMonsterLayoutScaffold()) {
     nextSections.push({
       bossEntityUuid: "0",
       title: t("monsterOverlay.placeholder.preview"),
@@ -526,7 +529,7 @@ export function updateMonsterDisplay() {
   if (
     SETTINGS.monsterMonitor.state.hateListEnabled &&
     nextHateSections.length === 0 &&
-    monsterRuntime.isEditing
+    isMonsterLayoutScaffold()
   ) {
     nextHateSections.push({
       bossEntityUuid: "0",
@@ -546,7 +549,7 @@ export function updateMonsterDisplay() {
     monsterRuntime.teammateRows = filteredTeammates.rows;
   } else {
     monsterRuntime.teammateColumns = fullTeammateDisplayColumns;
-    monsterRuntime.teammateRows = monsterRuntime.isEditing
+    monsterRuntime.teammateRows = isMonsterLayoutScaffold()
       ? buildTeammatePlaceholderRows(fullTeammateDisplayColumns)
       : [];
   }

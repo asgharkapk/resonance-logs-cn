@@ -37,6 +37,7 @@ import {
   onGlobalPointerUp,
   setEditMode,
   setOverlayWindow,
+  setReferenceMode,
 } from "./overlay-layout.svelte.js";
 import { initOverlayClock } from "./overlay-clock.svelte.js";
 
@@ -64,6 +65,12 @@ export function initOverlay() {
   const unlistenEditToggle = listen("overlay-edit-toggle", () => {
     void setEditMode(!overlayRuntime.isEditing);
   });
+  const unlistenReferenceToggle = listen<boolean>(
+    "game-overlay-reference-toggle",
+    (event) => {
+      setReferenceMode(event.payload);
+    },
+  );
   const unlistenBuff = onBuffUpdate((event) => {
     const next = new Map<number, BuffUpdateState>();
     for (const buff of event.payload.buffs) {
@@ -151,6 +158,7 @@ export function initOverlay() {
     overlayRuntime.dragState = null;
     overlayRuntime.resizeState = null;
     unlistenEditToggle.then((fn) => fn());
+    unlistenReferenceToggle.then((fn) => fn());
     unlistenBuff.then((fn) => fn());
     unlistenCounter.then((fn) => fn());
     unlistenFactorCounter.then((fn) => fn());

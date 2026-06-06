@@ -1,4 +1,9 @@
 import {
+  createReferenceSession,
+  disableSiblingReference,
+  enableSiblingReference,
+} from "$lib/overlay-reference";
+import {
   DEFAULT_OVERLAY_POSITIONS,
   DEFAULT_OVERLAY_SIZES,
 } from "./overlay-constants";
@@ -456,11 +461,36 @@ export function onGlobalPointerUp() {
   overlayRuntime.resizeState = null;
 }
 
+const MONSTER_OVERLAY_LABEL = "monster-overlay";
+const MONSTER_OVERLAY_REFERENCE_EVENT = "monster-overlay-reference-toggle";
+// Active-role session: this overlay driving the monster-overlay as its reference.
+const referenceSession = createReferenceSession();
+
 export async function setEditMode(editing: boolean) {
   overlayRuntime.isEditing = editing;
   if (overlayRuntime.currentWindow) {
     await overlayRuntime.currentWindow.setIgnoreCursorEvents(!editing);
   }
+  if (editing) {
+    await enableSiblingReference({
+      self: overlayRuntime.currentWindow,
+      siblingLabel: MONSTER_OVERLAY_LABEL,
+      referenceEvent: MONSTER_OVERLAY_REFERENCE_EVENT,
+      session: referenceSession,
+    });
+  } else {
+    await disableSiblingReference({
+      siblingLabel: MONSTER_OVERLAY_LABEL,
+      referenceEvent: MONSTER_OVERLAY_REFERENCE_EVENT,
+      session: referenceSession,
+    });
+  }
+}
+
+// Reference mode shows the overlay beneath the monster-overlay as a full-opacity
+// live alignment reference. It does NOT touch cursor events (stays clickthrough).
+export function setReferenceMode(enabled: boolean) {
+  overlayRuntime.isReferenceMode = enabled;
 }
 
 export function onWindowDragPointerDown(e: PointerEvent) {

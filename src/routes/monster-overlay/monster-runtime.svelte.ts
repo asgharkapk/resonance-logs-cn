@@ -26,6 +26,9 @@ export const monsterRuntime = $state({
   teammateRows: [] as MonsterTeammateBuffRow[],
   hateSections: [] as MonsterHateSection[],
   isEditing: false,
+  // True while this overlay is shown beneath the game-overlay as its reference
+  // layer (passive role). Driven by the "monster-overlay-reference-toggle" event.
+  isReferenceMode: false,
   dragState: null as MonsterDragState | null,
   resizeState: null as MonsterResizeState | null,
 });
@@ -44,6 +47,17 @@ export function monsterTeammateRows() {
 
 export function monsterTeammateColumns() {
   return monsterRuntime.teammateColumns;
+}
+
+export function isMonsterReferenceMode() {
+  return monsterRuntime.isReferenceMode;
+}
+
+// Whether to render the full layout scaffold (placeholder sections/rows for
+// configured-but-inactive panels). True both in this overlay's own edit mode AND
+// when it is used as a reference layer beneath the game-overlay.
+export function isMonsterLayoutScaffold() {
+  return monsterRuntime.isEditing || monsterRuntime.isReferenceMode;
 }
 
 export function isMonsterEditing() {

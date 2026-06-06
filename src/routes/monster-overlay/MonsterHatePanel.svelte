@@ -6,19 +6,21 @@
     getHatePanelScale,
     hatePanelStyle,
     isMonsterEditing,
+    isMonsterLayoutScaffold,
     monsterHateSections,
     startMonsterDrag,
     startMonsterResize,
   } from "./monster-state.svelte.js";
 
   const editing = $derived(isMonsterEditing());
+  const scaffold = $derived(isMonsterLayoutScaffold());
   const sections = $derived(monsterHateSections());
   const styleConfig = $derived(hatePanelStyle());
   const panelPos = $derived(getHatePanelPosition());
   const panelScale = $derived(getHatePanelScale());
 </script>
 
-{#if sections.length > 0 || editing}
+{#if sections.length > 0 || scaffold}
   <div
     class="overlay-group monster-hate-panel"
     class:editable={editing}
@@ -28,7 +30,7 @@
     style:transform-origin="top left"
     onpointerdown={(event) => startMonsterDrag(event, { kind: "hatePanel" }, panelPos)}
   >
-    {#if editing}
+    {#if scaffold}
       <div class="group-tag">{t("monsterOverlay.hateGroupTag")}</div>
     {/if}
 

@@ -6,6 +6,7 @@
     getIconBuffSize,
     groupedIconBuffs,
     isEditing,
+    isLayoutScaffold,
     normalizedBuffGroups,
     specialStandaloneBuffs,
     startDrag,
@@ -14,6 +15,7 @@
   import { t } from "$lib/i18n/index.svelte";
 
   const editing = $derived(isEditing());
+  const scaffold = $derived(isLayoutScaffold());
   const groups = $derived(normalizedBuffGroups());
   const groupedBuffMap = $derived(groupedIconBuffs());
   const standaloneBuffs = $derived(specialStandaloneBuffs());
@@ -25,7 +27,7 @@
   }
 </script>
 
-{#if groups.length === 0 && editing}
+{#if groups.length === 0 && scaffold}
   <div class="overlay-group grouped-empty-tip" style:left="40px" style:top="310px">
     {t("gameOverlay.groupedBuff.empty")}
   </div>
@@ -33,7 +35,7 @@
 
 {#each groups as group, groupIndex (group.id)}
   {@const groupBuffs = groupedBuffMap.get(group.id) ?? []}
-  {#if groupBuffs.length > 0 || editing}
+  {#if groupBuffs.length > 0 || scaffold}
     <BuffGroupGrid
       {group}
       buffs={groupBuffs}
