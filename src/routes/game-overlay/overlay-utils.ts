@@ -274,6 +274,9 @@ export function getCustomPanelDisplayRow(
     rule?.effectSlots[0];
   const linkedBuff = buffMap.get(slotConfig?.resetBuffId ?? -1);
   if (!counter || !selectedSlot) {
+    if (entry.hideWhenZero === true) {
+      return null;
+    }
     return {
       key: `counter_${entry.id}`,
       label: entry.label,
@@ -310,6 +313,9 @@ export function getCustomPanelDisplayRow(
     };
   }
   if (selectedSlot.isCounting) {
+    if (entry.hideWhenZero === true && selectedSlot.currentCount === 0) {
+      return null;
+    }
     return {
       key: `inline_counter_${entry.id}`,
       label: entry.label,
@@ -321,6 +327,9 @@ export function getCustomPanelDisplayRow(
   }
   const active = selectedSlot.resetBuffActive ?? isBuffActive(linkedBuff, now);
   const remainingMs = getBuffRemainingMs(linkedBuff, now);
+  if (entry.hideWhenZero === true && !active) {
+    return null;
+  }
   return {
     key: `inline_counter_${entry.id}`,
     label: entry.label,

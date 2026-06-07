@@ -25,6 +25,9 @@ export function ensureCustomPanelEntries(
     ...(entry.counterSlotId !== undefined
       ? { counterSlotId: entry.counterSlotId }
       : {}),
+    ...(entry.sourceType === "counter" && entry.hideWhenZero === true
+      ? { hideWhenZero: true }
+      : {}),
     label:
       entry.sourceType === "counter"
         ? (entry.label ?? `#${entry.sourceId}`)
@@ -64,6 +67,7 @@ export function ensureCustomPanelGroups(
         normalizeCustomPanelGroupKind(group.kind) === "manual"
           ? ensureCustomPanelEntries(group.entries)
           : [],
+      ...(group.hideZeroCounters === true ? { hideZeroCounters: true } : {}),
       position: group.position ?? {
         x: legacyPosition.x + index * 40,
         y: legacyPosition.y + index * 40,
@@ -87,6 +91,7 @@ export function ensureCustomPanelGroups(
       name: "",
       kind: "manual",
       entries: legacyEntries,
+      hideZeroCounters: false,
       position: legacyPosition,
       scale: legacyScale,
       style: fallbackStyle,

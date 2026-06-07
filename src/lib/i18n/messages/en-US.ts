@@ -1116,6 +1116,7 @@ export const enUSMessages = {
   "skillMonitor.customPanel.entries.sourceCounter": "Source: Counter - {name}",
   "skillMonitor.customPanel.entries.sourceBuff": "Source: Buff - {name}",
   "skillMonitor.customPanel.entries.labelPlaceholder": "Display Name",
+  "skillMonitor.customPanel.hideWhenZero": "Hide when count is 0",
   "skillMonitor.customPanel.empty":
     'No custom monitor areas yet. Click "New Monitor Area" above, then add buffs or counters.',
   "skillMonitor.customPanel.style.title": "Current Monitor Area Style",

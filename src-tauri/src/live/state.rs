@@ -768,6 +768,7 @@ impl AppStateManager {
                     }
                 }
                 factor_counter_dirty = true;
+                counter_dirty = true;
                 // Note: Player names are automatically stored in the database via UpsertEntity tasks
                 // No need to maintain a separate cache anymore
             }

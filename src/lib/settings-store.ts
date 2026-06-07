@@ -654,6 +654,7 @@ export type InlineBuffEntry = {
   sourceType: "buff" | "counter";
   sourceId: number;
   counterSlotId?: number;
+  hideWhenZero?: boolean;
   label: string;
   format: InlineBuffFormat;
 };
@@ -674,6 +675,7 @@ export type CustomPanelGroup = {
   name: string;
   kind: CustomPanelGroupKind;
   entries: InlineBuffEntry[];
+  hideZeroCounters?: boolean;
   position: Point;
   scale: number;
   style: CustomPanelStyle;
@@ -891,6 +893,7 @@ export function createDefaultCustomPanelGroup(
     name,
     kind,
     entries: [],
+    hideZeroCounters: false,
     position: { x: 700 + (index - 1) * 40, y: 280 + (index - 1) * 40 },
     scale: 1,
     style: createDefaultCustomPanelStyle(),

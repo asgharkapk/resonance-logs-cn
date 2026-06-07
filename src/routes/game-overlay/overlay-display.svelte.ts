@@ -307,6 +307,7 @@ const _buffSnapshot = $derived.by(() => {
           sourceType: "counter",
           sourceId: ruleId,
           counterSlotId: rule.effectSlots[0]?.slotId ?? 1,
+          hideWhenZero: group.hideZeroCounters === true,
           label: customLabel || rule.name,
           format: "timer",
         };

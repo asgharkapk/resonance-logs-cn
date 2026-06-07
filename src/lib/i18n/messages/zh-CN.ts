@@ -1011,6 +1011,7 @@ export const zhCNMessages = {
   "skillMonitor.customPanel.entries.sourceCounter": "来源：计数器 - {name}",
   "skillMonitor.customPanel.entries.sourceBuff": "来源：Buff - {name}",
   "skillMonitor.customPanel.entries.labelPlaceholder": "显示名称",
+  "skillMonitor.customPanel.hideWhenZero": "计数为 0 时隐藏",
   "skillMonitor.customPanel.empty":
     "还没有任何自定义监控区。先点击上方“新建监控区”，再向其中添加 Buff 或计数器。",
   "skillMonitor.customPanel.style.title": "当前监控区样式",

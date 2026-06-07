@@ -1114,6 +1114,7 @@ export const jaJPMessages = {
   "skillMonitor.customPanel.entries.sourceCounter": "ソース: カウンター - {name}",
   "skillMonitor.customPanel.entries.sourceBuff": "ソース: Buff - {name}",
   "skillMonitor.customPanel.entries.labelPlaceholder": "表示名",
+  "skillMonitor.customPanel.hideWhenZero": "カウントが 0 のとき非表示",
   "skillMonitor.customPanel.empty":
     "カスタムモニターエリアはまだありません。上の「新規モニターエリア」をクリックし、Buff またはカウンターを追加してください。",
   "skillMonitor.customPanel.style.title": "現在のモニターエリアスタイル",

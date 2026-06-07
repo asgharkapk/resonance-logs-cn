@@ -906,6 +906,17 @@
     );
   }
 
+  function setCustomPanelGroupHideZeroCounters(
+    groupId: string,
+    checked: boolean,
+  ) {
+    updateCustomPanelGroups((groups) =>
+      groups.map((group) =>
+        group.id === groupId ? { ...group, hideZeroCounters: checked } : group,
+      ),
+    );
+  }
+
   function setFactorSlotLabel(slotTemplateId: string, name: string) {
     const key = slotTemplateId.trim();
     if (!key) return;
@@ -1105,6 +1116,17 @@
     updateCustomPanelEntry(groupId, entryId, (entry) => ({
       ...entry,
       label: label.trim(),
+    }));
+  }
+
+  function setCustomPanelEntryHideWhenZero(
+    groupId: string,
+    entryId: string,
+    checked: boolean,
+  ) {
+    updateCustomPanelEntry(groupId, entryId, (entry) => ({
+      ...entry,
+      ...(entry.sourceType === "counter" ? { hideWhenZero: checked } : {}),
     }));
   }
 
@@ -1648,12 +1670,14 @@
       {removeCustomPanelGroup}
       {renameCustomPanelGroup}
       {updateCustomPanelGroupStyle}
+      {setCustomPanelGroupHideZeroCounters}
       {addCustomPanelEntry}
       {addUserCounterRule}
       {removeUserCounterRule}
       {updateUserCounterRule}
       {removeCustomPanelEntry}
       {setCustomPanelEntryLabel}
+      {setCustomPanelEntryHideWhenZero}
       {moveCustomPanelEntry}
     />
   {:else if activeTab === "shield-detail"}

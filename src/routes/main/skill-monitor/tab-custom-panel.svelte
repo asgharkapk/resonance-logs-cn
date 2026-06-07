@@ -39,6 +39,10 @@
       groupId: string,
       updater: (style: CustomPanelStyle) => CustomPanelStyle,
     ) => void;
+    setCustomPanelGroupHideZeroCounters: (
+      groupId: string,
+      checked: boolean,
+    ) => void;
     addCustomPanelEntry: (
       groupId: string,
       sourceType: "buff" | "counter",
@@ -50,6 +54,11 @@
     updateUserCounterRule: (ruleId: number, updates: Partial<UserCounterRule>) => void;
     removeCustomPanelEntry: (groupId: string, entryId: string) => void;
     setCustomPanelEntryLabel: (groupId: string, entryId: string, label: string) => void;
+    setCustomPanelEntryHideWhenZero: (
+      groupId: string,
+      entryId: string,
+      checked: boolean,
+    ) => void;
     moveCustomPanelEntry: (
       groupId: string,
       entryId: string,
@@ -74,12 +83,14 @@
     removeCustomPanelGroup,
     renameCustomPanelGroup,
     updateCustomPanelGroupStyle,
+    setCustomPanelGroupHideZeroCounters,
     addCustomPanelEntry,
     addUserCounterRule,
     removeUserCounterRule,
     updateUserCounterRule,
     removeCustomPanelEntry,
     setCustomPanelEntryLabel,
+    setCustomPanelEntryHideWhenZero,
     moveCustomPanelEntry,
   }: Props = $props();
 
@@ -710,6 +721,20 @@
                   (event.currentTarget as HTMLInputElement).value,
                 )}
             />
+            <label class="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-border bg-muted/30 text-primary focus:ring-primary/50"
+                checked={entry.hideWhenZero === true}
+                onchange={(event) =>
+                  setCustomPanelEntryHideWhenZero(
+                    selectedGroup.id,
+                    entry.id,
+                    (event.currentTarget as HTMLInputElement).checked,
+                  )}
+              />
+              <span>{t("skillMonitor.customPanel.hideWhenZero")}</span>
+            </label>
           {:else}
             <div class="rounded border border-border/60 bg-muted/30 px-2 py-1.5 text-sm text-foreground">
               {buffName}
@@ -749,6 +774,20 @@
         <div class="text-sm font-medium text-foreground">{t("skillMonitor.customPanel.factorSlots.title")}</div>
         <p class="text-xs text-muted-foreground">{t("skillMonitor.customPanel.factorSlots.description")}</p>
       </div>
+
+      <label class="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm text-foreground">
+        <input
+          type="checkbox"
+          class="h-4 w-4 rounded border-border bg-muted/30 text-primary focus:ring-primary/50"
+          checked={selectedGroup.hideZeroCounters === true}
+          onchange={(event) =>
+            setCustomPanelGroupHideZeroCounters(
+              selectedGroup.id,
+              (event.currentTarget as HTMLInputElement).checked,
+            )}
+        />
+        <span>{t("skillMonitor.customPanel.hideWhenZero")}</span>
+      </label>
 
       {#if customizedFactorSlots.length > 0}
         <div class="space-y-2">
