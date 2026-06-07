@@ -234,6 +234,13 @@ function formatCounterCountText(
   ) {
     return `${Math.max(0, threshold - slotState.currentCount)}`;
   }
+  if (
+    slotConfig?.displayMode === "rawWithThreshold" &&
+    threshold !== null &&
+    threshold > 0
+  ) {
+    return `${Math.max(0, slotState.currentCount)}/${threshold}`;
+  }
   return `${Math.max(0, slotState.currentCount)}`;
 }
 

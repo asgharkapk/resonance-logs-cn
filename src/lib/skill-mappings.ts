@@ -5,6 +5,7 @@ import classSpecialBuffDisplaysRaw from "$lib/config/class_special_buff_displays
 import counterRulesRaw from "$lib/config/counter_rules.json";
 import counterSourceTemplatesRaw from "$lib/config/counter_source_templates.json";
 import counterSlotTemplatesRaw from "$lib/config/counter_slot_templates.json";
+import seasonCultivateFactorCostsRaw from "$lib/config/season_cultivate_factor_costs.json";
 import type {
   CounterAction,
   CounterSource,
@@ -75,6 +76,7 @@ export type CounterRulePreset = {
 
 export type CounterSlotDisplayMode =
   | "raw"
+  | "rawWithThreshold"
   | "remainingToThreshold"
   | "percentOfThreshold";
 
@@ -176,6 +178,8 @@ export const SOURCE_TEMPLATES: SourceTemplate[] =
   counterSourceTemplatesRaw as SourceTemplate[];
 export const SLOT_TEMPLATES: SlotTemplate[] =
   counterSlotTemplatesRaw as SlotTemplate[];
+export const SEASON_CULTIVATE_FACTOR_COSTS: Record<string, number> =
+  seasonCultivateFactorCostsRaw as Record<string, number>;
 
 const LOCALE_CONFIG_MODULES = import.meta.glob("./config/*/*.json", {
   eager: true,
@@ -622,6 +626,24 @@ function resolveSourceTemplateSources(template: SourceTemplate): CounterSource[]
   return Array.isArray(template.source) ? template.source : [template.source];
 }
 
+function getSeasonCultivateFactorCost(itemId: number): number | null {
+  const value = SEASON_CULTIVATE_FACTOR_COSTS[String(itemId)];
+  return value !== undefined && Number.isInteger(value) && value > 0
+    ? value
+    : null;
+}
+
+function resolveSeasonCultivateFactorEffectSlots(
+  template: SlotTemplate,
+  itemId: number,
+): CounterEffectSlotPreset[] {
+  return resolveCounterEffectSlots([template.slotTemplateId]).map((slot) => ({
+    ...slot,
+    threshold: getSeasonCultivateFactorCost(itemId) ?? slot.threshold,
+    displayMode: "rawWithThreshold",
+  }));
+}
+
 export function getSeasonCultivateFactorTemplates(): FactorCounterTemplate[] {
   return [
     ...SOURCE_TEMPLATES.map((template) => ({
@@ -629,13 +651,16 @@ export function getSeasonCultivateFactorTemplates(): FactorCounterTemplate[] {
       sources: resolveSourceTemplateSources(template),
       effectSlots: [],
     })),
-    ...SLOT_TEMPLATES.map((template) => ({
-      itemIds: normalizeTemplateItemIds(template),
-      sources: [],
-      effectSlots: resolveCounterEffectSlots([template.slotTemplateId]).map(
-        ({ displayMode: _displayMode, ...slot }) => slot,
-      ),
-    })),
+    ...SLOT_TEMPLATES.flatMap((template) =>
+      normalizeTemplateItemIds(template).map((itemId) => ({
+        itemIds: [itemId],
+        sources: [],
+        effectSlots: resolveSeasonCultivateFactorEffectSlots(
+          template,
+          itemId,
+        ).map(({ displayMode: _displayMode, ...slot }) => slot),
+      })),
+    ),
   ];
 }
 
@@ -645,13 +670,12 @@ export function getSeasonCultivateFactorRuleMap(
   const map = new Map<number, CounterRulePreset>();
   for (const template of getSlotTemplates(locale)) {
     const itemIds = normalizeTemplateItemIds(template);
-    const effectSlots = resolveCounterEffectSlots([template.slotTemplateId]);
     for (const itemId of itemIds) {
       map.set(getSeasonCultivateFactorRuleId(itemId), {
         ruleId: getSeasonCultivateFactorRuleId(itemId),
         name: template.name,
         sources: [],
-        effectSlots,
+        effectSlots: resolveSeasonCultivateFactorEffectSlots(template, itemId),
       });
     }
   }
