@@ -1031,16 +1031,27 @@
   },
   {
     "sourceId": "frost_mage_x2",
-    "name": "冰魔X2, 释放陨星风暴获得 44 点能量",
-    "description": "释放陨星风暴获得 44 点能量",
-    "source": {
-      "skillCast": {
-        "skillBaseIds": [
-          1239
-        ],
-        "increment": 44
+    "name": "冰魔X2, 释放陨星风暴或冰霜之矛同时暴击和幸运获得 44 点能量",
+    "description": "释放陨星风暴获得 44 点能量。冰霜之矛同一次命中同时暴击和幸运时也获得 44 点能量",
+    "source": [
+      {
+        "skillCast": {
+          "skillBaseIds": [
+            1239
+          ],
+          "increment": 44
+        }
+      },
+      {
+        "damageBySkillKeyOnce": {
+          "skillKeys": [
+            312090200
+          ],
+          "increment": 44,
+          "requiredTypeFlags": 5
+        }
       }
-    },
+    ],
     "itemIds": [
       20010231,
       20010232,
@@ -1777,7 +1788,6 @@
     "source": {
       "buffAdded": {
         "buffId": 2201611,
-        "sourceConfigId": 2201610,
         "increment": 153
       }
     },

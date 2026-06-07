@@ -27,11 +27,15 @@ pub enum CounterSource {
         increment: u32,
         #[serde(default, rename = "hitsRequired")]
         hits_required: Option<u32>,
+        #[serde(default, rename = "requiredTypeFlags")]
+        required_type_flags: Option<i32>,
     },
     DamageBySkillKeyOnce {
         #[serde(rename = "skillKeys")]
         skill_keys: Vec<i64>,
         increment: u32,
+        #[serde(default, rename = "requiredTypeFlags")]
+        required_type_flags: Option<i32>,
     },
     DamageBySkillKeySelfTarget {
         #[serde(rename = "skillKeys")]
@@ -39,11 +43,15 @@ pub enum CounterSource {
         increment: u32,
         #[serde(default, rename = "hitsRequired")]
         hits_required: Option<u32>,
+        #[serde(default, rename = "requiredTypeFlags")]
+        required_type_flags: Option<i32>,
     },
     AnyDamage {
         increment: u32,
         #[serde(default, rename = "hitsRequired")]
         hits_required: Option<u32>,
+        #[serde(default, rename = "requiredTypeFlags")]
+        required_type_flags: Option<i32>,
     },
     DamageTaken {
         #[serde(default, rename = "skillKeys")]
@@ -503,23 +511,37 @@ impl BuffCounterTracker {
                         skill_keys,
                         increment,
                         hits_required,
+                        required_type_flags,
                     } => apply_damage_hits_required(
                         &mut state.damage_hit_accumulators[source_idx],
                         *increment,
                         *hits_required,
                         events
                             .iter()
-                            .filter(|event| skill_keys.contains(&event.skill_key))
+                            .filter(|event| {
+                                skill_keys.contains(&event.skill_key)
+                                    && matches_required_type_flags(
+                                        event.type_flag,
+                                        *required_type_flags,
+                                    )
+                            })
                             .count(),
                     ),
                     CounterSource::DamageBySkillKeyOnce {
                         skill_keys,
                         increment,
-                    } => apply_damage_by_skill_key_once_max(events, skill_keys, *increment),
+                        required_type_flags,
+                    } => apply_damage_by_skill_key_once_max(
+                        events,
+                        skill_keys,
+                        *increment,
+                        *required_type_flags,
+                    ),
                     CounterSource::DamageBySkillKeySelfTarget {
                         skill_keys,
                         increment,
                         hits_required,
+                        required_type_flags,
                     } => apply_damage_hits_required(
                         &mut state.damage_hit_accumulators[source_idx],
                         *increment,
@@ -529,17 +551,27 @@ impl BuffCounterTracker {
                             .filter(|event| {
                                 skill_keys.contains(&event.skill_key)
                                     && event.target_entity_uuid == local_player_uuid
+                                    && matches_required_type_flags(
+                                        event.type_flag,
+                                        *required_type_flags,
+                                    )
                             })
                             .count(),
                     ),
                     CounterSource::AnyDamage {
                         increment,
                         hits_required,
+                        required_type_flags,
                     } => apply_damage_hits_required(
                         &mut state.damage_hit_accumulators[source_idx],
                         *increment,
                         *hits_required,
-                        events.len(),
+                        events
+                            .iter()
+                            .filter(|event| {
+                                matches_required_type_flags(event.type_flag, *required_type_flags)
+                            })
+                            .count(),
                     ),
                     _ => continue,
                 };
@@ -1071,17 +1103,20 @@ impl CounterTriggerLegacy {
                 skill_keys,
                 increment: 1,
                 hits_required: None,
+                required_type_flags: None,
             },
             CounterTriggerLegacy::DamageBySkillKeySelfTarget(skill_keys) => {
                 CounterSource::DamageBySkillKeySelfTarget {
                     skill_keys,
                     increment: 1,
                     hits_required: None,
+                    required_type_flags: None,
                 }
             }
             CounterTriggerLegacy::AnyDamage => CounterSource::AnyDamage {
                 increment: 1,
                 hits_required: None,
+                required_type_flags: None,
             },
         }
     }
@@ -1151,6 +1186,7 @@ fn apply_damage_by_skill_key_once_max(
     events: &[LocalDamageEvent],
     skill_keys: &[i64],
     increment: u32,
+    required_type_flags: Option<i32>,
 ) -> Option<u32> {
     if events.is_empty() || skill_keys.is_empty() {
         return None;
@@ -1158,7 +1194,9 @@ fn apply_damage_by_skill_key_once_max(
 
     let mut hits: HashMap<(i64, i64), u32> = HashMap::new();
     for event in events {
-        if skill_keys.contains(&event.skill_key) {
+        if skill_keys.contains(&event.skill_key)
+            && matches_required_type_flags(event.type_flag, required_type_flags)
+        {
             *hits
                 .entry((event.skill_key, event.target_entity_uuid))
                 .or_insert(0) += 1;

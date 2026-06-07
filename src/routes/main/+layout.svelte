@@ -36,6 +36,22 @@
   let lastMonsterOverlayVisibleState: boolean | null = null;
   let runtimeSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
+  function queueRuntimeSnapshotSync(runtimeSnapshot: ReturnType<typeof buildMonitorRuntimeSnapshot>, runtimeSnapshotKey: string) {
+    if (runtimeSyncTimer) {
+      clearTimeout(runtimeSyncTimer);
+    }
+    runtimeSyncTimer = setTimeout(() => {
+      void (async () => {
+        try {
+          lastRuntimeSnapshotKey = runtimeSnapshotKey;
+          await saveAndApplyMonitorRuntimeSnapshot(runtimeSnapshot);
+        } catch (error) {
+          console.error("[runtime-monitor] failed to sync runtime snapshot", error);
+        }
+      })();
+    }, 50);
+  }
+
   $effect(() => {
     const runtimeSnapshot = buildMonitorRuntimeSnapshot();
     const runtimeSnapshotKey = createMonitorRuntimeSnapshotSignature(runtimeSnapshot);
@@ -43,20 +59,9 @@
     if (!runtimeSnapshotInitialized) {
       runtimeSnapshotInitialized = true;
       lastRuntimeSnapshotKey = runtimeSnapshotKey;
+      queueRuntimeSnapshotSync(runtimeSnapshot, runtimeSnapshotKey);
     } else if (runtimeSnapshotKey !== lastRuntimeSnapshotKey) {
-      if (runtimeSyncTimer) {
-        clearTimeout(runtimeSyncTimer);
-      }
-      runtimeSyncTimer = setTimeout(() => {
-        void (async () => {
-          try {
-            lastRuntimeSnapshotKey = runtimeSnapshotKey;
-            await saveAndApplyMonitorRuntimeSnapshot(runtimeSnapshot);
-          } catch (error) {
-            console.error("[runtime-monitor] failed to sync runtime snapshot", error);
-          }
-        })();
-      }, 50);
+      queueRuntimeSnapshotSync(runtimeSnapshot, runtimeSnapshotKey);
     }
 
     const enabled = SETTINGS.skillMonitor.state.enabled;

@@ -102,12 +102,14 @@ export type CounterEffectSlotPreset = {
   displayMode?: CounterSlotDisplayMode;
 };
 
+export type CounterSourceInput = CounterSource | CounterSource[];
+
 export type SourceTemplate = {
   sourceId: string;
   itemIds: number[];
   name: string;
   description: string;
-  source: CounterSource;
+  source: CounterSourceInput;
 };
 
 export type SlotTemplate = {
@@ -616,11 +618,15 @@ function normalizeTemplateEffectBuffIds(item: {
   return result;
 }
 
+function resolveSourceTemplateSources(template: SourceTemplate): CounterSource[] {
+  return Array.isArray(template.source) ? template.source : [template.source];
+}
+
 export function getSeasonCultivateFactorTemplates(): FactorCounterTemplate[] {
   return [
     ...SOURCE_TEMPLATES.map((template) => ({
       itemIds: normalizeTemplateItemIds(template),
-      sources: [template.source],
+      sources: resolveSourceTemplateSources(template),
       effectSlots: [],
     })),
     ...SLOT_TEMPLATES.map((template) => ({
@@ -696,7 +702,7 @@ export function resolveCounterSources(sourceRefs: string[]): CounterSource[] {
   );
   return sourceRefs.flatMap((ref) => {
     const item = templateMap.get(ref);
-    return item ? [item.source] : [];
+    return item ? resolveSourceTemplateSources(item) : [];
   });
 }
 

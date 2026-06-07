@@ -256,8 +256,8 @@
   },
   {
     "sourceId": "frost_mage_x2",
-    "name": "Frost Mage X2, casting Meteor Storm grants 44 Energy",
-    "description": "Casting Meteor Storm grants 44 Energy"
+    "name": "Frost Mage X2, casting Meteor Storm or landing a Frost Lance critical lucky hit grants 44 Energy",
+    "description": "Casting Meteor Storm grants 44 Energy. Frost Lance also grants 44 Energy when the same hit is both critical and lucky."
   },
   {
     "sourceId": "frost_mage_x3",

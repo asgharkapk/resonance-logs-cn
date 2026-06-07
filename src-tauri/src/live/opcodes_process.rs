@@ -78,6 +78,7 @@ pub struct SyncToMeDeltaResult {
 pub struct LocalDamageEvent {
     pub skill_key: i64,
     pub target_entity_uuid: i64,
+    pub type_flag: i32,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -784,13 +785,14 @@ pub fn process_aoi_sync_delta(
             sync_damage_info.hit_event_id,
         );
         let skill_key = damage_id;
+        let flag = sync_damage_info.type_flag.unwrap_or_default();
         if attacker_uuid == Some(encounter.local_player_uuid) {
             local_damage_events.push(LocalDamageEvent {
                 skill_key,
                 target_entity_uuid: target_uuid,
+                type_flag: flag,
             });
         }
-        let flag = sync_damage_info.type_flag.unwrap_or_default();
         if collect_taken && target_uuid == encounter.local_player_uuid && !is_heal {
             local_damage_taken_events.push(LocalDamageTakenEvent {
                 skill_key,
