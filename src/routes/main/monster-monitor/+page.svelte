@@ -11,6 +11,8 @@
     type BuffDefinition,
     type BuffNameInfo,
   } from "$lib/config/buff-name-table";
+  import { resolveMonsterName } from "$lib/config/game-names";
+  import { getGameData } from "$lib/i18n/game-data";
   import { t } from "$lib/i18n/index.svelte";
   import {
     SETTINGS,
@@ -18,13 +20,19 @@
     ensureBuffAlerts,
     ensureTeammatePanelStyle,
     getGlobalBuffAliases,
+    type CustomPanelStyle,
     type TeammateBuffColumnKey,
     type TeammatePanelStyle,
     type BuffAlertRule,
   } from "$lib/settings-store";
 
   type SearchTarget = "global" | "self";
-  type MonsterMonitorTab = "buff" | "teammate" | "hate" | "overlay";
+  type MonsterMonitorTab = "buff" | "teammate" | "hate" | "fantasy" | "overlay";
+  type FantasyMonsterOption = {
+    monsterId: number;
+    label: string;
+    rawName: string;
+  };
   type TeammateColumnItem =
     | {
         key: TeammateBuffColumnKey;
@@ -48,6 +56,7 @@
 
   let searchKeyword = $state("");
   let teammateSearchKeyword = $state("");
+  let fantasySearchKeyword = $state("");
   let prioritySearchKeyword = $state("");
   let alertSearchKeyword = $state("");
   let searchTarget = $state<SearchTarget>("self");
@@ -57,6 +66,9 @@
   const buffAliases = $derived.by(() => getGlobalBuffAliases());
   const hatePanelStyle = $derived.by(
     () => monsterMonitor.hatePanelStyle ?? monsterMonitor.panelStyle,
+  );
+  const fantasyPanelStyle = $derived.by(
+    () => monsterMonitor.fantasyPanelStyle ?? monsterMonitor.panelStyle,
   );
   const teammatePanelStyle = $derived.by(() =>
     ensureTeammatePanelStyle(
@@ -69,12 +81,17 @@
     showTeammateBuffPanel:
       monsterMonitor.overlayVisibility?.showTeammateBuffPanel ?? true,
     showHatePanel: monsterMonitor.overlayVisibility?.showHatePanel ?? true,
+    showFantasyPanel:
+      monsterMonitor.overlayVisibility?.showFantasyPanel ?? false,
   }));
   const globalBuffIds = $derived(monsterMonitor.monitoredBuffIds);
   const selfAppliedBuffIds = $derived(monsterMonitor.selfAppliedBuffIds);
   const teammateBuffIds = $derived(monsterMonitor.teammateBuffIds);
   const teammateBuffCategories = $derived(
     monsterMonitor.teammateBuffCategories ?? [],
+  );
+  const fantasyWhitelistMonsterIds = $derived(
+    monsterMonitor.fantasyWhitelistMonsterIds ?? [],
   );
   const buffPriorityIds = $derived(monsterMonitor.buffPriorityIds ?? []);
   const buffAlerts = $derived.by(() =>
@@ -138,6 +155,46 @@
       ? searchBuffsByName(teammateSearchKeyword, buffAliases)
       : ([] as BuffNameInfo[]),
   );
+  const fantasyMonsterOptions = $derived.by(() => {
+    const zhMonsterInfo = getGameData("zh-CN").monsterInfoById;
+    return Object.entries(zhMonsterInfo)
+      .map(([id, info]): FantasyMonsterOption | null => {
+        const monsterId = Number(id);
+        if (!Number.isFinite(monsterId)) return null;
+        if (!isResonanceFantasyMonsterId(monsterId)) return null;
+        const rawName = info.Name?.trim() ?? "";
+        if (!rawName) return null;
+        return {
+          monsterId,
+          label: fantasyMonsterLabel(monsterId),
+          rawName,
+        };
+      })
+      .filter((item): item is FantasyMonsterOption => item !== null)
+      .sort(
+        (left, right) =>
+          left.label.localeCompare(right.label, "zh-Hans-CN") ||
+          left.monsterId - right.monsterId,
+      );
+  });
+  const selectedFantasyMonsterOptions = $derived.by(() =>
+    fantasyMonsterOptions.filter((item) =>
+      fantasyWhitelistMonsterIds.includes(item.monsterId),
+    ),
+  );
+  const fantasySearchResults = $derived.by(() => {
+    const keyword = fantasySearchKeyword.trim().toLowerCase();
+    if (!keyword) return [] as FantasyMonsterOption[];
+    return fantasyMonsterOptions
+      .filter(
+        (item) =>
+          !fantasyWhitelistMonsterIds.includes(item.monsterId) &&
+          (`${item.monsterId}`.includes(keyword) ||
+            item.label.toLowerCase().includes(keyword) ||
+            item.rawName.toLowerCase().includes(keyword)),
+      )
+      .slice(0, 40);
+  });
   const prioritySearchResults = $derived.by(() => {
     if (prioritySearchKeyword.trim().length === 0) return [];
 
@@ -169,6 +226,25 @@
     categoryKey: BuffCategoryKey,
   ): TeammateBuffColumnKey {
     return `category:${categoryKey}`;
+  }
+
+  function stripFantasySuffix(name: string): string {
+    const index = name.indexOf("-");
+    return (index >= 0 ? name.slice(0, index) : name).trim() || name;
+  }
+
+  function isResonanceFantasyMonsterId(monsterId: number): boolean {
+    return /^300\d{4}$/.test(String(monsterId));
+  }
+
+  function defaultFantasyMonsterLabel(monsterId: number): string {
+    return stripFantasySuffix(resolveMonsterName(monsterId));
+  }
+
+  function fantasyMonsterLabel(monsterId: number): string {
+    const alias =
+      monsterMonitor.fantasyMonsterAliases?.[String(monsterId)]?.trim();
+    return alias || defaultFantasyMonsterLabel(monsterId);
   }
 
   function orderTeammateColumnItems(
@@ -358,6 +434,49 @@
     });
   }
 
+  function addFantasyMonster(monsterId: number) {
+    updateMonsterMonitor((state) => {
+      const current = state.fantasyWhitelistMonsterIds ?? [];
+      if (current.includes(monsterId)) return state;
+      return {
+        ...state,
+        fantasyWhitelistMonsterIds: [...current, monsterId].sort(
+          (a, b) => a - b,
+        ),
+      };
+    });
+  }
+
+  function removeFantasyMonster(monsterId: number) {
+    updateMonsterMonitor((state) => {
+      const fantasyMonsterAliases = { ...(state.fantasyMonsterAliases ?? {}) };
+      delete fantasyMonsterAliases[String(monsterId)];
+      return {
+        ...state,
+        fantasyWhitelistMonsterIds: (
+          state.fantasyWhitelistMonsterIds ?? []
+        ).filter((id) => id !== monsterId),
+        fantasyMonsterAliases,
+      };
+    });
+  }
+
+  function setFantasyMonsterAlias(monsterId: number, alias: string) {
+    updateMonsterMonitor((state) => {
+      const fantasyMonsterAliases = { ...(state.fantasyMonsterAliases ?? {}) };
+      const trimmed = alias.trim();
+      if (trimmed) {
+        fantasyMonsterAliases[String(monsterId)] = trimmed;
+      } else {
+        delete fantasyMonsterAliases[String(monsterId)];
+      }
+      return {
+        ...state,
+        fantasyMonsterAliases,
+      };
+    });
+  }
+
   function setAlias(buffId: number, alias: string) {
     const nextGlobalAliases = { ...SETTINGS.skillMonitor.state.buffAliases };
     const trimmed = alias.trim();
@@ -404,6 +523,19 @@
     }));
   }
 
+  function updateFantasyPanelStyle<K extends keyof CustomPanelStyle>(
+    key: K,
+    value: CustomPanelStyle[K],
+  ) {
+    updateMonsterMonitor((state) => ({
+      ...state,
+      fantasyPanelStyle: {
+        ...(state.fantasyPanelStyle ?? state.panelStyle),
+        [key]: value,
+      },
+    }));
+  }
+
   function updateTeammatePanelStyle<K extends keyof TeammatePanelStyle>(
     key: K,
     value: TeammatePanelStyle[K],
@@ -432,9 +564,7 @@
   function syncTeammateColumnOrder(
     state: Pick<
       typeof SETTINGS.monsterMonitor.state,
-      | "teammateBuffIds"
-      | "teammateBuffCategories"
-      | "teammateBuffColumnOrder"
+      "teammateBuffIds" | "teammateBuffCategories" | "teammateBuffColumnOrder"
     >,
   ): TeammateBuffColumnKey[] {
     const keys = getTeammateColumnKeys(state);
@@ -468,17 +598,23 @@
   }
 
   function toggleOverlayVisibility(key: keyof typeof overlayVisibility) {
-    updateMonsterMonitor((state) => ({
-      ...state,
-      overlayVisibility: {
+    updateMonsterMonitor((state) => {
+      const currentVisibility = {
         showMonsterBuffPanel:
           state.overlayVisibility?.showMonsterBuffPanel ?? true,
         showTeammateBuffPanel:
           state.overlayVisibility?.showTeammateBuffPanel ?? true,
         showHatePanel: state.overlayVisibility?.showHatePanel ?? true,
-        [key]: !(state.overlayVisibility?.[key] ?? true),
-      },
-    }));
+        showFantasyPanel: state.overlayVisibility?.showFantasyPanel ?? false,
+      };
+      return {
+        ...state,
+        overlayVisibility: {
+          ...currentVisibility,
+          [key]: !currentVisibility[key],
+        },
+      };
+    });
   }
 
   function visibilityState(value: boolean): string {
@@ -645,6 +781,18 @@
         }}
       >
         {t("monsterMonitor.tabs.hate")}
+      </button>
+      <button
+        type="button"
+        class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors {activeTab ===
+        'fantasy'
+          ? 'bg-primary text-primary-foreground border-primary'
+          : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+        onclick={() => {
+          activeTab = "fantasy";
+        }}
+      >
+        {t("monsterMonitor.tabs.fantasy")}
       </button>
       <button
         type="button"
@@ -1391,7 +1539,6 @@
           />
           <strong>{teammatePanelStyle.buffColumnWidth}px</strong>
         </label>
-
       </div>
 
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1631,6 +1778,190 @@
         </label>
       </div>
     </section>
+  {:else if activeTab === "fantasy"}
+    <section
+      class="border-border/60 bg-card/60 space-y-5 rounded-xl border p-5"
+    >
+      <div class="space-y-1">
+        <h2 class="text-foreground text-base font-semibold">
+          {t("monsterMonitor.fantasy.title")}
+        </h2>
+      </div>
+
+      <div class="flex justify-start">
+        <div class="min-w-[260px]">
+          <SettingsSwitch
+            label={t("monsterMonitor.fantasy.showAll")}
+            bind:checked={SETTINGS.monsterMonitor.state.fantasyShowAll}
+          />
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <input
+          type="text"
+          bind:value={fantasySearchKeyword}
+          placeholder={t("monsterMonitor.fantasy.placeholder")}
+          class="border-border/60 bg-background/60 text-foreground placeholder:text-muted-foreground focus:border-primary w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors"
+        />
+
+        {#if fantasySearchKeyword.trim().length > 0}
+          <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {#each fantasySearchResults as item (item.monsterId)}
+              <button
+                type="button"
+                class="border-border/60 bg-muted/20 hover:bg-muted/40 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors"
+                onclick={() => addFantasyMonster(item.monsterId)}
+              >
+                <span class="min-w-0 truncate">{item.label}</span>
+                <span class="text-muted-foreground shrink-0 text-xs">
+                  {item.monsterId}
+                </span>
+              </button>
+            {/each}
+          </div>
+          {#if fantasySearchResults.length === 0}
+            <p class="text-muted-foreground text-sm">
+              {t("monsterMonitor.fantasy.emptySearch")}
+            </p>
+          {/if}
+        {/if}
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-foreground text-sm font-semibold">
+          {t("monsterMonitor.fantasy.groupTitle")}
+        </h3>
+        <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          {#each selectedFantasyMonsterOptions as item (item.monsterId)}
+            <div class="teammate-order-row">
+              <span class="text-muted-foreground shrink-0 text-xs">
+                {item.monsterId}
+              </span>
+              <input
+                type="text"
+                value={item.label}
+                class="border-border/60 bg-background/60 text-foreground min-w-0 flex-1 rounded-md border px-2 py-1 text-sm outline-none transition-colors focus:border-primary"
+                oninput={(event) =>
+                  setFantasyMonsterAlias(
+                    item.monsterId,
+                    (event.currentTarget as HTMLInputElement).value,
+                  )}
+              />
+              <button
+                type="button"
+                class="order-button danger"
+                title={t("monsterMonitor.buffGroups.removeTitle")}
+                onclick={() => removeFantasyMonster(item.monsterId)}
+              >
+                {t("monsterMonitor.priority.remove")}
+              </button>
+            </div>
+          {:else}
+            <span class="text-muted-foreground text-sm">
+              {t("monsterMonitor.fantasy.empty")}
+            </span>
+          {/each}
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="border-border/60 bg-card/60 space-y-5 rounded-xl border p-5"
+    >
+      <div class="space-y-1">
+        <h2 class="text-foreground text-base font-semibold">
+          {t("monsterMonitor.fantasy.styleTitle")}
+        </h2>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-3">
+        <label class="style-field">
+          <span>{t("monsterMonitor.style.gap")}</span>
+          <input
+            type="range"
+            min="0"
+            max="24"
+            value={fantasyPanelStyle.gap}
+            oninput={(event) =>
+              updateFantasyPanelStyle(
+                "gap",
+                Number.parseInt(
+                  (event.currentTarget as HTMLInputElement).value,
+                  10,
+                ),
+              )}
+          />
+          <strong>{fantasyPanelStyle.gap}px</strong>
+        </label>
+
+        <label class="style-field">
+          <span>{t("monsterMonitor.style.columnGap")}</span>
+          <input
+            type="range"
+            min="0"
+            max="40"
+            value={fantasyPanelStyle.columnGap}
+            oninput={(event) =>
+              updateFantasyPanelStyle(
+                "columnGap",
+                Number.parseInt(
+                  (event.currentTarget as HTMLInputElement).value,
+                  10,
+                ),
+              )}
+          />
+          <strong>{fantasyPanelStyle.columnGap}px</strong>
+        </label>
+
+        <label class="style-field">
+          <span>{t("monsterMonitor.style.fontSize")}</span>
+          <input
+            type="range"
+            min="10"
+            max="28"
+            value={fantasyPanelStyle.fontSize}
+            oninput={(event) =>
+              updateFantasyPanelStyle(
+                "fontSize",
+                Number.parseInt(
+                  (event.currentTarget as HTMLInputElement).value,
+                  10,
+                ),
+              )}
+          />
+          <strong>{fantasyPanelStyle.fontSize}px</strong>
+        </label>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <label class="color-field">
+          <span>{t("monsterMonitor.style.nameColor")}</span>
+          <input
+            type="color"
+            value={fantasyPanelStyle.nameColor}
+            oninput={(event) =>
+              updateFantasyPanelStyle(
+                "nameColor",
+                (event.currentTarget as HTMLInputElement).value,
+              )}
+          />
+        </label>
+
+        <label class="color-field">
+          <span>{t("monsterMonitor.style.valueColor")}</span>
+          <input
+            type="color"
+            value={fantasyPanelStyle.valueColor}
+            oninput={(event) =>
+              updateFantasyPanelStyle(
+                "valueColor",
+                (event.currentTarget as HTMLInputElement).value,
+              )}
+          />
+        </label>
+      </div>
+    </section>
   {:else}
     <section
       class="border-border/60 bg-card/60 space-y-4 rounded-xl border p-5"
@@ -1681,6 +2012,18 @@
             state: visibilityState(
               monsterMonitor.hateListEnabled && overlayVisibility.showHatePanel,
             ),
+          })}
+        </button>
+
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors {overlayVisibility.showFantasyPanel
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+          onclick={() => toggleOverlayVisibility("showFantasyPanel")}
+        >
+          {t("monsterMonitor.overlay.fantasy", {
+            state: visibilityState(overlayVisibility.showFantasyPanel),
           })}
         </button>
       </div>

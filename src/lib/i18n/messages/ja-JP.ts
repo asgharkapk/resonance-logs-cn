@@ -101,7 +101,8 @@ export const jaJPMessages = {
   "components.updateModal.title": "新しいバージョンが利用可能です",
   "components.updateModal.versionLine":
     "現在のバージョン v{currentVersion}、最新バージョン v{latestVersion}",
-  "components.updateModal.empty": "このバージョンのリリースノートはありません。",
+  "components.updateModal.empty":
+    "このバージョンのリリースノートはありません。",
   "components.updateModal.footer":
     "GitHub のダウンロードが遅い場合は、QQ グループ（1084866292）から最新インストーラーを入手することもできます。",
   "components.updateModal.download": "GitHub でダウンロード",
@@ -159,16 +160,14 @@ export const jaJPMessages = {
   "columns.skill.damageMode": "物理/魔法",
   "columns.description.dps.player.totalDmg":
     "プレイヤーが与えた総ダメージを表示",
-  "columns.description.dps.player.dps":
-    "プレイヤーの秒間ダメージ（DPS）を表示",
+  "columns.description.dps.player.dps": "プレイヤーの秒間ダメージ（DPS）を表示",
   "columns.description.dps.player.tdps":
     "グローバルなアクティブ戦闘時間に基づくプレイヤーの True DPS を表示",
   "columns.description.dps.player.bossDmg":
     "プレイヤーがボスに与えたダメージを表示",
   "columns.description.dps.player.bossDps":
     "プレイヤーのボス秒間ダメージ（Boss DPS）を表示",
-  "columns.description.dps.player.dmgPct":
-    "プレイヤーのダメージ割合を表示",
+  "columns.description.dps.player.dmgPct": "プレイヤーのダメージ割合を表示",
   "columns.description.dps.player.critRate": "プレイヤーの会心率を表示",
   "columns.description.dps.player.critDmgRate":
     "プレイヤーのダメージのうち会心だった割合を表示",
@@ -179,12 +178,9 @@ export const jaJPMessages = {
   "columns.description.dps.player.hits": "プレイヤーの総命中数を表示",
   "columns.description.dps.player.hitsPerMinute":
     "プレイヤーの分間命中数を表示",
-  "columns.description.dps.skill.totalDmg":
-    "スキルが与えた総ダメージを表示",
-  "columns.description.dps.skill.dps":
-    "スキルの秒間ダメージ（DPS）を表示",
-  "columns.description.dps.skill.dmgPct":
-    "スキルのダメージ割合を表示",
+  "columns.description.dps.skill.totalDmg": "スキルが与えた総ダメージを表示",
+  "columns.description.dps.skill.dps": "スキルの秒間ダメージ（DPS）を表示",
+  "columns.description.dps.skill.dmgPct": "スキルのダメージ割合を表示",
   "columns.description.dps.skill.critRate": "スキルの会心率を表示",
   "columns.description.dps.skill.critDmgRate":
     "スキルのダメージのうち会心だった割合を表示",
@@ -192,51 +188,39 @@ export const jaJPMessages = {
   "columns.description.dps.skill.luckyDmgRate":
     "スキルのダメージのうちラッキーヒットだった割合を表示",
   "columns.description.dps.skill.hits": "スキルの総命中数を表示",
-  "columns.description.dps.skill.hitsPerMinute":
-    "スキルの分間命中数を表示",
-  "columns.description.heal.player.total":
-    "プレイヤーが行った総回復量を表示",
-  "columns.description.heal.player.hps":
-    "プレイヤーの秒間回復量（HPS）を表示",
+  "columns.description.dps.skill.hitsPerMinute": "スキルの分間命中数を表示",
+  "columns.description.heal.player.total": "プレイヤーが行った総回復量を表示",
+  "columns.description.heal.player.hps": "プレイヤーの秒間回復量（HPS）を表示",
   "columns.description.heal.player.effectiveTotal":
     "プレイヤーが行った実効回復量を表示",
   "columns.description.heal.player.effectiveHps":
     "プレイヤーの秒間実効回復量（EHPS）を表示",
-  "columns.description.heal.player.healPct":
-    "プレイヤーの回復割合を表示",
-  "columns.description.heal.player.critRate":
-    "プレイヤーの回復会心率を表示",
+  "columns.description.heal.player.healPct": "プレイヤーの回復割合を表示",
+  "columns.description.heal.player.critRate": "プレイヤーの回復会心率を表示",
   "columns.description.heal.player.critHealRate":
     "プレイヤーの回復のうち会心だった割合を表示",
   "columns.description.heal.player.luckyRate":
     "プレイヤーの回復ラッキー命中率を表示",
   "columns.description.heal.player.luckyHealRate":
     "プレイヤーの回復のうちラッキーヒットだった割合を表示",
-  "columns.description.heal.player.hits":
-    "プレイヤーの総回復回数を表示",
+  "columns.description.heal.player.hits": "プレイヤーの総回復回数を表示",
   "columns.description.heal.player.hitsPerMinute":
     "プレイヤーの分間回復回数を表示",
-  "columns.description.heal.skill.total":
-    "スキルが行った総回復量を表示",
-  "columns.description.heal.skill.hps":
-    "スキルの秒間回復量（HPS）を表示",
+  "columns.description.heal.skill.total": "スキルが行った総回復量を表示",
+  "columns.description.heal.skill.hps": "スキルの秒間回復量（HPS）を表示",
   "columns.description.heal.skill.effectiveTotal":
     "スキルが行った実効回復量を表示",
   "columns.description.heal.skill.effectiveHps":
     "スキルの秒間実効回復量（EHPS）を表示",
-  "columns.description.heal.skill.healPct":
-    "スキルの回復割合を表示",
+  "columns.description.heal.skill.healPct": "スキルの回復割合を表示",
   "columns.description.heal.skill.critRate": "スキルの会心率を表示",
   "columns.description.heal.skill.critHealRate":
     "スキルの回復のうち会心だった割合を表示",
-  "columns.description.heal.skill.luckyRate":
-    "スキルのラッキー命中率を表示",
+  "columns.description.heal.skill.luckyRate": "スキルのラッキー命中率を表示",
   "columns.description.heal.skill.luckyHealRate":
     "スキルの回復のうちラッキーヒットだった割合を表示",
-  "columns.description.heal.skill.hits":
-    "スキルの総回復回数を表示",
-  "columns.description.heal.skill.hitsPerMinute":
-    "スキルの分間回復回数を表示",
+  "columns.description.heal.skill.hits": "スキルの総回復回数を表示",
+  "columns.description.heal.skill.hitsPerMinute": "スキルの分間回復回数を表示",
   "columns.description.tanked.player.total":
     "プレイヤーが受けた総ダメージを表示",
   "columns.description.tanked.player.tps":
@@ -255,16 +239,13 @@ export const jaJPMessages = {
     "プレイヤーがダメージをブロックした頻度を表示",
   "columns.description.tanked.player.luckyBlockRate":
     "プレイヤーがラッキーブロックを発動した頻度を表示",
-  "columns.description.tanked.player.hits":
-    "プレイヤーの総被命中数を表示",
+  "columns.description.tanked.player.hits": "プレイヤーの総被命中数を表示",
   "columns.description.tanked.player.hitsPerMinute":
     "プレイヤーの分間被命中数を表示",
-  "columns.description.tanked.skill.total":
-    "スキルから受けた総ダメージを表示",
+  "columns.description.tanked.skill.total": "スキルから受けた総ダメージを表示",
   "columns.description.tanked.skill.tps":
     "スキルからの秒間被ダメージ（DTPS）を表示",
-  "columns.description.tanked.skill.tankedPct":
-    "スキルの被ダメージ割合を表示",
+  "columns.description.tanked.skill.tankedPct": "スキルの被ダメージ割合を表示",
   "columns.description.tanked.skill.critTakenRate":
     "このスキルが会心を与えた頻度を表示",
   "columns.description.tanked.skill.critDmgRate":
@@ -326,7 +307,8 @@ export const jaJPMessages = {
   "live.notifications.encounterPaused": "エンカウントを一時停止しました",
   "live.notifications.encounterResumed": "エンカウントを再開しました",
   "history.list.error.deleteFailed": "削除に失敗しました: {error}",
-  "history.list.error.loadFailed": "エンカウント一覧の読み込みに失敗しました: {error}",
+  "history.list.error.loadFailed":
+    "エンカウント一覧の読み込みに失敗しました: {error}",
   "history.list.filters.favorite": "お気に入り",
   "history.list.filters.favoriteOnly": "お気に入りのみ",
   "history.list.filters.favoriteOnlyTitle": "お気に入りのみ表示",
@@ -369,7 +351,8 @@ export const jaJPMessages = {
     "これらのエンカウント記録を完全に削除してもよろしいですか？プレイヤー統計、スキル統計、死亡イベントなど、関連するすべてのデータが削除されます。",
   "history.list.deleteDialog.cancel": "キャンセル",
   "history.list.deleteDialog.confirm": "削除",
-  "history.detail.error.deleteFailed": "エンカウントの削除に失敗しました: {error}",
+  "history.detail.error.deleteFailed":
+    "エンカウントの削除に失敗しました: {error}",
   "history.detail.tabs.damage": "ダメージ",
   "history.detail.tabs.tanked": "被ダメージ",
   "history.detail.tabs.healing": "回復",
@@ -439,26 +422,29 @@ export const jaJPMessages = {
   "settings.common.name.option.hideYourName": "自分の名前を非表示",
   "settings.common.name.option.othersName": "他プレイヤーの名前を表示",
   "settings.common.name.option.othersClass": "他プレイヤーのクラスを表示",
-  "settings.common.name.option.othersNameClass": "他プレイヤーの名前 - クラスを表示",
-  "settings.common.name.option.othersNameSpec": "他プレイヤーの名前 - スペックを表示",
+  "settings.common.name.option.othersNameClass":
+    "他プレイヤーの名前 - クラスを表示",
+  "settings.common.name.option.othersNameSpec":
+    "他プレイヤーの名前 - スペックを表示",
   "settings.common.name.option.hideOthersName": "他プレイヤーの名前を非表示",
   "settings.common.ability.your": "自分の能力スコア",
   "settings.common.ability.yourDescription": "自分の能力スコアを表示",
   "settings.common.ability.others": "他プレイヤーの能力スコア",
-  "settings.common.ability.othersDescription":
-    "他プレイヤーの能力スコアを表示",
+  "settings.common.ability.othersDescription": "他プレイヤーの能力スコアを表示",
   "settings.common.seasonStrength.your": "自分のシーズン強度",
   "settings.common.seasonStrength.yourDescription": "自分のシーズン強度を表示",
   "settings.common.seasonStrength.others": "他プレイヤーのシーズン強度",
   "settings.common.seasonStrength.othersDescription":
     "他プレイヤーのシーズン強度を表示",
-  "settings.common.relative.dpsPlayer": "最高 DPS に合わせてスケール（プレイヤー）",
+  "settings.common.relative.dpsPlayer":
+    "最高 DPS に合わせてスケール（プレイヤー）",
   "settings.common.relative.dpsPlayerDescription":
     "バーを全プレイヤーではなく最高 DPS プレイヤー基準でスケールします。20人エンカウントやワールドボスに便利です。",
   "settings.common.relative.dpsSkill": "最高 DPS に合わせてスケール（スキル）",
   "settings.common.relative.dpsSkillDescription":
     "バーを全スキルではなく最高 DPS スキル基準でスケールします。20人エンカウントやワールドボスに便利です。",
-  "settings.common.relative.healPlayer": "最高回復に合わせてスケール（プレイヤー）",
+  "settings.common.relative.healPlayer":
+    "最高回復に合わせてスケール（プレイヤー）",
   "settings.common.relative.healPlayerDescription":
     "バーを全プレイヤーではなく最高回復プレイヤー基準でスケールします。20人エンカウントやワールドボスに便利です。",
   "settings.common.relative.healSkill": "最高回復に合わせてスケール（スキル）",
@@ -468,7 +454,8 @@ export const jaJPMessages = {
     "最高被ダメージに合わせてスケール（プレイヤー）",
   "settings.common.relative.tankedPlayerDescription":
     "バーを全プレイヤーではなく最高被ダメージプレイヤー基準でスケールします。20人エンカウントやワールドボスに便利です。",
-  "settings.common.relative.tankedSkill": "最高被ダメージに合わせてスケール（スキル）",
+  "settings.common.relative.tankedSkill":
+    "最高被ダメージに合わせてスケール（スキル）",
   "settings.common.relative.tankedSkillDescription":
     "バーを全スキルではなく最高被ダメージスキル基準でスケールします。20人エンカウントやワールドボスに便利です。",
   "settings.common.shorten.tps": "TPS 値を短縮表示",
@@ -495,8 +482,7 @@ export const jaJPMessages = {
   "settings.common.columns.healPlayers": "回復（プレイヤー）列",
   "settings.common.columns.healSkills": "回復（スキル詳細）列",
   "settings.common.columns.tankedPlayers": "被ダメージ（プレイヤー）列",
-  "settings.common.columns.tankedSkills":
-    "被ダメージ（スキル詳細）列",
+  "settings.common.columns.tankedSkills": "被ダメージ（スキル詳細）列",
   "settings.common.columns.orderHint":
     "矢印で並べ替え、スイッチで表示/非表示を切り替えます。",
   "settings.live.refreshRate": "更新レート",
@@ -506,9 +492,9 @@ export const jaJPMessages = {
   "settings.network.method": "キャプチャ方式",
   "settings.network.methodDescription":
     "ネットワークパケットのキャプチャ方式を選択します（アプリの再起動が必要です）。",
-  "settings.network.npcapMissing.prefix":
-    "Npcap が検出されませんでした。",
-  "settings.network.npcapMissing.suffix": " からインストールしてこの機能を使用してください。",
+  "settings.network.npcapMissing.prefix": "Npcap が検出されませんでした。",
+  "settings.network.npcapMissing.suffix":
+    " からインストールしてこの機能を使用してください。",
   "settings.network.device": "ネットワークデバイス",
   "settings.network.deviceDescription":
     "トラフィックキャプチャに使用するネットワークアダプターを選択します。",
@@ -541,8 +527,7 @@ export const jaJPMessages = {
   "settings.headerLayout.rowGap": "行間隔",
   "settings.headerLayout.rowGapDescription": "タイトルバーの行間の距離",
   "settings.headerLayout.itemGap": "項目間隔",
-  "settings.headerLayout.itemGapDescription":
-    "同一行内の項目間の距離",
+  "settings.headerLayout.itemGapDescription": "同一行内の項目間の距離",
   "settings.headerLayout.rowTitle": "行 {row}",
   "settings.headerLayout.rowDescription":
     "この行のゾーン、順序、折り返しを調整します。",
@@ -558,7 +543,8 @@ export const jaJPMessages = {
   "themes.tabs.live": "ライブ",
   "themes.tabs.presets": "プリセット",
   "themes.preset.color.dark.name": "ダーク",
-  "themes.preset.color.dark.description": "ニュートラルグレーのクリーンなダークテーマ",
+  "themes.preset.color.dark.description":
+    "ニュートラルグレーのクリーンなダークテーマ",
   "themes.preset.color.light.name": "ライト",
   "themes.preset.color.light.description": "昼間使用向けの明るいテーマ",
   "themes.preset.color.pink.name": "ピンク UwU",
@@ -570,14 +556,16 @@ export const jaJPMessages = {
   "themes.preset.color.rainbow.name": "レインボーグラデーション",
   "themes.preset.color.rainbow.description": "カラフルなグラデーション背景",
   "themes.preset.size.compact.name": "ミニマル",
-  "themes.preset.size.compact.description": "ミニマル: パディングなし、ヘッダーなし",
+  "themes.preset.size.compact.description":
+    "ミニマル: パディングなし、ヘッダーなし",
   "themes.preset.size.small.name": "スモール",
-  "themes.preset.size.small.description": "より多くの行を表示するコンパクトレイアウト",
+  "themes.preset.size.small.description":
+    "より多くの行を表示するコンパクトレイアウト",
   "themes.preset.size.medium.name": "ミディアム",
-  "themes.preset.size.medium.description": "ほとんどの画面に適したバランスのサイズ",
+  "themes.preset.size.medium.description":
+    "ほとんどの画面に適したバランスのサイズ",
   "themes.preset.size.large.name": "ラージ",
-  "themes.preset.size.large.description":
-    "高解像度画面向けの大きめ UI",
+  "themes.preset.size.large.description": "高解像度画面向けの大きめ UI",
   "themes.colors.category.Base": "ベース",
   "themes.colors.category.Surfaces": "サーフェス",
   "themes.colors.category.Tooltip": "ツールチップ",
@@ -587,20 +575,17 @@ export const jaJPMessages = {
   "themes.colors.backgroundMain.label": "背景（メイン）",
   "themes.colors.backgroundMain.description": "メインウィンドウの背景色",
   "themes.colors.backgroundLive.label": "背景（ライブ）",
-  "themes.colors.backgroundLive.description":
-    "ライブ統計ウィンドウの背景色",
+  "themes.colors.backgroundLive.description": "ライブ統計ウィンドウの背景色",
   "themes.colors.foreground.label": "前景",
   "themes.colors.foreground.description": "主要テキスト色",
   "themes.colors.surface.label": "サーフェス",
-  "themes.colors.surface.description":
-    "カード、ダイアログ、パネルの背景色",
+  "themes.colors.surface.description": "カード、ダイアログ、パネルの背景色",
   "themes.colors.surfaceForeground.label": "サーフェステキスト",
   "themes.colors.surfaceForeground.description": "サーフェス上のテキスト色",
   "themes.colors.primary.label": "プライマリ",
   "themes.colors.primary.description": "主要アクセント色",
   "themes.colors.primaryForeground.label": "プライマリテキスト",
-  "themes.colors.primaryForeground.description":
-    "プライマリ要素上のテキスト色",
+  "themes.colors.primaryForeground.description": "プライマリ要素上のテキスト色",
   "themes.colors.secondary.label": "セカンダリ",
   "themes.colors.secondary.description": "副次アクセント色",
   "themes.colors.secondaryForeground.label": "セカンダリテキスト",
@@ -644,7 +629,8 @@ export const jaJPMessages = {
     "クラスまたはスペックの色をカスタマイズします。スペック色を選択すると、スペック検出時に特定の色を表示できます。",
   "themes.classSpec.classColors": "クラス色",
   "themes.classSpec.specColors": "スペック色",
-  "themes.classSpec.classDescription": "ライブ統計のクラス色をカスタマイズします。",
+  "themes.classSpec.classDescription":
+    "ライブ統計のクラス色をカスタマイズします。",
   "themes.classSpec.specDescription": "各スペックの色をカスタマイズします。",
   "themes.compact.title": "コンパクトモード",
   "themes.compact.description":
@@ -662,8 +648,7 @@ export const jaJPMessages = {
     "テーブル行の外観とハイライトモードを制御します。すべてのライブ統計テーブルに適用されます。",
   "themes.table.playerRows": "プレイヤー行",
   "themes.table.rowHeight": "行の高さ",
-  "themes.table.playerRowHeightDescription":
-    "各プレイヤー行の高さ（ピクセル）",
+  "themes.table.playerRowHeightDescription": "各プレイヤー行の高さ（ピクセル）",
   "themes.table.fontSize": "フォントサイズ",
   "themes.table.playerFontSizeDescription":
     "プレイヤー名と統計のフォントサイズ",
@@ -689,17 +674,16 @@ export const jaJPMessages = {
   "themes.table.headerTextColorDescription": "列タイトルのテキスト色",
   "themes.table.abbreviatedNumbers": "短縮数字（K、M、%）",
   "themes.table.suffixFontSize": "サフィックスフォントサイズ",
-  "themes.table.suffixFontSizeDescription": "K/M/% サフィックスのフォントサイズ",
+  "themes.table.suffixFontSizeDescription":
+    "K/M/% サフィックスのフォントサイズ",
   "themes.skillTable.settings": "スキルテーブル設定",
   "themes.skillTable.description":
     "スキルテーブルのサイズ、ヘッダー、短縮数字スタイルをカスタマイズします。",
   "themes.skillTable.rows": "スキル行",
   "themes.skillTable.rowHeight": "スキル行の高さ",
-  "themes.skillTable.rowHeightDescription":
-    "各スキル行の高さ（ピクセル）",
+  "themes.skillTable.rowHeightDescription": "各スキル行の高さ（ピクセル）",
   "themes.skillTable.fontSize": "スキルフォントサイズ",
-  "themes.skillTable.fontSizeDescription":
-    "スキル名と統計のフォントサイズ",
+  "themes.skillTable.fontSizeDescription": "スキル名と統計のフォントサイズ",
   "themes.skillTable.iconSize": "スキルアイコンサイズ",
   "themes.skillTable.iconSizeDescription": "スキルアイコンサイズ",
   "themes.skillTable.rowGlowOpacity": "スキル行グロー不透明度",
@@ -766,11 +750,9 @@ export const jaJPMessages = {
   "themes.header.title": "ヘッダー設定",
   "themes.header.layoutPadding": "レイアウトとパディング",
   "themes.header.windowPadding": "ウィンドウパディング",
-  "themes.header.windowPaddingDescription":
-    "ライブウィンドウ全体のパディング",
+  "themes.header.windowPaddingDescription": "ライブウィンドウ全体のパディング",
   "themes.header.headerPadding": "ヘッダーパディング",
-  "themes.header.headerPaddingDescription":
-    "ヘッダー領域の内部余白",
+  "themes.header.headerPaddingDescription": "ヘッダー領域の内部余白",
   "themes.header.layout": "ヘッダーレイアウト",
   "themes.header.layoutMode": "レイアウトモード",
   "themes.header.layoutModeDescription":
@@ -796,7 +778,8 @@ export const jaJPMessages = {
   "themes.header.showSceneNameDescription":
     "現在のダンジョン/エンカウント名を表示",
   "themes.header.sceneNameFontSize": "エンカウント名フォントサイズ",
-  "themes.header.sceneNameFontSizeDescription": "エンカウント名のフォントサイズ",
+  "themes.header.sceneNameFontSizeDescription":
+    "エンカウント名のフォントサイズ",
   "themes.header.controlButtons": "操作ボタン",
   "themes.header.showResetButton": "リセットボタンを表示",
   "themes.header.showResetButtonDescription":
@@ -804,8 +787,7 @@ export const jaJPMessages = {
   "themes.header.iconSize": "アイコンサイズ",
   "themes.header.padding": "パディング",
   "themes.header.showPauseButton": "一時停止ボタンを表示",
-  "themes.header.showPauseButtonDescription":
-    "戦闘を一時停止/再開するボタン",
+  "themes.header.showPauseButtonDescription": "戦闘を一時停止/再開するボタン",
   "themes.header.showHeaderControl": "訓練用ダミーボタンを表示",
   "themes.header.showHeaderControlDescription":
     "ライブウィンドウヘッダーに訓練用ダミーモードボタンを表示",
@@ -817,7 +799,8 @@ export const jaJPMessages = {
   "themes.header.totalDamage": "総ダメージ",
   "themes.header.showTotalDamage": "総ダメージを表示",
   "themes.header.showTotalDamageDescription": "与えた総ダメージを表示",
-  "themes.header.totalDamageLabelDescription": "「T.DMG」ラベルのフォントサイズ",
+  "themes.header.totalDamageLabelDescription":
+    "「T.DMG」ラベルのフォントサイズ",
   "themes.header.valueFontSize": "値フォントサイズ",
   "themes.header.damageValueFontSizeDescription": "ダメージ値のフォントサイズ",
   "themes.header.totalDps": "総 DPS",
@@ -961,7 +944,8 @@ export const jaJPMessages = {
   "skillMonitor.skillCd.resonance.searchPrompt":
     "キーワードを入力して共鳴スキルを検索",
   "skillMonitor.skillCd.resonance.selectedTitle": "選択した共鳴スキル",
-  "skillMonitor.skillCd.resonance.noneSelected": "共鳴スキルが選択されていません",
+  "skillMonitor.skillCd.resonance.noneSelected":
+    "共鳴スキルが選択されていません",
   "skillMonitor.skillCd.preview.title": "モニタープレビュー",
   "skillMonitor.skillCd.preview.description": "選択順に並べ替え",
   "skillMonitor.buff.status.selected": "選択済み",
@@ -991,16 +975,17 @@ export const jaJPMessages = {
   "skillMonitor.buff.display.grouped": "グループモード",
   "skillMonitor.buff.display.modernText": "テキスト Buff モダンスタイル",
   "skillMonitor.buff.display.classicText": "テキスト Buff クラシックスタイル",
-  "skillMonitor.buff.display.maxTextBuffs": "テキストのみ Buff の最大表示数: {count}",
+  "skillMonitor.buff.display.maxTextBuffs":
+    "テキストのみ Buff の最大表示数: {count}",
   "skillMonitor.buff.priority.globalTitle": "グローバル Buff 優先度",
   "skillMonitor.buff.priority.globalPlaceholder":
     "検索してグローバル優先度に追加",
   "skillMonitor.buff.priority.globalEmpty":
     "グローバル優先度に追加できる Buff がありません",
   "skillMonitor.buff.priority.groupTitle": "グループ優先度",
-  "skillMonitor.buff.priority.groupPlaceholder":
-    "検索して優先度リストに追加",
-  "skillMonitor.buff.priority.groupEmpty": "優先度に追加できる Buff がありません",
+  "skillMonitor.buff.priority.groupPlaceholder": "検索して優先度リストに追加",
+  "skillMonitor.buff.priority.groupEmpty":
+    "優先度に追加できる Buff がありません",
   "skillMonitor.buff.alert.title": "Buff カウントダウンアラート",
   "skillMonitor.buff.alert.description":
     "重要な Buff の残り時間しきい値を設定します。該当 Buff はオーバーレイでハイライトされます。",
@@ -1054,12 +1039,12 @@ export const jaJPMessages = {
   "skillMonitor.style.progressColor": "プログレス色",
   "skillMonitor.style.progressOpacity": "プログレス不透明度: {value}%",
   "skillMonitor.panelAttr.title": "キャラクターパネル",
-  "skillMonitor.panelAttr.enabledSummary":
-    "{enabled}/{total} 属性を有効化",
+  "skillMonitor.panelAttr.enabledSummary": "{enabled}/{total} 属性を有効化",
   "skillMonitor.panelAttr.displayColor": "表示色",
   "skillMonitor.panelAttr.rowOrder": "行の順序",
   "skillMonitor.panelAttr.noRows": "並べ替え可能な行がありません",
-  "skillMonitor.customPanel.status.currentGroupAdded": "現在のグループに追加済み",
+  "skillMonitor.customPanel.status.currentGroupAdded":
+    "現在のグループに追加済み",
   "skillMonitor.customPanel.status.alreadyIn": "すでに {name} に存在",
   "skillMonitor.customPanel.title": "カスタムモニターエリア",
   "skillMonitor.customPanel.description":
@@ -1073,10 +1058,13 @@ export const jaJPMessages = {
     "ファクタースロットのカスタム表示名を設定。スロットテンプレートごとに保存され、そのスロットが表示される限りビルド切替後も維持されます。",
   "skillMonitor.customPanel.factorSlots.currentList": "設定済み",
   "skillMonitor.customPanel.factorSlots.searchTitle": "検索と設定",
-  "skillMonitor.customPanel.factorSlots.searchPlaceholder": "ファクタースロットを検索（名前 / 説明）",
-  "skillMonitor.customPanel.factorSlots.noMatch": "一致するファクタースロットがありません",
+  "skillMonitor.customPanel.factorSlots.searchPlaceholder":
+    "ファクタースロットを検索（名前 / 説明）",
+  "skillMonitor.customPanel.factorSlots.noMatch":
+    "一致するファクタースロットがありません",
   "skillMonitor.customPanel.factorSlots.defaultName": "デフォルト: {name}",
-  "skillMonitor.customPanel.factorSlots.customNamePlaceholder": "カスタム表示名",
+  "skillMonitor.customPanel.factorSlots.customNamePlaceholder":
+    "カスタム表示名",
   "skillMonitor.customPanel.factorSlots.clear": "クリア",
   "skillMonitor.customPanel.currentEditing": "編集中: {name}",
   "skillMonitor.customPanel.chooseOrCreate": "モニターエリアを選択または作成",
@@ -1111,7 +1099,8 @@ export const jaJPMessages = {
   "skillMonitor.customPanel.entries.title": "現在のグループエントリ",
   "skillMonitor.customPanel.entries.empty":
     "現在のモニターエリアにエントリがありません",
-  "skillMonitor.customPanel.entries.sourceCounter": "ソース: カウンター - {name}",
+  "skillMonitor.customPanel.entries.sourceCounter":
+    "ソース: カウンター - {name}",
   "skillMonitor.customPanel.entries.sourceBuff": "ソース: Buff - {name}",
   "skillMonitor.customPanel.entries.labelPlaceholder": "表示名",
   "skillMonitor.customPanel.hideWhenZero": "カウントが 0 のとき非表示",
@@ -1157,6 +1146,7 @@ export const jaJPMessages = {
   "monsterMonitor.tabs.buff": "Buff モニター",
   "monsterMonitor.tabs.teammate": "味方 Buff",
   "monsterMonitor.tabs.hate": "ヘイトリスト",
+  "monsterMonitor.tabs.fantasy": "味方幻想",
   "monsterMonitor.tabs.overlay": "ウィンドウを有効化",
   "monsterMonitor.buffSearch.title": "Buff 検索と選択",
   "monsterMonitor.buffSearch.self": "検索して自己付与を追加",
@@ -1189,6 +1179,15 @@ export const jaJPMessages = {
   "monsterMonitor.teammate.emptySearch": "一致する味方 Buff がありません",
   "monsterMonitor.teammate.groupTitle": "モニター中の味方 Buff",
   "monsterMonitor.teammate.styleTitle": "味方 Buff マトリクススタイル",
+  "monsterMonitor.fantasy.title": "味方幻想",
+  "monsterMonitor.fantasy.description":
+    "味方が発動した共鳴スキル召喚モンスター。",
+  "monsterMonitor.fantasy.showAll": "すべての味方幻想を表示",
+  "monsterMonitor.fantasy.placeholder": "味方幻想名または MonsterId を検索",
+  "monsterMonitor.fantasy.emptySearch": "一致する味方幻想がありません",
+  "monsterMonitor.fantasy.groupTitle": "味方幻想",
+  "monsterMonitor.fantasy.empty": "味方幻想は未追加です",
+  "monsterMonitor.fantasy.styleTitle": "味方幻想パネルスタイル",
   "monsterMonitor.priority.title": "Buff 優先度",
   "monsterMonitor.priority.description":
     "モンスター Buff の表示順序をカスタマイズ。リストの上位 Buff が先に表示されます。",
@@ -1203,7 +1202,8 @@ export const jaJPMessages = {
   "monsterMonitor.alert.title": "Buff カウントダウンアラート",
   "monsterMonitor.alert.description":
     "モンスター Buff ごとに残り時間しきい値を設定。該当行はオーバーレイでハイライトされます。",
-  "monsterMonitor.alert.addPlaceholder": "モニター中の Buff を検索してアラートを追加",
+  "monsterMonitor.alert.addPlaceholder":
+    "モニター中の Buff を検索してアラートを追加",
   "monsterMonitor.alert.emptySearch":
     "追加できる Buff がありません。先に上でモニターに追加し、重複を避けてください。",
   "monsterMonitor.alert.empty": "モンスター Buff アラートが設定されていません",
@@ -1237,6 +1237,7 @@ export const jaJPMessages = {
   "monsterMonitor.overlay.monsterBuff": "モンスター Buff エリア: {state}",
   "monsterMonitor.overlay.teammateBuff": "味方 Buff エリア: {state}",
   "monsterMonitor.overlay.hate": "ヘイトリストエリア: {state}",
+  "monsterMonitor.overlay.fantasy": "味方幻想エリア: {state}",
   "monsterMonitor.overlay.state.show": "表示",
   "monsterMonitor.overlay.state.hide": "非表示",
   "monsterMonitor.overlay.help": "ボタンをクリックして表示を切替。",
@@ -1253,12 +1254,14 @@ export const jaJPMessages = {
   "monsterOverlay.buffGroupTag": "モンスター Buff エリア",
   "monsterOverlay.teammateGroupTag": "味方 Buff エリア",
   "monsterOverlay.hateGroupTag": "ヘイトエリア",
+  "monsterOverlay.fantasyGroupTag": "味方幻想エリア",
   "monsterOverlay.hateSectionTitle": "{title} - ヘイト",
   "monsterOverlay.placeholder.selectBuff":
     "モンスターモニターページで Buff を選択",
   "monsterOverlay.placeholder.preview": "プレビュー",
   "monsterOverlay.placeholder.target": "ターゲット {uid}",
   "monsterOverlay.placeholder.teammate": "味方プレビュー",
+  "monsterOverlay.placeholder.fantasy": "幻想プレビュー",
   "monsterOverlay.placeholder.buffName": "サンプル Buff",
   "monsterOverlay.entity.uid": "UID {uid}",
   "monsterOverlay.teammate.nameHeader": "味方",
@@ -1274,7 +1277,8 @@ export const jaJPMessages = {
   "gameOverlay.edit.resetPosition": "位置をリセット",
   "gameOverlay.edit.resetSize": "サイズをリセット",
   "gameOverlay.edit.done": "完了",
-  "gameOverlay.edit.dragHint": "ここをドラッグして Game Overlay ウィンドウを移動",
+  "gameOverlay.edit.dragHint":
+    "ここをドラッグして Game Overlay ウィンドウを移動",
   "gameOverlay.group.resource": "リソースエリア",
   "gameOverlay.group.skillCd": "スキル CD エリア",
   "gameOverlay.group.textBuff": "テキスト Buff エリア",

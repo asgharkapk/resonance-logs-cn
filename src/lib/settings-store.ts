@@ -224,11 +224,15 @@ function normalizeColumnOrder(
   return normalized;
 }
 
-export function normalizeTankedPlayerColumnOrder(order: readonly string[] | undefined) {
+export function normalizeTankedPlayerColumnOrder(
+  order: readonly string[] | undefined,
+) {
   return normalizeColumnOrder(order, DEFAULT_TANKED_PLAYER_COLUMN_ORDER);
 }
 
-export function normalizeTankedSkillColumnOrder(order: readonly string[] | undefined) {
+export function normalizeTankedSkillColumnOrder(
+  order: readonly string[] | undefined,
+) {
   return normalizeColumnOrder(order, DEFAULT_TANKED_SKILL_COLUMN_ORDER);
 }
 
@@ -599,18 +603,21 @@ export type MonsterOverlayPositions = {
   monsterBuffPanel: Point;
   teammateBuffPanel: Point;
   hatePanel: Point;
+  fantasyPanel: Point;
 };
 
 export type MonsterOverlaySizes = {
   monsterBuffPanelScale: number;
   teammateBuffPanelScale: number;
   hatePanelScale: number;
+  fantasyPanelScale: number;
 };
 
 export type MonsterOverlayVisibility = {
   showMonsterBuffPanel: boolean;
   showTeammateBuffPanel: boolean;
   showHatePanel: boolean;
+  showFantasyPanel: boolean;
 };
 
 export type BuffAlertRule = {
@@ -633,6 +640,9 @@ export type MonsterMonitorConfig = {
   teammateBuffIds: number[];
   teammateBuffCategories?: BuffCategoryKey[];
   teammateBuffColumnOrder?: TeammateBuffColumnKey[];
+  fantasyWhitelistMonsterIds: number[];
+  fantasyMonsterAliases: Record<string, string>;
+  fantasyShowAll: boolean;
   buffPriorityIds: number[];
   buffAliases: BuffAliasMap;
   buffAlerts: BuffAlertMap;
@@ -642,6 +652,7 @@ export type MonsterMonitorConfig = {
   panelStyle: CustomPanelStyle;
   teammatePanelStyle: TeammatePanelStyle;
   hatePanelStyle: CustomPanelStyle;
+  fantasyPanelStyle: CustomPanelStyle;
 };
 
 export type TextBuffPanelDisplayMode = "modern" | "classic";
@@ -854,6 +865,7 @@ function createDefaultMonsterOverlayPositions(): MonsterOverlayPositions {
     monsterBuffPanel: { x: 40, y: 40 },
     teammateBuffPanel: { x: 420, y: 40 },
     hatePanel: { x: 40, y: 300 },
+    fantasyPanel: { x: 420, y: 300 },
   };
 }
 
@@ -862,6 +874,7 @@ function createDefaultMonsterOverlaySizes(): MonsterOverlaySizes {
     monsterBuffPanelScale: 1,
     teammateBuffPanelScale: 1,
     hatePanelScale: 1,
+    fantasyPanelScale: 1,
   };
 }
 
@@ -870,6 +883,7 @@ function createDefaultMonsterOverlayVisibility(): MonsterOverlayVisibility {
     showMonsterBuffPanel: true,
     showTeammateBuffPanel: true,
     showHatePanel: true,
+    showFantasyPanel: false,
   };
 }
 
@@ -908,7 +922,9 @@ export function ensureTeammatePanelStyle(
       Math.min(
         48,
         Math.round(
-          style && "rowHeight" in style ? (style.rowHeight ?? base.rowHeight) : base.rowHeight,
+          style && "rowHeight" in style
+            ? (style.rowHeight ?? base.rowHeight)
+            : base.rowHeight,
         ),
       ),
     ),
@@ -1029,6 +1045,9 @@ export function createDefaultMonsterMonitorConfig(): MonsterMonitorConfig {
     teammateBuffIds: [],
     teammateBuffCategories: [],
     teammateBuffColumnOrder: [],
+    fantasyWhitelistMonsterIds: [],
+    fantasyMonsterAliases: {},
+    fantasyShowAll: false,
     buffPriorityIds: [],
     buffAliases: {},
     buffAlerts: {},
@@ -1038,6 +1057,7 @@ export function createDefaultMonsterMonitorConfig(): MonsterMonitorConfig {
     panelStyle: createDefaultCustomPanelStyle(),
     teammatePanelStyle: createDefaultTeammatePanelStyle(),
     hatePanelStyle: createDefaultCustomPanelStyle(),
+    fantasyPanelStyle: createDefaultCustomPanelStyle(),
   };
 }
 

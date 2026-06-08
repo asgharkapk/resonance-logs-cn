@@ -1,9 +1,14 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { BuffUpdateState, HateEntry } from "$lib/api";
+import type {
+  BuffUpdateState,
+  HateEntry,
+  TeammateFantasyState,
+} from "$lib/api";
 import type { EntityId } from "$lib/entity-id";
 import type {
   MonsterBossBuffSection,
   MonsterDragState,
+  MonsterFantasyRow,
   MonsterHateSection,
   MonsterTeammateBuffColumn,
   MonsterTeammateBuffRow,
@@ -21,10 +26,12 @@ export const monsterRuntime = $state({
   bossBuffMap: new Map<EntityId, Map<number, BuffUpdateState>>(),
   teammateBuffMap: new Map<EntityId, Map<number, BuffUpdateState>>(),
   bossHateMap: new Map<EntityId, HateEntry[]>(),
+  fantasyEntries: [] as TeammateFantasyState[],
   bossSections: [] as MonsterBossBuffSection[],
   teammateColumns: [] as MonsterTeammateBuffColumn[],
   teammateRows: [] as MonsterTeammateBuffRow[],
   hateSections: [] as MonsterHateSection[],
+  fantasyRows: [] as MonsterFantasyRow[],
   isEditing: false,
   // True while this overlay is shown beneath the game-overlay as its reference
   // layer (passive role). Driven by the "monster-overlay-reference-toggle" event.
@@ -39,6 +46,10 @@ export function monsterBossSections() {
 
 export function monsterHateSections() {
   return monsterRuntime.hateSections;
+}
+
+export function monsterFantasyRows() {
+  return monsterRuntime.fantasyRows;
 }
 
 export function monsterTeammateRows() {

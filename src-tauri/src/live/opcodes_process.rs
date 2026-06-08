@@ -23,6 +23,7 @@ use std::default::Default;
 
 /// Attr ID for the shield display data (nested protobuf with current/max shield values).
 const ATTR_SHIELD_DISPLAY: i32 = 60050;
+const RESONANCE_FANTASY_MARKER_BUFF_ID: i32 = 2_199_999;
 
 /// Parses packed varints from ATTR_FIGHT_RESOURCES (50002) raw data.
 /// The raw data is expected to be a protobuf message with field 1 containing packed varints.
@@ -202,9 +203,26 @@ pub(crate) fn should_overwrite_entity_type(existing: EEntityType, observed: EEnt
     true
 }
 
+#[derive(Debug, Clone)]
+pub struct TeammateFantasyDetection {
+    pub summon_uuid: i64,
+    pub summoner_uuid: i64,
+    pub monster_id: i32,
+    pub remodel_level: i64,
+}
+
 #[derive(Debug, Default)]
 pub struct SyncNearEntitiesProcessResult {
     pub initial_buff_snapshots: Vec<(i64, blueprotobuf::BuffInfoSync)>,
+    pub teammate_fantasies: Vec<TeammateFantasyDetection>,
+}
+
+fn has_resonance_fantasy_marker(buff_infos: Option<&blueprotobuf::BuffInfoSync>) -> bool {
+    buff_infos.is_some_and(|sync| {
+        sync.buff_infos
+            .iter()
+            .any(|buff| buff.base_id == Some(RESONANCE_FANTASY_MARKER_BUFF_ID))
+    })
 }
 
 pub fn process_sync_near_entities(
@@ -217,7 +235,10 @@ pub fn process_sync_near_entities(
     for pkt_entity in sync_near_entities.appear {
         let target_uuid = pkt_entity.uuid?;
         let initial_buff_infos = pkt_entity.buff_infos;
-        let target_entity_type = EEntityType::from(target_uuid);
+        let target_entity_type = pkt_entity
+            .ent_type
+            .and_then(|value| EEntityType::try_from(value).ok())
+            .unwrap_or_else(|| EEntityType::from(target_uuid));
         let target_entity = match encounter.entity_uuid_to_entity.entry(target_uuid) {
             Entry::Occupied(mut entry) => {
                 let existing_type = entry.get().entity_type;
@@ -238,6 +259,12 @@ pub fn process_sync_near_entities(
             }
             Entry::Vacant(entry) => entry.insert(Entity::new(target_uuid, target_entity_type)),
         };
+        info!(
+            target: "app::live",
+            "SyncNearEntities: target_uuid={:?} target_entity_type={:?}",
+            target_uuid,
+            target_entity_type
+        );
 
         let attr_collection = pkt_entity.attrs?;
         match target_entity_type {
@@ -251,6 +278,15 @@ pub fn process_sync_near_entities(
                     &attr_collection.attrs,
                     attr_store,
                 );
+                if has_resonance_fantasy_marker(initial_buff_infos.as_ref()) {
+                    if let Some(detection) = collect_teammate_fantasy_detection(
+                        attr_store,
+                        target_uuid,
+                        attr_store.local_player_uuid(),
+                    ) {
+                        result.teammate_fantasies.push(detection);
+                    }
+                }
             }
             _ => {}
         }
@@ -264,6 +300,48 @@ pub fn process_sync_near_entities(
 
     // Track party members for wipe detection (collect data first to avoid borrow issues)
     Some(result)
+}
+
+fn collect_teammate_fantasy_detection(
+    attr_store: &EntityAttrStore,
+    target_uuid: i64,
+    local_player_uuid: i64,
+) -> Option<TeammateFantasyDetection> {
+    let summoner_uuid = attr_store
+        .attr(target_uuid, AttrType::TopSummonerId)
+        .and_then(AttrValue::as_int)?;
+    if summoner_uuid == 0 || summoner_uuid == local_player_uuid {
+        return None;
+    }
+
+    let monster_id = attr_store
+        .attr(target_uuid, AttrType::MonsterId)
+        .and_then(AttrValue::as_int)
+        .and_then(|value| i32::try_from(value).ok())?;
+    if monster_id <= 0 {
+        return None;
+    }
+
+    let remodel_level = attr_store
+        .attr(target_uuid, AttrType::SkillRemodelLevel)
+        .and_then(AttrValue::as_int)
+        .unwrap_or(0);
+
+    info!(
+        target: "app::live",
+        "CollectTeammateFantasyDetection: summon_uuid=0x{:x} summoner_uuid=0x{:x} monster_id={} remodel_level={}",
+        target_uuid,
+        summoner_uuid,
+        monster_id,
+        remodel_level
+    );
+
+    Some(TeammateFantasyDetection {
+        summon_uuid: target_uuid,
+        summoner_uuid,
+        monster_id,
+        remodel_level,
+    })
 }
 
 pub fn process_sync_container_data(

@@ -356,6 +356,23 @@ pub struct TeammateBuffUpdatePayload {
     pub teammate_buffs: HashMap<String, Vec<BuffUpdateState>>,
 }
 
+#[derive(serde::Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TeammateFantasyState {
+    pub summon_uuid: String,
+    pub summoner_uuid: String,
+    pub summoner_name: Option<String>,
+    pub monster_id: i32,
+    pub remodel_level: i64,
+    pub detected_at_ms: i64,
+}
+
+#[derive(serde::Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TeammateFantasyUpdatePayload {
+    pub fantasies: Vec<TeammateFantasyState>,
+}
+
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct HateEntry {

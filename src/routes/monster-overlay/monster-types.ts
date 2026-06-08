@@ -50,15 +50,26 @@ export type MonsterTeammateBuffDisplay = {
   rows: MonsterTeammateBuffRow[];
 };
 
+export type MonsterFantasyRow = {
+  key: string;
+  summonUuid: EntityId;
+  summonerName: string;
+  fantasyName: string;
+  levelText: string;
+  isPlaceholder?: boolean;
+};
+
 export type MonsterDragTarget =
   | { kind: "buffPanel" }
   | { kind: "teammatePanel" }
-  | { kind: "hatePanel" };
+  | { kind: "hatePanel" }
+  | { kind: "fantasyPanel" };
 
 export type MonsterResizeTarget =
   | { kind: "buffPanel" }
   | { kind: "teammatePanel" }
-  | { kind: "hatePanel" };
+  | { kind: "hatePanel" }
+  | { kind: "fantasyPanel" };
 
 export type MonsterDragState = {
   target: MonsterDragTarget;

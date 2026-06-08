@@ -5,7 +5,7 @@ use crate::live::buff_monitor::{
 };
 use crate::live::commands_models::{
     CounterUpdateState, FightResourceEntry, FightResourceState, PanelAttrState, ShieldDetailEntry,
-    SkillCdState, TrainingDummyState, to_death_record,
+    SkillCdState, TeammateFantasyState, TrainingDummyState, to_death_record,
 };
 use crate::live::counter_tracker::{BuffCounterTracker, CounterRule};
 use crate::live::dungeon_log::{BattleStateMachine, EncounterResetReason};
@@ -1209,6 +1209,33 @@ impl AppStateManager {
             warn!("Error processing SyncNearEntities.. ignoring.");
             return;
         };
+
+        let detected_at_ms = now_ms();
+        let teammate_fantasies = result
+            .teammate_fantasies
+            .into_iter()
+            .map(|fantasy| {
+                let summoner_entity = state
+                    .encounter
+                    .entity_uuid_to_entity
+                    .get(&fantasy.summoner_uuid);
+                TeammateFantasyState {
+                    summon_uuid: entity_uuid_string(fantasy.summon_uuid),
+                    summoner_uuid: entity_uuid_string(fantasy.summoner_uuid),
+                    summoner_name: resolve_known_player_display_name(
+                        fantasy.summoner_uuid,
+                        summoner_entity,
+                        &state.attr_store,
+                    ),
+                    monster_id: fantasy.monster_id,
+                    remodel_level: fantasy.remodel_level,
+                    detected_at_ms,
+                }
+            })
+            .collect();
+        state
+            .event_manager
+            .emit_teammate_fantasy_update(teammate_fantasies);
 
         for (target_uuid, buff_infos) in result.initial_buff_snapshots {
             let Some(kind) = classify_buff_effect_target(state, target_uuid) else {

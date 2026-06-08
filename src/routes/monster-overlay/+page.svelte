@@ -3,6 +3,7 @@
   import { SETTINGS } from "$lib/settings-store";
   import EditBanner from "./EditBanner.svelte";
   import MonsterBuffPanel from "./MonsterBuffPanel.svelte";
+  import MonsterFantasyPanel from "./MonsterFantasyPanel.svelte";
   import MonsterHatePanel from "./MonsterHatePanel.svelte";
   import MonsterTeammateBuffPanel from "./MonsterTeammateBuffPanel.svelte";
   import {
@@ -35,6 +36,9 @@
   {/if}
   {#if hateEnabled}
     <MonsterHatePanel />
+  {/if}
+  {#if visibility.showFantasyPanel}
+    <MonsterFantasyPanel />
   {/if}
 </div>
 

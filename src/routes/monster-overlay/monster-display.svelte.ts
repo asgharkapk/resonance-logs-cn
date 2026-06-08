@@ -13,7 +13,11 @@ import {
   getGlobalBuffAliases,
   type TeammateBuffColumnKey,
 } from "$lib/settings-store";
-import type { BuffUpdateState, HateEntry } from "$lib/api";
+import type {
+  BuffUpdateState,
+  HateEntry,
+  TeammateFantasyState,
+} from "$lib/api";
 import {
   buildBuffTextRow,
   resolveAlertState,
@@ -25,10 +29,13 @@ import {
 } from "./monster-runtime.svelte.js";
 import type {
   MonsterBossBuffSection,
+  MonsterFantasyRow,
   MonsterHateSection,
   MonsterTeammateBuffColumn,
   MonsterTeammateBuffRow,
 } from "./monster-types";
+
+const FANTASY_DISPLAY_TTL_MS = 5000;
 
 type TeammateColumnDefinition =
   | {
@@ -275,6 +282,89 @@ function resolveEntityDisplayName(entityUuid: EntityId): string {
   return t("monsterOverlay.entity.uid", { uid: uidFromEntityUuid(entityUuid) });
 }
 
+function stripFantasySuffix(name: string): string {
+  const separatorIndex = name.indexOf("-");
+  return (
+    (separatorIndex >= 0 ? name.slice(0, separatorIndex) : name).trim() || name
+  );
+}
+
+function resolveFantasyName(monsterId: number): string {
+  const alias =
+    SETTINGS.monsterMonitor.state.fantasyMonsterAliases?.[
+      String(monsterId)
+    ]?.trim();
+  if (alias) return alias;
+  return stripFantasySuffix(resolveMonsterName(monsterId));
+}
+
+function isResonanceFantasyMonsterId(monsterId: number): boolean {
+  return /^300\d{4}$/.test(String(monsterId));
+}
+
+function buildFantasyPlaceholderRows(): MonsterFantasyRow[] {
+  return [
+    {
+      key: "fantasy_preview_1",
+      summonUuid: "fantasy_preview_1",
+      summonerName: t("monsterOverlay.placeholder.teammate"),
+      fantasyName: t("monsterOverlay.placeholder.fantasy"),
+      levelText: "Lv3",
+      isPlaceholder: true,
+    },
+    {
+      key: "fantasy_preview_2",
+      summonUuid: "fantasy_preview_2",
+      summonerName: t("monsterOverlay.placeholder.teammate"),
+      fantasyName: t("monsterOverlay.placeholder.fantasy"),
+      levelText: "Lv2",
+      isPlaceholder: true,
+    },
+  ];
+}
+
+function buildFantasyRows(now: number): MonsterFantasyRow[] {
+  const latestBySummon = new Map<EntityId, TeammateFantasyState>();
+  for (const entry of monsterRuntime.fantasyEntries) {
+    if (entry.detectedAtMs + FANTASY_DISPLAY_TTL_MS <= now) continue;
+    const existing = latestBySummon.get(entry.summonUuid);
+    if (!existing || entry.detectedAtMs >= existing.detectedAtMs) {
+      latestBySummon.set(entry.summonUuid, entry);
+    }
+  }
+
+  const activeEntries = [...latestBySummon.values()].sort(
+    (left, right) => right.detectedAtMs - left.detectedAtMs,
+  );
+  monsterRuntime.fantasyEntries = activeEntries;
+
+  const state = SETTINGS.monsterMonitor.state;
+  const whitelist = new Set(state.fantasyWhitelistMonsterIds ?? []);
+  const fantasyEntries = activeEntries.filter((entry) =>
+    isResonanceFantasyMonsterId(entry.monsterId),
+  );
+  const filteredEntries =
+    state.fantasyShowAll === true
+      ? fantasyEntries
+      : fantasyEntries.filter((entry) => whitelist.has(entry.monsterId));
+
+  return filteredEntries.map((entry) => {
+    const summonerName =
+      entry.summonerName ||
+      monsterRuntime.playerNameCache.get(entry.summonerUuid) ||
+      t("monsterOverlay.entity.uid", {
+        uid: uidFromEntityUuid(entry.summonerUuid),
+      });
+    return {
+      key: `fantasy_${entry.summonUuid}`,
+      summonUuid: entry.summonUuid,
+      summonerName,
+      fantasyName: resolveFantasyName(entry.monsterId),
+      levelText: `Lv${entry.remodelLevel}`,
+    };
+  });
+}
+
 function resolveMonsterSectionTitle(entityUuid: EntityId): string {
   const monsterId = monsterRuntime.monsterIdCache.get(entityUuid);
   if (monsterId !== undefined) return resolveMonsterName(monsterId);
@@ -371,6 +461,7 @@ export function updateMonsterDisplay() {
   const nextSections: MonsterBossBuffSection[] = [];
   const nextTeammateRows: MonsterTeammateBuffRow[] = [];
   const nextHateSections: MonsterHateSection[] = [];
+  let nextFantasyRows = buildFantasyRows(now);
 
   const sortedBossUids = Array.from(monsterRuntime.bossBuffMap.keys()).sort();
 
@@ -563,6 +654,10 @@ export function updateMonsterDisplay() {
     });
   }
 
+  if (nextFantasyRows.length === 0 && isMonsterLayoutScaffold()) {
+    nextFantasyRows = buildFantasyPlaceholderRows();
+  }
+
   monsterRuntime.bossSections = nextSections;
   if (nextTeammateRows.length > 0) {
     const filteredTeammates = filterInactiveTeammateColumns(
@@ -578,5 +673,6 @@ export function updateMonsterDisplay() {
       : [];
   }
   monsterRuntime.hateSections = nextHateSections;
+  monsterRuntime.fantasyRows = nextFantasyRows;
   monsterRuntime.rafId = requestAnimationFrame(updateMonsterDisplay);
 }

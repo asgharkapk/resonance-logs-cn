@@ -82,7 +82,8 @@ pub enum AttrType {
     MovementSpeed,
     EquipmentSlot1,
     EquipmentSlot2,
-    TalentSpec,
+    SkillRemodelLevel,
+    TopSummonerId,
     EliteStatus,
     ProfessionId,
     BuffSlot3,
@@ -156,7 +157,8 @@ impl AttrType {
             attr_type::ATTR_MOVEMENT_SPEED => Some(AttrType::MovementSpeed),
             attr_type::ATTR_EQUIPMENT_SLOT_1 => Some(AttrType::EquipmentSlot1),
             attr_type::ATTR_EQUIPMENT_SLOT_2 => Some(AttrType::EquipmentSlot2),
-            attr_type::ATTR_TALENT_SPEC => Some(AttrType::TalentSpec),
+            attr_type::ATTR_SKILL_REMODEL_LEVEL => Some(AttrType::SkillRemodelLevel),
+            attr_type::ATTR_TOP_SUMMONER_ID => Some(AttrType::TopSummonerId),
             attr_type::ATTR_ELITE_STATUS => Some(AttrType::EliteStatus),
             attr_type::ATTR_PROFESSION_ID => Some(AttrType::ProfessionId),
             attr_type::ATTR_BUFF_SLOT_3 => Some(AttrType::BuffSlot3),
@@ -227,7 +229,8 @@ impl AttrType {
             AttrType::MovementSpeed => attr_type::ATTR_MOVEMENT_SPEED,
             AttrType::EquipmentSlot1 => attr_type::ATTR_EQUIPMENT_SLOT_1,
             AttrType::EquipmentSlot2 => attr_type::ATTR_EQUIPMENT_SLOT_2,
-            AttrType::TalentSpec => attr_type::ATTR_TALENT_SPEC,
+            AttrType::SkillRemodelLevel => attr_type::ATTR_SKILL_REMODEL_LEVEL,
+            AttrType::TopSummonerId => attr_type::ATTR_TOP_SUMMONER_ID,
             AttrType::EliteStatus => attr_type::ATTR_ELITE_STATUS,
             AttrType::ProfessionId => attr_type::ATTR_PROFESSION_ID,
             AttrType::BuffSlot3 => attr_type::ATTR_BUFF_SLOT_3,
@@ -533,7 +536,8 @@ pub mod attr_type {
     pub const ATTR_MOVEMENT_SPEED: i32 = 0x74; // Movement or action speed
     pub const ATTR_EQUIPMENT_SLOT_1: i32 = 0x76; // Equipment slot data
     pub const ATTR_EQUIPMENT_SLOT_2: i32 = 0x78; // Equipment slot data
-    pub const ATTR_TALENT_SPEC: i32 = 0x79; // Talent tree/specialization selection
+    pub const ATTR_TOP_SUMMONER_ID: i32 = 0x5b; // AttrTopSummonerId
+    pub const ATTR_SKILL_REMODEL_LEVEL: i32 = 0x79; // AttrSkillRemodelLevel
     pub const ATTR_ELITE_STATUS: i32 = 0xb6; // Elite/premium/special status flag
     pub const ATTR_PROFESSION_ID: i32 = 0xdc;
     pub const ATTR_BUFF_SLOT_3: i32 = 0xe2; // Active buff/consumable slot (type 3)

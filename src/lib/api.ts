@@ -140,6 +140,19 @@ export type TeammateBuffUpdatePayload = {
   teammateBuffs: Record<string, BuffUpdateState[]>;
 };
 
+export type TeammateFantasyState = {
+  summonUuid: string;
+  summonerUuid: string;
+  summonerName?: string | null;
+  monsterId: number;
+  remodelLevel: number;
+  detectedAtMs: number;
+};
+
+export type TeammateFantasyUpdatePayload = {
+  fantasies: TeammateFantasyState[];
+};
+
 export type HateEntry = {
   entityUuid: string;
   hateVal: number;
@@ -292,6 +305,11 @@ export const onTeammateBuffUpdate = (
   handler: (event: Event<TeammateBuffUpdatePayload>) => void,
 ): Promise<UnlistenFn> =>
   listen<TeammateBuffUpdatePayload>("teammate-buff-update", handler);
+
+export const onTeammateFantasyUpdate = (
+  handler: (event: Event<TeammateFantasyUpdatePayload>) => void,
+): Promise<UnlistenFn> =>
+  listen<TeammateFantasyUpdatePayload>("teammate-fantasy-update", handler);
 
 export const onHateListUpdate = (
   handler: (event: Event<HateListUpdatePayload>) => void,
