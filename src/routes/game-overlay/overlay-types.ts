@@ -10,6 +10,9 @@ export type SkillDisplay = {
   percent: number;
   text: string;
   chargesText?: string;
+  usable: boolean;
+  chargesAvailable?: number;
+  maxCharges?: number;
 };
 
 export type BuffAlertState = {

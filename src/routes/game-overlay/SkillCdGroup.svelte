@@ -67,15 +67,21 @@
           skill.resourceRequirement.amount
         : false}
       {@const isOnCd = effectiveDisplay?.isActive ?? false}
-      {@const isUnavailable = isOnCd || resourceBlocked}
+      {@const isUsable = effectiveDisplay?.usable ?? true}
+      {@const isUnavailable = !isUsable || resourceBlocked}
+      {@const isRechargingUsable = isOnCd && isUsable}
       {@const percent = isOnCd ? (effectiveDisplay?.percent ?? 0) : 0}
       {@const displayText = effectiveDisplay?.text ?? ""}
+      {@const chargesAvailable = effectiveDisplay?.chargesAvailable}
+      {@const maxCharges = effectiveDisplay?.maxCharges}
+      {@const chargesText = effectiveDisplay?.chargesText}
 
       <div
         class="skill-cell"
         class:empty={!skillId}
         class:on-cd={isOnCd}
         class:derived-active={isDerivedActive}
+        class:usable-recharging={isRechargingUsable}
       >
         {#if displaySkill?.imagePath}
           <img
@@ -88,16 +94,30 @@
           <div class="skill-fallback">#{skillId}</div>
         {/if}
 
-        {#if effectiveDisplay?.chargesText}
-          <div class="charges-badge">{effectiveDisplay.chargesText}</div>
+        {#if chargesText}
+          {@const isFull = chargesAvailable !== undefined && maxCharges !== undefined && chargesAvailable >= maxCharges}
+          {@const hasCharges = chargesAvailable !== undefined && chargesAvailable > 0}
+          <div
+            class="charges-badge"
+            class:charges-full={isFull}
+            class:charges-partial={hasCharges && !isFull}
+            class:charges-empty={chargesAvailable !== undefined && chargesAvailable === 0}
+          >{chargesText}</div>
         {/if}
 
-        {#if isOnCd}
+        {#if isUnavailable && isOnCd}
           <div class="cd-overlay" style={`--cd-percent: ${percent}`}>
             {#if displayText}
               <span class="cd-text">{displayText}</span>
             {/if}
           </div>
+        {:else if isRechargingUsable}
+          <div class="recharge-bar-wrap">
+            <div class="recharge-bar" style={`--recharge-pct: ${(1 - percent) * 100}%`}></div>
+          </div>
+          {#if displayText}
+            <span class="recharge-text">{displayText}</span>
+          {/if}
         {/if}
       </div>
     {/each}
@@ -170,6 +190,7 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
+  /* Fully unavailable (on CD / charges depleted): full-cell darkening overlay */
   .cd-overlay {
     position: absolute;
     inset: 0;
@@ -177,28 +198,83 @@
     align-items: center;
     justify-content: center;
     background: conic-gradient(
-      rgba(0, 0, 0, 0.65) calc(var(--cd-percent) * 360deg),
+      rgba(0, 0, 0, 0.7) calc(var(--cd-percent) * 360deg),
       transparent calc(var(--cd-percent) * 360deg)
     );
   }
 
   .cd-text {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: #ffffff;
-    text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.55);
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 1),
+      0 0 6px rgba(0, 0, 0, 0.8);
   }
 
+  /* Usable but recharging: thin bottom progress bar, icon stays bright */
+  .recharge-bar-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 0 0 5px 5px;
+    overflow: hidden;
+  }
+
+  .recharge-bar {
+    height: 100%;
+    width: var(--recharge-pct);
+    background: linear-gradient(90deg, #60a5fa, #93c5fd);
+    border-radius: 0 0 5px 5px;
+    transition: width 200ms linear;
+  }
+
+  .recharge-text {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.5);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 1);
+    white-space: nowrap;
+  }
+
+  /* Charges badge: color-coded by available count */
   .charges-badge {
     position: absolute;
     right: 3px;
-    bottom: 3px;
-    padding: 1px 4px;
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.65);
+    top: 3px;
+    padding: 2px 5px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.7);
     color: #ffffff;
-    font-size: 9px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     line-height: 1;
+  }
+
+  .charges-badge.charges-full {
+    color: #34d399;
+  }
+
+  .charges-badge.charges-partial {
+    color: #fbbf24;
+  }
+
+  .charges-badge.charges-empty {
+    color: #94a3b8;
   }
 </style>
