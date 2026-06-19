@@ -3,6 +3,8 @@ import { SvelteMap } from "svelte/reactivity";
 import type { MinimapSkillCast, MinimapSnapshot } from "$lib/api";
 import type { EntityId } from "$lib/entity-id";
 
+const MAX_SKILL_CAST_LOG = 64;
+
 /**
  * Reactive runtime state for the minimap overlay window.
  *
@@ -16,7 +18,8 @@ export const minimapRuntime = $state({
   isMounted: false,
   isEditing: false,
   snapshot: null as MinimapSnapshot | null,
-  skillCasts: [] as MinimapSkillCast[],
+  lastSceneId: null as number | null,
+  skillCastLog: [] as MinimapSkillCast[],
   playerNameCache: new SvelteMap<EntityId, string>(),
 });
 
@@ -32,6 +35,18 @@ export function minimapPlayerNames() {
   return minimapRuntime.playerNameCache;
 }
 
+export function minimapSkillCasts() {
+  return minimapRuntime.skillCastLog;
+}
+
+export function clearSkillCastLog() {
+  minimapRuntime.skillCastLog = [];
+}
+
 export function consumeMinimapSkillCasts(skillCasts: MinimapSkillCast[]) {
-  minimapRuntime.skillCasts = skillCasts;
+  if (skillCasts.length === 0) return;
+  minimapRuntime.skillCastLog = [
+    ...minimapRuntime.skillCastLog,
+    ...skillCasts,
+  ].slice(-MAX_SKILL_CAST_LOG);
 }

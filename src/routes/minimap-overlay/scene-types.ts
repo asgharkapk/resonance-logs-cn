@@ -1,4 +1,8 @@
-import type { MinimapEntity, MinimapSnapshot } from "$lib/api";
+import type {
+  MinimapEntity,
+  MinimapSkillCast,
+  MinimapSnapshot,
+} from "$lib/api";
 
 export type MapLine = {
   x1: number;
@@ -39,6 +43,7 @@ export type MechanicRow = {
   createTimeMs: number;
   durationMs: number;
   targets: string[];
+  hideTimer?: boolean;
 };
 
 export type SceneView = {
@@ -58,6 +63,10 @@ export type SceneDefinition = {
     snapshot: MinimapSnapshot,
     displayName: (entity: MinimapEntity) => string,
   ) => SceneView;
+  resolveSkillRows?: (args: {
+    skillCasts: MinimapSkillCast[];
+    displayName: (entity: MinimapEntity) => string;
+  }) => MechanicRow[];
 };
 
 export function emptySceneView(entities: MinimapEntity[] = []): SceneView {

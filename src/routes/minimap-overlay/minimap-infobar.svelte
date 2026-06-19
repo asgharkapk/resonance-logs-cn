@@ -1,7 +1,10 @@
 <script lang="ts">
   import type { MinimapEntity, MinimapSnapshot } from "$lib/api";
   import { overlayNow } from "../game-overlay/overlay-clock.svelte.js";
-  import { minimapPlayerNames } from "./minimap-runtime.svelte.js";
+  import {
+    minimapPlayerNames,
+    minimapSkillCasts,
+  } from "./minimap-runtime.svelte.js";
   import { slotColor } from "./colors";
   import { resolveScene } from "./scene-registry";
   import type { MechanicRow } from "./scene-types";
@@ -24,8 +27,13 @@
     const scene = resolveScene(snapshot.sceneId);
     const view = scene?.resolveView(snapshot, displayName);
     if (!view) return [];
+    const skillRows =
+      scene?.resolveSkillRows?.({
+        skillCasts: minimapSkillCasts(),
+        displayName,
+      }) ?? [];
     const groups: SkillGroup[] = [];
-    for (const row of view.rows) {
+    for (const row of [...view.rows, ...skillRows]) {
       const existing = groups.find((group) => group.group === row.group);
       if (existing) {
         existing.rows.push(row);
@@ -76,13 +84,16 @@
                 <span class="targets">
                   {#each row.targets as target, index (target)}
                     <span class="target-chip">
-                      {target}{#if index < row.targets.length - 1}, {/if}
+                      {target}{#if index < row.targets.length - 1},
+                      {/if}
                     </span>
                   {/each}
                 </span>
               {/if}
             </span>
-            <span class="time">{remainingText(row)}</span>
+            {#if !row.hideTimer}
+              <span class="time">{remainingText(row)}</span>
+            {/if}
           </div>
         {/each}
       </section>

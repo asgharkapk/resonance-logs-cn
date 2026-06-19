@@ -1309,7 +1309,8 @@ export const zhCNMessages = {
   "minimap.overlay.state.hide": "隐藏",
   "minimap.overlay.mapPanel": "地图面板：{state}",
   "minimap.overlay.infoPanel": "机制报幕：{state}",
-  "minimap.overlay.help": "面板位置和宽度请在副本机制窗口的编辑布局模式中调整。",
+  "minimap.overlay.help":
+    "面板位置和宽度请在副本机制窗口的编辑布局模式中调整。",
   "minimap.settings.colors.title": "玩家颜色",
   "minimap.settings.colors.description":
     "设置无机制颜色覆盖时的自己与队友颜色；机制点名颜色仍使用专用高区分度色槽。",
@@ -1346,6 +1347,10 @@ export const zhCNMessages = {
   "minimap.s3Raid.electromagneticPulse.a": "A",
   "minimap.s3Raid.electromagneticPulse.b": "B",
   "minimap.s3Raid.electromagneticPulse.c": "C",
+  "minimap.s3Raid.electromagneticRing.group": "电磁环序列",
+  "minimap.s3Raid.electromagneticRing.inner": "电磁内环",
+  "minimap.s3Raid.electromagneticRing.mid": "电磁中环",
+  "minimap.s3Raid.electromagneticRing.outer": "电磁外环",
   "minimap.s3Raid.shareMirage.group": "分摊/幻分摊",
   "minimap.s3Raid.normalDecay.group": "普通点名/衰减点名",
   "minimap.s3Raid.normalDecay.normalTarget": "普通点名",
