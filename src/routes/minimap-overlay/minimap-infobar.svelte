@@ -73,7 +73,13 @@
             <span class="text" title={targetText(row)}>
               <span class="label">{row.label}</span>
               {#if row.targets.length > 0}
-                <span class="targets">{targetText(row)}</span>
+                <span class="targets">
+                  {#each row.targets as target, index (target)}
+                    <span class="target-chip">
+                      {target}{#if index < row.targets.length - 1}, {/if}
+                    </span>
+                  {/each}
+                </span>
               {/if}
             </span>
             <span class="time">{remainingText(row)}</span>
@@ -123,16 +129,16 @@
   }
   .buff-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     min-height: 24px;
   }
   .dot {
     width: 9px;
     height: 9px;
+    margin-top: 7px;
     border-radius: 50%;
     flex: none;
-    align-self: center;
     box-shadow: 0 0 8px currentColor;
   }
   .text {
@@ -144,20 +150,30 @@
     color: #f1f5f9;
     line-height: 1.25;
   }
-  .label,
-  .targets {
+  .label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .label {
     font-weight: 700;
   }
   .targets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 4px;
+    width: 100%;
+    min-width: 0;
     color: #cbd5e1;
     font-size: 11px;
   }
+  .target-chip {
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .time {
+    flex: none;
+    margin-top: 2px;
     min-width: 3ch;
     padding: 2px 6px;
     border-radius: 999px;
