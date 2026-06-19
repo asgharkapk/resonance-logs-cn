@@ -25,6 +25,12 @@ use std::default::Default;
 const ATTR_SHIELD_DISPLAY: i32 = 60050;
 const RESONANCE_FANTASY_MARKER_BUFF_ID: i32 = 2_199_999;
 
+#[derive(Debug, Default, Clone, Copy)]
+pub struct DungeonProcessResult {
+    pub reset_reason: Option<EncounterResetReason>,
+    pub entered_playing: bool,
+}
+
 /// Parses packed varints from ATTR_FIGHT_RESOURCES (50002) raw data.
 /// The raw data is expected to be a protobuf message with field 1 containing packed varints.
 /// Format: Tag (0x0A) | Length | Varint1 | Varint2 | ...
@@ -459,8 +465,9 @@ pub fn process_sync_dungeon_data(
     battle_state: &mut BattleStateMachine,
     sync_dungeon_data: blueprotobuf::SyncDungeonData,
     encounter_has_stats: bool,
-) -> Option<EncounterResetReason> {
+) -> DungeonProcessResult {
     let mut reset_reason = None;
+    let mut entered_playing = false;
     info!(
         target: "app::live",
         "Processing SyncDungeonData (encounter_has_stats={})",
@@ -470,6 +477,7 @@ pub fn process_sync_dungeon_data(
         if let Some(flow_info) = v_data.flow_info {
             if let Some(state) = flow_info.state {
                 info!(target: "app::live", "SyncDungeonData flow_info.state={}", state);
+                entered_playing |= battle_state.record_dungeon_flow_state(state);
             }
         }
 
@@ -496,14 +504,17 @@ pub fn process_sync_dungeon_data(
     if let Some(reason) = reset_reason {
         info!(target: "app::live", "SyncDungeonData produced reset reason: {:?}", reason);
     }
-    reset_reason
+    DungeonProcessResult {
+        reset_reason,
+        entered_playing,
+    }
 }
 
 pub fn process_sync_dungeon_dirty_data(
     battle_state: &mut BattleStateMachine,
     sync_dungeon_dirty_data: blueprotobuf::SyncDungeonDirtyData,
     encounter_has_stats: bool,
-) -> Option<EncounterResetReason> {
+) -> DungeonProcessResult {
     info!(
         target: "app::live",
         "Processing SyncDungeonDirtyData (encounter_has_stats={})",
@@ -511,11 +522,11 @@ pub fn process_sync_dungeon_dirty_data(
     );
     let Some(v_data) = sync_dungeon_dirty_data.v_data else {
         warn!(target: "app::live", "SyncDungeonDirtyData missing v_data");
-        return None;
+        return DungeonProcessResult::default();
     };
     let Some(bytes) = v_data.buffer else {
         warn!(target: "app::live", "SyncDungeonDirtyData missing buffer");
-        return None;
+        return DungeonProcessResult::default();
     };
     info!(
         target: "app::live",
@@ -531,17 +542,19 @@ pub fn process_sync_dungeon_dirty_data(
                     "Failed to decode dirty dungeon blob from buffer: {}",
                     e
                 );
-                return None;
+                return DungeonProcessResult::default();
             }
         };
 
     let mut reset_reason = None;
+    let mut entered_playing = false;
     if let Some(state) = dirty_sync.flow_state {
         info!(
             target: "app::live",
             "SyncDungeonDirtyData flow_info.state={}",
             state
         );
+        entered_playing |= battle_state.record_dungeon_flow_state(state);
     }
 
     for target_data in dirty_sync.targets {
@@ -567,7 +580,10 @@ pub fn process_sync_dungeon_dirty_data(
             reason
         );
     }
-    reset_reason
+    DungeonProcessResult {
+        reset_reason,
+        entered_playing,
+    }
 }
 
 pub fn process_sync_to_me_delta_info(

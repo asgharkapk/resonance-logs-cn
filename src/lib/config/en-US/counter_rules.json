@@ -38,5 +38,9 @@
   {
     "ruleId": 10,
     "name": "Judgment Pursuit Count - Defense Shield"
+  },
+  {
+    "ruleId": 11,
+    "name": "Healing Bot Cooldown"
   }
 ]

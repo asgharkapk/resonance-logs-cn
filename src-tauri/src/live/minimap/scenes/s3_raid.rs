@@ -11,7 +11,10 @@ const MECHANIC_BUFF_IDS: &[i32] = &[
 // Entity template ids (attr `10`) worth pushing on top of team members: the
 // boss and its adds. Mechanic decoration monsters (3000xxx/3100002/210107) are
 // intentionally excluded as visual noise.
-const RELEVANT_MONSTER_IDS: &[i32] = &[103100, 103107, 103108, 103106, 103207, 103208, 103308, 103200, 103300, 103301, 103302, 103303, 103309, 103310, 103311, 10310062, 10310063, 10310064];
+const RELEVANT_MONSTER_IDS: &[i32] = &[
+    103100, 103107, 103108, 103106, 103207, 103208, 103308, 103200, 103300, 103301, 103302, 103303,
+    103309, 103310, 103311, 10310062, 10310063, 10310064,
+];
 
 pub(crate) const CONFIG: SceneConfig = SceneConfig {
     scene_ids: SCENE_IDS,

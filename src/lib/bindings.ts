@@ -405,6 +405,7 @@ maxHp: number | null;
  */
 isDefeated: boolean }
 export type CounterAction = "reset" | "freeze" | "resetAndFreeze" | "resetAndFreezeKeepCounting" | "resetAndStartCount" | "startCount" | "noOp"
+export type ResetBuffTarget = "selfPlayer" | "anyTeam"
 export type CounterRule = { ruleId: number; sources: CounterSource[]; effectSlots: EffectSlotConfig[] }
 export type CounterSource = { damageBySkillKey: { skillKeys: number[]; increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { damageBySkillKeyOnce: { skillKeys: number[]; increment: number; requiredTypeFlags?: number | null } } | { damageBySkillKeySelfTarget: { skillKeys: number[]; increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { anyDamage: { increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { damageTaken: { skillKeys?: number[] | null; increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { fightResourceSpent: { resourceId: number; unitsRequired: number; increment: number } } | { buffAdded: { buffId: number; sourceConfigId?: number | null; increment: number } } | { buffLayerSpent: { buffId: number; unitsRequired: number; increment: number } } | { buffDurationTick: { buffId: number; tickIntervalMs: number; increment: number; attrCondition?: TickAttrCondition | null } } | { skillCast: { skillBaseIds: number[]; increment: number } } | { skillDurationTick: { skillBaseId: number; tickIntervalMs: number; increment: number } } | { skillCastComplete: { skillBaseIds: number[]; increment: number } } | { movementDistance: { buffId: number; attrId: number; metersRequired: number; increment: number } }
 /**
@@ -440,7 +441,7 @@ export type DeathRecord = { victimEntityUuid: string; deathTimestampMs: number;
  */
 recentDamages: DamageSnapshot[] }
 export type Device = { name: string; description: string | null }
-export type EffectSlotConfig = { slotId: number; threshold: number | null; resetBuffId: number; resetSourceConfigId?: number | null; onBuffAdd?: CounterAction; onBuffChange?: CounterAction; onBuffRemove?: CounterAction; freezeDurationMs?: number | null; onFreezeExpire?: CounterAction; altFreeze?: AltFreezeConfig | null; thresholdModifier?: AttrModifier | null; freezeDurationModifier?: AttrModifier | null; resetSkillKeys?: number[] | null; onResetSkill?: CounterAction }
+export type EffectSlotConfig = { slotId: number; threshold: number | null; resetBuffId: number; resetSourceConfigId?: number | null; resetBuffTarget?: ResetBuffTarget; onBuffAdd?: CounterAction; onBuffChange?: CounterAction; onBuffRemove?: CounterAction; freezeDurationMs?: number | null; onFreezeExpire?: CounterAction; altFreeze?: AltFreezeConfig | null; thresholdModifier?: AttrModifier | null; freezeDurationModifier?: AttrModifier | null; resetSkillKeys?: number[] | null; onResetSkill?: CounterAction; dungeonStartFreezeMs?: number | null }
 /**
  * Filters for querying encounters.
  */

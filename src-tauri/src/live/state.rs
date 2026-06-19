@@ -880,11 +880,17 @@ impl AppStateManager {
                 // todo: this is skipped, not sure what info it has
             }
             StateEvent::SyncDungeonData(data) => {
-                self.process_sync_dungeon_data(state, data);
+                let (next_counter_dirty, next_factor_counter_dirty) =
+                    self.process_sync_dungeon_data(state, data);
+                counter_dirty |= next_counter_dirty;
+                factor_counter_dirty |= next_factor_counter_dirty;
                 self.apply_battle_state_resets_if_needed(state);
             }
             StateEvent::SyncDungeonDirtyData(data) => {
-                self.process_sync_dungeon_dirty_data(state, data);
+                let (next_counter_dirty, next_factor_counter_dirty) =
+                    self.process_sync_dungeon_dirty_data(state, data);
+                counter_dirty |= next_counter_dirty;
+                factor_counter_dirty |= next_factor_counter_dirty;
                 self.apply_battle_state_resets_if_needed(state);
             }
             StateEvent::SyncToMeDeltaInfo(data) => {
@@ -1350,7 +1356,7 @@ impl AppStateManager {
         &self,
         state: &mut AppState,
         sync_dungeon_data: blueprotobuf::SyncDungeonData,
-    ) {
+    ) -> (bool, bool) {
         use crate::live::opcodes_process::process_sync_dungeon_data;
 
         let difficulty = sync_dungeon_data
@@ -1375,11 +1381,28 @@ impl AppStateManager {
 
         let encounter_has_stats = encounter_has_stats(&state.encounter);
 
-        if let Some(reason) = process_sync_dungeon_data(
+        let result = process_sync_dungeon_data(
             &mut state.battle_state,
             sync_dungeon_data,
             encounter_has_stats,
-        ) {
+        );
+        let (counter_dirty, factor_counter_dirty) = if result.entered_playing {
+            let now = now_ms();
+            (
+                state
+                    .local_monitor
+                    .counter_tracker
+                    .on_mechanic_dungeon_started(now),
+                state
+                    .local_monitor
+                    .factor_counter_tracker
+                    .on_mechanic_dungeon_started(now),
+            )
+        } else {
+            (false, false)
+        };
+
+        if let Some(reason) = result.reset_reason {
             info!(
                 target: "app::live",
                 "State layer applying reset from SyncDungeonData: {:?}",
@@ -1387,22 +1410,40 @@ impl AppStateManager {
             );
             self.apply_reset_reason(state, reason);
         }
+        (counter_dirty, factor_counter_dirty)
     }
 
     fn process_sync_dungeon_dirty_data(
         &self,
         state: &mut AppState,
         sync_dungeon_dirty_data: blueprotobuf::SyncDungeonDirtyData,
-    ) {
+    ) -> (bool, bool) {
         use crate::live::opcodes_process::process_sync_dungeon_dirty_data;
 
         let encounter_has_stats = encounter_has_stats(&state.encounter);
 
-        if let Some(reason) = process_sync_dungeon_dirty_data(
+        let result = process_sync_dungeon_dirty_data(
             &mut state.battle_state,
             sync_dungeon_dirty_data,
             encounter_has_stats,
-        ) {
+        );
+        let (counter_dirty, factor_counter_dirty) = if result.entered_playing {
+            let now = now_ms();
+            (
+                state
+                    .local_monitor
+                    .counter_tracker
+                    .on_mechanic_dungeon_started(now),
+                state
+                    .local_monitor
+                    .factor_counter_tracker
+                    .on_mechanic_dungeon_started(now),
+            )
+        } else {
+            (false, false)
+        };
+
+        if let Some(reason) = result.reset_reason {
             info!(
                 target: "app::live",
                 "State layer applying reset from SyncDungeonDirtyData: {:?}",
@@ -1410,6 +1451,7 @@ impl AppStateManager {
             );
             self.apply_reset_reason(state, reason);
         }
+        (counter_dirty, factor_counter_dirty)
     }
 
     fn process_sync_to_me_delta_info(
@@ -1550,11 +1592,27 @@ impl AppStateManager {
                     &state.attr_store,
                     local_player_uuid,
                 );
+                counter_dirty |= state
+                    .local_monitor
+                    .counter_tracker
+                    .on_external_team_buff_changes(
+                        &buff_process_result.changes,
+                        &state.attr_store,
+                        local_player_uuid,
+                    );
                 factor_counter_dirty |= state.local_monitor.factor_counter_tracker.on_buff_changes(
                     &buff_process_result.changes,
                     &state.attr_store,
                     local_player_uuid,
                 );
+                factor_counter_dirty |= state
+                    .local_monitor
+                    .factor_counter_tracker
+                    .on_external_team_buff_changes(
+                        &buff_process_result.changes,
+                        &state.attr_store,
+                        local_player_uuid,
+                    );
             }
         }
 
@@ -1629,7 +1687,28 @@ impl AppStateManager {
             }
 
             if let (Some(target_uuid), Some(raw_bytes)) = (target_uuid, buff_bytes) {
-                process_entity_buff_effect_bytes(state, target_uuid, &raw_bytes);
+                if let Some((kind, buff_process_result)) =
+                    process_entity_buff_effect_bytes(state, target_uuid, &raw_bytes)
+                {
+                    if matches!(kind, BuffTargetKind::LocalPlayer | BuffTargetKind::Teammate) {
+                        counter_dirty |= state
+                            .local_monitor
+                            .counter_tracker
+                            .on_external_team_buff_changes(
+                                &buff_process_result.changes,
+                                &state.attr_store,
+                                local_player_uuid,
+                            );
+                        factor_counter_dirty |= state
+                            .local_monitor
+                            .factor_counter_tracker
+                            .on_external_team_buff_changes(
+                                &buff_process_result.changes,
+                                &state.attr_store,
+                                local_player_uuid,
+                            );
+                    }
+                }
             }
         }
 

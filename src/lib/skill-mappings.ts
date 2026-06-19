@@ -10,6 +10,7 @@ import type {
   CounterAction,
   CounterSource,
   FactorCounterTemplate,
+  ResetBuffTarget,
 } from "$lib/bindings";
 import { getLocale, type AppLocale } from "$lib/i18n/index.svelte";
 import { APP_LOCALES } from "$lib/i18n/locales";
@@ -91,10 +92,12 @@ export type CounterEffectSlotPreset = {
   threshold: number | null;
   resetBuffId: number;
   resetSourceConfigId?: number;
+  resetBuffTarget?: ResetBuffTarget;
   onBuffAdd: CounterAction;
   onBuffChange: CounterAction;
   onBuffRemove: CounterAction;
   freezeDurationMs?: number;
+  dungeonStartFreezeMs?: number;
   onFreezeExpire?: CounterAction;
   altFreeze?: { conditionBuffId: number; freezeDurationMs: number };
   thresholdModifier?: AttrModifierPreset;
@@ -747,11 +750,17 @@ export function resolveCounterEffectSlots(
             ...(item.slot.resetSourceConfigId !== undefined
               ? { resetSourceConfigId: item.slot.resetSourceConfigId }
               : {}),
+            ...(item.slot.resetBuffTarget !== undefined
+              ? { resetBuffTarget: item.slot.resetBuffTarget }
+              : {}),
             onBuffAdd: item.slot.onBuffAdd,
             onBuffChange: item.slot.onBuffChange,
             onBuffRemove: item.slot.onBuffRemove,
             ...(item.slot.freezeDurationMs !== undefined
               ? { freezeDurationMs: item.slot.freezeDurationMs }
+              : {}),
+            ...(item.slot.dungeonStartFreezeMs !== undefined
+              ? { dungeonStartFreezeMs: item.slot.dungeonStartFreezeMs }
               : {}),
             ...(item.slot.onFreezeExpire !== undefined
               ? { onFreezeExpire: item.slot.onFreezeExpire }
