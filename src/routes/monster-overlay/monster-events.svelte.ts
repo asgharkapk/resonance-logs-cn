@@ -11,7 +11,10 @@ import {
   type HateEntry,
   type TeammateFantasyState,
 } from "$lib/api";
-import { SETTINGS } from "$lib/settings-store";
+import {
+  fantasyEntryKey,
+  withPreservedFantasySummonerName,
+} from "./monster-fantasy";
 import {
   onGlobalPointerMove,
   onGlobalPointerUp,
@@ -36,48 +39,28 @@ function mapBossBuffs(buffs: BuffUpdateState[]) {
 
 const mapEntityBuffs = mapBossBuffs;
 
-function isSameFantasyEntry(
-  left: TeammateFantasyState,
-  right: TeammateFantasyState,
-) {
-  return (
-    left.summonUuid === right.summonUuid &&
-    left.monsterId === right.monsterId &&
-    left.remodelLevel === right.remodelLevel &&
-    left.summonerUuid === right.summonerUuid
-  );
-}
-
 function mergeFantasyEntries(entries: TeammateFantasyState[]) {
   const next = new Map(
-    monsterRuntime.fantasyEntries.map((entry) => [entry.summonUuid, entry]),
+    monsterRuntime.fantasyEntries.map((entry) => [
+      fantasyEntryKey(entry),
+      entry,
+    ]),
   );
   for (const entry of entries) {
-    const existing = next.get(entry.summonUuid);
+    const key = fantasyEntryKey(entry);
+    const existing = next.get(key);
     if (!existing) {
-      next.set(entry.summonUuid, entry);
-      continue;
-    }
-
-    if (isSameFantasyEntry(existing, entry)) {
-      if (SETTINGS.monsterMonitor.state.fantasyPersistentDisplay !== true) {
-        if (entry.detectedAtMs >= existing.detectedAtMs) {
-          next.set(entry.summonUuid, entry);
-        }
-        continue;
-      }
-
-      if (!existing.summonerName && entry.summonerName) {
-        next.set(entry.summonUuid, {
-          ...existing,
-          summonerName: entry.summonerName,
-        });
-      }
+      next.set(key, entry);
       continue;
     }
 
     if (entry.detectedAtMs >= existing.detectedAtMs) {
-      next.set(entry.summonUuid, entry);
+      next.set(key, withPreservedFantasySummonerName(entry, existing));
+      continue;
+    }
+
+    if (!existing.summonerName && entry.summonerName) {
+      next.set(key, { ...existing, summonerName: entry.summonerName });
     }
   }
   monsterRuntime.fantasyEntries = [...next.values()];

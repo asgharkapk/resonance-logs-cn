@@ -27,6 +27,10 @@ import {
   isMonsterLayoutScaffold,
   monsterRuntime,
 } from "./monster-runtime.svelte.js";
+import {
+  fantasyEntryKey,
+  withPreservedFantasySummonerName,
+} from "./monster-fantasy";
 import type {
   MonsterBossBuffSection,
   MonsterFantasyRow,
@@ -334,7 +338,6 @@ function sortFantasyEntries(
 
     return (
       left.summonerUuid.localeCompare(right.summonerUuid) ||
-      left.summonUuid.localeCompare(right.summonUuid) ||
       left.monsterId - right.monsterId ||
       left.remodelLevel - right.remodelLevel
     );
@@ -344,7 +347,7 @@ function sortFantasyEntries(
 function buildFantasyRows(now: number): MonsterFantasyRow[] {
   const state = SETTINGS.monsterMonitor.state;
   const persistentDisplay = state.fantasyPersistentDisplay === true;
-  const latestBySummon = new Map<EntityId, TeammateFantasyState>();
+  const latestByFantasy = new Map<string, TeammateFantasyState>();
   for (const entry of monsterRuntime.fantasyEntries) {
     if (
       !persistentDisplay &&
@@ -352,14 +355,26 @@ function buildFantasyRows(now: number): MonsterFantasyRow[] {
     ) {
       continue;
     }
-    const existing = latestBySummon.get(entry.summonUuid);
+    const key = fantasyEntryKey(entry);
+    const existing = latestByFantasy.get(key);
     if (!existing || entry.detectedAtMs >= existing.detectedAtMs) {
-      latestBySummon.set(entry.summonUuid, entry);
+      latestByFantasy.set(
+        key,
+        withPreservedFantasySummonerName(entry, existing),
+      );
+      continue;
+    }
+
+    if (!existing.summonerName && entry.summonerName) {
+      latestByFantasy.set(key, {
+        ...existing,
+        summonerName: entry.summonerName,
+      });
     }
   }
 
   const activeEntries = sortFantasyEntries(
-    [...latestBySummon.values()],
+    [...latestByFantasy.values()],
     persistentDisplay,
   );
   monsterRuntime.fantasyEntries = activeEntries;
@@ -380,8 +395,9 @@ function buildFantasyRows(now: number): MonsterFantasyRow[] {
       t("monsterOverlay.entity.uid", {
         uid: uidFromEntityUuid(entry.summonerUuid),
       });
+    const key = fantasyEntryKey(entry);
     return {
-      key: `fantasy_${entry.summonUuid}`,
+      key: `fantasy_${key}`,
       summonUuid: entry.summonUuid,
       summonerName,
       fantasyName: resolveFantasyName(entry.monsterId),
