@@ -471,10 +471,20 @@ pub struct MinimapEntity {
     pub monster_id: Option<i32>,
     /// Whether the entity is currently in the dead actor state.
     pub is_dead: bool,
-    /// Skill the entity is currently casting (`ATTR_SKILL_ID`, attribute 100).
-    pub current_skill_id: Option<i32>,
     /// Top-level summoner/owner UUID when present.
     pub top_summoner_id: Option<String>,
+}
+
+/// One monster skill cast event observed from `ATTR_SKILL_ID` (attribute 100).
+#[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct MinimapSkillCast {
+    /// Entity UUID that emitted the skill cast.
+    pub entity_uuid: String,
+    /// Skill template id.
+    pub skill_id: i32,
+    /// Local receive time in milliseconds.
+    pub time_ms: i64,
 }
 
 /// One frame of minimap data for a single scene.
@@ -496,6 +506,7 @@ pub struct MinimapSnapshot {
 #[serde(rename_all = "camelCase")]
 pub struct MinimapUpdatePayload {
     pub snapshot: Option<MinimapSnapshot>,
+    pub skill_casts: Vec<MinimapSkillCast>,
 }
 
 #[derive(serde::Serialize, Debug, Clone)]

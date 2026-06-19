@@ -1,6 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { SvelteMap } from "svelte/reactivity";
-import type { MinimapSnapshot } from "$lib/api";
+import type { MinimapSkillCast, MinimapSnapshot } from "$lib/api";
 import type { EntityId } from "$lib/entity-id";
 
 /**
@@ -16,6 +16,7 @@ export const minimapRuntime = $state({
   isMounted: false,
   isEditing: false,
   snapshot: null as MinimapSnapshot | null,
+  skillCasts: [] as MinimapSkillCast[],
   playerNameCache: new SvelteMap<EntityId, string>(),
 });
 
@@ -29,4 +30,8 @@ export function isMinimapEditing() {
 
 export function minimapPlayerNames() {
   return minimapRuntime.playerNameCache;
+}
+
+export function consumeMinimapSkillCasts(skillCasts: MinimapSkillCast[]) {
+  minimapRuntime.skillCasts = skillCasts;
 }

@@ -3,7 +3,7 @@ use crate::live::{
     commands_models::{
         BossBuffUpdatePayload, BuffCounterUpdatePayload, BuffUpdatePayload, DeathReplayPayload,
         EntityIdentityMapPayload, FightResourceUpdatePayload, HateListUpdatePayload,
-        MinimapUpdatePayload, PanelAttrUpdatePayload, SeasonCultivateFactorCounterUpdatePayload,
+        PanelAttrUpdatePayload, SeasonCultivateFactorCounterUpdatePayload,
         ShieldDetailUpdatePayload, SkillCdUpdatePayload, TeammateBuffUpdatePayload,
         TeammateFantasyUpdatePayload,
     },
@@ -69,6 +69,7 @@ fn log_queue_depth_if_needed(
 }
 
 const DECODE_CHANNEL_CAP: usize = 4096;
+const MINIMAP_EMIT_INTERVAL: Duration = Duration::from_millis(50);
 
 /// Starts the live meter.
 ///
@@ -100,6 +101,7 @@ pub async fn start(
 
     // Throttling for events - rate is read dynamically from state each iteration
     let mut last_emit_time = Instant::now();
+    let mut last_minimap_emit_time = Instant::now();
 
     // Heartbeat: ensure we emit events periodically even during idle periods
     // to prevent frontend from thinking the connection is dead
@@ -181,7 +183,6 @@ pub async fn start(
                 }
 
                 state_manager.handle_events_batch_with_state(&mut state, batch_events);
-                state_manager.emit_minimap_if_active(&mut state);
                 state_manager.drain_control_commands(&mut state, &mut control_rx);
                 flush_outbound_events(&app_handle, &mut state);
 
@@ -191,6 +192,10 @@ pub async fn start(
                 if now.duration_since(last_emit_time) >= emit_throttle_duration {
                     last_emit_time = now;
                     state_manager.update_and_emit_events_with_state(&mut state);
+                }
+                if now.duration_since(last_minimap_emit_time) >= MINIMAP_EMIT_INTERVAL {
+                    last_minimap_emit_time = now;
+                    state_manager.emit_minimap_if_active(&mut state);
                 }
                 flush_outbound_events(&app_handle, &mut state);
             }
@@ -209,6 +214,10 @@ pub async fn start(
                 if now.duration_since(last_emit_time) >= emit_throttle_duration {
                     last_emit_time = now;
                     state_manager.update_and_emit_events_with_state(&mut state);
+                }
+                if now.duration_since(last_minimap_emit_time) >= MINIMAP_EMIT_INTERVAL {
+                    last_minimap_emit_time = now;
+                    state_manager.emit_minimap_if_active(&mut state);
                 }
                 flush_outbound_events(&app_handle, &mut state);
             }
@@ -402,12 +411,12 @@ fn flush_outbound_events(app_handle: &AppHandle, state: &mut AppState) {
                     DeathReplayPayload { records },
                 );
             }
-            OutboundEvent::MinimapUpdate(snapshot) => {
+            OutboundEvent::MinimapUpdate(payload) => {
                 safe_emit_to(
                     app_handle,
                     crate::WINDOW_MINIMAP_OVERLAY_LABEL,
                     "minimap-update",
-                    MinimapUpdatePayload { snapshot },
+                    payload,
                 );
             }
         }

@@ -215,8 +215,13 @@ export type MinimapEntity = {
   name?: string | null;
   monsterId?: number | null;
   isDead: boolean;
-  currentSkillId?: number | null;
   topSummonerId?: string | null;
+};
+
+export type MinimapSkillCast = {
+  entityUuid: string;
+  skillId: number;
+  timeMs: number;
 };
 
 export type MinimapSnapshot = {
@@ -228,6 +233,7 @@ export type MinimapSnapshot = {
 
 export type MinimapUpdatePayload = {
   snapshot: MinimapSnapshot | null;
+  skillCasts: MinimapSkillCast[];
 };
 
 export type EntityIdentityMapPayload = {

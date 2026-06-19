@@ -2,7 +2,10 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { onEntityIdentities, onMinimapUpdate } from "$lib/api";
 import { initOverlayClock } from "../game-overlay/overlay-clock.svelte.js";
-import { minimapRuntime } from "./minimap-runtime.svelte.js";
+import {
+  consumeMinimapSkillCasts,
+  minimapRuntime,
+} from "./minimap-runtime.svelte.js";
 import { setMinimapEditMode } from "./minimap-state.svelte.js";
 
 /**
@@ -36,7 +39,13 @@ export function initMinimapOverlay() {
   });
 
   const unlistenMinimap = onMinimapUpdate((event) => {
-    minimapRuntime.snapshot = event.payload.snapshot;
+    const { snapshot, skillCasts } = event.payload;
+    if (snapshot) {
+      minimapRuntime.snapshot = snapshot;
+    } else if (skillCasts.length === 0) {
+      minimapRuntime.snapshot = null;
+    }
+    consumeMinimapSkillCasts(skillCasts);
   });
 
   const unlistenIdentities = onEntityIdentities((event) => {

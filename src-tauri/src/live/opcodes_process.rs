@@ -1472,22 +1472,25 @@ fn process_mechanic_entity_attrs(
     attrs: &[Attr],
     attr_store: &mut EntityAttrStore,
 ) {
+    let packet_monster_id = attrs.iter().find_map(|attr| {
+        (attr.id == Some(attr_type::ATTR_ID))
+            .then(|| decode_varint_i64_or_default(attr.raw_data.as_deref()))
+            .and_then(|id| i32::try_from(id).ok())
+            .filter(|id| *id > 0)
+    });
+
     for attr in attrs {
         let Some(attr_id) = attr.id else { continue };
         let raw_bytes_opt = attr.raw_data.as_deref();
 
         if attr_id == attr_type::ATTR_ID {
-            if let Some(monster_id) =
-                i32::try_from(decode_varint_i64_or_default(raw_bytes_opt)).ok()
-            {
-                if monster_id > 0 {
-                    target_entity.set_monster_type(monster_id);
-                    let _ = attr_store.set_attr(
-                        target_uuid,
-                        AttrType::MonsterId,
-                        AttrValue::Int(i64::from(monster_id)),
-                    );
-                }
+            if let Some(monster_id) = packet_monster_id {
+                target_entity.set_monster_type(monster_id);
+                let _ = attr_store.set_attr(
+                    target_uuid,
+                    AttrType::MonsterId,
+                    AttrValue::Int(i64::from(monster_id)),
+                );
             }
             continue;
         }
@@ -1519,6 +1522,14 @@ fn process_mechanic_entity_attrs(
 
         if let Some(attr_type) = AttrType::from_id(attr_id) {
             let value = decode_varint_i64_or_default(raw_bytes_opt);
+            if attr_type == AttrType::SkillId
+                && let Ok(skill_id) = i32::try_from(value)
+                && skill_id > 0
+            {
+                // Record every positive server report; relevance and scene
+                // filtering happen once, downstream in the state layer.
+                attr_store.push_skill_cast(target_uuid, skill_id);
+            }
             let _ = attr_store.set_attr(target_uuid, attr_type, AttrValue::Int(value));
         }
     }

@@ -10,6 +10,13 @@ pub struct DeathEvent {
     pub timestamp_ms: u128,
 }
 
+#[derive(Debug, Clone)]
+pub struct SkillCastEvent {
+    pub entity_uuid: i64,
+    pub skill_id: i32,
+    pub timestamp_ms: i64,
+}
+
 #[derive(Debug, Default)]
 pub struct EntityAttrStore {
     attrs: HashMap<i64, HashMap<AttrType, AttrValue>>,
@@ -23,6 +30,10 @@ pub struct EntityAttrStore {
     shield_detail_entries: Vec<ShieldDetailEntry>,
     shield_detail_dirty: bool,
     death_events: Vec<DeathEvent>,
+    skill_cast_events: Vec<SkillCastEvent>,
+    /// Whether monster skill casts should be recorded at all. Driven by the active
+    /// scene: only minimap scenes need them, so normal combat records nothing.
+    record_skill_casts: bool,
 }
 
 #[derive(Debug, Default)]
@@ -32,6 +43,7 @@ pub struct AttrChanges {
     pub shield_detail_dirty: bool,
     pub shield_detail_entries: Vec<ShieldDetailEntry>,
     pub death_events: Vec<DeathEvent>,
+    pub skill_cast_events: Vec<SkillCastEvent>,
 }
 
 impl EntityAttrStore {
@@ -48,6 +60,8 @@ impl EntityAttrStore {
             shield_detail_entries: Vec::new(),
             shield_detail_dirty: false,
             death_events: Vec::new(),
+            skill_cast_events: Vec::new(),
+            record_skill_casts: false,
         }
     }
 
@@ -103,6 +117,31 @@ impl EntityAttrStore {
         }
 
         true
+    }
+
+    /// Toggle skill-cast recording. Enabled only while inside a minimap scene so
+    /// ordinary combat never buffers monster skill events.
+    pub fn set_skill_cast_recording(&mut self, enabled: bool) {
+        self.record_skill_casts = enabled;
+        if !enabled {
+            self.skill_cast_events.clear();
+        }
+    }
+
+    pub fn push_skill_cast(&mut self, entity_uuid: i64, skill_id: i32) {
+        if !self.record_skill_casts || skill_id <= 0 {
+            return;
+        }
+        let timestamp_ms = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis()
+            .min(i64::MAX as u128) as i64;
+        self.skill_cast_events.push(SkillCastEvent {
+            entity_uuid,
+            skill_id,
+            timestamp_ms,
+        });
     }
 
     pub fn set_panel_attr(&mut self, attr_id: i32, value: i32) -> bool {
@@ -258,6 +297,7 @@ impl EntityAttrStore {
         self.shield_detail_entries.clear();
         self.shield_detail_dirty = true;
         self.death_events.clear();
+        self.skill_cast_events.clear();
     }
 
     pub fn drain_changes(&mut self) -> AttrChanges {
@@ -273,6 +313,7 @@ impl EntityAttrStore {
             shield_detail_dirty: shield_dirty,
             shield_detail_entries: shield_entries,
             death_events: std::mem::take(&mut self.death_events),
+            skill_cast_events: std::mem::take(&mut self.skill_cast_events),
         }
     }
 }

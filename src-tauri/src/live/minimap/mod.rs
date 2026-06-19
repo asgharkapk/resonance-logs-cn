@@ -34,7 +34,6 @@ pub(crate) fn build_minimap_snapshot(state: &AppState) -> MinimapSnapshot {
 
         let entity_type = resolved_entity_type(entity.entity_type, uuid);
         let kind = classify(uuid, local_uuid, entity_type, monster_id);
-        let current_skill_id = int_attr_i32(state, uuid, AttrType::SkillId);
         let top_summoner_id = state
             .attr_store
             .attr(uuid, AttrType::TopSummonerId)
@@ -59,7 +58,6 @@ pub(crate) fn build_minimap_snapshot(state: &AppState) -> MinimapSnapshot {
             name,
             monster_id,
             is_dead: attr_store.is_dead(uuid),
-            current_skill_id,
             top_summoner_id,
         });
     }
@@ -114,15 +112,6 @@ fn is_minimap_relevant(
         (monster_id, config),
         (Some(id), Some(config)) if config.relevant_monster_ids.contains(&id)
     )
-}
-
-fn int_attr_i32(state: &AppState, uuid: EntityUuid, attr_type: AttrType) -> Option<i32> {
-    state
-        .attr_store
-        .attr(uuid, attr_type)
-        .and_then(AttrValue::as_int)
-        .and_then(|id| i32::try_from(id).ok())
-        .filter(|id| *id > 0)
 }
 
 fn classify(

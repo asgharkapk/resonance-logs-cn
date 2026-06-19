@@ -4,8 +4,8 @@ use crate::live::buff_monitor::{
     BuffTargetKind, BuffWatchProfile, EntityBuffMonitorConfig, EntityBuffMonitors,
 };
 use crate::live::commands_models::{
-    CounterUpdateState, FightResourceEntry, FightResourceState, PanelAttrState, ShieldDetailEntry,
-    SkillCdState, TeammateFantasyState, TrainingDummyState, to_death_record,
+    CounterUpdateState, FightResourceEntry, FightResourceState, MinimapSkillCast, PanelAttrState,
+    ShieldDetailEntry, SkillCdState, TeammateFantasyState, TrainingDummyState, to_death_record,
 };
 use crate::live::counter_tracker::{BuffCounterTracker, CounterRule};
 use crate::live::dungeon_log::{BattleStateMachine, EncounterResetReason};
@@ -141,6 +141,8 @@ pub struct AppState {
     pub death_snapshot_dirty: bool,
     /// Runtime state from GrpcTeamNtf packets, which can arrive on a separate TCP link.
     pub team: TeamRuntimeState,
+    /// One-shot skill casts waiting for the minimap overlay emit cycle.
+    pending_minimap_skill_casts: Vec<MinimapSkillCast>,
     /// Whether the minimap overlay currently has a live scene snapshot.
     minimap_snapshot_active: bool,
     apply_event_timing: ApplyEventTimingStats,
@@ -291,6 +293,7 @@ impl AppState {
             sent_overlay_entity_uuids: HashSet::new(),
             death_snapshot_dirty: false,
             team: TeamRuntimeState::default(),
+            pending_minimap_skill_casts: Vec::new(),
             minimap_snapshot_active: false,
             apply_event_timing: ApplyEventTimingStats::new(),
         }
@@ -515,6 +518,35 @@ fn classify_buff_snapshot_target(state: &AppState, target_uuid: i64) -> Option<B
     None
 }
 
+fn minimap_monster_id_of(state: &AppState, entity_uuid: i64) -> Option<i32> {
+    state
+        .attr_store
+        .attr(entity_uuid, AttrType::MonsterId)
+        .and_then(AttrValue::as_int)
+        .or_else(|| {
+            state
+                .encounter
+                .entity_uuid_to_entity
+                .get(&entity_uuid)
+                .and_then(|entity| entity.monster_type_id.map(i64::from))
+        })
+        .and_then(|id| i32::try_from(id).ok())
+        .filter(|id| *id > 0)
+}
+
+fn is_minimap_relevant_entity(state: &AppState, entity_uuid: i64, scene_id: i32) -> bool {
+    if entity_uuid == state.encounter.local_player_uuid || state.team.members.contains(&entity_uuid)
+    {
+        return true;
+    }
+
+    let Some(config) = crate::live::minimap::scene::scene_config_for(scene_id) else {
+        return false;
+    };
+    minimap_monster_id_of(state, entity_uuid)
+        .is_some_and(|monster_id| config.relevant_monster_ids.contains(&monster_id))
+}
+
 fn collect_overlay_identity_for_entity(
     state: &mut AppState,
     entity_uuid: i64,
@@ -727,14 +759,19 @@ impl AppStateManager {
     pub fn emit_minimap_if_active(&self, state: &mut AppState) {
         let scene_id = state.encounter.current_scene_id.unwrap_or_default();
         if !crate::live::minimap::scene::is_minimap_scene(scene_id) {
+            state.pending_minimap_skill_casts.clear();
             if state.minimap_snapshot_active {
-                state.event_manager.emit_minimap_update(None);
+                state.event_manager.emit_minimap_update(None, Vec::new());
                 state.minimap_snapshot_active = false;
             }
             return;
         }
-        let snapshot = crate::live::minimap::build_minimap_snapshot(state);
-        state.event_manager.emit_minimap_update(Some(snapshot));
+
+        let skill_casts = std::mem::take(&mut state.pending_minimap_skill_casts);
+        let snapshot = Some(crate::live::minimap::build_minimap_snapshot(state));
+        state
+            .event_manager
+            .emit_minimap_update(snapshot, skill_casts);
         state.minimap_snapshot_active = true;
     }
 
@@ -1192,6 +1229,10 @@ impl AppStateManager {
             // Update encounter with scene info
             state.encounter.current_scene_id = Some(scene_id);
             state.encounter.current_dungeon_difficulty = None;
+            // Only buffer monster skill casts while inside a minimap scene.
+            state
+                .attr_store
+                .set_skill_cast_recording(crate::live::minimap::scene::is_minimap_scene(scene_id));
 
             info!("Scene changed to ID: {}", scene_id);
 
@@ -1273,6 +1314,7 @@ impl AppStateManager {
         state.sent_overlay_entity_uuids.clear();
         state.battle_state = BattleStateMachine::default();
         state.pending_auto_reset = None;
+        state.pending_minimap_skill_casts.clear();
         state.event_manager.emit_teammate_fantasy_clear();
         let previous = build_training_dummy_state(&state.training_dummy);
         state.training_dummy.clear();
@@ -1691,6 +1733,19 @@ impl AppStateManager {
             emit_shield_detail_update_if_needed(state, changes.shield_detail_entries);
         }
 
+        let scene_id = state.encounter.current_scene_id.unwrap_or_default();
+        if crate::live::minimap::scene::is_minimap_scene(scene_id) {
+            for cast in changes.skill_cast_events {
+                if is_minimap_relevant_entity(state, cast.entity_uuid, scene_id) {
+                    state.pending_minimap_skill_casts.push(MinimapSkillCast {
+                        entity_uuid: entity_uuid_string(cast.entity_uuid),
+                        skill_id: cast.skill_id,
+                        time_ms: cast.timestamp_ms,
+                    });
+                }
+            }
+        }
+
         for death in changes.death_events {
             if let Some(entity) = state
                 .encounter
@@ -1735,6 +1790,7 @@ impl AppStateManager {
         persist_segment_unless_saved(state, is_manual, "reset");
         state.encounter.reset_combat_state();
         state.death_snapshot_dirty = false;
+        state.pending_minimap_skill_casts.clear();
 
         if state.event_manager.should_emit_events() {
             state.event_manager.emit_encounter_reset();
