@@ -44,8 +44,7 @@ pub(crate) fn safe_emit<S: Serialize + Clone>(
             // Check if this is a WebView2 state error (0x8007139F)
             let error_msg = e.to_string();
             if error_msg.contains("0x8007139F") || error_msg.contains("not in the correct state") {
-                // This is expected when windows are minimized/hidden - don't spam logs
-                trace!(
+                warn!(
                     "WebView2 not ready for '{}' (window may be minimized/hidden)",
                     event
                 );
@@ -77,7 +76,7 @@ pub(crate) fn safe_emit_to<S: Serialize + Clone>(
         Err(e) => {
             let error_msg = e.to_string();
             if error_msg.contains("0x8007139F") || error_msg.contains("not in the correct state") {
-                trace!(
+                warn!(
                     "WebView2 not ready for '{}' on '{}' (window may be minimized/hidden)",
                     event, target_label
                 );

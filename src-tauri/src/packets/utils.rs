@@ -77,7 +77,7 @@ pub struct TCPReassembler {
 
 const MAX_TCP_CACHE_SIZE: usize = 5 * 1024 * 1024; // 5MB limit
 const GAP_SKIP_BUFFERED_BYTES: usize = 512 * 1024;
-const GAP_SKIP_WAIT: Duration = Duration::from_millis(500);
+const GAP_SKIP_WAIT: Duration = Duration::from_millis(1000);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GapSkipReason {
@@ -408,7 +408,7 @@ mod tests {
             reassembler.insert_segment(200, b"abc"),
             TcpInsertResult::Gap
         );
-        reassembler.age_gap_by(Duration::from_millis(501));
+        reassembler.age_gap_by(Duration::from_millis(1001));
 
         assert_eq!(
             reassembler.insert_segment(203, b"def"),
