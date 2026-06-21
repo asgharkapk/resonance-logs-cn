@@ -1,6 +1,6 @@
 # FAQ · Monster Monitor
 
-**Detailed guides**: [Monster Monitor Overview](../features/monster/README.md) · [Buff Monitor](../features/monster/buff.md) · [Teammate Buffs](../features/monster/teammate.md) · [Threat List](../features/monster/hate.md) · [Enable Overlay](../features/monster/overlay.md)
+**Detailed guides**: [Monster Monitor Overview](../features/monster/README.md) · [Buff Monitor](../features/monster/buff.md) · [Teammate Buffs](../features/monster/teammate.md) · [Threat List](../features/monster/hate.md) · [Boss DBM](../features/monster/boss-dbm.md) · [Enable Overlay](../features/monster/overlay.md)
 
 ## How are monster buffs different from live monitor buffs?
 
@@ -26,3 +26,16 @@ Common causes:
 4. **Target is dead**: Buffs and threat stop updating when the monster dies—switch target or wait for the next one.
 
 On training dummies, behavior matches Boss fights as long as the dummy is locked as your attack target.
+
+## What is Boss DBM? How is it different from buff monitor?
+
+**Boss DBM** shows Boss mechanic warning bars (skill name + countdown) on the monster overlay from in-game Boss DBM events—**no manual buff list needed**. See [Boss DBM](../features/monster/boss-dbm.md).
+
+- **Buff monitor**: Track specific buff duration/stacks; add entries to the monitor list first.
+- **Boss DBM**: Automatic timer bars for Boss casts/phases.
+
+## Why are there no Boss DBM bars?
+
+1. **Boss DBM area not enabled**: Set **Boss DBM area** to show on the **Boss DBM** or **Enable Window** tab (off by default).
+2. **Monster monitor or overlay off**: Confirm **Enable Monster Monitor** and **Toggle Monster Overlay**.
+3. **No DBM events**: Not every Boss skill emits DBM; the area stays hidden when empty (edit mode shows a preview placeholder).

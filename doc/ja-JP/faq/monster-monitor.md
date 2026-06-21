@@ -1,6 +1,6 @@
 # FAQ · モンスターモニター
 
-**詳細**：[モンスターモニター 概要](../features/monster/README.md) · [Buff 監視](../features/monster/buff.md) · [味方 Buff](../features/monster/teammate.md) · [ヘイトリスト](../features/monster/hate.md) · [ウィンドウを有効化](../features/monster/overlay.md)
+**詳細**：[モンスターモニター 概要](../features/monster/README.md) · [Buff 監視](../features/monster/buff.md) · [味方 Buff](../features/monster/teammate.md) · [ヘイトリスト](../features/monster/hate.md) · [Boss DBM](../features/monster/boss-dbm.md) · [ウィンドウを有効化](../features/monster/overlay.md)
 
 ## モンスター Buff と ライブモニター の Buff の違いは？
 
@@ -26,3 +26,16 @@
 4. **ターゲットが死亡**：モンスター死亡後は Buff / ヘイト更新が停止。新ターゲットへ切り替えるか次の対象を待つ
 
 ダミー討伐時もダミーが攻撃ターゲットとしてロックされていれば、Boss と同様に動作します。
+
+## Boss DBM とは？Buff 監視との違いは？
+
+**Boss DBM** はモンスターオーバーレイに Boss ギミック警告バー（スキル名 + カウントダウン）を表示。ゲーム内 Boss DBM イベントから取得し、**Buff のように監視リストへの追加は不要**。詳細は [Boss DBM](../features/monster/boss-dbm.md)。
+
+- **Buff 監視**：特定 Buff の残り時間・层数。先に監視リストへ追加
+- **Boss DBM**：Boss 読条/フェーズのタイマーバーが自動表示
+
+## Boss DBM 警告バーが出ないのはなぜ？
+
+1. **Boss DBM 区が未有効**：**Boss DBM** または **ウィンドウを有効化** で表示に設定（既定オフ）
+2. **モンスターモニター / オーバーレイがオフ**
+3. **DBM イベントがない**：すべての Boss スキルが DBM を出すわけではない

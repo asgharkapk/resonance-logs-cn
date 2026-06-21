@@ -38,7 +38,14 @@
 | [Buff 监控](./features/monster/buff.md) | 全局 / 仅自身、优先级、告警、样式 |
 | [队友 Buff](./features/monster/teammate.md) | 队友 Buff、分类快捷、矩阵样式 |
 | [仇恨列表](./features/monster/hate.md) | 仇恨开关、人数上限、样式 |
-| [启用窗口](./features/monster/overlay.md) | 怪物遮罩三区显示开关 |
+| [Boss DBM](./features/monster/boss-dbm.md) | Boss 技能机制预警条、样式与布局 |
+| [启用窗口](./features/monster/overlay.md) | 怪物遮罩各区域显示开关 |
+
+### 副本机制
+
+| 文档 | 说明 |
+|------|------|
+| [总览](./features/minimap/README.md) | 小地图机制、机制报幕、已支持副本与示例 |
 
 ## 版本更新
 

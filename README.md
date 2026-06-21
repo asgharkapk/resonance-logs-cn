@@ -78,7 +78,7 @@ npm run tauri build
 ## 社区
 
 - QQ 群：1084866292
-- discord: RHeX47wvDU
+- Discord：https://discord.gg/RHeX47wvDU
 
 ## 更新日志
 

@@ -106,7 +106,7 @@ export const enUSMessages = {
     "Current version v{currentVersion}, latest version v{latestVersion}",
   "components.updateModal.empty": "No release notes for this version.",
   "components.updateModal.footer":
-    "If GitHub is slow, you can also get the latest installer from the QQ group (1084866292).",
+    "If GitHub is slow, you can get the latest installer from the QQ group (1084866292) or Discord (discord.gg/RHeX47wvDU). If you'd like to help provide translations, contact us on Discord.",
   "components.updateModal.download": "Download on GitHub",
   "components.changelogModal.closeAria": "Close changelog dialog",
   "components.changelogModal.title": "Changelog",

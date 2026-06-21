@@ -38,7 +38,14 @@
 | [Buff 監視](./features/monster/buff.md) | グローバル / 自身のみ、優先度、アラート、スタイル |
 | [味方 Buff](./features/monster/teammate.md) | 味方 Buff、分類ショートカット、マトリクススタイル |
 | [ヘイトリスト](./features/monster/hate.md) | ヘイトのオン/オフ、表示人数上限、スタイル |
-| [ウィンドウを有効化](./features/monster/overlay.md) | モンスターオーバーレイ 3 エリアの表示切替 |
+| [Boss DBM](./features/monster/boss-dbm.md) | Boss ギミック警告バー、スタイル、レイアウト |
+| [ウィンドウを有効化](./features/monster/overlay.md) | モンスターオーバーレイ各エリアの表示切替 |
+
+### ダンジョンギミック
+
+| ドキュメント | 説明 |
+|------|------|
+| [概要](./features/minimap/README.md) | ミニマップギミック、字幕、対応ダンジョンと例 |
 
 ## バージョン更新
 

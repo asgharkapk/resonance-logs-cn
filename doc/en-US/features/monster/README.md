@@ -19,13 +19,14 @@ Independent from **Live Monitor** (your skill CD, your buffs, etc.): config live
 | [Buff Monitor](./buff.md) | Buff Monitor | Global / self-only, priority, alerts, styling |
 | [Teammate Buffs](./teammate.md) | Teammate Buffs | Teammate-applied buffs, category shortcuts, matrix styling |
 | [Threat List](./hate.md) | Hate List | Threat panel toggle, player limit, styling |
-| [Enable Overlay](./overlay.md) | Enable Window | Monster overlay three-zone toggles |
+| [Boss DBM](./boss-dbm.md) | Boss DBM | Boss mechanic warning bars, styling, layout |
+| [Enable Overlay](./overlay.md) | Enable Window | Monster overlay area display toggles |
 
 ## Enable & Top Bar
 
 - **Enable Monster Monitor**: Master switch at top; when off, no data to monster overlay.
 - **Toggle Monster Overlay**: Show or hide in-game **Monster Monitor** overlay.
-- **Edit Monster Layout**: Drag and resize monster buff, teammate buff, and threat areas on the overlay.
+- **Edit Monster Layout**: Drag and resize areas on the overlay (monster buff, teammate buff, threat list, Boss DBM, etc.).
 
 Config is **global** (no multi-profile like Live Monitor); changes persist—if lists look wrong on first enable, try toggling the master switch off and on (see release notes on persistence).
 

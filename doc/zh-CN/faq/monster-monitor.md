@@ -1,6 +1,6 @@
 # FAQ · 怪物监控
 
-**详细说明**：[怪物监控总览](../features/monster/README.md) · [Buff 监控](../features/monster/buff.md) · [队友 Buff](../features/monster/teammate.md) · [仇恨列表](../features/monster/hate.md) · [启用窗口](../features/monster/overlay.md)
+**详细说明**：[怪物监控总览](../features/monster/README.md) · [Buff 监控](../features/monster/buff.md) · [队友 Buff](../features/monster/teammate.md) · [仇恨列表](../features/monster/hate.md) · [Boss DBM](../features/monster/boss-dbm.md) · [启用窗口](../features/monster/overlay.md)
 
 ## 怪物 Buff 和实时监控的 Buff 有什么区别？
 
@@ -26,3 +26,16 @@
 4. **目标已死亡**：怪物死亡后 Buff / 仇恨会停止更新，需换目标或等下一只。
 
 打桩时只要木桩被锁定为你的攻击目标，行为与打 Boss 相同。
+
+## Boss DBM 是什么？和 Buff 监控有什么区别？
+
+**Boss DBM** 在怪物遮罩中显示 Boss 技能机制预警条（技能名 + 倒计时），数据来自游戏内 Boss DBM 事件，**无需像 Buff 一样手动添加监控项**。详见 [Boss DBM](../features/monster/boss-dbm.md)。
+
+- **Buff 监控**：盯特定 Buff 的持续时间、层数，须先加入监控列表。
+- **Boss DBM**：Boss 读条 / 阶段技能自动弹出计时条，适合统一看机制时间轴。
+
+## 为什么看不到 Boss DBM 预警条？
+
+1. **Boss DBM 区未开启**：在 **Boss DBM** 或 **启用窗口** Tab 将 **Boss DBM 区** 设为显示（默认关闭）。
+2. **怪物监控或遮罩未打开**：确认 **启用怪物监控** 与 **切换怪物遮罩**。
+3. **当前技能无 DBM 事件**：并非所有 Boss 技能都会推送 DBM；无条目时浮窗不显示该区域（编辑模式下可见占位预览）。

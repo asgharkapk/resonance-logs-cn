@@ -102,7 +102,7 @@ export const zhCNMessages = {
     "当前版本 v{currentVersion}，最新版本 v{latestVersion}",
   "components.updateModal.empty": "该版本暂无更新说明。",
   "components.updateModal.footer":
-    "若 GitHub 下载较慢，也可前往 QQ 群（1084866292）获取最新版本安装包。",
+    "若 GitHub 下载较慢，也可前往 QQ 群（1084866292）或 Discord（discord.gg/RHeX47wvDU）获取最新版本安装包。",
   "components.updateModal.download": "前往 GitHub 下载",
   "components.changelogModal.closeAria": "关闭更新日志弹窗",
   "components.changelogModal.title": "更新日志",

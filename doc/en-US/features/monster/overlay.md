@@ -2,7 +2,7 @@
 
 Corresponds to **Monster Monitor → Enable Window** tab.
 
-Toggle the three areas in the **monster overlay** (saved across restarts).
+Toggle areas in the **monster overlay** (saved across restarts).
 
 ## Display Areas
 
@@ -11,6 +11,8 @@ Toggle the three areas in the **monster overlay** (saved across restarts).
 | **Monster Buff Area** | Self-only / global buffs from [Buff Monitor](./buff.md) |
 | **Teammate Buff Area** | Buffs and categories from [Teammate Buffs](./teammate.md) |
 | **Threat List Area** | Threat order from [Threat List](./hate.md) (enable threat tab first) |
+| **Teammate Fantasy Area** | Teammate fantasy summon display |
+| **Boss DBM Area** | [Boss DBM](./boss-dbm.md) mechanic warning bars (enable on Boss DBM or this tab) |
 
 Click buttons to toggle **show / hide**.
 

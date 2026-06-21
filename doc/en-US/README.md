@@ -38,7 +38,14 @@ Feature guides and FAQ index.
 | [Buff Monitor](./features/monster/buff.md) | Global / self-only, priority, alerts, styling |
 | [Teammate Buffs](./features/monster/teammate.md) | Teammate buffs, category shortcuts, matrix styling |
 | [Threat List](./features/monster/hate.md) | Threat toggle, player limit, styling |
-| [Enable Overlay](./features/monster/overlay.md) | Monster overlay three-zone display toggles |
+| [Boss DBM](./features/monster/boss-dbm.md) | Boss mechanic warning bars, styling, layout |
+| [Enable Overlay](./features/monster/overlay.md) | Monster overlay area display toggles |
+
+### Dungeon Mechanics
+
+| Document | Description |
+|------|------|
+| [Overview](./features/minimap/README.md) | Minimap mechanics, mechanic calls, supported dungeons, examples |
 
 ## Changelog
 

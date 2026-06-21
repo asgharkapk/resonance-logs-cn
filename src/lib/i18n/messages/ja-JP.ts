@@ -105,7 +105,7 @@ export const jaJPMessages = {
   "components.updateModal.empty":
     "このバージョンのリリースノートはありません。",
   "components.updateModal.footer":
-    "GitHub のダウンロードが遅い場合は、QQ グループ（1084866292）から最新インストーラーを入手することもできます。",
+    "GitHub のダウンロードが遅い場合は、QQ グループ（1084866292）または Discord（discord.gg/RHeX47wvDU）から最新インストーラーを入手できます。翻訳の提供をご希望の場合は Discord よりご連絡ください。",
   "components.updateModal.download": "GitHub でダウンロード",
   "components.changelogModal.closeAria": "更新履歴ダイアログを閉じる",
   "components.changelogModal.title": "更新履歴",
