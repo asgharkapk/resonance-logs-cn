@@ -478,7 +478,7 @@ pub struct MinimapEntity {
 }
 
 /// One monster skill cast event observed from `ATTR_SKILL_ID` (attribute 100).
-#[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct MinimapSkillCast {
     /// Entity UUID that emitted the skill cast.
@@ -487,6 +487,12 @@ pub struct MinimapSkillCast {
     pub skill_id: i32,
     /// Local receive time in milliseconds.
     pub time_ms: i64,
+    /// World X position of the caster at cast time, when known.
+    pub x: Option<f32>,
+    /// World Z position of the caster at cast time, when known.
+    pub z: Option<f32>,
+    /// Yaw facing in degrees at cast time, when known.
+    pub facing: Option<f32>,
 }
 
 /// One frame of minimap data for a single scene.

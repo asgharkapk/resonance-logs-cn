@@ -223,6 +223,9 @@ export type MinimapSkillCast = {
   entityUuid: string;
   skillId: number;
   timeMs: number;
+  x?: number | null;
+  z?: number | null;
+  facing?: number | null;
 };
 
 export type MinimapSnapshot = {

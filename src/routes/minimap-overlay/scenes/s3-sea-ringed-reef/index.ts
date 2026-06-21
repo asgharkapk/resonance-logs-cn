@@ -84,6 +84,14 @@ function localizeRegion(
   arena: S3SeaRingedReefArena,
 ): MechanicRegion {
   if (region.kind === "ring") return region;
+  if (region.kind === "polygon") {
+    return {
+      ...region,
+      points: region.points.map((point) =>
+        toArenaLocal(point.x, point.z, arena),
+      ),
+    };
+  }
   const point = toArenaLocal(region.x, region.z, arena);
   return {
     ...region,

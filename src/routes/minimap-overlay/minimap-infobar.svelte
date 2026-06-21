@@ -25,11 +25,12 @@
   const groups = $derived.by<SkillGroup[]>(() => {
     if (!snapshot) return [];
     const scene = resolveScene(snapshot.sceneId);
-    const view = scene?.resolveView(snapshot, displayName);
+    const skillCasts = minimapSkillCasts();
+    const view = scene?.resolveView(snapshot, displayName, skillCasts);
     if (!view) return [];
     const skillRows =
       scene?.resolveSkillRows?.({
-        skillCasts: minimapSkillCasts(),
+        skillCasts,
         displayName,
       }) ?? [];
     const groups: SkillGroup[] = [];

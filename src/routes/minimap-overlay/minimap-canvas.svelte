@@ -2,6 +2,7 @@
   import type { MinimapEntity, MinimapSnapshot } from "$lib/api";
   import { SETTINGS } from "$lib/settings-store";
   import { slotColor } from "./colors";
+  import { minimapSkillCasts } from "./minimap-runtime.svelte.js";
   import { resolveScene } from "./scene-registry";
   import {
     emptySceneView,
@@ -29,7 +30,7 @@
     if (!snapshot) return emptySceneView();
     const scene = resolveScene(snapshot.sceneId);
     return (
-      scene?.resolveView(snapshot, displayName) ??
+      scene?.resolveView(snapshot, displayName, minimapSkillCasts()) ??
       emptySceneView(snapshot.entities)
     );
   });
@@ -246,6 +247,72 @@
     ctx.globalAlpha = 1;
   }
 
+  function drawSectorRegion(
+    ctx: CanvasRenderingContext2D,
+    project: Projector,
+    region: Extract<MechanicRegion, { kind: "sector" }>,
+    color: string,
+  ) {
+    const steps = Math.max(
+      6,
+      Math.ceil(Math.abs(region.endDeg - region.startDeg) / 8),
+    );
+    const points: [number, number][] = [project(region.x, region.z)];
+    for (let i = 0; i <= steps; i++) {
+      const deg =
+        region.startDeg + ((region.endDeg - region.startDeg) * i) / steps;
+      const rad = (deg * Math.PI) / 180;
+      points.push(
+        project(
+          region.x + Math.sin(rad) * region.radius,
+          region.z + Math.cos(rad) * region.radius,
+        ),
+      );
+    }
+
+    ctx.beginPath();
+    const [startX, startY] = points[0] ?? [0, 0];
+    ctx.moveTo(startX, startY);
+    for (const [x, y] of points.slice(1)) {
+      ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.globalAlpha = 0.24;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 0.92;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPolygonRegion(
+    ctx: CanvasRenderingContext2D,
+    project: Projector,
+    region: Extract<MechanicRegion, { kind: "polygon" }>,
+    color: string,
+  ) {
+    if (region.points.length < 3) return;
+
+    const points = region.points.map((point) => project(point.x, point.z));
+    ctx.beginPath();
+    const [startX, startY] = points[0] ?? [0, 0];
+    ctx.moveTo(startX, startY);
+    for (const [x, y] of points.slice(1)) {
+      ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.globalAlpha = 0.24;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 0.92;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
   function drawRegion(
     ctx: CanvasRenderingContext2D,
     region: MechanicRegion,
@@ -272,6 +339,39 @@
       return;
     }
 
+    if (region.kind === "sector") {
+      drawSectorRegion(ctx, project, region, color);
+      if (region.label) {
+        const midDeg = (region.startDeg + region.endDeg) / 2;
+        const rad = (midDeg * Math.PI) / 180;
+        const [tx, ty] = project(
+          region.x + Math.sin(rad) * region.radius * 0.62,
+          region.z + Math.cos(rad) * region.radius * 0.62,
+        );
+        ctx.fillStyle = color;
+        ctx.font = "700 14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(region.label, tx, ty);
+      }
+      return;
+    }
+
+    if (region.kind === "polygon") {
+      if (region.points.length < 3) return;
+      drawPolygonRegion(ctx, project, region, color);
+      if (region.label) {
+        const centroid = polygonCentroid(region.points);
+        const [tx, ty] = project(centroid.x, centroid.z);
+        ctx.fillStyle = color;
+        ctx.font = "700 14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(region.label, tx, ty);
+      }
+      return;
+    }
+
     fillRectRegion(
       ctx,
       project,
@@ -289,6 +389,21 @@
       ctx.textBaseline = "middle";
       ctx.fillText(region.label, tx, ty);
     }
+  }
+
+  function polygonCentroid(points: { x: number; z: number }[]): {
+    x: number;
+    z: number;
+  } {
+    if (points.length === 0) return { x: 0, z: 0 };
+    const sum = points.reduce(
+      (acc, point) => ({ x: acc.x + point.x, z: acc.z + point.z }),
+      { x: 0, z: 0 },
+    );
+    return {
+      x: sum.x / points.length,
+      z: sum.z / points.length,
+    };
   }
 
   $effect(() => {

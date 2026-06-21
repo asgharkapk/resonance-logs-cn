@@ -471,13 +471,23 @@ function dedupeRegions(regions: MechanicRegion[]): MechanicRegion[] {
   const seen = new Set<string>();
   const out: MechanicRegion[] = [];
   for (const region of regions) {
-    const key =
-      region.kind === "ring"
-        ? `ring:${region.rInner}:${region.rOuter}:${region.colorSlot}`
-        : `rect:${region.x}:${region.z}:${region.halfX}:${region.halfZ}:${region.colorSlot}:${region.label ?? ""}`;
+    const key = regionKey(region);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(region);
   }
   return out;
+}
+
+function regionKey(region: MechanicRegion): string {
+  switch (region.kind) {
+    case "ring":
+      return `ring:${region.rInner}:${region.rOuter}:${region.colorSlot}`;
+    case "rect":
+      return `rect:${region.x}:${region.z}:${region.halfX}:${region.halfZ}:${region.colorSlot}:${region.label ?? ""}`;
+    case "sector":
+      return `sector:${region.x}:${region.z}:${region.radius}:${region.startDeg}:${region.endDeg}:${region.colorSlot}:${region.label ?? ""}`;
+    case "polygon":
+      return `polygon:${region.points.map((point) => `${point.x}:${point.z}`).join("|")}:${region.colorSlot}:${region.label ?? ""}`;
+  }
 }

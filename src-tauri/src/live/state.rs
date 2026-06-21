@@ -12,7 +12,7 @@ use crate::live::dungeon_log::{BattleStateMachine, EncounterResetReason};
 use crate::live::entity_attr_store::EntityAttrStore;
 use crate::live::entity_id::entity_uuid_string;
 use crate::live::event_manager::EventManager;
-use crate::live::opcodes_models::{AttrType, AttrValue, DeathRecord, Encounter, Entity};
+use crate::live::opcodes_models::{AttrType, AttrValue, DeathRecord, Encounter, Entity, attr_type};
 use crate::live::season_cultivate::{FactorCounterTemplate, SeasonCultivateRuntimeState};
 use crate::live::skill_cd_monitor::SkillCdMonitor;
 use crate::live::skill_lifecycle::{
@@ -1821,10 +1821,21 @@ impl AppStateManager {
         if crate::live::minimap::scene::is_minimap_scene(scene_id) {
             for cast in changes.skill_cast_events {
                 if is_minimap_relevant_entity(state, cast.entity_uuid, scene_id) {
+                    let position = state
+                        .attr_store
+                        .attr_position_by_id(cast.entity_uuid, attr_type::ATTR_POS);
+                    let facing = state
+                        .attr_store
+                        .attr(cast.entity_uuid, AttrType::Facing)
+                        .and_then(AttrValue::as_int)
+                        .map(|v| v as f32 / 100.0);
                     state.pending_minimap_skill_casts.push(MinimapSkillCast {
                         entity_uuid: entity_uuid_string(cast.entity_uuid),
                         skill_id: cast.skill_id,
                         time_ms: cast.timestamp_ms,
+                        x: position.as_ref().map(|position| position.x),
+                        z: position.as_ref().map(|position| position.z),
+                        facing,
                     });
                 }
             }

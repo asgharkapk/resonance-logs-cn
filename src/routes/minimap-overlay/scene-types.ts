@@ -33,6 +33,22 @@ export type MechanicRegion =
       halfZ: number;
       colorSlot: number;
       label?: string;
+    }
+  | {
+      kind: "sector";
+      x: number;
+      z: number;
+      radius: number;
+      startDeg: number;
+      endDeg: number;
+      colorSlot: number;
+      label?: string;
+    }
+  | {
+      kind: "polygon";
+      points: { x: number; z: number }[];
+      colorSlot: number;
+      label?: string;
     };
 
 export type MechanicRow = {
@@ -63,6 +79,7 @@ export type SceneDefinition = {
   resolveView: (
     snapshot: MinimapSnapshot,
     displayName: (entity: MinimapEntity) => string,
+    skillCasts?: MinimapSkillCast[],
   ) => SceneView;
   resolveSkillRows?: (args: {
     skillCasts: MinimapSkillCast[];
