@@ -313,6 +313,34 @@
     ctx.globalAlpha = 1;
   }
 
+  function drawLineRegion(
+    ctx: CanvasRenderingContext2D,
+    project: Projector,
+    region: Extract<MechanicRegion, { kind: "line" }>,
+    color: string,
+  ) {
+    const [sx, sy] = project(region.x1, region.z1);
+    const [ex, ey] = project(region.x2, region.z2);
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = region.widthPx ?? 2;
+    ctx.lineCap = "butt";
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+
+    if (region.label) {
+      ctx.fillStyle = color;
+      ctx.font = "700 14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(region.label, (sx + ex) / 2, (sy + ey) / 2);
+    }
+    ctx.restore();
+  }
+
   function drawRegion(
     ctx: CanvasRenderingContext2D,
     region: MechanicRegion,
@@ -336,6 +364,11 @@
       ctx.arc(ox, oy, region.rOuter * scale, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 1;
+      return;
+    }
+
+    if (region.kind === "line") {
+      drawLineRegion(ctx, project, region, color);
       return;
     }
 

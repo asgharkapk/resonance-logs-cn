@@ -173,7 +173,6 @@ function addWaveSafeRegions(
     halfX: INTERSECTION_HALF_SIZE,
     halfZ: INTERSECTION_HALF_SIZE,
     colorSlot: 1,
-    label: t(textKeys.crossSafe),
   });
   rows.push({
     key: `wave:cross:${vertical.entity.entityUuid}:${horizontal.entity.entityUuid}`,

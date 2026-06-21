@@ -1481,6 +1481,8 @@ export const enUSMessages = {
   "minimap.s3Raid.pinball.cast": "Pinball Cast",
   "minimap.s3Raid.pinball.ball": "Ball",
   "minimap.s3SeaRingedReef.matrix.group": "Nabo Matrix Runes",
+  "minimap.s3SeaRingedReef.matrix.calloutGroup": "Nabo Matrix Callout",
+  "minimap.s3SeaRingedReef.matrix.callout": "Mechanism Callout",
   "minimap.s3SeaRingedReef.matrix.runeA": "Rune A",
   "minimap.s3SeaRingedReef.matrix.runeB": "Rune B",
   "minimap.s3SeaRingedReef.matrix.runeC": "Rune C",

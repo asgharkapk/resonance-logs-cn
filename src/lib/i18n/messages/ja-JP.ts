@@ -1466,6 +1466,8 @@ export const jaJPMessages = {
   "minimap.s3Raid.pinball.cast": "ピンボール詠唱",
   "minimap.s3Raid.pinball.ball": "弾",
   "minimap.s3SeaRingedReef.matrix.group": "ナボ行列ルーン",
+  "minimap.s3SeaRingedReef.matrix.calloutGroup": "ナボ行列指名",
+  "minimap.s3SeaRingedReef.matrix.callout": "装置指名",
   "minimap.s3SeaRingedReef.matrix.runeA": "ルーンA",
   "minimap.s3SeaRingedReef.matrix.runeB": "ルーンB",
   "minimap.s3SeaRingedReef.matrix.runeC": "ルーンC",

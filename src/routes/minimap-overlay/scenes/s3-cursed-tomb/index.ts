@@ -57,6 +57,17 @@ function localizeRegion(region: MechanicRegion): MechanicRegion {
       points: region.points.map((point) => toArenaLocal(point.x, point.z)),
     };
   }
+  if (region.kind === "line") {
+    const start = toArenaLocal(region.x1, region.z1);
+    const end = toArenaLocal(region.x2, region.z2);
+    return {
+      ...region,
+      x1: start.x,
+      z1: start.z,
+      x2: end.x,
+      z2: end.z,
+    };
+  }
   const point = toArenaLocal(region.x, region.z);
   return {
     ...region,

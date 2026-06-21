@@ -49,6 +49,16 @@ export type MechanicRegion =
       points: { x: number; z: number }[];
       colorSlot: number;
       label?: string;
+    }
+  | {
+      kind: "line";
+      x1: number;
+      z1: number;
+      x2: number;
+      z2: number;
+      colorSlot: number;
+      widthPx?: number;
+      label?: string;
     };
 
 export type MechanicRow = {

@@ -92,6 +92,17 @@ function localizeRegion(
       ),
     };
   }
+  if (region.kind === "line") {
+    const start = toArenaLocal(region.x1, region.z1, arena);
+    const end = toArenaLocal(region.x2, region.z2, arena);
+    return {
+      ...region,
+      x1: start.x,
+      z1: start.z,
+      x2: end.x,
+      z2: end.z,
+    };
+  }
   const point = toArenaLocal(region.x, region.z, arena);
   return {
     ...region,

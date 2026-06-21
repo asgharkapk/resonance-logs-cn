@@ -1363,6 +1363,8 @@ export const zhCNMessages = {
   "minimap.s3Raid.pinball.cast": "弹球倒计时",
   "minimap.s3Raid.pinball.ball": "弹球",
   "minimap.s3SeaRingedReef.matrix.group": "娜宝矩阵符文",
+  "minimap.s3SeaRingedReef.matrix.calloutGroup": "娜宝矩阵点名",
+  "minimap.s3SeaRingedReef.matrix.callout": "机关点名",
   "minimap.s3SeaRingedReef.matrix.runeA": "符文A",
   "minimap.s3SeaRingedReef.matrix.runeB": "符文B",
   "minimap.s3SeaRingedReef.matrix.runeC": "符文C",
