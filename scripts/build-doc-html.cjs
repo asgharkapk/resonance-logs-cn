@@ -25,16 +25,19 @@ const FEATURE_HUBS = {
     monitor: { hubHref: 'README.html', hubLabel: 'Buff 监控' },
     dps: { hubHref: 'README.html', hubLabel: 'DPS 检测' },
     monster: { hubHref: 'README.html', hubLabel: '怪物监控' },
+    minimap: { hubHref: 'README.html', hubLabel: '副本机制' },
   },
   'en-US': {
     monitor: { hubHref: 'README.html', hubLabel: 'Buff Monitor' },
     dps: { hubHref: 'README.html', hubLabel: 'DPS Meter' },
     monster: { hubHref: 'README.html', hubLabel: 'Monster Monitor' },
+    minimap: { hubHref: 'README.html', hubLabel: 'Dungeon Mechanics' },
   },
   'ja-JP': {
     monitor: { hubHref: 'README.html', hubLabel: 'Buff モニター' },
     dps: { hubHref: 'README.html', hubLabel: 'DPS メーター' },
     monster: { hubHref: 'README.html', hubLabel: 'モンスターモニター' },
+    minimap: { hubHref: 'README.html', hubLabel: 'ダンジョンギミック' },
   },
 };
 
@@ -327,7 +330,7 @@ function buildLocale(locale) {
     if (fs.existsSync(mdPath)) buildFile(mdPath, outPath, locale);
   }
 
-  for (const module of ['monitor', 'dps', 'monster']) {
+  for (const module of ['monitor', 'dps', 'monster', 'minimap']) {
     buildFeatureModule(module, locale);
   }
 
