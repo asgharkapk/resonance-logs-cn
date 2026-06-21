@@ -8,8 +8,10 @@
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
   import { goto } from "$app/navigation";
   import { onSceneChange } from "$lib/api";
-  import { isDailyScene } from "$lib/config/daily-scene-blacklist";
-  import { isSupportedMinimapScene } from "$lib/config/minimap-scene-support";
+  import {
+    isDailyScene,
+    isSupportedMinimapScene,
+  } from "$lib/config/daily-scene-blacklist";
   import { SETTINGS } from '$lib/settings-store';
   import { applyCustomFonts } from "$lib/font-loader";
   import { applyLiveClickthrough } from "$lib/utils.svelte";
@@ -37,8 +39,7 @@
   let runtimeSnapshotInitialized = false;
   let lastOverlayVisibleState: boolean | null = null;
   let lastMonsterOverlayVisibleState: boolean | null = null;
-  let minimapAutoHidden = false;
-  let minimapWasVisible = false;
+  let lastMinimapOverlayVisibleState: boolean | null = null;
   let runtimeSyncTimer: ReturnType<typeof setTimeout> | null = null;
   let currentSceneId = $state<number | null>(null);
 
@@ -129,32 +130,30 @@
   $effect(() => {
     const autoHideInDailyScenes =
       SETTINGS.minimap.state.autoHideInDailyScenes ?? false;
-    const shouldAutoHide =
-      autoHideInDailyScenes &&
-      (isDailyScene(currentSceneId) || !isSupportedMinimapScene(currentSceneId));
+    const shouldControl = autoHideInDailyScenes && currentSceneId !== null;
+    const shouldShow =
+      shouldControl &&
+      !isDailyScene(currentSceneId) &&
+      isSupportedMinimapScene(currentSceneId);
 
     void (async () => {
       try {
-        const minimapOverlayWindow = await WebviewWindow.getByLabel("minimap-overlay");
-        if (!minimapOverlayWindow) return;
-
-        if (shouldAutoHide) {
-          if (minimapAutoHidden) return;
-          minimapWasVisible = await minimapOverlayWindow.isVisible();
-          if (minimapWasVisible) {
-            await minimapOverlayWindow.hide();
-          }
-          minimapAutoHidden = true;
+        if (!shouldControl) {
+          lastMinimapOverlayVisibleState = null;
           return;
         }
 
-        if (!minimapAutoHidden) return;
-        if (minimapWasVisible) {
+        const minimapOverlayWindow = await WebviewWindow.getByLabel("minimap-overlay");
+        if (!minimapOverlayWindow) return;
+
+        if (lastMinimapOverlayVisibleState === shouldShow) return;
+        lastMinimapOverlayVisibleState = shouldShow;
+        if (shouldShow) {
           await minimapOverlayWindow.show();
           await minimapOverlayWindow.unminimize();
+        } else {
+          await minimapOverlayWindow.hide();
         }
-        minimapAutoHidden = false;
-        minimapWasVisible = false;
       } catch (error) {
         console.error("[minimap] failed to sync auto hide state", error);
       }
