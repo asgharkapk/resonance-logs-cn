@@ -914,7 +914,6 @@ pub fn process_aoi_sync_delta(
     // `skill_effects` early-return below, since that path is the common case.
     if let Some(seq) = aoi_sync_delta.passive_skill_infos.as_ref() {
         for info in &seq.passive_infos {
-            info!("passive_skill_infos: {:?}", info);
             let (Some(uuid), Some(skill_id)) = (info.uuid, info.skill_id) else {
                 continue;
             };

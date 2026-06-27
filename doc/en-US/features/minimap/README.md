@@ -46,6 +46,7 @@ Toggle **Map Panel** and **Mechanic Calls** separately in settings. Position and
 | **Cursed Tomb** | 6513 / 6514 / 6515 | Blue tower activation, energy pillar callouts, half-arena charges, charge clones, etc. |
 | **Sea-Ringed Reef** | 6563 / 6564 / 6565 | Matrix rune traps (mid-run), Boss dual-tone colors, ice/wave safe zones and cross lines, etc. |
 | **Forgotten Dreamwild** | 13021 / 13022 / 13023 | Phase tiles, stack/decay/spread, causal jump, kill marks, electromagnetic ring sequence, pinball, etc. |
+| **S3 Giant Tower** | 1150 / 1151 / 1152 | Correct portal color callout |
 
 > Mechanic labels match in-overlay text. Normal / Hard / Master difficulties share the same parser with different scene IDs.
 
