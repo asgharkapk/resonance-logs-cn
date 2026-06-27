@@ -1464,6 +1464,9 @@ export const enUSMessages = {
     "When enabled, an additional configurable outline is drawn around your own dot.",
   "minimap.settings.localRing.color": "Ring Color",
   "minimap.settings.localRing.width": "Ring Width",
+  "minimap.settings.localFacing.label": "Show facing indicator",
+  "minimap.settings.localFacing.description":
+    "When enabled, a small arrow pointing in your current facing direction is drawn on your own marker.",
   "minimap.s3Raid.phase.corner": "Corner Explosion",
   "minimap.s3Raid.phase.edge": "Edge-Mid Explosion",
   "minimap.s3Raid.phase.group": "Phase",

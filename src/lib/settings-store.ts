@@ -270,6 +270,10 @@ export type MinimapLocalRing = {
   width: number;
 };
 
+export type MinimapLocalFacing = {
+  enabled: boolean;
+};
+
 export type MinimapConfig = {
   autoHideInDailyScenes: boolean;
   hideNormalTeammates: boolean;
@@ -280,6 +284,7 @@ export type MinimapConfig = {
   infoPanel: MinimapPanelRect;
   entityColors: MinimapEntityColors;
   localRing: MinimapLocalRing;
+  localFacing: MinimapLocalFacing;
 };
 
 export type PanelAttrConfig = {
@@ -1130,6 +1135,9 @@ export function createDefaultMinimapConfig(): MinimapConfig {
       enabled: true,
       color: "#ffffff",
       width: 2,
+    },
+    localFacing: {
+      enabled: false,
     },
   };
 }

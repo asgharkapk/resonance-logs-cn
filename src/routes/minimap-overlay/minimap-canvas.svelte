@@ -131,6 +131,55 @@
     ctx.stroke();
   }
 
+  function shouldDrawLocalFacing(): boolean {
+    return minimapSettings.localFacing?.enabled === true;
+  }
+
+  // Small arrowhead anchored just outside the self marker, pointing in the
+  // player's world facing direction. We derive the screen-space heading by
+  // projecting a point one world unit ahead, so map rotation is absorbed by
+  // the same projector the dots use.
+  function drawLocalFacing(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    entity: MinimapEntity,
+    project: Projector,
+    color: string,
+  ) {
+    if (!shouldDrawLocalFacing()) return;
+    const facing = entity.facing;
+    if (facing === null || facing === undefined || !Number.isFinite(facing)) {
+      return;
+    }
+
+    const rad = (facing * Math.PI) / 180;
+    const [ax, ay] = project(entity.x + Math.sin(rad), entity.z + Math.cos(rad));
+    const dx = ax - cx;
+    const dy = ay - cy;
+    if (dx === 0 && dy === 0) return;
+    const heading = Math.atan2(dy, dx);
+
+    const base =
+      radiusFor() + (shouldDrawLocalRing() ? localRingWidth() : 0) + 3;
+    const length = 7;
+    const halfWidth = 4;
+
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.translate(cx, cy);
+    ctx.rotate(heading);
+    ctx.beginPath();
+    ctx.moveTo(base + length, 0);
+    ctx.lineTo(base, -halfWidth);
+    ctx.lineTo(base, halfWidth);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Upward-pointing triangle centered on (cx, cy), used for every non-team
   // entity so it reads distinctly from team members' circles.
   function drawTriangle(
@@ -249,6 +298,7 @@
         ctx.fill();
         if (entity.kind === "local") {
           drawLocalRing(ctx, sx, sy);
+          drawLocalFacing(ctx, sx, sy, entity, project, colorFor(entity));
         }
       } else {
         drawTriangle(ctx, sx, sy, NON_TEAM_TRIANGLE_RADIUS);
@@ -487,6 +537,7 @@
     void minimapSettings.localRing?.enabled;
     void minimapSettings.localRing?.color;
     void minimapSettings.localRing?.width;
+    void minimapSettings.localFacing?.enabled;
     if (typeof window === "undefined") return;
     const id = window.requestAnimationFrame(draw);
     return () => window.cancelAnimationFrame(id);

@@ -1345,6 +1345,9 @@ export const zhCNMessages = {
     "开启后，自己的圆点外层会额外绘制一圈可配置描边。",
   "minimap.settings.localRing.color": "同心圆颜色",
   "minimap.settings.localRing.width": "同心圆线宽",
+  "minimap.settings.localFacing.label": "显示朝向指示",
+  "minimap.settings.localFacing.description":
+    "开启后，在自己的标记上绘制一个指向当前朝向的小箭头。",
   "minimap.s3Raid.phase.corner": "四角爆炸",
   "minimap.s3Raid.phase.edge": "边中爆炸",
   "minimap.s3Raid.phase.group": "相位",

@@ -12,6 +12,7 @@
     showBoss?: boolean;
     entityColors?: Partial<typeof defaultMinimapConfig.entityColors>;
     localRing?: Partial<typeof defaultMinimapConfig.localRing>;
+    localFacing?: Partial<typeof defaultMinimapConfig.localFacing>;
   };
 
   function ensureMinimapSettingsDefaults() {
@@ -24,6 +25,8 @@
     state.localRing.enabled ??= defaultMinimapConfig.localRing.enabled;
     state.localRing.color ??= defaultMinimapConfig.localRing.color;
     state.localRing.width ??= defaultMinimapConfig.localRing.width;
+    state.localFacing ??= { ...defaultMinimapConfig.localFacing };
+    state.localFacing.enabled ??= defaultMinimapConfig.localFacing.enabled;
   }
 
   ensureMinimapSettingsDefaults();
@@ -35,6 +38,7 @@
     void minimapSettings.autoHideInDailyScenes;
     void minimapSettings.entityColors;
     void minimapSettings.localRing;
+    void minimapSettings.localFacing;
     ensureMinimapSettingsDefaults();
   });
 
@@ -173,6 +177,13 @@
             label={t("minimap.settings.localRing.enabled.label")}
             description={t("minimap.settings.localRing.enabled.description")}
           />
+          {#if minimapSettings.localFacing && minimapSettings.localFacing.enabled !== undefined}
+            <SettingsSwitch
+              bind:checked={minimapSettings.localFacing.enabled}
+              label={t("minimap.settings.localFacing.label")}
+              description={t("minimap.settings.localFacing.description")}
+            />
+          {/if}
           <div class="grid gap-2 lg:grid-cols-2">
             <SettingsColor
               bind:value={minimapSettings.localRing.color}

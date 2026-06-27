@@ -1450,6 +1450,9 @@ export const jaJPMessages = {
     "有効にすると、自分の点の外側に設定可能な輪郭を追加表示します。",
   "minimap.settings.localRing.color": "同心円の色",
   "minimap.settings.localRing.width": "同心円の線幅",
+  "minimap.settings.localFacing.label": "向きを表示",
+  "minimap.settings.localFacing.description":
+    "有効にすると、自分のマーカーに現在の向きを指す小さな矢印を描画します。",
   "minimap.s3Raid.phase.corner": "四隅爆発",
   "minimap.s3Raid.phase.edge": "辺中央爆発",
   "minimap.s3Raid.phase.group": "フェーズ",
