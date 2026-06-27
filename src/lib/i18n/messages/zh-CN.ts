@@ -1323,6 +1323,9 @@ export const zhCNMessages = {
   "minimap.settings.showBoss.label": "显示 Boss 位置",
   "minimap.settings.showBoss.description":
     "开启后，在小地图中显示当前副本 Boss 的位置；默认关闭以减少干扰。",
+  "minimap.settings.showMarkers.label": "显示标点",
+  "minimap.settings.showMarkers.description":
+    "开启后，在小地图中显示队伍标点（1~6 号）；仅在地图上以彩色数字显示，默认关闭。",
   "minimap.overlay.title": "面板可见性",
   "minimap.overlay.description": "控制副本机制 overlay 中哪些独立面板可见。",
   "minimap.overlay.state.show": "显示",
@@ -1337,6 +1340,12 @@ export const zhCNMessages = {
   "minimap.settings.colors.local": "自己",
   "minimap.settings.colors.teammate": "队友",
   "minimap.settings.colors.boss": "Boss",
+  "minimap.settings.colors.marker1": "标点 1",
+  "minimap.settings.colors.marker2": "标点 2",
+  "minimap.settings.colors.marker3": "标点 3",
+  "minimap.settings.colors.marker4": "标点 4",
+  "minimap.settings.colors.marker5": "标点 5",
+  "minimap.settings.colors.marker6": "标点 6",
   "minimap.settings.localRing.title": "自身标记",
   "minimap.settings.localRing.description":
     "在自己的小地图圆点外叠加一圈同心圆，即使被机制点名变色也能快速定位自己。",

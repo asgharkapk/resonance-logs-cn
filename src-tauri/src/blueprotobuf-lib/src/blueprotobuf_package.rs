@@ -254,7 +254,7 @@ pub struct SeqPassiveSkillInfo {
     #[prost(message, repeated, tag = "2")]
     pub passive_infos: ::prost::alloc::vec::Vec<PassiveSkillInfo>,
 }
-#[derive(specta::Type, Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+#[derive(specta::Type, Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PassiveSkillInfo {
     #[prost(int32, optional, tag = "1")]
     pub uuid: ::core::option::Option<i32>,
@@ -272,6 +272,8 @@ pub struct PassiveSkillInfo {
     pub skill_level: ::core::option::Option<i32>,
     #[prost(int32, optional, tag = "8")]
     pub skill_stage: ::core::option::Option<i32>,
+    #[prost(message, optional, tag = "9")]
+    pub tar_pos: ::core::option::Option<Vector3>,
 }
 #[derive(specta::Type, Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct SeqPassiveSkillEndInfo {

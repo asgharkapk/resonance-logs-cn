@@ -4,7 +4,8 @@ pub(crate) mod scene;
 mod scenes;
 
 use crate::live::commands_models::{
-    MinimapBuffFact, MinimapEntity, MinimapEntityKind, MinimapEntityType, MinimapSnapshot,
+    MinimapBuffFact, MinimapEntity, MinimapEntityKind, MinimapEntityType, MinimapMarker,
+    MinimapSnapshot,
 };
 use crate::live::entity_id::{EntityUuid, entity_uuid_string};
 use crate::live::minimap::scene::{SceneConfig, scene_config_for};
@@ -66,11 +67,24 @@ pub(crate) fn build_minimap_snapshot(state: &AppState) -> MinimapSnapshot {
         });
     }
 
+    let markers = state
+        .encounter
+        .markers
+        .values()
+        .map(|m| MinimapMarker {
+            marker: m.skill_id - 1100,
+            skill_id: m.skill_id,
+            x: m.x,
+            z: m.z,
+        })
+        .collect();
+
     MinimapSnapshot {
         scene_id,
         local_player_uuid: entity_uuid_string(local_uuid),
         entities,
         buffs: collect_mechanic_buffs(state, scene_id),
+        markers,
     }
 }
 

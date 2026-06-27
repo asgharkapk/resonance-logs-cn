@@ -34,7 +34,7 @@
     const scene = resolveScene(snapshot.sceneId);
     return (
       scene?.resolveView(snapshot, displayName, minimapSkillCasts()) ??
-      emptySceneView(snapshot.entities)
+      emptySceneView(snapshot.entities, snapshot.markers)
     );
   });
 
@@ -306,6 +306,52 @@
     }
     ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
+
+    drawMarkers(ctx, project, view.markers);
+  }
+
+  // Player markers (标点): drawn from the scene view so they share the same
+  // arena-local coordinate space as entities. Each is a colored number 1..6
+  // with a black outline; gated by the `showMarkers` toggle (default off).
+  function drawMarkers(
+    ctx: CanvasRenderingContext2D,
+    project: Projector,
+    markers: SceneView["markers"],
+  ) {
+    if (!minimapSettings.showMarkers) return;
+    if (!markers || markers.length === 0) return;
+
+    const colors = minimapSettings.markerColors as
+      | Record<string, string>
+      | undefined;
+
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.font = "700 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#000000";
+    ctx.lineJoin = "round";
+    for (const marker of markers) {
+      if (
+        marker.x === null ||
+        marker.x === undefined ||
+        marker.z === null ||
+        marker.z === undefined
+      ) {
+        continue;
+      }
+      const n = marker.marker;
+      if (n < 1 || n > 6) continue;
+      const [sx, sy] = project(marker.x, marker.z);
+      const label = String(n);
+      ctx.strokeText(label, sx, sy);
+      ctx.fillStyle = colors?.[`m${n}`] ?? "#ffffff";
+      ctx.fillText(label, sx, sy);
+    }
+    ctx.restore();
   }
 
   function fillRectRegion(
@@ -531,6 +577,8 @@
     void sceneView;
     void minimapSettings.hideNormalTeammates;
     void minimapSettings.showBoss;
+    void minimapSettings.showMarkers;
+    void minimapSettings.markerColors;
     void minimapSettings.entityColors.local;
     void minimapSettings.entityColors.teammate;
     void minimapSettings.entityColors.boss;

@@ -31,6 +31,16 @@ pub struct Encounter {
     pub local_player: SyncContainerData,
     pub current_scene_id: Option<i32>,
     pub current_dungeon_difficulty: Option<i32>,
+    pub markers: HashMap<i32, MarkerFact>,
+}
+
+/// A persistent in-game player marker placed via passive-skill packets.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct MarkerFact {
+    pub uuid: i32,
+    pub skill_id: i32,
+    pub x: Option<f32>,
+    pub z: Option<f32>,
 }
 
 // Use an async-aware RwLock so readers don't block the tokio runtime threads.

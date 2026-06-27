@@ -1,5 +1,6 @@
 import type {
   MinimapEntity,
+  MinimapMarker,
   MinimapSkillCast,
   MinimapSnapshot,
 } from "$lib/api";
@@ -81,6 +82,8 @@ export type SceneView = {
   rows: MechanicRow[];
   entityColorSlots: Map<string, number>;
   entities: MinimapEntity[];
+  /** Player markers, in the same local coordinate space as `entities`. */
+  markers: MinimapMarker[];
 };
 
 export type SceneDefinition = {
@@ -97,7 +100,10 @@ export type SceneDefinition = {
   }) => MechanicRow[];
 };
 
-export function emptySceneView(entities: MinimapEntity[] = []): SceneView {
+export function emptySceneView(
+  entities: MinimapEntity[] = [],
+  markers: MinimapMarker[] = [],
+): SceneView {
   return {
     worldHalfX: 30,
     worldHalfZ: 27,
@@ -107,5 +113,6 @@ export function emptySceneView(entities: MinimapEntity[] = []): SceneView {
     rows: [],
     entityColorSlots: new Map(),
     entities,
+    markers,
   };
 }

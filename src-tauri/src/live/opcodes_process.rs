@@ -9,8 +9,8 @@ use crate::live::opcodes_models::class::{
     ClassSpec, get_class_id_from_spec, get_class_spec_from_skill_id,
 };
 use crate::live::opcodes_models::{
-    AttrType, AttrValue, DamageSnapshot, Encounter, Entity, PositionAttr, Skill, attr_type,
-    damage_type_flag,
+    AttrType, AttrValue, DamageSnapshot, Encounter, Entity, MarkerFact, PositionAttr, Skill,
+    attr_type, damage_type_flag,
 };
 use crate::live::training_dummy::CombatGate;
 use blueprotobuf_lib::blueprotobuf;
@@ -904,6 +904,39 @@ pub fn process_aoi_sync_delta(
                     &attrs_collection.attrs,
                     attr_store,
                 );
+            }
+        }
+    }
+
+    // Player markers: stateful, driven by passive-skill packets. Start
+    // inserts/overwrites by uuid; End removes. "Reset" = Start new uuid + End old
+    // uuid, which these two passes handle naturally. Must run before the
+    // `skill_effects` early-return below, since that path is the common case.
+    if let Some(seq) = aoi_sync_delta.passive_skill_infos.as_ref() {
+        for info in &seq.passive_infos {
+            info!("passive_skill_infos: {:?}", info);
+            let (Some(uuid), Some(skill_id)) = (info.uuid, info.skill_id) else {
+                continue;
+            };
+            if !(1101..=1106).contains(&skill_id) {
+                continue; // only marker skill ids
+            }
+            let (x, z) = info.tar_pos.as_ref().map_or((None, None), |p| (p.x, p.z));
+            encounter.markers.insert(
+                uuid,
+                MarkerFact {
+                    uuid,
+                    skill_id,
+                    x,
+                    z,
+                },
+            );
+        }
+    }
+    if let Some(end) = aoi_sync_delta.passive_skill_end_infos.as_ref() {
+        for &dead in &end.uuids {
+            if let Ok(uuid) = i32::try_from(dead) {
+                encounter.markers.remove(&uuid);
             }
         }
     }

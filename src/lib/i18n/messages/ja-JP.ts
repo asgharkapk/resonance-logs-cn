@@ -1427,6 +1427,9 @@ export const jaJPMessages = {
   "minimap.settings.showBoss.label": "Boss位置を表示",
   "minimap.settings.showBoss.description":
     "有効にすると、現在のダンジョンBossの位置をミニマップに表示します。ノイズを減らすため既定ではオフです。",
+  "minimap.settings.showMarkers.label": "マーカーを表示",
+  "minimap.settings.showMarkers.description":
+    "有効にすると、パーティマーカー（1〜6）をミニマップに表示します。マップ上に色付き数字でのみ表示され、既定ではオフです。",
   "minimap.overlay.title": "パネル表示",
   "minimap.overlay.description":
     "ダンジョンギミック overlay で表示する独立パネルを制御します。",
@@ -1442,6 +1445,12 @@ export const jaJPMessages = {
   "minimap.settings.colors.local": "自分",
   "minimap.settings.colors.teammate": "味方",
   "minimap.settings.colors.boss": "Boss",
+  "minimap.settings.colors.marker1": "マーカー 1",
+  "minimap.settings.colors.marker2": "マーカー 2",
+  "minimap.settings.colors.marker3": "マーカー 3",
+  "minimap.settings.colors.marker4": "マーカー 4",
+  "minimap.settings.colors.marker5": "マーカー 5",
+  "minimap.settings.colors.marker6": "マーカー 6",
   "minimap.settings.localRing.title": "自分マーカー",
   "minimap.settings.localRing.description":
     "自分のミニマップ点の外側に追加の同心円を描画し、ギミック色で変わっても自分の位置を見つけやすくします。",

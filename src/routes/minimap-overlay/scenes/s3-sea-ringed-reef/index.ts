@@ -1,4 +1,4 @@
-import type { MinimapEntity } from "$lib/api";
+import type { MinimapEntity, MinimapMarker } from "$lib/api";
 import type { MechanicRegion, SceneDefinition } from "../../scene-types";
 import {
   arenaByPlayerY,
@@ -40,9 +40,28 @@ export const s3SeaRingedReefScene: SceneDefinition = {
         arena,
         mechanicView.entityColorSlots,
       ).map((entity) => localizeEntity(entity, arena)),
+      markers: snapshot.markers.map((marker) => localizeMarker(marker, arena)),
     };
   },
 };
+
+// Markers are not spatially filtered (the player should always see their own
+// markers); only the same arena-local translation as entities is applied.
+function localizeMarker(
+  marker: MinimapMarker,
+  arena: S3SeaRingedReefArena,
+): MinimapMarker {
+  if (
+    marker.x === null ||
+    marker.x === undefined ||
+    marker.z === null ||
+    marker.z === undefined
+  ) {
+    return marker;
+  }
+  const point = toArenaLocal(marker.x, marker.z, arena);
+  return { ...marker, x: point.x, z: point.z };
+}
 
 function buildMechanicView(
   snapshot: Parameters<SceneDefinition["resolveView"]>[0],

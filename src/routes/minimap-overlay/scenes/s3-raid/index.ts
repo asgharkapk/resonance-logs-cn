@@ -52,6 +52,9 @@ export const s3RaidScene: SceneDefinition = {
         arena,
         mechanicView.entityColorSlots,
       ),
+      // Raid renders in raw world coordinates (entities are not localized), so
+      // markers pass through unchanged.
+      markers: snapshot.markers,
     };
   },
   resolveSkillRows({ skillCasts }) {

@@ -241,11 +241,19 @@ export type MinimapSkillCast = {
   facing?: number | null;
 };
 
+export type MinimapMarker = {
+  marker: number;
+  skillId: number;
+  x?: number | null;
+  z?: number | null;
+};
+
 export type MinimapSnapshot = {
   sceneId: number;
   localPlayerUuid: string;
   entities: MinimapEntity[];
   buffs: MinimapBuffFact[];
+  markers: MinimapMarker[];
 };
 
 export type MinimapUpdatePayload = {

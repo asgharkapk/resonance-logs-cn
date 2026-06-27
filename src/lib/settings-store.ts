@@ -274,15 +274,26 @@ export type MinimapLocalFacing = {
   enabled: boolean;
 };
 
+export type MinimapMarkerColors = {
+  m1: string;
+  m2: string;
+  m3: string;
+  m4: string;
+  m5: string;
+  m6: string;
+};
+
 export type MinimapConfig = {
   autoHideInDailyScenes: boolean;
   hideNormalTeammates: boolean;
   showBoss: boolean;
+  showMarkers: boolean;
   showMapPanel: boolean;
   showInfoPanel: boolean;
   mapPanel: MinimapPanelRect;
   infoPanel: MinimapPanelRect;
   entityColors: MinimapEntityColors;
+  markerColors: MinimapMarkerColors;
   localRing: MinimapLocalRing;
   localFacing: MinimapLocalFacing;
 };
@@ -1122,6 +1133,7 @@ export function createDefaultMinimapConfig(): MinimapConfig {
     autoHideInDailyScenes: false,
     hideNormalTeammates: true,
     showBoss: false,
+    showMarkers: false,
     showMapPanel: false,
     showInfoPanel: false,
     mapPanel: { x: 24, y: 24, width: 340, scale: 1 },
@@ -1130,6 +1142,14 @@ export function createDefaultMinimapConfig(): MinimapConfig {
       local: "#f8fafc",
       teammate: "#38bdf8",
       boss: "#ef4444",
+    },
+    markerColors: {
+      m1: "#facc15",
+      m2: "#fb923c",
+      m3: "#4ade80",
+      m4: "#67e8f9",
+      m5: "#c084fc",
+      m6: "#2563eb",
     },
     localRing: {
       enabled: true,

@@ -1,4 +1,4 @@
-import type { MinimapEntity } from "$lib/api";
+import type { MinimapEntity, MinimapMarker } from "$lib/api";
 import type { MechanicRegion, SceneDefinition } from "../../scene-types";
 import { arenaLayout, inBossArea, toArenaLocal, yInArena } from "./arena";
 import { buildMechanicView } from "./mechanics";
@@ -22,9 +22,25 @@ export const s3CursedTombScene: SceneDefinition = {
         snapshot.entities,
         mechanicView.entityColorSlots,
       ).map(localizeEntity),
+      markers: snapshot.markers.map(localizeMarker),
     };
   },
 };
+
+// Markers are not spatially filtered (the player should always see their own
+// markers); only the same arena-local translation as entities is applied.
+function localizeMarker(marker: MinimapMarker): MinimapMarker {
+  if (
+    marker.x === null ||
+    marker.x === undefined ||
+    marker.z === null ||
+    marker.z === undefined
+  ) {
+    return marker;
+  }
+  const point = toArenaLocal(marker.x, marker.z);
+  return { ...marker, x: point.x, z: point.z };
+}
 
 function visibleEntities(
   entities: MinimapEntity[],

@@ -512,6 +512,16 @@ pub struct MinimapSkillCast {
     pub facing: Option<f32>,
 }
 
+/// One in-game player marker to render on the minimap.
+#[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct MinimapMarker {
+    pub marker: i32,
+    pub skill_id: i32,
+    pub x: Option<f32>,
+    pub z: Option<f32>,
+}
+
 /// One frame of minimap data for a single scene.
 #[derive(specta::Type, serde::Serialize, serde::Deserialize, Debug, Clone, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -524,6 +534,8 @@ pub struct MinimapSnapshot {
     pub entities: Vec<MinimapEntity>,
     /// Active buff facts selected by the scene/mechanic extraction config.
     pub buffs: Vec<MinimapBuffFact>,
+    /// Active in-game player markers
+    pub markers: Vec<MinimapMarker>,
 }
 
 /// Event payload wrapping a [`MinimapSnapshot`] for the minimap overlay window.

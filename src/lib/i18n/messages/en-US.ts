@@ -1441,6 +1441,9 @@ export const enUSMessages = {
   "minimap.settings.showBoss.label": "Show Boss Position",
   "minimap.settings.showBoss.description":
     "Show the current dungeon boss position on the minimap when enabled. Off by default to reduce noise.",
+  "minimap.settings.showMarkers.label": "Show Markers",
+  "minimap.settings.showMarkers.description":
+    "Show party markers (1-6) on the minimap when enabled. Drawn as colored numbers on the map only. Off by default.",
   "minimap.overlay.title": "Panel Visibility",
   "minimap.overlay.description":
     "Control which independent panels are visible in the dungeon mechanics overlay.",
@@ -1456,6 +1459,12 @@ export const enUSMessages = {
   "minimap.settings.colors.local": "Self",
   "minimap.settings.colors.teammate": "Teammate",
   "minimap.settings.colors.boss": "Boss",
+  "minimap.settings.colors.marker1": "Marker 1",
+  "minimap.settings.colors.marker2": "Marker 2",
+  "minimap.settings.colors.marker3": "Marker 3",
+  "minimap.settings.colors.marker4": "Marker 4",
+  "minimap.settings.colors.marker5": "Marker 5",
+  "minimap.settings.colors.marker6": "Marker 6",
   "minimap.settings.localRing.title": "Self Marker",
   "minimap.settings.localRing.description":
     "Draw an extra ring around your minimap dot so you can locate yourself even when mechanic colors override your marker.",

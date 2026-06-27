@@ -1242,7 +1242,11 @@ impl AppStateManager {
         emit_training_dummy_update_if_changed(state, previous);
 
         if let Some(scene_id) = parsed.scene_id {
-            // Update encounter with scene info
+            // Update encounter with scene info. Markers are scene-scoped:
+            // drop them whenever the scene actually changes.
+            if state.encounter.current_scene_id != Some(scene_id) {
+                state.encounter.markers.clear();
+            }
             state.encounter.current_scene_id = Some(scene_id);
             state.encounter.current_dungeon_difficulty = None;
             // Only buffer monster skill casts while inside a minimap scene.
@@ -1383,6 +1387,7 @@ impl AppStateManager {
         state.battle_state = BattleStateMachine::default();
         state.pending_auto_reset = None;
         state.pending_minimap_skill_casts.clear();
+        state.encounter.markers.clear();
         state.event_manager.emit_teammate_fantasy_clear();
         let previous = build_training_dummy_state(&state.training_dummy);
         state.training_dummy.clear();
