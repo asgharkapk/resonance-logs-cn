@@ -6,6 +6,14 @@ import type { EntityId } from "$lib/entity-id";
 const MAX_SKILL_CAST_LOG = 64;
 
 /**
+ * Monster IDs of the S3 raid boss 1 electromagnetic ring virtual bodies.
+ * Each virtual body casts the skill matching its own monster id
+ * (10310062/10310063/10310064 = inner/mid/outer). Used to drive the ring
+ * row's lifecycle by entity presence rather than by skill-cast sequencing.
+ */
+const ELECTROMAGNETIC_RING_MONSTER_IDS = new Set([10310062, 10310063, 10310064]);
+
+/**
  * Reactive runtime state for the minimap overlay window.
  *
  * `snapshot` is replaced wholesale on each `minimap-update` event; consumers
@@ -22,6 +30,7 @@ export const minimapRuntime = $state({
   skillCastLog: [] as MinimapSkillCast[],
   playerNameCache: new SvelteMap<EntityId, string>(),
   entityFirstSeenMs: new SvelteMap<string, number>(),
+  electromagneticRingResetMs: 0,
 });
 
 export function minimapSnapshot() {
@@ -43,6 +52,7 @@ export function minimapSkillCasts() {
 export function clearSkillCastLog() {
   minimapRuntime.skillCastLog = [];
   minimapRuntime.entityFirstSeenMs.clear();
+  minimapRuntime.electromagneticRingResetMs = 0;
 }
 
 export function entityFirstSeen(entityUuid: string): number | undefined {
@@ -73,4 +83,33 @@ export function consumeMinimapSkillCasts(skillCasts: MinimapSkillCast[]) {
     ...minimapRuntime.skillCastLog,
     ...skillCasts,
   ].slice(-MAX_SKILL_CAST_LOG);
+}
+
+/**
+ * Read-only accessor for the electromagnetic ring cycle reset timestamp.
+ * Skill casts with timeMs below this value are excluded from the current
+ * ring sequence, so a fresh mechanic cycle starts accumulating from zero.
+ */
+export function electromagneticRingResetMs(): number {
+  return minimapRuntime.electromagneticRingResetMs;
+}
+
+/**
+ * Marks the start of a new electromagnetic ring cycle whenever no ring
+ * virtual body is present in the snapshot. As long as at least one virtual
+ * body exists the reset timestamp is left untouched, preserving the in-cycle
+ * skill sequence; once all three disappear the next cast window begins at
+ * the current time. Called from the minimap-update event handler (outside
+ * $derived) so the write stays a side effect, not a derived computation.
+ */
+export function updateElectromagneticRingCycle(
+  snapshot: MinimapSnapshot,
+  nowMs: number,
+) {
+  const hasEntity = snapshot.entities.some((entity) =>
+    ELECTROMAGNETIC_RING_MONSTER_IDS.has(entity.monsterId ?? 0),
+  );
+  if (!hasEntity) {
+    minimapRuntime.electromagneticRingResetMs = nowMs;
+  }
 }

@@ -1,7 +1,7 @@
-import type { MinimapBuffFact, MinimapEntity, MinimapSnapshot } from "$lib/api";
+import type { MinimapBuffFact, MinimapEntity, MinimapSkillCast, MinimapSnapshot } from "$lib/api";
 import { t, type MessageKey } from "$lib/i18n/index.svelte";
 import { overlayNow } from "../../../game-overlay/overlay-clock.svelte.js";
-import { entityFirstSeen } from "../../minimap-runtime.svelte.js";
+import { electromagneticRingResetMs, entityFirstSeen } from "../../minimap-runtime.svelte.js";
 import type { MechanicRegion, MechanicRow } from "../../scene-types";
 import {
   FLOOR_CORNER_CELLS,
@@ -55,12 +55,35 @@ const textKeys = {
   pinballGroup: "minimap.s3Raid.pinball.group",
   pinballCast: "minimap.s3Raid.pinball.cast",
   pinballBall: "minimap.s3Raid.pinball.ball",
+  electromagneticRingGroup: "minimap.s3Raid.electromagneticRing.group",
 } satisfies Record<string, MessageKey>;
 
 const PINBALL_CAST_BUFF_ID = 829314;
 const PINBALL_BALL_MONSTER_ID = 10330051;
 const PINBALL_BALL_DURATION_MS = 6000;
 const PINBALL_COLOR_SLOT = 5;
+
+const ELECTROMAGNETIC_RING_SLOTS = 3;
+const ELECTROMAGNETIC_RING_SKILLS: Record<
+  number,
+  { labelKey: MessageKey; colorSlot: number }
+> = {
+  10310062: {
+    labelKey: "minimap.s3Raid.electromagneticRing.inner",
+    colorSlot: 0,
+  },
+  10310063: {
+    labelKey: "minimap.s3Raid.electromagneticRing.mid",
+    colorSlot: 1,
+  },
+  10310064: {
+    labelKey: "minimap.s3Raid.electromagneticRing.outer",
+    colorSlot: 2,
+  },
+};
+const ELECTROMAGNETIC_RING_MONSTER_IDS = new Set([
+  10310062, 10310063, 10310064,
+]);
 
 export type MechanicView = {
   regions: MechanicRegion[];
@@ -216,6 +239,7 @@ export function buildMechanicView(
   snapshot: MinimapSnapshot,
   displayName: (entity: MinimapEntity) => string,
   arena: S3RaidArena,
+  skillCasts: MinimapSkillCast[],
 ): MechanicView {
   const regions: MechanicRegion[] = [];
   const rows = new Map<string, MechanicRow>();
@@ -261,6 +285,9 @@ export function buildMechanicView(
 
   // Pinball runs in any phase, so it lives outside the non-ring block.
   addPinballRows(snapshot, rows, entityColorSlots);
+  // Electromagnetic ring runs in the ring arena; gated by virtual-body
+  // presence inside the helper, so it is safe to call unconditionally.
+  addElectromagneticRingRows(snapshot, skillCasts, rows);
 
   return {
     regions: dedupeRegions(regions),
@@ -312,6 +339,46 @@ function groupBuffsByTarget(
     out.set(buff.targetEntityUuid, list);
   }
   return out;
+}
+
+function addElectromagneticRingRows(
+  snapshot: MinimapSnapshot,
+  skillCasts: MinimapSkillCast[],
+  rows: Map<string, MechanicRow>,
+) {
+  const hasEntity = snapshot.entities.some((entity) =>
+    ELECTROMAGNETIC_RING_MONSTER_IDS.has(entity.monsterId ?? 0),
+  );
+  if (!hasEntity) return;
+
+  const resetMs = electromagneticRingResetMs();
+  type RingMatch = {
+    cast: MinimapSkillCast;
+    entry: { labelKey: MessageKey; colorSlot: number };
+  };
+  const matched = skillCasts
+    .map((cast): RingMatch | undefined => {
+      const entry = ELECTROMAGNETIC_RING_SKILLS[cast.skillId];
+      if (entry === undefined) return undefined;
+      if (cast.timeMs < resetMs) return undefined;
+      return { cast, entry };
+    })
+    .filter((item): item is RingMatch => item !== undefined)
+    .slice(-ELECTROMAGNETIC_RING_SLOTS);
+  if (matched.length === 0) return;
+
+  const latest = matched.at(-1);
+  if (!latest) return;
+  upsertRow(rows, {
+    key: `electromagneticRing:${matched.map((item) => item.cast.skillId).join("-")}`,
+    group: t(textKeys.electromagneticRingGroup),
+    label: matched.map((item) => t(item.entry.labelKey)).join(" → "),
+    colorSlot: latest.entry.colorSlot,
+    createTimeMs: 0,
+    durationMs: 0,
+    targets: [],
+    hideTimer: true,
+  });
 }
 
 function addPhaseBuffs(

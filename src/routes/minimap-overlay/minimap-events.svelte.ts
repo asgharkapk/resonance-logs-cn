@@ -9,6 +9,7 @@ import {
   clearSkillCastLog,
   consumeMinimapSkillCasts,
   minimapRuntime,
+  updateElectromagneticRingCycle,
   updateEntityFirstSeen,
 } from "./minimap-runtime.svelte.js";
 import { setMinimapEditMode } from "./minimap-state.svelte.js";
@@ -55,6 +56,7 @@ export function initMinimapOverlay() {
       minimapRuntime.lastSceneId = snapshot.sceneId;
       minimapRuntime.snapshot = snapshot;
       updateEntityFirstSeen(snapshot, overlayNow());
+      updateElectromagneticRingCycle(snapshot, overlayNow());
     } else if (skillCasts.length === 0) {
       minimapRuntime.snapshot = null;
       minimapRuntime.lastSceneId = null;
