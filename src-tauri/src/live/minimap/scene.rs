@@ -9,6 +9,7 @@ const SCENES: &[&SceneConfig] = &[
     &super::scenes::s3_giant_tower::CONFIG,
     &super::scenes::s3_raid::CONFIG,
     &super::scenes::s3_sea_ringed_reef::CONFIG,
+    &super::scenes::s3_tina_mindrealm::CONFIG,
 ];
 
 #[inline]

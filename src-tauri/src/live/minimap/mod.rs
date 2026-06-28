@@ -206,6 +206,7 @@ fn collect_mechanic_buffs(state: &AppState, scene_id: i32) -> Vec<MinimapBuffFac
                 duration_ms: buff.duration,
                 fire_uuid: buff.fire_uuid.map(entity_uuid_string),
                 source_config_id: buff.source_config_id,
+                effect_ids: buff.effect_ids.clone(),
             });
         }
     }

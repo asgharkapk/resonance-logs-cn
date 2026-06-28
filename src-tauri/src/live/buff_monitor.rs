@@ -2,7 +2,8 @@ use crate::database::now_ms;
 use crate::live::commands_models::BuffUpdateState;
 use crate::live::entity_id::{EntityUuid, entity_uuid_string};
 use blueprotobuf_lib::blueprotobuf::{
-    BuffChange, BuffEffectSync, BuffInfo, BuffInfoSync, EBuffEffectLogicPbType, EBuffEventType,
+    BuffChange, BuffEffectLogicPlayEffect, BuffEffectSync, BuffInfo, BuffInfoSync,
+    EBuffEffectLogicPbType, EBuffEventType,
 };
 use prost::Message;
 use std::collections::{HashMap, HashSet};
@@ -15,6 +16,7 @@ pub struct ActiveBuff {
     pub create_time: i64,
     pub fire_uuid: Option<EntityUuid>,
     pub source_config_id: Option<i32>,
+    pub effect_ids: Vec<i32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -186,6 +188,7 @@ impl BuffMonitor {
                         .fight_source_info
                         .as_ref()
                         .and_then(|info| info.source_config_id),
+                    effect_ids: Vec::new(),
                 },
             );
             applied += 1;
@@ -211,10 +214,27 @@ impl BuffMonitor {
                 None => continue,
             };
 
+            // Collect this buff_effect's PlayEffect effect_ids in wire order; they
+            // are assigned to the ActiveBuff once at the end of the loop so that a
+            // later buff_effect fully replaces (not appends to) the stored list.
+            let mut play_effect_ids: Vec<i32> = Vec::new();
+
             for logic_effect in buff_effect.logic_effect {
-                let Some(effect_type) = logic_effect.effect_type else {
+                let effect_type = logic_effect
+                    .effect_type
+                    .unwrap_or(EBuffEffectLogicPbType::PlayEffect as i32);
+
+                if effect_type == EBuffEffectLogicPbType::PlayEffect as i32 {
+                    let id = logic_effect
+                        .raw_data
+                        .as_ref()
+                        .and_then(|raw| BuffEffectLogicPlayEffect::decode(raw.as_slice()).ok())
+                        .and_then(|pe| pe.effect_id)
+                        .unwrap_or(0);
+                    play_effect_ids.push(id);
                     continue;
-                };
+                }
+
                 let Some(raw) = logic_effect.raw_data else {
                     continue;
                 };
@@ -245,6 +265,7 @@ impl BuffMonitor {
                                 create_time,
                                 fire_uuid,
                                 source_config_id,
+                                effect_ids: Vec::new(),
                             },
                         );
                         changes.push(BuffChangeEvent {
@@ -287,6 +308,12 @@ impl BuffMonitor {
                             });
                         }
                     }
+                }
+            }
+
+            if !play_effect_ids.is_empty() {
+                if let Some(entry) = self.active_buffs.get_mut(&buff_uuid) {
+                    entry.effect_ids = play_effect_ids;
                 }
             }
 

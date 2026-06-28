@@ -216,6 +216,7 @@ export type MinimapBuffFact = {
   durationMs: number;
   fireUuid?: string | null;
   sourceConfigId?: number | null;
+  effectIds: number[];
 };
 
 export type MinimapEntity = {

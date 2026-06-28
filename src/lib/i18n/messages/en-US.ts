@@ -1563,4 +1563,12 @@ export const enUSMessages = {
   "minimap.s3CursedTomb.clone.forward": "Forward",
   "minimap.s3CursedTomb.clone.leftSide": "Left Hand",
   "minimap.s3CursedTomb.clone.rightSide": "Right Hand",
+  "minimap.s3TinaMindrealm.buffGroup": "Tina · Mechanic",
+  "minimap.s3TinaMindrealm.heavyWound": "Heavy Wound",
+  "minimap.s3TinaMindrealm.redBind": "Red-Light Bind",
+  "minimap.s3TinaMindrealm.wudiSlash": "Wudi-Slash Mark",
+  "minimap.s3TinaMindrealm.wudiSlashOrder": "Wudi-Slash Mark · Slash {n}",
+  "minimap.s3TinaMindrealm.pizzaGroup": "Pizza Danger Zone",
+  "minimap.s3TinaMindrealm.pizzaSlow": "Pizza · Slow Wave",
+  "minimap.s3TinaMindrealm.pizzaFast": "Pizza · Fast Wave",
 } satisfies typeof zhCNMessages;

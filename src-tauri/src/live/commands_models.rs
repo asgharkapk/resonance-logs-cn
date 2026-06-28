@@ -464,6 +464,8 @@ pub struct MinimapBuffFact {
     pub fire_uuid: Option<String>,
     /// Skill/buff config id that caused this buff, when available.
     pub source_config_id: Option<i32>,
+    /// `PlayEffect` effect ids from the buff's logic_effects, in wire order.
+    pub effect_ids: Vec<i32>,
 }
 
 /// A single entity fact rendered/interpreted by the 2D minimap overlay.

@@ -1443,4 +1443,12 @@ export const zhCNMessages = {
   "minimap.s3CursedTomb.clone.forward": "正前方",
   "minimap.s3CursedTomb.clone.leftSide": "左手侧",
   "minimap.s3CursedTomb.clone.rightSide": "右手侧",
+  "minimap.s3TinaMindrealm.buffGroup": "蒂娜·机制",
+  "minimap.s3TinaMindrealm.heavyWound": "重伤",
+  "minimap.s3TinaMindrealm.redBind": "红光束缚",
+  "minimap.s3TinaMindrealm.wudiSlash": "无敌斩标记",
+  "minimap.s3TinaMindrealm.wudiSlashOrder": "无敌斩标记·第{n}刀",
+  "minimap.s3TinaMindrealm.pizzaGroup": "披萨危险区",
+  "minimap.s3TinaMindrealm.pizzaSlow": "披萨·慢波",
+  "minimap.s3TinaMindrealm.pizzaFast": "披萨·快波",
 };

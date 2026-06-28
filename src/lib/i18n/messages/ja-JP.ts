@@ -1548,4 +1548,12 @@ export const jaJPMessages = {
   "minimap.s3CursedTomb.clone.forward": "正面",
   "minimap.s3CursedTomb.clone.leftSide": "左手側",
   "minimap.s3CursedTomb.clone.rightSide": "右手側",
+  "minimap.s3TinaMindrealm.buffGroup": "ティーナ・機関",
+  "minimap.s3TinaMindrealm.heavyWound": "重傷",
+  "minimap.s3TinaMindrealm.redBind": "赤光束縛",
+  "minimap.s3TinaMindrealm.wudiSlash": "無敵斬マーク",
+  "minimap.s3TinaMindrealm.wudiSlashOrder": "無敵斬マーク·{n}斬目",
+  "minimap.s3TinaMindrealm.pizzaGroup": "ピザ危険域",
+  "minimap.s3TinaMindrealm.pizzaSlow": "ピザ・遅い波",
+  "minimap.s3TinaMindrealm.pizzaFast": "ピザ・速い波",
 };

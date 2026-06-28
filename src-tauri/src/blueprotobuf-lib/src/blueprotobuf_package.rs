@@ -341,6 +341,11 @@ pub struct BuffEffectLogicInfo {
     #[prost(bool, optional, tag = "3")]
     pub is_loop: ::core::option::Option<bool>,
 }
+#[derive(specta::Type, Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct BuffEffectLogicPlayEffect {
+    #[prost(int32, optional, tag = "1")]
+    pub effect_id: ::core::option::Option<i32>,
+}
 #[derive(specta::Type, Clone, PartialEq, ::prost::Message)]
 pub struct BuffEffectSync {
     #[prost(int64, optional, tag = "1")]
