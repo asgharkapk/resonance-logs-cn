@@ -46,6 +46,9 @@ const textKeys = {
   cloneGroup: "minimap.s3CursedTomb.clone.group",
   cloneLeft: "minimap.s3CursedTomb.clone.left",
   cloneRight: "minimap.s3CursedTomb.clone.right",
+  puzzleGroup: "minimap.s3CursedTomb.puzzle.group",
+  puzzle1: "minimap.s3CursedTomb.puzzle.piece1",
+  puzzle2: "minimap.s3CursedTomb.puzzle.piece2",
 } satisfies Record<string, MessageKey>;
 
 enum TowerState {
@@ -104,6 +107,16 @@ const CALLOUT_BUFFS: Record<
     groupKey: textKeys.chargeTargetGroup,
     labelKey: textKeys.chargeTargetRandom,
     colorSlot: 6,
+  },
+  884169: {
+    groupKey: textKeys.puzzleGroup,
+    labelKey: textKeys.puzzle1,
+    colorSlot: 8,
+  },
+  884170: {
+    groupKey: textKeys.puzzleGroup,
+    labelKey: textKeys.puzzle2,
+    colorSlot: 9,
   },
 };
 
