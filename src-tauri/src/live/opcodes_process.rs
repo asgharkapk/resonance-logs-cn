@@ -724,6 +724,13 @@ pub(crate) fn process_enter_scene(
                     process_player_attrs(uuid, &attrs.attrs, attr_store);
                 }
             }
+            if let Some(temp_attr_collection) = player_ent.temp_attrs.as_ref() {
+                for temp_attr in &temp_attr_collection.attrs {
+                    let Some(id) = temp_attr.id else { continue };
+                    let value = temp_attr.value.unwrap_or(0);
+                    let _ = attr_store.set_temp_attr(id, value);
+                }
+            }
         }
     }
 

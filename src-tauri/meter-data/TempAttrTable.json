@@ -3518,6 +3518,21 @@
     "AttrDesc": "全子弹大小",
     "AttrIcon": ""
   },
+  "90242": {
+    "Id": 90242,
+    "Name": "【狂野呼唤】层数",
+    "Desc": "【狂野呼唤】层数",
+    "AttrType": 352,
+    "LogicType": 1,
+    "AttrParams": [
+      2237
+    ],
+    "LowerLimit": 0,
+    "UpperLimit": 2,
+    "IsSyncClient": true,
+    "AttrDesc": "全子弹大小",
+    "AttrIcon": ""
+  },
   "90300": {
     "Id": 90300,
     "Name": "【光明决心】充能上限变化",
@@ -3786,6 +3801,23 @@
       1613
     ],
     "LowerLimit": -10000,
+    "UpperLimit": 99999,
+    "IsSyncClient": true,
+    "AttrDesc": "全子弹大小",
+    "AttrIcon": ""
+  },
+  "90323": {
+    "Id": 90323,
+    "Name": "纳兹技能冷却加速",
+    "Desc": "纳兹技能冷却加速",
+    "AttrType": 103,
+    "LogicType": 1,
+    "AttrParams": [
+      2604,
+      2605,
+      2606
+    ],
+    "LowerLimit": 0,
     "UpperLimit": 99999,
     "IsSyncClient": true,
     "AttrDesc": "全子弹大小",
@@ -4492,6 +4524,22 @@
     "AttrDesc": "全子弹大小",
     "AttrIcon": ""
   },
+  "92108": {
+    "Id": 92108,
+    "Name": "【载具】吸血鬼加速冷却",
+    "Desc": "【载具】吸血鬼加速冷却",
+    "AttrType": 103,
+    "LogicType": 1,
+    "AttrParams": [
+      4721,
+      4723
+    ],
+    "LowerLimit": -99999,
+    "UpperLimit": 99999,
+    "IsSyncClient": true,
+    "AttrDesc": "全子弹大小",
+    "AttrIcon": ""
+  },
   "93000": {
     "Id": 93000,
     "Name": "【黯影堡垒】限制虚蚀层数",
@@ -4856,6 +4904,21 @@
     ],
     "LowerLimit": -1,
     "UpperLimit": 1,
+    "IsSyncClient": true,
+    "AttrDesc": "全子弹大小",
+    "AttrIcon": ""
+  },
+  "98009": {
+    "Id": 98009,
+    "Name": "精神凝聚冷却加速",
+    "Desc": "精神凝聚冷却加速",
+    "AttrType": 103,
+    "LogicType": 1,
+    "AttrParams": [
+      2231
+    ],
+    "LowerLimit": 0,
+    "UpperLimit": 99999,
     "IsSyncClient": true,
     "AttrDesc": "全子弹大小",
     "AttrIcon": ""
