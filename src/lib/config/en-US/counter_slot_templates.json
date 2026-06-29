@@ -183,5 +183,15 @@
     "slotTemplateId": "giant_blade_s3_x6",
     "name": "Heavy Guardian True Factor X6, block damage reduction decreases and class skill final damage increases",
     "description": "For a period of time, block damage reduction decreases and all class skill final damage increases"
+  },
+  {
+    "slotTemplateId": "verdant_oracle_x2",
+    "name": "Verdant Oracle True Factor X2, super armor and increased cast speed",
+    "description": "Super armor and increased cast speed"
+  },
+  {
+    "slotTemplateId": "verdant_oracle_x3",
+    "name": "Verdant Oracle True Factor X3, Thorns can trigger Lucky Strike for 7s",
+    "description": "Thorns can trigger Lucky Strike for 7s"
   }
 ]

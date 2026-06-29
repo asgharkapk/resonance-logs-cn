@@ -398,5 +398,25 @@
     "sourceId": "giant_blade_x11",
     "name": "Heavy Guardian X11, gaining Heart of Stone grants 153 Energy",
     "description": "Gaining Heart of Stone grants 153 Energy"
+  },
+  {
+    "sourceId": "verdant_oracle_x2",
+    "name": "Verdant Oracle X2, Infusion damage grants 6 Energy",
+    "description": "Infusion damage grants 6 Energy"
+  },
+  {
+    "sourceId": "verdant_oracle_x3",
+    "name": "Verdant Oracle X3, casting skill 1523 or Pulse Breath grants 171 Energy",
+    "description": "Casting skill 1523 grants 171 Energy; buff 2202111 (configId=2202450) on add grants 171 Energy"
+  },
+  {
+    "sourceId": "verdant_oracle_x5",
+    "name": "Verdant Oracle X5, casting Untamed Seed grants 200 Energy",
+    "description": "Casting Untamed Seed (1519) grants 200 Energy"
+  },
+  {
+    "sourceId": "verdant_oracle_x11",
+    "name": "Verdant Oracle X11, Lucky Strike damage grants 7 Energy",
+    "description": "Lucky Strike damage grants 7 Energy"
   }
 ]

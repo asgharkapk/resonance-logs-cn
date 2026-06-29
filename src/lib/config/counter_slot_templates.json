@@ -928,5 +928,59 @@
       20022089,
       20022090
     ]
+  },
+  {
+    "slotTemplateId": "verdant_oracle_x2",
+    "name": "森语真实因子X2, 霸体并增加释放速度",
+    "description": "霸体并增加释放速度",
+    "slot": {
+      "threshold": 500,
+      "resetBuffId": 3056391,
+      "onBuffAdd": "reset",
+      "onBuffChange": "noOp",
+      "onBuffRemove": "noOp"
+    },
+    "effectBuffIds": [
+      3056391
+    ],
+    "itemIds": [
+      20022101,
+      20022102,
+      20022103,
+      20022104,
+      20022105,
+      20022106,
+      20022107,
+      20022108,
+      20022109,
+      20022110
+    ]
+  },
+  {
+    "slotTemplateId": "verdant_oracle_x3",
+    "name": "森语真实因子X3, 7s 内荆棘可以触发幸运一击",
+    "description": "7s 内荆棘可以触发幸运一击",
+    "slot": {
+      "threshold": 500,
+      "resetBuffId": 3056401,
+      "onBuffAdd": "reset",
+      "onBuffChange": "noOp",
+      "onBuffRemove": "noOp"
+    },
+    "effectBuffIds": [
+      3056401
+    ],
+    "itemIds": [
+      20022111,
+      20022112,
+      20022113,
+      20022114,
+      20022115,
+      20022116,
+      20022117,
+      20022118,
+      20022119,
+      20022120
+    ]
   }
 ]

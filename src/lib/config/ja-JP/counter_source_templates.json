@@ -398,5 +398,25 @@
     "sourceId": "giant_blade_x11",
     "name": "ヘビーガーディアン X11、磐石の心を獲得すると153エネルギーを獲得",
     "description": "磐石の心を獲得すると153エネルギーを獲得"
+  },
+  {
+    "sourceId": "verdant_oracle_x2",
+    "name": "ヴァーダントオラクル X2、灌注ダメージで6エネルギーを獲得",
+    "description": "灌注ダメージで6エネルギーを獲得"
+  },
+  {
+    "sourceId": "verdant_oracle_x3",
+    "name": "ヴァーダントオラクル X3、1523スキルまたは波動の息吹で171エネルギーを獲得",
+    "description": "1523スキル発動で171エネルギーを獲得。2202111 buff（configId=2202450）追加時も171エネルギーを獲得"
+  },
+  {
+    "sourceId": "verdant_oracle_x5",
+    "name": "ヴァーダントオラクル X5、不羁の種を発動すると200エネルギーを獲得",
+    "description": "不羁の種（1519）を発動すると200エネルギーを獲得"
+  },
+  {
+    "sourceId": "verdant_oracle_x11",
+    "name": "ヴァーダントオラクル X11、ラッキーストライクダメージで7エネルギーを獲得",
+    "description": "ラッキーストライクダメージで7エネルギーを獲得"
   }
 ]

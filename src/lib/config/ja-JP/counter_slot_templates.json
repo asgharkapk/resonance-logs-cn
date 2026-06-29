@@ -183,5 +183,15 @@
     "slotTemplateId": "giant_blade_s3_x6",
     "name": "ヘビーガーディアン 真因子 X6、ブロック軽減が低下しクラススキルの最終ダメージが増加",
     "description": "一定時間、ブロック軽減が低下し、すべてのクラススキルの最終ダメージが増加"
+  },
+  {
+    "slotTemplateId": "verdant_oracle_x2",
+    "name": "ヴァーダントオラクル 真因子 X2、スーパーアーマーと詠唱速度増加",
+    "description": "スーパーアーマーと詠唱速度増加"
+  },
+  {
+    "slotTemplateId": "verdant_oracle_x3",
+    "name": "ヴァーダントオラクル 真因子 X3、7秒間いばらがラッキーストライクを発動可能",
+    "description": "7秒間いばらがラッキーストライクを発動可能"
   }
 ]
