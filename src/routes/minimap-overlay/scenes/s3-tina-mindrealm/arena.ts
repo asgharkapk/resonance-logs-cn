@@ -28,7 +28,7 @@ export function arenaLayout(): SceneLayout {
   return {
     worldHalfX: WORLD_HALF_X,
     worldHalfZ: WORLD_HALF_Z,
-    rotationQuarters: 2,
+    rotationQuarters: 1,
     shapes: {
       lines: [],
       circles: [CABINET_RING],
