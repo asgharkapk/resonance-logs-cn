@@ -68,6 +68,8 @@ export type PlayerRow = {
   bossDmgPct: number;
   effectiveTotal: number;
   effectiveDps: number;
+  forbiddenHit: boolean;
+  forbiddenHitIds: number[];
 };
 
 export type PlayersWindow = {

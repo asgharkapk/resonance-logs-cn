@@ -1,4 +1,4 @@
-import type { MinimapEntity, MinimapMarker } from "$lib/api";
+import type { MinimapEntity, MinimapMarker, MinimapSkillCast } from "$lib/api";
 import type { MechanicRegion, SceneDefinition } from "../../scene-types";
 import {
   arenaByPlayerY,
@@ -16,14 +16,14 @@ import {
 export const s3SeaRingedReefScene: SceneDefinition = {
   id: "s3-sea-ringed-reef",
   sceneIds: [6563, 6564, 6565],
-  resolveView(snapshot, displayName) {
+  resolveView(snapshot, displayName, skillCasts = []) {
     const localPlayer =
       snapshot.entities.find(
         (entity) => entity.entityUuid === snapshot.localPlayerUuid,
       ) ?? null;
     const arena = arenaByPlayerY(localPlayer?.y);
     const layout = arenaLayout(arena);
-    const mechanicView = buildMechanicView(snapshot, displayName, arena);
+    const mechanicView = buildMechanicView(snapshot, displayName, arena, skillCasts);
 
     return {
       worldHalfX: layout.worldHalfX,
@@ -67,9 +67,10 @@ function buildMechanicView(
   snapshot: Parameters<SceneDefinition["resolveView"]>[0],
   displayName: Parameters<SceneDefinition["resolveView"]>[1],
   arena: S3SeaRingedReefArena,
+  skillCasts: MinimapSkillCast[],
 ): SeaRingedReefMechanicView {
   if (arena === "matrix") return buildMatrixMechanicView(snapshot, displayName);
-  return buildBossMechanicView(snapshot, displayName, arena);
+  return buildBossMechanicView(snapshot, displayName, arena, skillCasts);
 }
 
 function visibleEntities(

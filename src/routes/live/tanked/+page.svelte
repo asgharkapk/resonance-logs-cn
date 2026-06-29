@@ -14,14 +14,18 @@
   import AbbreviatedNumber from "$lib/components/abbreviated-number.svelte";
   import PercentFormat from "$lib/components/percent-format.svelte";
   import LivePlayerPowerBadge from "$lib/components/live-player-power-badge.svelte";
+  import ChallengeWarningIcon from "$lib/components/ChallengeWarningIcon.svelte";
   import getDisplayName from "$lib/name-display";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatClassSpecLabel } from "$lib/class-labels";
   import { formatNumber, t } from "$lib/i18n/index.svelte";
 
   let liveData = $derived(getLiveData());
+  let forbiddenIds = $derived(
+    new Set(SETTINGS.challengeWatch.state.forbiddenDamageIds),
+  );
   let rawTankedData = $derived(
-    liveData ? computePlayerRows(liveData, "tanked") : [],
+    liveData ? computePlayerRows(liveData, "tanked", forbiddenIds) : [],
   );
 
   // Sorting settings
@@ -178,6 +182,9 @@
                     style="color: {customThemeColors.tableTextColor};"
                     >{displayName || `#${player.displayUid}`}</span
                   >
+                  {#if player.forbiddenHit}
+                    <ChallengeWarningIcon ids={player.forbiddenHitIds} />
+                  {/if}
                   <LivePlayerPowerBadge
                     abilityScore={player.abilityScore}
                     seasonStrength={player.seasonStrength}
@@ -359,6 +366,9 @@
                   style="color: {customThemeColors.tableTextColor};"
                   >{displayName || `#${player.displayUid}`}</span
                 >
+                {#if player.forbiddenHit}
+                  <ChallengeWarningIcon ids={player.forbiddenHitIds} />
+                {/if}
               </div>
             </td>
             {#each visiblePlayerColumns as col (col.key)}

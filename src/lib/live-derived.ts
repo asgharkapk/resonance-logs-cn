@@ -36,6 +36,7 @@ type PlayerRowsSource = {
 export function computePlayerRowsFromEntities(
   source: PlayerRowsSource,
   metric: Metric,
+  forbiddenIds?: Set<number>,
 ): PlayerRow[] {
   const elapsedSecs = source.elapsedMs > 0 ? source.elapsedMs / 1000 : 0;
   const effectiveActiveCombatMs = Math.min(source.activeCombatTimeMs, source.elapsedMs);
@@ -58,6 +59,13 @@ export function computePlayerRowsFromEntities(
       const triggerHits = Number(stats.triggerHits || stats.hits || 0);
       const bossDmg = metric === "dps" ? Number(entity.damageBossOnly?.total || 0) : 0;
       const bossTotal = Number(source.totalDmgBossOnly || 0);
+
+      const forbiddenHitIds =
+        forbiddenIds && forbiddenIds.size > 0
+          ? [...forbiddenIds].filter(
+              (id) => Number(entity.takenSkills?.[id]?.hits ?? 0) > 0,
+            )
+          : [];
 
       const row: PlayerRow = {
         entityUuid: entity.entityUuid,
@@ -87,6 +95,8 @@ export function computePlayerRowsFromEntities(
         effectiveTotal,
         effectiveDps:
           metric === "heal" && elapsedSecs > 0 ? effectiveTotal / elapsedSecs : 0,
+        forbiddenHit: forbiddenHitIds.length > 0,
+        forbiddenHitIds,
       };
 
       return row;
@@ -94,7 +104,11 @@ export function computePlayerRowsFromEntities(
     .filter((row) => row.totalDmg > 0);
 }
 
-export function computePlayerRows(data: LiveDataPayload, metric: Metric): PlayerRow[] {
+export function computePlayerRows(
+  data: LiveDataPayload,
+  metric: Metric,
+  forbiddenIds?: Set<number>,
+): PlayerRow[] {
   return computePlayerRowsFromEntities(
     {
       entities: data.entities,
@@ -105,6 +119,7 @@ export function computePlayerRows(data: LiveDataPayload, metric: Metric): Player
       totalDmgBossOnly: data.totalDmgBossOnly,
     },
     metric,
+    forbiddenIds,
   );
 }
 

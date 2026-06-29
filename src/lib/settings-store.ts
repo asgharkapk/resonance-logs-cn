@@ -1547,6 +1547,9 @@ const DEFAULT_SETTINGS = {
   },
   monsterMonitor: createDefaultMonsterMonitorConfig(),
   minimap: createDefaultMinimapConfig(),
+  challengeWatch: {
+    forbiddenDamageIds: [] as number[],
+  },
   live: {
     general: { ...DEFAULT_GENERAL_SETTINGS },
     dpsPlayers: { ...DEFAULT_STATS },
@@ -1646,6 +1649,11 @@ export const SETTINGS = {
   minimap: new RuneStore(
     "minimap",
     DEFAULT_SETTINGS.minimap,
+    RUNE_STORE_OPTIONS,
+  ),
+  challengeWatch: new RuneStore(
+    "challengeWatch",
+    DEFAULT_SETTINGS.challengeWatch,
     RUNE_STORE_OPTIONS,
   ),
   live: {
@@ -1829,6 +1837,7 @@ export const settings = {
     skillMonitor: SETTINGS.skillMonitor.state,
     monsterMonitor: SETTINGS.monsterMonitor.state,
     minimap: SETTINGS.minimap.state,
+    challengeWatch: SETTINGS.challengeWatch.state,
     live: {
       general: SETTINGS.live.general.state,
       dps: {
