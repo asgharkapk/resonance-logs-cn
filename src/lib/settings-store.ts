@@ -293,6 +293,7 @@ export type MinimapMarkerColors = {
 export type MinimapConfig = {
   autoHideInDailyScenes: boolean;
   hideNormalTeammates: boolean;
+  hideAllTeammates: boolean;
   showBoss: boolean;
   showMarkers: boolean;
   showMapPanel: boolean;
@@ -1160,6 +1161,7 @@ export function createDefaultMinimapConfig(): MinimapConfig {
   return {
     autoHideInDailyScenes: false,
     hideNormalTeammates: true,
+    hideAllTeammates: false,
     showBoss: false,
     showMarkers: false,
     showMapPanel: false,

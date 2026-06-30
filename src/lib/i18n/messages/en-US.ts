@@ -1469,6 +1469,9 @@ export const enUSMessages = {
     "Only show self and teammates affected by mechanics",
   "minimap.settings.hideNormalTeammates.description":
     "When enabled, normal teammate points are hidden; teammates with mechanic colors or buffs are shown automatically.",
+  "minimap.settings.hideAllTeammates.label": "Hide all teammate points",
+  "minimap.settings.hideAllTeammates.description":
+    "When enabled, all teammate points are hidden even if affected by mechanic colors or buffs; only your own point remains. Takes priority over the option above.",
   "minimap.settings.showBoss.label": "Show Boss Position",
   "minimap.settings.showBoss.description":
     "Show the current dungeon boss position on the minimap when enabled. Off by default to reduce noise.",
@@ -1581,6 +1584,7 @@ export const enUSMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "Ice Wave Safe",
   "minimap.s3SeaRingedReef.boss.waterWave": "Sea Wave Safe",
   "minimap.s3SeaRingedReef.boss.crossSafe": "Cross Intersection",
+  "minimap.s3SeaRingedReef.boss.singleWaveSafe": "Single Wave Safe",
   "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(me)",
   "minimap.s3SeaRingedReef.boss.vertical": "Vertical",
   "minimap.s3SeaRingedReef.boss.horizontal": "Horizontal",

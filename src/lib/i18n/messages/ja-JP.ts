@@ -1454,6 +1454,9 @@ export const jaJPMessages = {
     "自分とギミック対象の味方のみ表示",
   "minimap.settings.hideNormalTeammates.description":
     "有効にすると通常の味方位置は非表示になり、ギミック色やBuffの影響を受けた味方だけ自動表示されます。",
+  "minimap.settings.hideAllTeammates.label": "味方位置をすべて非表示",
+  "minimap.settings.hideAllTeammates.description":
+    "有効にするとギミック色やBuffの影響に関わらずすべての味方位置を非表示にし、自分のみ表示します。上の設定より優先されます。",
   "minimap.settings.showBoss.label": "Boss位置を表示",
   "minimap.settings.showBoss.description":
     "有効にすると、現在のダンジョンBossの位置をミニマップに表示します。ノイズを減らすため既定ではオフです。",
@@ -1565,6 +1568,7 @@ export const jaJPMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "氷浪安全",
   "minimap.s3SeaRingedReef.boss.waterWave": "海浪安全",
   "minimap.s3SeaRingedReef.boss.crossSafe": "十字交点",
+  "minimap.s3SeaRingedReef.boss.singleWaveSafe": "単波安全",
   "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(私)",
   "minimap.s3SeaRingedReef.boss.vertical": "縦線",
   "minimap.s3SeaRingedReef.boss.horizontal": "横線",

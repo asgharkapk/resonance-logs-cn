@@ -1350,6 +1350,9 @@ export const zhCNMessages = {
   "minimap.settings.hideNormalTeammates.label": "仅显示自己与被机制影响的队友",
   "minimap.settings.hideNormalTeammates.description":
     "开启后，普通队友点位会隐藏；当队友被机制颜色或 Buff 影响时会自动显示。",
+  "minimap.settings.hideAllTeammates.label": "完全不显示队友坐标点",
+  "minimap.settings.hideAllTeammates.description":
+    "开启后所有队友点位一律隐藏，即便队友正被机制颜色或 Buff 影响也不会显示；仅保留自己的点位。优先级高于上一项。",
   "minimap.settings.showBoss.label": "显示 Boss 位置",
   "minimap.settings.showBoss.description":
     "开启后，在小地图中显示当前副本 Boss 的位置；默认关闭以减少干扰。",
@@ -1460,6 +1463,7 @@ export const zhCNMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "冰浪安全",
   "minimap.s3SeaRingedReef.boss.waterWave": "海浪安全",
   "minimap.s3SeaRingedReef.boss.crossSafe": "十字交点",
+  "minimap.s3SeaRingedReef.boss.singleWaveSafe": "单浪安全",
   "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(我)",
   "minimap.s3SeaRingedReef.boss.vertical": "竖线",
   "minimap.s3SeaRingedReef.boss.horizontal": "横线",

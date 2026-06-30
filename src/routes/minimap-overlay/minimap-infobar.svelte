@@ -121,9 +121,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: min(72vh, 520px);
     padding: 10px;
-    overflow-y: auto;
     color: #e2e8f0;
     font-size: 12px;
     background: rgba(15, 23, 42, 0.76);

@@ -9,6 +9,7 @@
 
   type LegacyMinimapConfig = typeof defaultMinimapConfig & {
     autoHideInDailyScenes?: boolean;
+    hideAllTeammates?: boolean;
     showBoss?: boolean;
     showMarkers?: boolean;
     entityColors?: Partial<typeof defaultMinimapConfig.entityColors>;
@@ -21,6 +22,7 @@
   function ensureMinimapSettingsDefaults() {
     const state = SETTINGS.minimap.state as LegacyMinimapConfig;
     state.autoHideInDailyScenes ??= defaultMinimapConfig.autoHideInDailyScenes;
+    state.hideAllTeammates ??= defaultMinimapConfig.hideAllTeammates;
     state.showBoss ??= defaultMinimapConfig.showBoss;
     state.showMarkers ??= defaultMinimapConfig.showMarkers;
     state.entityColors ??= { ...defaultMinimapConfig.entityColors };
@@ -91,6 +93,12 @@
       bind:checked={minimapSettings.hideNormalTeammates}
       label={t("minimap.settings.hideNormalTeammates.label")}
       description={t("minimap.settings.hideNormalTeammates.description")}
+    />
+
+    <SettingsSwitch
+      bind:checked={minimapSettings.hideAllTeammates}
+      label={t("minimap.settings.hideAllTeammates.label")}
+      description={t("minimap.settings.hideAllTeammates.description")}
     />
 
     {#if minimapSettings.showBoss !== undefined}

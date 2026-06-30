@@ -50,6 +50,7 @@ const textKeys = {
   iceWave: "minimap.s3SeaRingedReef.boss.iceWave",
   waterWave: "minimap.s3SeaRingedReef.boss.waterWave",
   crossSafe: "minimap.s3SeaRingedReef.boss.crossSafe",
+  singleWaveSafe: "minimap.s3SeaRingedReef.boss.singleWaveSafe",
   vertical: "minimap.s3SeaRingedReef.boss.vertical",
   horizontal: "minimap.s3SeaRingedReef.boss.horizontal",
   pizzaGroup: "minimap.s3SeaRingedReef.boss.pizzaGroup",
@@ -328,47 +329,75 @@ function addWaveSafeRegions(
 
   const vertical = waves.find((wave) => wave.axis === "vertical");
   const horizontal = waves.find((wave) => wave.axis === "horizontal");
-  if (!vertical || !horizontal) return;
 
-  // The safe rect is the overlap of the two perpendicular bands, centered at
-  // the crossing of their centerlines. A player is safe only when the whole
-  // collision circle (radius PLAYER_RADIUS) fits inside, so we test against
-  // the rect shrunk by the radius. Strict <: touching the edge is dangerous.
-  const cx = vertical.entity.x;
-  const cz = horizontal.entity.z;
+  // The wave bands are SAFE lanes (not danger). A player is safe when their
+  // whole collision circle (radius PLAYER_RADIUS) fits inside a band, so we
+  // test against the band shrunk by the radius. Strict <: touching the edge
+  // counts as dangerous.
+  // - Both waves: the overlap square of the two perpendicular safe bands
+  //   (the cross center) is the only spot safe from both.
+  // - Only one wave: inside that wave's band is safe; outside is danger.
   const innerHalf = Math.max(0, SAFE_HALF - PLAYER_RADIUS);
 
-  const teamEntities = snapshot.entities.filter(
-    (entity) =>
-      (entity.kind === "local" || entity.kind === "teammate") &&
-      !entity.isDead,
-  );
+  let safePredicate: ((entity: MinimapEntity) => boolean) | null = null;
+  let safeRow: MechanicRow | null = null;
 
-  const targetStatus: MechanicRowTargetStatus[] = teamEntities
-    .map((entity) => {
-      const safe =
-        Math.abs(entity.x - cx) < innerHalf &&
-        Math.abs(entity.z - cz) < innerHalf;
-      waveSafeStatus.set(entity.entityUuid, safe);
-      return {
-        name: displayName(entity),
-        isLocal: entity.entityUuid === snapshot.localPlayerUuid,
-        safe,
+  if (vertical && horizontal) {
+    const cx = vertical.entity.x;
+    const cz = horizontal.entity.z;
+    safePredicate = (entity) =>
+      Math.abs(entity.x - cx) < innerHalf &&
+      Math.abs(entity.z - cz) < innerHalf;
+    safeRow = {
+      key: `wave:cross:${vertical.entity.entityUuid}:${horizontal.entity.entityUuid}`,
+      group: t(textKeys.waveGroup),
+      label: t(textKeys.crossSafe),
+      colorSlot: 1,
+      createTimeMs: 0,
+      durationMs: 0,
+      targets: [],
+      hideTimer: true,
+    };
+  } else {
+    const wave = vertical ?? horizontal ?? null;
+    if (wave) {
+      const axisCoord = vertical ? wave.entity.x : wave.entity.z;
+      safePredicate = (entity) =>
+        Math.abs((vertical ? entity.x : entity.z) - axisCoord) < innerHalf;
+      safeRow = {
+        key: `wave:single:${wave.key}:${wave.entity.entityUuid}`,
+        group: t(textKeys.waveGroup),
+        label: `${t(wave.labelKey)}：${t(textKeys.singleWaveSafe)}`,
+        colorSlot: 1,
+        createTimeMs: 0,
+        durationMs: 0,
+        targets: [],
+        hideTimer: true,
       };
-    })
-    .sort((a, b) => Number(b.isLocal) - Number(a.isLocal));
+    }
+  }
 
-  rows.push({
-    key: `wave:cross:${vertical.entity.entityUuid}:${horizontal.entity.entityUuid}`,
-    group: t(textKeys.waveGroup),
-    label: t(textKeys.crossSafe),
-    colorSlot: 1,
-    createTimeMs: 0,
-    durationMs: 0,
-    targets: [],
-    targetStatus,
-    hideTimer: true,
-  });
+  if (safePredicate && safeRow) {
+    const teamEntities = snapshot.entities.filter(
+      (entity) =>
+        (entity.kind === "local" || entity.kind === "teammate") &&
+        !entity.isDead,
+    );
+
+    const targetStatus: MechanicRowTargetStatus[] = teamEntities
+      .map((entity) => {
+        const safe = safePredicate!(entity);
+        waveSafeStatus.set(entity.entityUuid, safe);
+        return {
+          name: displayName(entity),
+          isLocal: entity.entityUuid === snapshot.localPlayerUuid,
+          safe,
+        };
+      })
+      .sort((a, b) => Number(b.isLocal) - Number(a.isLocal));
+
+    rows.push({ ...safeRow, targetStatus });
+  }
 }
 
 function latestWaves(entities: MinimapEntity[]): WaveLine[] {

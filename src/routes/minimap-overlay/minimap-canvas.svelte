@@ -277,6 +277,12 @@
       const hasSafeStatus = safeStatus !== undefined && team;
       const hasMechanic = colorSlot !== undefined || hasSafeStatus;
       if (
+        minimapSettings.hideAllTeammates &&
+        entity.kind === "teammate"
+      ) {
+        continue;
+      }
+      if (
         minimapSettings.hideNormalTeammates &&
         entity.kind === "teammate" &&
         !hasMechanic
@@ -589,6 +595,7 @@
     void aspect;
     void sceneView;
     void minimapSettings.hideNormalTeammates;
+    void minimapSettings.hideAllTeammates;
     void minimapSettings.showBoss;
     void minimapSettings.showMarkers;
     void minimapSettings.markerColors;
