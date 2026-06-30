@@ -1492,6 +1492,13 @@ export const jaJPMessages = {
   "minimap.settings.localFacing.label": "向きを表示",
   "minimap.settings.localFacing.description":
     "有効にすると、自分のマーカーに現在の向きを指す小さな矢印を描画します。",
+  "minimap.settings.sizes.title": "エンティティサイズ",
+  "minimap.settings.sizes.description":
+    "ミニマップ上の各エンティティの表示半径(px)",
+  "minimap.settings.sizes.local": "自分",
+  "minimap.settings.sizes.teammate": "味方",
+  "minimap.settings.sizes.boss": "ボス",
+  "minimap.settings.sizes.other": "その他",
   "minimap.s3Raid.phase.corner": "四隅爆発",
   "minimap.s3Raid.phase.edge": "辺中央爆発",
   "minimap.s3Raid.phase.group": "フェーズ",

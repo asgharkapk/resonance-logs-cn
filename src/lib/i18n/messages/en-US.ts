@@ -1507,6 +1507,13 @@ export const enUSMessages = {
   "minimap.settings.localFacing.label": "Show facing indicator",
   "minimap.settings.localFacing.description":
     "When enabled, a small arrow pointing in your current facing direction is drawn on your own marker.",
+  "minimap.settings.sizes.title": "Entity sizes",
+  "minimap.settings.sizes.description":
+    "Display radius (px) of each entity type on the minimap.",
+  "minimap.settings.sizes.local": "Self",
+  "minimap.settings.sizes.teammate": "Teammate",
+  "minimap.settings.sizes.boss": "Boss",
+  "minimap.settings.sizes.other": "Other entities",
   "minimap.s3Raid.phase.corner": "Corner Explosion",
   "minimap.s3Raid.phase.edge": "Edge-Mid Explosion",
   "minimap.s3Raid.phase.group": "Phase",

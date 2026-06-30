@@ -274,6 +274,13 @@ export type MinimapLocalFacing = {
   enabled: boolean;
 };
 
+export type MinimapEntitySizes = {
+  local: number;
+  teammate: number;
+  boss: number;
+  other: number;
+};
+
 export type MinimapMarkerColors = {
   m1: string;
   m2: string;
@@ -293,6 +300,7 @@ export type MinimapConfig = {
   mapPanel: MinimapPanelRect;
   infoPanel: MinimapPanelRect;
   entityColors: MinimapEntityColors;
+  entitySizes: MinimapEntitySizes;
   markerColors: MinimapMarkerColors;
   localRing: MinimapLocalRing;
   localFacing: MinimapLocalFacing;
@@ -1162,6 +1170,12 @@ export function createDefaultMinimapConfig(): MinimapConfig {
       local: "#f8fafc",
       teammate: "#38bdf8",
       boss: "#ef4444",
+    },
+    entitySizes: {
+      local: 4,
+      teammate: 4,
+      boss: 10,
+      other: 10,
     },
     markerColors: {
       m1: "#facc15",

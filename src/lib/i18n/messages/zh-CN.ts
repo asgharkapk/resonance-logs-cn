@@ -1387,6 +1387,13 @@ export const zhCNMessages = {
   "minimap.settings.localFacing.label": "显示朝向指示",
   "minimap.settings.localFacing.description":
     "开启后，在自己的标记上绘制一个指向当前朝向的小箭头。",
+  "minimap.settings.sizes.title": "实体大小",
+  "minimap.settings.sizes.description":
+    "设置小地图上各类实体的展示半径（像素）。",
+  "minimap.settings.sizes.local": "自己",
+  "minimap.settings.sizes.teammate": "队友",
+  "minimap.settings.sizes.boss": "Boss",
+  "minimap.settings.sizes.other": "其他实体",
   "minimap.s3Raid.phase.corner": "四角爆炸",
   "minimap.s3Raid.phase.edge": "边中爆炸",
   "minimap.s3Raid.phase.group": "相位",

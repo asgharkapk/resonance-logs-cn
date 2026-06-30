@@ -12,6 +12,7 @@
     showBoss?: boolean;
     showMarkers?: boolean;
     entityColors?: Partial<typeof defaultMinimapConfig.entityColors>;
+    entitySizes?: Partial<typeof defaultMinimapConfig.entitySizes>;
     markerColors?: Partial<typeof defaultMinimapConfig.markerColors>;
     localRing?: Partial<typeof defaultMinimapConfig.localRing>;
     localFacing?: Partial<typeof defaultMinimapConfig.localFacing>;
@@ -24,6 +25,11 @@
     state.showMarkers ??= defaultMinimapConfig.showMarkers;
     state.entityColors ??= { ...defaultMinimapConfig.entityColors };
     state.entityColors.boss ??= defaultMinimapConfig.entityColors.boss;
+    state.entitySizes ??= { ...defaultMinimapConfig.entitySizes };
+    state.entitySizes.local ??= defaultMinimapConfig.entitySizes.local;
+    state.entitySizes.teammate ??= defaultMinimapConfig.entitySizes.teammate;
+    state.entitySizes.boss ??= defaultMinimapConfig.entitySizes.boss;
+    state.entitySizes.other ??= defaultMinimapConfig.entitySizes.other;
     state.markerColors ??= { ...defaultMinimapConfig.markerColors };
     state.markerColors.m1 ??= defaultMinimapConfig.markerColors.m1;
     state.markerColors.m2 ??= defaultMinimapConfig.markerColors.m2;
@@ -48,6 +54,7 @@
     void minimapSettings.showMarkers;
     void minimapSettings.autoHideInDailyScenes;
     void minimapSettings.entityColors;
+    void minimapSettings.entitySizes;
     void minimapSettings.markerColors;
     void minimapSettings.localRing;
     void minimapSettings.localFacing;
@@ -168,6 +175,56 @@
         />
       {/if}
     </div>
+  </section>
+
+  <section
+    class="border-border/60 bg-card/40 space-y-4 rounded-lg border p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]"
+  >
+    <div>
+      <h2 class="text-foreground text-base font-semibold">
+        {t("minimap.settings.sizes.title")}
+      </h2>
+      <p class="text-muted-foreground text-xs">
+        {t("minimap.settings.sizes.description")}
+      </p>
+    </div>
+
+    {#if minimapSettings.entitySizes}
+      <div class="grid gap-2 lg:grid-cols-2">
+        <SettingsSlider
+          bind:value={minimapSettings.entitySizes.local}
+          label={t("minimap.settings.sizes.local")}
+          min={1}
+          max={20}
+          step={1}
+          unit="px"
+        />
+        <SettingsSlider
+          bind:value={minimapSettings.entitySizes.teammate}
+          label={t("minimap.settings.sizes.teammate")}
+          min={1}
+          max={20}
+          step={1}
+          unit="px"
+        />
+        <SettingsSlider
+          bind:value={minimapSettings.entitySizes.boss}
+          label={t("minimap.settings.sizes.boss")}
+          min={1}
+          max={24}
+          step={1}
+          unit="px"
+        />
+        <SettingsSlider
+          bind:value={minimapSettings.entitySizes.other}
+          label={t("minimap.settings.sizes.other")}
+          min={1}
+          max={24}
+          step={1}
+          unit="px"
+        />
+      </div>
+    {/if}
   </section>
 
   <section
