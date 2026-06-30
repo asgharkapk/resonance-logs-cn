@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { MinimapEntity, MinimapSnapshot } from "$lib/api";
+  import { t } from "$lib/i18n/index.svelte";
   import { overlayNow } from "../game-overlay/overlay-clock.svelte.js";
   import {
     minimapPlayerNames,
@@ -81,7 +82,20 @@
             <span class="dot" style:background={color} style:color></span>
             <span class="text" title={targetText(row)}>
               <span class="label">{row.label}</span>
-              {#if row.targets.length > 0}
+              {#if row.targetStatus && row.targetStatus.length > 0}
+                <span class="targets">
+                  {#each row.targetStatus as ts (ts.name)}
+                    <span
+                      class="target-chip status-chip"
+                      style:color={ts.safe ? "#22c55e" : "#ef4444"}
+                    >
+                      {ts.safe ? "✓" : "✗"}{ts.isLocal
+                        ? t("minimap.s3SeaRingedReef.boss.crossSafeSelf")
+                        : ""}{ts.name}
+                    </span>
+                  {/each}
+                </span>
+              {:else if row.targets.length > 0}
                 <span class="targets">
                   {#each row.targets as target, index (target)}
                     <span class="target-chip">
@@ -182,6 +196,9 @@
     min-width: 0;
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+  .status-chip {
+    font-weight: 700;
   }
   .time {
     flex: none;

@@ -5,14 +5,24 @@ import type {
   MinimapSnapshot,
 } from "$lib/api";
 import { t, type MessageKey } from "$lib/i18n/index.svelte";
-import type { MechanicRegion, MechanicRow } from "../../../scene-types";
+import type {
+  MechanicRegion,
+  MechanicRow,
+  MechanicRowTargetStatus,
+} from "../../../scene-types";
 import { arenaBounds, arenaCenter, type S3SeaRingedReefArena } from "../arena";
 import type { SeaRingedReefMechanicView } from "./matrix";
 
 const ICE_WAVE_MONSTER_ID = 3340219;
 const WATER_WAVE_MONSTER_ID = 3340220;
-const WAVE_BAND_HALF_WIDTH = 3.5;
-const INTERSECTION_HALF_SIZE = 5;
+// Each wave band is 4 units wide. The two perpendicular bands overlap in a
+// 4x4 square at their intersection — that overlap is the safe zone.
+const WAVE_BAND_HALF_WIDTH = 2;
+const SAFE_HALF = WAVE_BAND_HALF_WIDTH;
+// Player collision radius. A player is only "safe" when the entire circle
+// fits inside the safe rect, so we shrink the rect by this radius. Touching
+// the edge counts as dangerous (strict <).
+const PLAYER_RADIUS = 0.25;
 
 // Boss-phase orbs (attr `10` / monsterId): players must track their positions.
 const ICE_BALL_MONSTER_ID = 4604;
@@ -72,6 +82,7 @@ export function buildBossMechanicView(
   const regions: MechanicRegion[] = [];
   const rows: MechanicRow[] = [];
   const entityColorSlots = new Map<string, number>();
+  const waveSafeStatus = new Map<string, boolean>();
   const entitiesByUuid = new Map(
     snapshot.entities.map((entity) => [entity.entityUuid, entity]),
   );
@@ -83,7 +94,7 @@ export function buildBossMechanicView(
     entityColorSlots,
     displayName,
   );
-  addWaveSafeRegions(snapshot, arena, regions, rows);
+  addWaveSafeRegions(snapshot, arena, regions, rows, displayName, waveSafeStatus);
   addOrbMarkers(snapshot, entityColorSlots);
   addPizzaDangerRegions(
     skillCasts,
@@ -98,6 +109,7 @@ export function buildBossMechanicView(
     regions,
     rows,
     entityColorSlots,
+    waveSafeStatus,
   };
 }
 
@@ -289,6 +301,8 @@ function addWaveSafeRegions(
   arena: S3SeaRingedReefArena,
   regions: MechanicRegion[],
   rows: MechanicRow[],
+  displayName: (entity: MinimapEntity) => string,
+  waveSafeStatus: Map<string, boolean>,
 ) {
   const waves = latestWaves(snapshot.entities);
   if (waves.length === 0) return;
@@ -316,14 +330,34 @@ function addWaveSafeRegions(
   const horizontal = waves.find((wave) => wave.axis === "horizontal");
   if (!vertical || !horizontal) return;
 
-  regions.push({
-    kind: "rect",
-    x: vertical.entity.x,
-    z: horizontal.entity.z,
-    halfX: INTERSECTION_HALF_SIZE,
-    halfZ: INTERSECTION_HALF_SIZE,
-    colorSlot: 1,
-  });
+  // The safe rect is the overlap of the two perpendicular bands, centered at
+  // the crossing of their centerlines. A player is safe only when the whole
+  // collision circle (radius PLAYER_RADIUS) fits inside, so we test against
+  // the rect shrunk by the radius. Strict <: touching the edge is dangerous.
+  const cx = vertical.entity.x;
+  const cz = horizontal.entity.z;
+  const innerHalf = Math.max(0, SAFE_HALF - PLAYER_RADIUS);
+
+  const teamEntities = snapshot.entities.filter(
+    (entity) =>
+      (entity.kind === "local" || entity.kind === "teammate") &&
+      !entity.isDead,
+  );
+
+  const targetStatus: MechanicRowTargetStatus[] = teamEntities
+    .map((entity) => {
+      const safe =
+        Math.abs(entity.x - cx) < innerHalf &&
+        Math.abs(entity.z - cz) < innerHalf;
+      waveSafeStatus.set(entity.entityUuid, safe);
+      return {
+        name: displayName(entity),
+        isLocal: entity.entityUuid === snapshot.localPlayerUuid,
+        safe,
+      };
+    })
+    .sort((a, b) => Number(b.isLocal) - Number(a.isLocal));
+
   rows.push({
     key: `wave:cross:${vertical.entity.entityUuid}:${horizontal.entity.entityUuid}`,
     group: t(textKeys.waveGroup),
@@ -332,6 +366,7 @@ function addWaveSafeRegions(
     createTimeMs: 0,
     durationMs: 0,
     targets: [],
+    targetStatus,
     hideTimer: true,
   });
 }

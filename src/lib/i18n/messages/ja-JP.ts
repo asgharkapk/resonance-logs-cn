@@ -1558,6 +1558,7 @@ export const jaJPMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "氷浪安全",
   "minimap.s3SeaRingedReef.boss.waterWave": "海浪安全",
   "minimap.s3SeaRingedReef.boss.crossSafe": "十字交点",
+  "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(私)",
   "minimap.s3SeaRingedReef.boss.vertical": "縦線",
   "minimap.s3SeaRingedReef.boss.horizontal": "横線",
   "minimap.s3SeaRingedReef.boss.pizzaGroup": "ピザ危険区域",

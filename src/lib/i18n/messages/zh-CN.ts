@@ -1453,6 +1453,7 @@ export const zhCNMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "冰浪安全",
   "minimap.s3SeaRingedReef.boss.waterWave": "海浪安全",
   "minimap.s3SeaRingedReef.boss.crossSafe": "十字交点",
+  "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(我)",
   "minimap.s3SeaRingedReef.boss.vertical": "竖线",
   "minimap.s3SeaRingedReef.boss.horizontal": "横线",
   "minimap.s3SeaRingedReef.boss.pizzaGroup": "披萨危险区",

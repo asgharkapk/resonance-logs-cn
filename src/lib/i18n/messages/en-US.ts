@@ -1574,6 +1574,7 @@ export const enUSMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "Ice Wave Safe",
   "minimap.s3SeaRingedReef.boss.waterWave": "Sea Wave Safe",
   "minimap.s3SeaRingedReef.boss.crossSafe": "Cross Intersection",
+  "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(me)",
   "minimap.s3SeaRingedReef.boss.vertical": "Vertical",
   "minimap.s3SeaRingedReef.boss.horizontal": "Horizontal",
   "minimap.s3SeaRingedReef.boss.pizzaGroup": "Pizza Danger Zone",

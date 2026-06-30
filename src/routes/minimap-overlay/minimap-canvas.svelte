@@ -266,7 +266,10 @@
       }
 
       const colorSlot = view.entityColorSlots.get(entity.entityUuid);
-      const hasMechanic = colorSlot !== undefined;
+      const team = isTeamMember(entity);
+      const safeStatus = view.entitySafeStatus?.get(entity.entityUuid);
+      const hasSafeStatus = safeStatus !== undefined && team;
+      const hasMechanic = colorSlot !== undefined || hasSafeStatus;
       if (
         minimapSettings.hideNormalTeammates &&
         entity.kind === "teammate" &&
@@ -276,9 +279,13 @@
       }
 
       const [sx, sy] = project(entity.x, entity.z);
-      const team = isTeamMember(entity);
-      const dotColor =
-        colorSlot === undefined ? colorFor(entity) : slotColor(colorSlot);
+      const dotColor = hasSafeStatus
+        ? safeStatus
+          ? slotColor(1) // green = inside safe zone
+          : slotColor(3) // red = outside safe zone
+        : colorSlot === undefined
+          ? colorFor(entity)
+          : slotColor(colorSlot);
 
       ctx.globalAlpha = entity.isDead
         ? 0.35
