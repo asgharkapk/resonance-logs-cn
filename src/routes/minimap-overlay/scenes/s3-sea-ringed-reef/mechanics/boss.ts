@@ -34,7 +34,7 @@ const ORB_COLOR_SLOTS: Record<number, number> = {
 
 const PIZZA_INDICATOR_SKILL_ID = 3340245;
 const PIZZA_HALF_ANGLE = 45; // each sector spans 90 degrees
-const PIZZA_OUTER_RADIUS = 22.5; // min(boss halfX 55, halfZ 45) / 2
+const PIZZA_OUTER_RADIUS = 20; // min(boss halfX 33, halfZ 27) / 2
 const PIZZA_ORANGE_BUFF_ID = 883633; // "标记-Rock橙色板子"
 const PIZZA_PURPLE_BUFF_ID = 883634; // "标记-Rock紫色板子"
 const PIZZA_PURPLE_DIAGONAL_OFFSET = 90; // purple danger diagonal is rotated 90deg
@@ -310,11 +310,28 @@ function addWaveSafeRegions(
 
   const center = arenaCenter(arena);
   const bounds = arenaBounds(arena);
+  const innerHalf = Math.max(0, SAFE_HALF - PLAYER_RADIUS);
+
+  const localPlayer = snapshot.entities.find(
+    (entity) => entity.entityUuid === snapshot.localPlayerUuid,
+  );
 
   for (const wave of waves) {
     const axisLabelKey =
       wave.axis === "vertical" ? textKeys.vertical : textKeys.horizontal;
-    regions.push(waveRegion(wave, center, bounds));
+
+    const axisCoord =
+      wave.axis === "vertical" ? wave.entity.x : wave.entity.z;
+    const playerCoord =
+      wave.axis === "vertical" ? localPlayer?.x : localPlayer?.z;
+    const inBand =
+      localPlayer !== undefined &&
+      !localPlayer.isDead &&
+      playerCoord !== undefined &&
+      Math.abs(playerCoord - axisCoord) < innerHalf;
+
+    regions.push(waveRegion(wave, center, bounds, inBand ? 1 : 3));
+
     rows.push({
       key: `wave:${wave.key}:${wave.entity.entityUuid}`,
       group: t(textKeys.waveGroup),
@@ -337,7 +354,7 @@ function addWaveSafeRegions(
   // - Both waves: the overlap square of the two perpendicular safe bands
   //   (the cross center) is the only spot safe from both.
   // - Only one wave: inside that wave's band is safe; outside is danger.
-  const innerHalf = Math.max(0, SAFE_HALF - PLAYER_RADIUS);
+  // `innerHalf` is computed above (shared with the per-wave band coloring).
 
   let safePredicate: ((entity: MinimapEntity) => boolean) | null = null;
   let safeRow: MechanicRow | null = null;
@@ -452,6 +469,7 @@ function waveRegion(
   wave: WaveLine,
   center: { x: number; z: number },
   bounds: { halfX: number; halfZ: number },
+  displayColorSlot: number,
 ): MechanicRegion {
   if (wave.axis === "vertical") {
     return {
@@ -460,7 +478,7 @@ function waveRegion(
       z: center.z,
       halfX: WAVE_BAND_HALF_WIDTH,
       halfZ: bounds.halfZ,
-      colorSlot: wave.colorSlot,
+      colorSlot: displayColorSlot,
     };
   }
 
@@ -470,6 +488,6 @@ function waveRegion(
     z: wave.entity.z,
     halfX: bounds.halfX,
     halfZ: WAVE_BAND_HALF_WIDTH,
-    colorSlot: wave.colorSlot,
+    colorSlot: displayColorSlot,
   };
 }
