@@ -1,0 +1,104 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: write
+
+concurrency:
+ group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build Tauri application
+        run: npm run tauri build
+
+      - name: Create portable package
+        shell: pwsh
+        run: |
+          $APP_NAME = "resonance-logs-cn"
+
+          New-Item -ItemType Directory -Force portable | Out-Null
+
+          Copy-Item "src-tauri/target/release/$APP_NAME.exe" portable/
+
+          if (Test-Path "src-tauri/WinDivert.dll") {
+            Copy-Item "src-tauri/WinDivert.dll" portable/
+          }
+
+          if (Test-Path "src-tauri/WinDivert64.sys") {
+            Copy-Item "src-tauri/WinDivert64.sys" portable/
+          }
+
+          if (Test-Path "src-tauri/meter-data") {
+            Copy-Item "src-tauri/meter-data" portable/ -Recurse
+          }
+
+          Compress-Archive `
+            -Path portable/* `
+            -DestinationPath "$APP_NAME-portable.zip"
+
+      - name: Generate release tag
+        id: tag
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format "yyyy.MM.dd"
+          $tag = "v$date-r${{ github.run_number }}"
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Push Git tag
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag "${{ steps.tag.outputs.tag }}"
+          git push origin "${{ steps.tag.outputs.tag }}"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            resonance-logs-cn-portable.zip
+            src-tauri/target/release/resonance-logs-cn.exe
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.zip
+            src-tauri/target/release/bundle/**/*.tar.gz
+            src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.rpm
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
