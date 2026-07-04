@@ -1,4 +1,4 @@
-# <img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/app-logo.png?raw=true" width="64" align="center"> Resonance Logs Documentation
+# <img src="app-logo.png" width="64" align="center"> Resonance Logs Documentation
 
 <div align="center">
 
@@ -15,11 +15,11 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 
 | Document                                                                                            | Description                      |
 | --------------------------------------------------------------------------------------------------- | -------------------------------- |
-| 📘 [README](https://github.com/asgharkapk/resonance-logs-cn/blob/main/README.md)                    | Main documentation               |
-| 🇺🇸 [README_EN.md](https://github.com/asgharkapk/resonance-logs-cn/blob/main/README_EN.md)         | English documentation            |
-| 🇨🇳 [README_CN.md](https://github.com/asgharkapk/resonance-logs-cn/blob/main/README_CN.md)         | Simplified Chinese documentation |
-| 📝 [CHANGELOG.md](https://github.com/asgharkapk/resonance-logs-cn/blob/main/CHANGELOG.md)           | Project changelog                |
-| 🍴 [CHANGELOG_FORK.md](https://github.com/asgharkapk/resonance-logs-cn/blob/main/CHANGELOG_FORK.md) | Fork-specific changes            |
+| 📘 [README](README.md)                    | Main documentation               |
+| 🇺🇸 [README_EN.md](README_EN.md)         | English documentation            |
+| 🇨🇳 [README_CN.md](README_CN.md)         | Simplified Chinese documentation |
+| 📝 [CHANGELOG.md](CHANGELOG.md)           | Project changelog                |
+| 🍴 [CHANGELOG_FORK.md](CHANGELOG_FORK.md) | Fork-specific changes            |
 
 ---
 
@@ -52,7 +52,7 @@ The documentation is separated by language.
 
 ### Compact Theme
 
-<img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/doc/shared/img/dps/dps_5.png?raw=true">
+<img src="doc/shared/img/dps/dps_5.png">
 
 A minimal interface designed to keep important combat information visible while occupying as little screen space as possible.
 
@@ -60,7 +60,7 @@ A minimal interface designed to keep important combat information visible while 
 
 ### Theme Customization
 
-<img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/doc/shared/img/dps/dps_4.png?raw=true">
+<img src="doc/shared/img/dps/dps_4.png">
 
 Customize colors, layouts, fonts, and appearance to match your preferences.
 
@@ -68,7 +68,7 @@ Customize colors, layouts, fonts, and appearance to match your preferences.
 
 ### Accuracy Test
 
-<img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/doc/shared/img/dps/dps_1.png?raw=true">
+<img src="/doc/shared/img/dps/dps_1.png">
 
 Verify combat log accuracy and ensure the parser is correctly reading game data.
 
@@ -76,7 +76,6 @@ Verify combat log accuracy and ensure the parser is correctly reading game data.
 
 ### Dungeon Mechanics Guide Minimap
 
-<img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/doc/shared/img/minimap/s3_minimap_1.png?raw=true">
 <table>
   <tr>
     <td><img src="doc/shared/img/minimap/s3_minimap_1.png" width="250"></td>
@@ -90,7 +89,7 @@ Interactive minimap overlays help players quickly learn dungeon mechanics and po
 
 ### DPS Overlay as Your Game UI
 
-<img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/doc/shared/img/monitor/buff_4.png?raw=true">
+<img src="/doc/shared/img/monitor/buff_4.png">
 
 You can disable the in-game UI and rely on the Resonance Logs overlay for combat information while maintaining a clean gameplay experience.
 
@@ -98,7 +97,7 @@ You can disable the in-game UI and rely on the Resonance Logs overlay for combat
 
 ## 🌐 Changing the Application Language
 
-<img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/doc/shared/img/faq/faq_5.png?raw=true">
+<img src="doc/shared/img/faq/faq_5.png">
 
 The application supports multiple languages. Open **Settings → Language** to switch the interface language.
 
