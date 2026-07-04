@@ -77,7 +77,13 @@ Verify combat log accuracy and ensure the parser is correctly reading game data.
 ### Dungeon Mechanics Guide Minimap
 
 <img src="https://github.com/asgharkapk/resonance-logs-cn/blob/main/doc/shared/img/minimap/s3_minimap_1.png?raw=true">
-
+<table>
+  <tr>
+    <td><img src="doc/shared/img/minimap/s3_minimap_1.png" width="250"></td>
+    <td><img src="doc/shared/img/minimap/s3_minimap_2.png" width="250"></td>
+    <td><img src="doc/shared/img/minimap/s3_minimap_3.png" width="250"></td>
+  </tr>
+</table>
 Interactive minimap overlays help players quickly learn dungeon mechanics and positioning.
 
 ---
