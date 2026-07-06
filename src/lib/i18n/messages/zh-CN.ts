@@ -1185,7 +1185,7 @@ export const zhCNMessages = {
   "monsterMonitor.overlay.bossDbm": "Boss DBM 区：{state}",
   "monsterMonitor.bossDbm.title": "Boss 机制 (DBM)",
   "monsterMonitor.bossDbm.description":
-    "显示 Boss 技能机制预警条，包含技能名与倒计时。开启后在“启用窗口”中显示该面板。",
+    "显示 Boss 技能机制预警条，包含技能名与倒计时。可在“启用窗口”页签中切换该面板显示。",
   "monsterMonitor.bossDbm.alias.title": "技能别名",
   "monsterMonitor.bossDbm.alias.description":
     "搜索 Boss 技能并设置自定义显示名，覆盖默认技能名。",

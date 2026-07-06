@@ -2299,22 +2299,6 @@
           {t("monsterMonitor.bossDbm.description")}
         </p>
       </div>
-
-      <div class="flex justify-start">
-        <div class="min-w-[220px]">
-          <button
-            type="button"
-            class="w-full rounded-lg border px-3 py-2 text-sm font-medium transition-colors {overlayVisibility.showBossDbmPanel
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
-            onclick={() => toggleOverlayVisibility("showBossDbmPanel")}
-          >
-            {t("monsterMonitor.overlay.bossDbm", {
-              state: visibilityState(overlayVisibility.showBossDbmPanel),
-            })}
-          </button>
-        </div>
-      </div>
     </section>
 
     <section
