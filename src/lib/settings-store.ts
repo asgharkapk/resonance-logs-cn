@@ -716,6 +716,7 @@ export type MonsterMonitorConfig = {
   teammateBuffColumnOrder?: TeammateBuffColumnKey[];
   fantasyWhitelistMonsterIds: number[];
   fantasyMonsterAliases: Record<string, string>;
+  dbmAliases: Record<string, string>;
   fantasyShowAll: boolean;
   fantasyPersistentDisplay: boolean;
   buffPriorityIds: number[];
@@ -838,6 +839,18 @@ export function ensureBuffAliases(
     const trimmed = alias.trim();
     if (!trimmed) continue;
     next[baseId] = trimmed;
+  }
+  return next;
+}
+
+export function ensureDbmAliases(
+  dbmAliases: Record<string, string> | null | undefined,
+): Record<string, string> {
+  const next: Record<string, string> = {};
+  for (const [id, alias] of Object.entries(dbmAliases ?? {})) {
+    const trimmed = alias.trim();
+    if (!trimmed) continue;
+    next[id] = trimmed;
   }
   return next;
 }
@@ -1182,6 +1195,7 @@ export function createDefaultMonsterMonitorConfig(): MonsterMonitorConfig {
     teammateBuffColumnOrder: [],
     fantasyWhitelistMonsterIds: [],
     fantasyMonsterAliases: {},
+    dbmAliases: {},
     fantasyShowAll: false,
     fantasyPersistentDisplay: false,
     buffPriorityIds: [],

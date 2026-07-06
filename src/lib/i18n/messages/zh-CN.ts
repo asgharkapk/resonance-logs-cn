@@ -1186,6 +1186,13 @@ export const zhCNMessages = {
   "monsterMonitor.bossDbm.title": "Boss 机制 (DBM)",
   "monsterMonitor.bossDbm.description":
     "显示 Boss 技能机制预警条，包含技能名与倒计时。开启后在“启用窗口”中显示该面板。",
+  "monsterMonitor.bossDbm.alias.title": "技能别名",
+  "monsterMonitor.bossDbm.alias.description":
+    "搜索 Boss 技能并设置自定义显示名，覆盖默认技能名。",
+  "monsterMonitor.bossDbm.alias.searchPlaceholder": "搜索技能名或 ID",
+  "monsterMonitor.bossDbm.alias.emptySearch": "未找到匹配的 Boss 技能。",
+  "monsterMonitor.bossDbm.alias.empty": "暂未设置别名。先在上方搜索并添加技能。",
+  "monsterMonitor.bossDbm.alias.remove": "移除",
   "monsterMonitor.overlay.state.show": "显示",
   "monsterMonitor.overlay.state.hide": "隐藏",
   "monsterMonitor.overlay.help": "点击按钮切换显示状态。",

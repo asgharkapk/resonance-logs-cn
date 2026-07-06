@@ -1282,6 +1282,14 @@ export const jaJPMessages = {
   "monsterMonitor.bossDbm.title": "Boss ギミック (DBM)",
   "monsterMonitor.bossDbm.description":
     "スキル名とカウントダウン付きの Boss ギミック警告バーを表示します。「ウィンドウを有効化」で表示を切り替えます。",
+  "monsterMonitor.bossDbm.alias.title": "スキル別名",
+  "monsterMonitor.bossDbm.alias.description":
+    "Boss スキルを検索して既定のスキル名を上書きするカスタム表示名を設定します。",
+  "monsterMonitor.bossDbm.alias.searchPlaceholder": "スキル名または ID を検索",
+  "monsterMonitor.bossDbm.alias.emptySearch": "一致する Boss スキルがありません。",
+  "monsterMonitor.bossDbm.alias.empty":
+    "別名が未設定です。上部で検索してスキルを追加してください。",
+  "monsterMonitor.bossDbm.alias.remove": "削除",
   "monsterMonitor.overlay.state.show": "表示",
   "monsterMonitor.overlay.state.hide": "非表示",
   "monsterMonitor.overlay.help": "ボタンをクリックして表示を切替。",

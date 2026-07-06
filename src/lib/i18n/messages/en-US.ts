@@ -1298,6 +1298,14 @@ export const enUSMessages = {
   "monsterMonitor.bossDbm.title": "Boss Mechanics (DBM)",
   "monsterMonitor.bossDbm.description":
     "Show Boss mechanic warning bars with skill name and countdown. Toggle visibility under Enable Window.",
+  "monsterMonitor.bossDbm.alias.title": "Skill Aliases",
+  "monsterMonitor.bossDbm.alias.description":
+    "Search Boss skills and set custom display names that override the default skill names.",
+  "monsterMonitor.bossDbm.alias.searchPlaceholder": "Search skill name or ID",
+  "monsterMonitor.bossDbm.alias.emptySearch": "No matching Boss skills found.",
+  "monsterMonitor.bossDbm.alias.empty":
+    "No aliases set yet. Search above and add a skill first.",
+  "monsterMonitor.bossDbm.alias.remove": "Remove",
   "monsterMonitor.overlay.state.show": "Show",
   "monsterMonitor.overlay.state.hide": "Hide",
   "monsterMonitor.overlay.help": "Click buttons to toggle visibility.",

@@ -12,12 +12,18 @@
     type BuffNameInfo,
   } from "$lib/config/buff-name-table";
   import { resolveMonsterName } from "$lib/config/game-names";
+  import {
+    searchDbmEntries,
+    lookupDbmDefaultName,
+    type DbmSearchItem,
+  } from "$lib/config/dbm-table";
   import { getGameData } from "$lib/i18n/game-data";
   import { t } from "$lib/i18n/index.svelte";
   import {
     SETTINGS,
     createDefaultBuffAlertRule,
     ensureBuffAlerts,
+    ensureDbmAliases,
     ensureTeammatePanelStyle,
     getGlobalBuffAliases,
     type CustomPanelStyle,
@@ -70,11 +76,20 @@
   let fantasySearchKeyword = $state("");
   let prioritySearchKeyword = $state("");
   let alertSearchKeyword = $state("");
+  let dbmSearchKeyword = $state("");
   let searchTarget = $state<SearchTarget>("self");
   let activeTab = $state<MonsterMonitorTab>("buff");
 
   const monsterMonitor = $derived(SETTINGS.monsterMonitor.state);
   const buffAliases = $derived.by(() => getGlobalBuffAliases());
+  const dbmAliases = $derived.by(() => ensureDbmAliases(monsterMonitor.dbmAliases));
+  const dbmSearchResults = $derived.by(() =>
+    dbmSearchKeyword.trim().length > 0
+      ? searchDbmEntries(dbmSearchKeyword).filter(
+          (item) => !dbmAliases[String(item.id)],
+        )
+      : ([] as DbmSearchItem[]),
+  );
   const monsterPanelStyle = $derived.by(() =>
     normalizeCustomPanelStyle(monsterMonitor.panelStyle),
   );
@@ -506,6 +521,27 @@
         fantasyMonsterAliases,
       };
     });
+  }
+
+  function setDbmAlias(id: number, alias: string) {
+    updateMonsterMonitor((state) => {
+      const nextDbmAliases = { ...(state.dbmAliases ?? {}) };
+      const trimmed = alias.trim();
+      if (trimmed) {
+        nextDbmAliases[String(id)] = trimmed;
+      } else {
+        delete nextDbmAliases[String(id)];
+      }
+      return {
+        ...state,
+        dbmAliases: nextDbmAliases,
+      };
+    });
+  }
+
+  function addDbmAlias(id: number) {
+    const initial = lookupDbmDefaultName(id) ?? `#${id}`;
+    setDbmAlias(id, initial);
   }
 
   function setAlias(buffId: number, alias: string) {
@@ -2279,7 +2315,95 @@
           </button>
         </div>
       </div>
+    </section>
 
+    <section
+      class="border-border/60 bg-card/60 space-y-5 rounded-xl border p-5"
+    >
+      <div class="space-y-1">
+        <h2 class="text-foreground text-base font-semibold">
+          {t("monsterMonitor.bossDbm.alias.title")}
+        </h2>
+        <p class="text-muted-foreground text-sm">
+          {t("monsterMonitor.bossDbm.alias.description")}
+        </p>
+      </div>
+
+      <div class="space-y-3">
+        <input
+          type="text"
+          bind:value={dbmSearchKeyword}
+          placeholder={t("monsterMonitor.bossDbm.alias.searchPlaceholder")}
+          class="border-border bg-background focus:border-primary w-full rounded-lg border px-3 py-2.5 text-sm outline-none"
+        />
+
+        {#if dbmSearchKeyword.trim().length > 0}
+          {#if dbmSearchResults.length > 0}
+            <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {#each dbmSearchResults as item (item.id)}
+                <button
+                  type="button"
+                  class="border-border/60 bg-muted/20 hover:bg-muted/40 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors"
+                  onclick={() => addDbmAlias(item.id)}
+                >
+                  <span class="min-w-0 truncate">{item.name}</span>
+                  <span class="text-muted-foreground shrink-0 text-xs">
+                    {item.id}
+                  </span>
+                </button>
+              {/each}
+            </div>
+          {:else}
+            <p class="text-muted-foreground text-sm">
+              {t("monsterMonitor.bossDbm.alias.emptySearch")}
+            </p>
+          {/if}
+        {/if}
+      </div>
+
+      <div class="space-y-2">
+        {#if Object.keys(dbmAliases).length > 0}
+          <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {#each Object.entries(dbmAliases) as [id, alias] (id)}
+              <div class="teammate-order-row">
+                <span class="text-muted-foreground shrink-0 text-xs">
+                  {id}
+                </span>
+                <span class="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+                  {lookupDbmDefaultName(Number(id)) ?? `#${id}`}
+                </span>
+                <input
+                  type="text"
+                  value={alias}
+                  class="border-border/60 bg-background/60 text-foreground min-w-0 w-28 rounded-md border px-2 py-1 text-sm outline-none transition-colors focus:border-primary"
+                  oninput={(event) =>
+                    setDbmAlias(
+                      Number(id),
+                      (event.currentTarget as HTMLInputElement).value,
+                    )}
+                />
+                <button
+                  type="button"
+                  class="order-button danger"
+                  title={t("monsterMonitor.bossDbm.alias.remove")}
+                  onclick={() => setDbmAlias(Number(id), "")}
+                >
+                  {t("monsterMonitor.bossDbm.alias.remove")}
+                </button>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-muted-foreground text-sm">
+            {t("monsterMonitor.bossDbm.alias.empty")}
+          </p>
+        {/if}
+      </div>
+    </section>
+
+    <section
+      class="border-border/60 bg-card/60 space-y-5 rounded-xl border p-5"
+    >
       <div class="grid gap-4 lg:grid-cols-3">
         <label class="style-field">
           <span>{t("monsterMonitor.style.gap")}</span>
