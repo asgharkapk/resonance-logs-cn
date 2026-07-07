@@ -763,6 +763,9 @@ export const enUSMessages = {
   "themes.fonts.title": "Custom Fonts",
   "themes.fonts.description":
     "Import custom fonts to replace the defaults. Font files should be .woff2, .woff, .ttf, or .otf.",
+  "themes.fonts.applyToOverlay": "Apply to overlays",
+  "themes.fonts.applyToOverlayDescription":
+    "When enabled, the custom sans-serif font is applied to the skill, monster, and minimap overlays. When disabled, overlays use the system default font.",
   "themes.fonts.sansTitle": "Sans-serif Font (UI Text)",
   "themes.fonts.defaultSans": "Default: Inter Variable",
   "themes.fonts.enableSans": "Enable Custom Sans-serif Font",
@@ -991,11 +994,11 @@ export const enUSMessages = {
   "skillMonitor.buff.status.aliased": "Alias set",
   "skillMonitor.buff.title": "Buff Monitor",
   "skillMonitor.buff.description":
-    "Search all buffs by name, including icon and text-only buffs",
+    "Search all buffs by name or ID, including icon and text-only buffs",
   "skillMonitor.buff.selectedSummary":
     "Selected buffs {buffCount} / categories {categoryCount}",
-  "skillMonitor.buff.placeholder": "Search buff name",
-  "skillMonitor.buff.searchPrompt": "Enter a keyword to search buffs",
+  "skillMonitor.buff.placeholder": "Search buff name or ID",
+  "skillMonitor.buff.searchPrompt": "Enter a name or ID to search buffs",
   "skillMonitor.buff.selectedTitle": "Selected Buffs",
   "skillMonitor.buff.alias.title": "Buff Alias Settings",
   "skillMonitor.buff.alias.configuredCount": "{count} aliases set",
@@ -1075,6 +1078,9 @@ export const enUSMessages = {
   "skillMonitor.style.valueColor": "Value Color",
   "skillMonitor.style.progressColor": "Progress Color",
   "skillMonitor.style.progressOpacity": "Progress opacity: {value}%",
+  "overlay.style.textShadow": "Text shadow",
+  "overlay.style.background": "Background mask",
+  "overlay.style.backgroundOpacity": "Mask opacity: {value}%",
   "skillMonitor.panelAttr.title": "Character Panel",
   "skillMonitor.panelAttr.enabledSummary":
     "{enabled}/{total} attributes enabled",
@@ -1168,6 +1174,8 @@ export const enUSMessages = {
   "skillMonitor.overlay.resource": "Resource Monitor Area: {state}",
   "skillMonitor.overlay.panelAttr": "Character Attribute Area: {state}",
   "skillMonitor.overlay.panelAttrGroupTag": "Character Attribute Area",
+  "skillMonitor.overlay.sharedTextStyle": "Other overlay text (skills/resources/buff icons)",
+  "skillMonitor.panelAttr.textStyle": "Text style",
   "skillMonitor.overlay.customPanel": "Custom Monitor Area: {state}",
   "skillMonitor.overlay.shieldDetail": "HP/Shield Area: {state}",
   "skillMonitor.overlay.help":
@@ -1192,9 +1200,9 @@ export const enUSMessages = {
   "monsterMonitor.buffSearch.self": "Search and Add Self-Applied",
   "monsterMonitor.buffSearch.global": "Search and Add Global Monitor",
   "monsterMonitor.buffSearch.placeholderSelf":
-    "Search monster buffs to add as self-applied",
+    "Search monster buffs by name or ID to add as self-applied",
   "monsterMonitor.buffSearch.placeholderGlobal":
-    "Search monster buffs to add to global monitor",
+    "Search monster buffs by name or ID to add to global monitor",
   "monsterMonitor.buffSearch.empty": "No matching monster buffs",
   "monsterMonitor.buffSearch.status.addedGlobal": "Added globally",
   "monsterMonitor.buffSearch.status.currentSelf": "Currently self-applied",
@@ -1215,7 +1223,8 @@ export const enUSMessages = {
   "monsterMonitor.buffGroups.removeTitle": "Click to remove",
   "monsterMonitor.buffGroups.empty": "No buffs selected",
   "monsterMonitor.teammate.title": "Teammate Buff Monitor",
-  "monsterMonitor.teammate.placeholder": "Search and add teammate buffs",
+  "monsterMonitor.teammate.placeholder":
+    "Search teammate buffs by name or ID",
   "monsterMonitor.teammate.emptySearch": "No matching teammate buffs",
   "monsterMonitor.teammate.groupTitle": "Monitored Teammate Buffs",
   "monsterMonitor.teammate.styleTitle": "Teammate Buff Matrix Style",
@@ -1289,6 +1298,14 @@ export const enUSMessages = {
   "monsterMonitor.bossDbm.title": "Boss Mechanics (DBM)",
   "monsterMonitor.bossDbm.description":
     "Show Boss mechanic warning bars with skill name and countdown. Toggle visibility under Enable Window.",
+  "monsterMonitor.bossDbm.alias.title": "Skill Aliases",
+  "monsterMonitor.bossDbm.alias.description":
+    "Search Boss skills and set custom display names that override the default skill names.",
+  "monsterMonitor.bossDbm.alias.searchPlaceholder": "Search skill name or ID",
+  "monsterMonitor.bossDbm.alias.emptySearch": "No matching Boss skills found.",
+  "monsterMonitor.bossDbm.alias.empty":
+    "No aliases set yet. Search above and add a skill first.",
+  "monsterMonitor.bossDbm.alias.remove": "Remove",
   "monsterMonitor.overlay.state.show": "Show",
   "monsterMonitor.overlay.state.hide": "Hide",
   "monsterMonitor.overlay.help": "Click buttons to toggle visibility.",
@@ -1468,6 +1485,9 @@ export const enUSMessages = {
     "Only show self and teammates affected by mechanics",
   "minimap.settings.hideNormalTeammates.description":
     "When enabled, normal teammate points are hidden; teammates with mechanic colors or buffs are shown automatically.",
+  "minimap.settings.hideAllTeammates.label": "Hide all teammate points",
+  "minimap.settings.hideAllTeammates.description":
+    "When enabled, all teammate points are hidden even if affected by mechanic colors or buffs; only your own point remains. Takes priority over the option above.",
   "minimap.settings.showBoss.label": "Show Boss Position",
   "minimap.settings.showBoss.description":
     "Show the current dungeon boss position on the minimap when enabled. Off by default to reduce noise.",
@@ -1506,6 +1526,13 @@ export const enUSMessages = {
   "minimap.settings.localFacing.label": "Show facing indicator",
   "minimap.settings.localFacing.description":
     "When enabled, a small arrow pointing in your current facing direction is drawn on your own marker.",
+  "minimap.settings.sizes.title": "Entity sizes",
+  "minimap.settings.sizes.description":
+    "Display radius (px) of each entity type on the minimap.",
+  "minimap.settings.sizes.local": "Self",
+  "minimap.settings.sizes.teammate": "Teammate",
+  "minimap.settings.sizes.boss": "Boss",
+  "minimap.settings.sizes.other": "Other entities",
   "minimap.s3Raid.phase.corner": "Corner Explosion",
   "minimap.s3Raid.phase.edge": "Edge-Mid Explosion",
   "minimap.s3Raid.phase.group": "Phase",
@@ -1573,6 +1600,8 @@ export const enUSMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "Ice Wave Safe",
   "minimap.s3SeaRingedReef.boss.waterWave": "Sea Wave Safe",
   "minimap.s3SeaRingedReef.boss.crossSafe": "Cross Intersection",
+  "minimap.s3SeaRingedReef.boss.singleWaveSafe": "Single Wave Safe",
+  "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(me)",
   "minimap.s3SeaRingedReef.boss.vertical": "Vertical",
   "minimap.s3SeaRingedReef.boss.horizontal": "Horizontal",
   "minimap.s3SeaRingedReef.boss.pizzaGroup": "Pizza Danger Zone",

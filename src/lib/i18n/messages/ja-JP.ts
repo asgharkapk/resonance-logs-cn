@@ -745,6 +745,9 @@ export const jaJPMessages = {
   "themes.fonts.title": "カスタムフォント",
   "themes.fonts.description":
     "デフォルトを置き換えるカスタムフォントをインポートします。フォントファイルは .woff2、.woff、.ttf、.otf 形式である必要があります。",
+  "themes.fonts.applyToOverlay": "オーバーレイに適用",
+  "themes.fonts.applyToOverlayDescription":
+    "オンにすると、カスタムサンセリフフォントがスキル、モンスター、ミニマップのオーバーレイに適用されます。オフの場合、オーバーレイはシステム既定のフォントを使用します。",
   "themes.fonts.sansTitle": "サンセリフフォント（UI テキスト）",
   "themes.fonts.defaultSans": "デフォルト: Inter Variable",
   "themes.fonts.enableSans": "カスタムサンセリフフォントを有効化",
@@ -973,11 +976,11 @@ export const jaJPMessages = {
   "skillMonitor.buff.status.aliased": "別名設定済み",
   "skillMonitor.buff.title": "Buff モニター",
   "skillMonitor.buff.description":
-    "アイコン付き/テキストのみの Buff を含め、名前ですべての Buff を検索",
+    "アイコン付き/テキストのみの Buff を含め、名前または ID ですべての Buff を検索",
   "skillMonitor.buff.selectedSummary":
     "選択 Buff {buffCount} / カテゴリ {categoryCount}",
-  "skillMonitor.buff.placeholder": "Buff 名を検索",
-  "skillMonitor.buff.searchPrompt": "キーワードを入力して Buff を検索",
+  "skillMonitor.buff.placeholder": "Buff 名または ID を検索",
+  "skillMonitor.buff.searchPrompt": "名前または ID を入力して Buff を検索",
   "skillMonitor.buff.selectedTitle": "選択した Buff",
   "skillMonitor.buff.alias.title": "Buff 別名設定",
   "skillMonitor.buff.alias.configuredCount": "{count} 件の別名を設定",
@@ -1058,6 +1061,9 @@ export const jaJPMessages = {
   "skillMonitor.style.valueColor": "値の色",
   "skillMonitor.style.progressColor": "プログレス色",
   "skillMonitor.style.progressOpacity": "プログレス不透明度: {value}%",
+  "overlay.style.textShadow": "テキストの影",
+  "overlay.style.background": "背景マスク",
+  "overlay.style.backgroundOpacity": "マスク濃度: {value}%",
   "skillMonitor.panelAttr.title": "キャラクターパネル",
   "skillMonitor.panelAttr.enabledSummary": "{enabled}/{total} 属性を有効化",
   "skillMonitor.panelAttr.displayColor": "表示色",
@@ -1153,6 +1159,8 @@ export const jaJPMessages = {
   "skillMonitor.overlay.resource": "リソースモニターエリア: {state}",
   "skillMonitor.overlay.panelAttr": "キャラクター属性エリア: {state}",
   "skillMonitor.overlay.panelAttrGroupTag": "キャラクター属性エリア",
+  "skillMonitor.overlay.sharedTextStyle": "その他オーバーレイ文字（スキル/リソース/Buffアイコン）",
+  "skillMonitor.panelAttr.textStyle": "テキストスタイル",
   "skillMonitor.overlay.customPanel": "カスタムモニターエリア: {state}",
   "skillMonitor.overlay.shieldDetail": "HP/シールドエリア: {state}",
   "skillMonitor.overlay.help":
@@ -1177,9 +1185,9 @@ export const jaJPMessages = {
   "monsterMonitor.buffSearch.self": "検索して自己付与を追加",
   "monsterMonitor.buffSearch.global": "検索してグローバルモニターを追加",
   "monsterMonitor.buffSearch.placeholderSelf":
-    "自己付与として追加するモンスター Buff を検索",
+    "自己付与として追加するモンスター Buff を名前または ID で検索",
   "monsterMonitor.buffSearch.placeholderGlobal":
-    "グローバルモニターに追加するモンスター Buff を検索",
+    "グローバルモニターに追加するモンスター Buff を名前または ID で検索",
   "monsterMonitor.buffSearch.empty": "一致するモンスター Buff がありません",
   "monsterMonitor.buffSearch.status.addedGlobal": "グローバルに追加済み",
   "monsterMonitor.buffSearch.status.currentSelf": "現在は自己付与",
@@ -1200,7 +1208,7 @@ export const jaJPMessages = {
   "monsterMonitor.buffGroups.removeTitle": "クリックで削除",
   "monsterMonitor.buffGroups.empty": "Buff が選択されていません",
   "monsterMonitor.teammate.title": "味方 Buff モニター",
-  "monsterMonitor.teammate.placeholder": "味方 Buff を検索して追加",
+  "monsterMonitor.teammate.placeholder": "味方 Buff を名前または ID で検索",
   "monsterMonitor.teammate.emptySearch": "一致する味方 Buff がありません",
   "monsterMonitor.teammate.groupTitle": "モニター中の味方 Buff",
   "monsterMonitor.teammate.styleTitle": "味方 Buff マトリクススタイル",
@@ -1274,6 +1282,14 @@ export const jaJPMessages = {
   "monsterMonitor.bossDbm.title": "Boss ギミック (DBM)",
   "monsterMonitor.bossDbm.description":
     "スキル名とカウントダウン付きの Boss ギミック警告バーを表示します。「ウィンドウを有効化」で表示を切り替えます。",
+  "monsterMonitor.bossDbm.alias.title": "スキル別名",
+  "monsterMonitor.bossDbm.alias.description":
+    "Boss スキルを検索して既定のスキル名を上書きするカスタム表示名を設定します。",
+  "monsterMonitor.bossDbm.alias.searchPlaceholder": "スキル名または ID を検索",
+  "monsterMonitor.bossDbm.alias.emptySearch": "一致する Boss スキルがありません。",
+  "monsterMonitor.bossDbm.alias.empty":
+    "別名が未設定です。上部で検索してスキルを追加してください。",
+  "monsterMonitor.bossDbm.alias.remove": "削除",
   "monsterMonitor.overlay.state.show": "表示",
   "monsterMonitor.overlay.state.hide": "非表示",
   "monsterMonitor.overlay.help": "ボタンをクリックして表示を切替。",
@@ -1454,6 +1470,9 @@ export const jaJPMessages = {
     "自分とギミック対象の味方のみ表示",
   "minimap.settings.hideNormalTeammates.description":
     "有効にすると通常の味方位置は非表示になり、ギミック色やBuffの影響を受けた味方だけ自動表示されます。",
+  "minimap.settings.hideAllTeammates.label": "味方位置をすべて非表示",
+  "minimap.settings.hideAllTeammates.description":
+    "有効にするとギミック色やBuffの影響に関わらずすべての味方位置を非表示にし、自分のみ表示します。上の設定より優先されます。",
   "minimap.settings.showBoss.label": "Boss位置を表示",
   "minimap.settings.showBoss.description":
     "有効にすると、現在のダンジョンBossの位置をミニマップに表示します。ノイズを減らすため既定ではオフです。",
@@ -1492,6 +1511,13 @@ export const jaJPMessages = {
   "minimap.settings.localFacing.label": "向きを表示",
   "minimap.settings.localFacing.description":
     "有効にすると、自分のマーカーに現在の向きを指す小さな矢印を描画します。",
+  "minimap.settings.sizes.title": "エンティティサイズ",
+  "minimap.settings.sizes.description":
+    "ミニマップ上の各エンティティの表示半径(px)",
+  "minimap.settings.sizes.local": "自分",
+  "minimap.settings.sizes.teammate": "味方",
+  "minimap.settings.sizes.boss": "ボス",
+  "minimap.settings.sizes.other": "その他",
   "minimap.s3Raid.phase.corner": "四隅爆発",
   "minimap.s3Raid.phase.edge": "辺中央爆発",
   "minimap.s3Raid.phase.group": "フェーズ",
@@ -1558,6 +1584,8 @@ export const jaJPMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "氷浪安全",
   "minimap.s3SeaRingedReef.boss.waterWave": "海浪安全",
   "minimap.s3SeaRingedReef.boss.crossSafe": "十字交点",
+  "minimap.s3SeaRingedReef.boss.singleWaveSafe": "単波安全",
+  "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(私)",
   "minimap.s3SeaRingedReef.boss.vertical": "縦線",
   "minimap.s3SeaRingedReef.boss.horizontal": "横線",
   "minimap.s3SeaRingedReef.boss.pizzaGroup": "ピザ危険区域",

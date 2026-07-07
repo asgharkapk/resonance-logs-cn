@@ -686,6 +686,9 @@ export const zhCNMessages = {
   "themes.fonts.title": "自定义字体",
   "themes.fonts.description":
     "导入自定义字体以替换默认字体。字体文件格式应为 .woff2, .woff, .ttf, 或 .otf。",
+  "themes.fonts.applyToOverlay": "应用到悬浮窗",
+  "themes.fonts.applyToOverlayDescription":
+    "开启后,自定义无衬线字体将应用于技能、怪物、小地图悬浮窗;关闭时悬浮窗使用系统默认字体。",
   "themes.fonts.sansTitle": "无衬线字体（UI 文本）",
   "themes.fonts.defaultSans": "默认：Inter Variable",
   "themes.fonts.enableSans": "启用自定义无衬线字体",
@@ -893,11 +896,11 @@ export const zhCNMessages = {
   "skillMonitor.buff.status.aliased": "已设别名",
   "skillMonitor.buff.title": "Buff 监控",
   "skillMonitor.buff.description":
-    "统一通过 Buff 名称搜索（含有图标/无图标 Buff）",
+    "统一通过 Buff 名称或 ID 搜索（含有图标/无图标 Buff）",
   "skillMonitor.buff.selectedSummary":
     "已选 Buff {buffCount} / 分类 {categoryCount}",
-  "skillMonitor.buff.placeholder": "搜索 Buff 名称",
-  "skillMonitor.buff.searchPrompt": "请输入关键词搜索 Buff",
+  "skillMonitor.buff.placeholder": "搜索 Buff 名称或 ID",
+  "skillMonitor.buff.searchPrompt": "请输入名称或 ID 搜索 Buff",
   "skillMonitor.buff.selectedTitle": "已选 Buff",
   "skillMonitor.buff.alias.title": "Buff 别名设置",
   "skillMonitor.buff.alias.configuredCount": "已设置别名 {count}",
@@ -973,6 +976,9 @@ export const zhCNMessages = {
   "skillMonitor.style.valueColor": "数值颜色",
   "skillMonitor.style.progressColor": "进度条颜色",
   "skillMonitor.style.progressOpacity": "进度条透明度: {value}%",
+  "overlay.style.textShadow": "文字阴影",
+  "overlay.style.background": "背景遮罩",
+  "overlay.style.backgroundOpacity": "遮罩浓度: {value}%",
   "skillMonitor.panelAttr.title": "角色面板",
   "skillMonitor.panelAttr.enabledSummary": "已启用属性 {enabled}/{total}",
   "skillMonitor.panelAttr.displayColor": "显示颜色",
@@ -1062,6 +1068,8 @@ export const zhCNMessages = {
   "skillMonitor.overlay.resource": "资源监控区：{state}",
   "skillMonitor.overlay.panelAttr": "角色属性区：{state}",
   "skillMonitor.overlay.panelAttrGroupTag": "角色属性区",
+  "skillMonitor.overlay.sharedTextStyle": "其他覆盖层文字（技能/资源/Buff 图标）",
+  "skillMonitor.panelAttr.textStyle": "文字样式",
   "skillMonitor.overlay.customPanel": "自定义监控区：{state}",
   "skillMonitor.overlay.shieldDetail": "血量护盾区：{state}",
   "skillMonitor.overlay.help": "点击按钮切换显示状态（按方案保存）",
@@ -1084,9 +1092,9 @@ export const zhCNMessages = {
   "monsterMonitor.buffSearch.self": "搜索加入仅自身施加",
   "monsterMonitor.buffSearch.global": "搜索加入全局监控",
   "monsterMonitor.buffSearch.placeholderSelf":
-    "搜索要加入仅自身施加的 Boss Buff",
+    "按名称或 ID 搜索要加入仅自身施加的 Boss Buff",
   "monsterMonitor.buffSearch.placeholderGlobal":
-    "搜索要加入全局监控的 Boss Buff",
+    "按名称或 ID 搜索要加入全局监控的 Boss Buff",
   "monsterMonitor.buffSearch.empty": "没有匹配的 Boss Buff",
   "monsterMonitor.buffSearch.status.addedGlobal": "已加全局",
   "monsterMonitor.buffSearch.status.currentSelf": "当前在仅自身",
@@ -1107,7 +1115,7 @@ export const zhCNMessages = {
   "monsterMonitor.buffGroups.removeTitle": "点击移除",
   "monsterMonitor.buffGroups.empty": "尚未选择 Buff",
   "monsterMonitor.teammate.title": "队友 Buff 监控",
-  "monsterMonitor.teammate.placeholder": "搜索并添加队友 Buff",
+  "monsterMonitor.teammate.placeholder": "按名称或 ID 搜索队友 Buff",
   "monsterMonitor.teammate.emptySearch": "没有匹配的队友 Buff",
   "monsterMonitor.teammate.groupTitle": "已监控队友 Buff",
   "monsterMonitor.teammate.styleTitle": "队友 Buff 矩阵样式",
@@ -1177,7 +1185,14 @@ export const zhCNMessages = {
   "monsterMonitor.overlay.bossDbm": "Boss DBM 区：{state}",
   "monsterMonitor.bossDbm.title": "Boss 机制 (DBM)",
   "monsterMonitor.bossDbm.description":
-    "显示 Boss 技能机制预警条，包含技能名与倒计时。开启后在“启用窗口”中显示该面板。",
+    "显示 Boss 技能机制预警条，包含技能名与倒计时。可在“启用窗口”页签中切换该面板显示。",
+  "monsterMonitor.bossDbm.alias.title": "技能别名",
+  "monsterMonitor.bossDbm.alias.description":
+    "搜索 Boss 技能并设置自定义显示名，覆盖默认技能名。",
+  "monsterMonitor.bossDbm.alias.searchPlaceholder": "搜索技能名或 ID",
+  "monsterMonitor.bossDbm.alias.emptySearch": "未找到匹配的 Boss 技能。",
+  "monsterMonitor.bossDbm.alias.empty": "暂未设置别名。先在上方搜索并添加技能。",
+  "monsterMonitor.bossDbm.alias.remove": "移除",
   "monsterMonitor.overlay.state.show": "显示",
   "monsterMonitor.overlay.state.hide": "隐藏",
   "monsterMonitor.overlay.help": "点击按钮切换显示状态。",
@@ -1350,6 +1365,9 @@ export const zhCNMessages = {
   "minimap.settings.hideNormalTeammates.label": "仅显示自己与被机制影响的队友",
   "minimap.settings.hideNormalTeammates.description":
     "开启后，普通队友点位会隐藏；当队友被机制颜色或 Buff 影响时会自动显示。",
+  "minimap.settings.hideAllTeammates.label": "完全不显示队友坐标点",
+  "minimap.settings.hideAllTeammates.description":
+    "开启后所有队友点位一律隐藏，即便队友正被机制颜色或 Buff 影响也不会显示；仅保留自己的点位。优先级高于上一项。",
   "minimap.settings.showBoss.label": "显示 Boss 位置",
   "minimap.settings.showBoss.description":
     "开启后，在小地图中显示当前副本 Boss 的位置；默认关闭以减少干扰。",
@@ -1387,6 +1405,13 @@ export const zhCNMessages = {
   "minimap.settings.localFacing.label": "显示朝向指示",
   "minimap.settings.localFacing.description":
     "开启后，在自己的标记上绘制一个指向当前朝向的小箭头。",
+  "minimap.settings.sizes.title": "实体大小",
+  "minimap.settings.sizes.description":
+    "设置小地图上各类实体的展示半径（像素）。",
+  "minimap.settings.sizes.local": "自己",
+  "minimap.settings.sizes.teammate": "队友",
+  "minimap.settings.sizes.boss": "Boss",
+  "minimap.settings.sizes.other": "其他实体",
   "minimap.s3Raid.phase.corner": "四角爆炸",
   "minimap.s3Raid.phase.edge": "边中爆炸",
   "minimap.s3Raid.phase.group": "相位",
@@ -1453,6 +1478,8 @@ export const zhCNMessages = {
   "minimap.s3SeaRingedReef.boss.iceWave": "冰浪安全",
   "minimap.s3SeaRingedReef.boss.waterWave": "海浪安全",
   "minimap.s3SeaRingedReef.boss.crossSafe": "十字交点",
+  "minimap.s3SeaRingedReef.boss.singleWaveSafe": "单浪安全",
+  "minimap.s3SeaRingedReef.boss.crossSafeSelf": "(我)",
   "minimap.s3SeaRingedReef.boss.vertical": "竖线",
   "minimap.s3SeaRingedReef.boss.horizontal": "横线",
   "minimap.s3SeaRingedReef.boss.pizzaGroup": "披萨危险区",
