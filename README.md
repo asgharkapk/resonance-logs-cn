@@ -29,9 +29,9 @@ The documentation is separated by language.
 
 | Language                | Documentation                        | Description            |
 | ----------------------- | ------------------------------------ | ---------------------- |
-| 🇨🇳 Simplified Chinese | [zh-CN/README.md](./zh-CN/README.md) | Default documentation  |
-| 🇺🇸 English            | [en-US/README.md](./en-US/README.md) | English documentation  |
-| 🇯🇵 Japanese           | [ja-JP/README.md](./ja-JP/README.md) | Japanese documentation |
+| 🇨🇳 Simplified Chinese | [zh-CN/README.md](doc/zh-CN/README.md) | Default documentation  |
+| 🇺🇸 English            | [en-US/README.md](doc/en-US/README.md) | English documentation  |
+| 🇯🇵 Japanese           | [ja-JP/README.md](doc/ja-JP/README.md) | Japanese documentation |
 
 </div>
 
