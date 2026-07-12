@@ -1,43 +1,45 @@
-# 1
+# Changelog
 
-**Commit message**
+## CI / Build Automation
 
-```text
-ci: add automated build and GitHub release workflow
-```
+### Automated Build & Release Pipeline
 
-**Commit description**
+A complete GitHub Actions CI/CD pipeline has been added to automate application builds and releases.
 
-```text
-- Add GitHub Actions workflow to automatically build the application on every push
-- Automatically generate release tags in the format vYYYY.MM.DD-r<run_number>
-- Automatically create GitHub Releases
-- Upload NSIS installer and updater artifacts
-- Generate and upload a portable ZIP package
-- Upload the standalone executable for portable use
-- Cache Node.js and Rust dependencies to speed up builds
-- Use the default GitHub token to push tags and publish releases
-```
+#### Added
 
-# 2
+* Automatic application builds on every push.
+* Automatic version tag generation using the format:
 
-## Documentation Improvements
+  * `vYYYY.MM.DD-r<run_number>`
+* Automatic GitHub Release creation.
+* Automatic upload of release artifacts:
 
-This update significantly improves the documentation entry point and makes it more accessible for international users.
+  * NSIS installer
+  * Auto-updater packages
+  * Portable ZIP package
+  * Standalone executable
+* Dependency caching for Node.js and Rust to significantly reduce build times.
+* Automatic tag creation and release publishing using the default GitHub Actions token.
 
-### What's changed
+---
 
-* Translated the documentation index from Simplified Chinese to English.
-* Added a cleaner, more organized README layout.
-* Added quick navigation buttons for:
+## Documentation
+
+The project documentation has been extensively reorganized and translated to improve accessibility for both English and Chinese users.
+
+### Added
+
+* English documentation index.
+* Quick navigation buttons for:
 
   * `README.md`
   * `README_EN.md`
   * `README_CN.md`
   * `CHANGELOG.md`
   * `CHANGELOG_FORK.md`
-* Added a language selection table for all available documentation.
-* Added preview images for major features, including:
+* Language selection table covering all available documentation.
+* Preview screenshots for major features:
 
   * Compact Theme
   * Theme Settings
@@ -45,19 +47,39 @@ This update significantly improves the documentation entry point and makes it mo
   * Dungeon Mechanics Minimap
   * DPS Overlay UI
   * Language Settings
-* Expanded the documentation build instructions.
-* Improved explanations for HTML generation and single-language builds.
-* Added documentation maintenance guidelines for shared images and UI placeholder localization.
-* Added GitHub callout blocks:
+* Expanded documentation build instructions.
+* Documentation maintenance guidelines for shared images and localized UI placeholders.
+* GitHub callout blocks:
 
   * **NOTE**
   * **TIP**
   * **IMPORTANT**
   * **WARNING**
   * **CAUTION**
-* Improved formatting, readability, and navigation throughout the documentation.
 
-This commit focuses entirely on documentation quality and does not introduce any application code changes.
+### Improved
 
-# 3
+* Translated the documentation index from Simplified Chinese to English.
+* Reorganized the README for easier navigation.
+* Improved explanations for HTML generation and single-language documentation builds.
+* Enhanced formatting, readability, and overall documentation structure.
 
+> This update contains documentation improvements only and does not include application code changes.
+
+---
+
+## Localization
+
+### Updated Translations
+
+Updated multiple localization and database files to improve translation coverage and keep game data synchronized.
+
+#### Updated
+
+* `SceneName.json`
+* `DbmTable.json`
+* `MonsterIdNameType.json`
+* `skill_aoyi_icons.json`
+* `README.md`
+
+These updates include new translations, terminology improvements, and synchronization with the latest game content.
