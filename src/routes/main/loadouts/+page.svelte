@@ -35,6 +35,7 @@
   import { toast } from "svelte-sonner";
   import NameInputDialog from "$lib/components/NameInputDialog.svelte";
   import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
+  import LoadoutPresetCard from "$lib/components/LoadoutPresetCard.svelte";
 
   const loadouts = $derived(listLoadouts());
   const active = $derived(activeLoadout());
@@ -114,7 +115,7 @@
 
   function handleApplyPreset(preset: (typeof presets)[number]) {
     createLoadoutFromPreset(preset);
-    toast.success(t("loadout.page.presetApplied", { name: preset.className }));
+    toast.success(t("loadout.page.presetApplied", { name: preset.name }));
   }
 
   async function handleExport(id: string) {
@@ -382,15 +383,12 @@
         {t("loadout.page.presetsDescription")}
       </p>
     </div>
-    <div class="grid grid-cols-2 gap-2.5 p-4 sm:grid-cols-3 lg:grid-cols-4">
-      {#each presets as preset (preset.classKey)}
-        <button
-          type="button"
-          class="border-border/60 bg-muted/20 text-foreground hover:border-primary/60 hover:bg-primary/10 flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3.5 text-sm font-medium transition-colors"
-          onclick={() => handleApplyPreset(preset)}
-        >
-          {preset.className}
-        </button>
+    <div class="max-w-md p-4">
+      {#each presets as preset (preset.id)}
+        <LoadoutPresetCard
+          {preset}
+          onselect={() => handleApplyPreset(preset)}
+        />
       {/each}
     </div>
   </div>

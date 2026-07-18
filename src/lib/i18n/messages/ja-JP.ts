@@ -25,7 +25,7 @@ export const jaJPMessages = {
   "loadout.page.liveProfileLabel": "リアルタイム計測プロファイル",
   "loadout.page.presetsTitle": "プリセット",
   "loadout.page.presetsDescription":
-    "クラス別に完全なロードアウト（スキル監視＋モンスター監視）をすばやく作成できます。作成後は自由に調整できます",
+    "スキル・モンスター・リアルタイム計測設定を含む構成済みロードアウトを適用します",
   "loadout.page.presetApplied": "「{name}」ロードアウトを作成しました",
   "loadout.page.importButton": "インポート",
   "loadout.page.exportButton": "エクスポート",
@@ -35,7 +35,7 @@ export const jaJPMessages = {
   "loadout.page.exportError": "エクスポートに失敗しました",
   "loadout.firstRun.title": "初期ロードアウトを選択",
   "loadout.firstRun.description":
-    "クラスに合ったプリセットを選んで、すぐに監視を始めましょう。後から「ロードアウト」ページでいつでも調整・追加できます",
+    "構成済みプリセットですぐに監視を開始できます。後からロードアウトページで調整できます",
   "loadout.firstRun.skip": "後で",
   "monitoring.recovery.loading": "監視設定を読み込んでいます…",
   "monitoring.recovery.recovering":

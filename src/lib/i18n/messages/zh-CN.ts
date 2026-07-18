@@ -25,7 +25,7 @@ export const zhCNMessages = {
   "loadout.page.liveProfileLabel": "实时计量子方案",
   "loadout.page.presetsTitle": "预置方案",
   "loadout.page.presetsDescription":
-    "按职业快速创建一套完整的总方案（技能监控 + 怪物监控），之后可自行调整",
+    "选择一套已配置的完整方案，快速应用技能、怪物与实时计量设置",
   "loadout.page.presetApplied": "已创建「{name}」方案",
   "loadout.page.importButton": "导入方案",
   "loadout.page.exportButton": "导出方案",
@@ -35,7 +35,7 @@ export const zhCNMessages = {
   "loadout.page.exportError": "导出失败",
   "loadout.firstRun.title": "选择一个初始方案",
   "loadout.firstRun.description":
-    "为你的职业选择一个预置方案，快速开始监控；之后可以随时在「监控方案」页调整或新建更多方案",
+    "选择一套已配置的预置方案快速开始监控，之后可随时在「监控方案」页调整",
   "loadout.firstRun.skip": "稍后再说",
   "monitoring.recovery.loading": "正在加载监控配置…",
   "monitoring.recovery.recovering": "监控配置已恢复，正在重新加载…",
