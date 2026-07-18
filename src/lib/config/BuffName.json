@@ -3848,7 +3848,7 @@
   {
     "Icon": "talent_passive_icon_general_sup_grassarea",
     "Id": 2110061,
-    "NameDesign": "烈焰之心不死",
+    "NameDesign": "塔塔免死",
     "SpriteFile": "talent_passive_icon_general_sup_grassarea_-2699280676978229692.png"
   },
   {
@@ -3872,7 +3872,7 @@
   {
     "Icon": "buff_passive_icon_dps_crit04",
     "Id": 2110065,
-    "NameDesign": "炽热战意",
+    "NameDesign": "山贼增伤",
     "SpriteFile": "buff_passive_icon_dps_crit04_-5330410982362793317.png"
   },
   {
@@ -4058,7 +4058,7 @@
   {
     "Icon": "buff_abnormal_red_icon_03",
     "Id": 2110099,
-    "NameDesign": "剧毒蜂巢-dot易伤",
+    "NameDesign": "蜂巢易伤",
     "SpriteFile": "buff_abnormal_red_icon_03_-6411525200381862591.png"
   },
   {
@@ -4136,7 +4136,7 @@
   {
     "Icon": "buff_red_def",
     "Id": 2110111,
-    "NameDesign": "罗罗拉-咒术",
+    "NameDesign": "罗罗拉增伤",
     "SpriteFile": "buff_red_def_2516734868688990745.png"
   },
   {
@@ -4220,7 +4220,7 @@
   {
     "Icon": "buff_icon78",
     "Id": 2110125,
-    "NameDesign": "高原蜥蜴王-效果",
+    "NameDesign": "巴西增伤",
     "SpriteFile": "buff_icon78_-2560800184268380271.png"
   },
   {
@@ -4280,7 +4280,7 @@
   {
     "Icon": "",
     "Id": 2110135,
-    "NameDesign": "罗罗拉-主动记时",
+    "NameDesign": "罗罗拉叠层增伤",
     "SpriteFile": null
   },
   {
@@ -4310,7 +4310,7 @@
   {
     "Icon": "buff_icon136",
     "Id": 2110140,
-    "NameDesign": "巨塔BOSS-全队属性增幅",
+    "NameDesign": "卡特增伤",
     "SpriteFile": "buff_icon136_3861372500749577434.png"
   },
   {
@@ -21818,7 +21818,7 @@
   {
     "Icon": "buff_blue_def",
     "Id": 50024,
-    "NameDesign": "特攻A护盾",
+    "NameDesign": "岩盾_护盾",
     "SpriteFile": "buff_blue_def_-5154019358626773797.png"
   },
   {

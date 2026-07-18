@@ -1,563 +1,563 @@
 [
   {
     "id": 2350,
-    "NameDesign": "传奇野猪-嚎叫",
+    "NameDesign": "伝説のボア-ハウル",
     "Icon": "skill_aoyi_skill_icon_001.png"
   },
   {
     "id": 2351,
-    "NameDesign": "传奇雄鹰-嚎叫",
+    "NameDesign": "伝説の鷹-ハウル",
     "Icon": "skill_aoyi_skill_icon_001.png"
   },
   {
     "id": 3021,
-    "NameDesign": "雷霆天引",
+    "NameDesign": "雷霆天引 (AI)",
     "Icon": "skill_aoyi_skill_icon_014.png"
   },
   {
     "id": 3022,
-    "NameDesign": "琉火咆哮",
+    "NameDesign": "琉火の咆哮 (AI)",
     "Icon": "skill_aoyi_skill_icon_017.png"
   },
   {
     "id": 3023,
-    "NameDesign": "脉冲祝祷",
+    "NameDesign": "パルス祝祷 (AI)",
     "Icon": "skill_aoyi_skill_icon_012.png"
   },
   {
     "id": 3024,
-    "NameDesign": "地狱突刺",
+    "NameDesign": "地獄突き (AI)",
     "Icon": "skill_aoyi_skill_icon_047.png"
   },
   {
     "id": 3025,
-    "NameDesign": "雷霆咆哮",
+    "NameDesign": "雷霆の咆哮 (AI)",
     "Icon": "skill_aoyi_skill_icon_038.png"
   },
   {
     "id": 3026,
-    "NameDesign": "静默潮汐",
+    "NameDesign": "静寂の潮汐 (AI)",
     "Icon": "skill_aoyi_skill_icon_049.png"
   },
   {
     "id": 3027,
-    "NameDesign": "生命祈愿",
+    "NameDesign": "生命の祈り (AI)",
     "Icon": "skill_aoyi_skill_icon_013.png"
   },
   {
     "id": 3028,
-    "NameDesign": "佑世边界",
+    "NameDesign": "救世の境界 (AI)",
     "Icon": "skill_aoyi_skill_icon_054.png"
   },
   {
     "id": 3898,
-    "NameDesign": "绝技！寒风旋涡",
+    "NameDesign": "絶技！寒風の渦 (AI)",
     "Icon": "skill_aoyi_skill_icon_099.png",
     "maxCharges": 2
   },
   {
     "id": 3899,
-    "NameDesign": "绝技！烈焰驱散",
+    "NameDesign": "絶技！烈炎払拭 (AI)",
     "Icon": "skill_aoyi_skill_icon_100.png"
   },
   {
     "id": 3901,
-    "NameDesign": "奥义！琉火咆哮",
+    "NameDesign": "奥義！炎の咆哮",
     "Icon": "skill_aoyi_skill_icon_017.png"
   },
   {
     "id": 3902,
-    "NameDesign": "奥义！雷霆天引",
+    "NameDesign": "奥義！サンダーコール",
     "Icon": "skill_aoyi_skill_icon_014.png"
   },
   {
     "id": 3903,
-    "NameDesign": "奥义！炽炎战斧",
+    "NameDesign": "奥義！炎のバトルアクス",
     "Icon": "skill_aoyi_skill_icon_018.png"
   },
   {
     "id": 3904,
-    "NameDesign": "绝技！超会心",
+    "NameDesign": "絶技！超会心",
     "Icon": "skill_aoyi_skill_icon_026.png"
   },
   {
     "id": 3905,
-    "NameDesign": "绝技！猪突猛进",
+    "NameDesign": "絶技！猪突猛進",
     "Icon": "skill_aoyi_skill_icon_001.png"
   },
   {
     "id": 3906,
-    "NameDesign": "奥义！冰霜震荡",
+    "NameDesign": "奥義！フロストショック",
     "Icon": "skill_aoyi_skill_icon_015.png"
   },
   {
     "id": 3907,
-    "NameDesign": "绝技！碎星陨落",
+    "NameDesign": "絶技！スターフォール",
     "Icon": "skill_aoyi_skill_icon_008.png"
   },
   {
     "id": 3908,
-    "NameDesign": "奥义！脉冲祝祷",
+    "NameDesign": "奥義！パルスの祈り",
     "Icon": "skill_aoyi_skill_icon_012.png"
   },
   {
     "id": 3909,
-    "NameDesign": "绝技！灵狐突袭",
+    "NameDesign": "絶技！フォックスレイド",
     "Icon": "skill_aoyi_skill_icon_011.png"
   },
   {
     "id": 3910,
-    "NameDesign": "绝技！缭乱飞弹",
+    "NameDesign": "絶技！カオスボルト",
     "Icon": "skill_aoyi_skill_icon_009.png"
   },
   {
     "id": 3911,
-    "NameDesign": "奥义！烈焰之心",
+    "NameDesign": "奥義！フレイムハート",
     "Icon": "skill_aoyi_skill_icon_042.png"
   },
   {
     "id": 3913,
-    "NameDesign": "绝技！电磁爆弹",
+    "NameDesign": "絶技！マグネボム",
     "Icon": "skill_aoyi_skill_icon_010.png"
   },
   {
     "id": 3914,
-    "NameDesign": "绝技！剑刃横扫",
+    "NameDesign": "絶技！ブレードスイープ",
     "Icon": "skill_aoyi_skill_icon_019.png"
   },
   {
     "id": 3915,
-    "NameDesign": "绝技！乱射",
+    "NameDesign": "絶技！乱射",
     "Icon": "skill_aoyi_skill_icon_020.png"
   },
   {
     "id": 3916,
-    "NameDesign": "绝技！贯穿矢",
+    "NameDesign": "絶技！貫通の矢",
     "Icon": "skill_aoyi_skill_icon_021.png"
   },
   {
     "id": 3917,
-    "NameDesign": "绝技！超重斩",
+    "NameDesign": "絶技！ヘビースラッシュ",
     "Icon": "skill_aoyi_skill_icon_022.png"
   },
   {
     "id": 3918,
-    "NameDesign": "奥义！狐影破袭",
+    "NameDesign": "奥義！シャドウストライク",
     "Icon": "skill_aoyi_skill_icon_023.png"
   },
   {
     "id": 3919,
-    "NameDesign": "奥义！强袭炮台",
+    "NameDesign": "奥義！アサルトタレット",
     "Icon": "skill_aoyi_skill_icon_024.png"
   },
   {
     "id": 3920,
-    "NameDesign": "奥义！生命祈愿",
+    "NameDesign": "奥義！ライフブレス",
     "Icon": "skill_aoyi_skill_icon_013.png"
   },
   {
     "id": 3921,
-    "NameDesign": "奥义！时间法令",
+    "NameDesign": "奥義！タイムエディクト",
     "Icon": "skill_aoyi_skill_icon_016.png"
   },
   {
     "id": 3922,
-    "NameDesign": "奥义！瞬即斩",
+    "NameDesign": "奥義！ゼロスラッシュ",
     "Icon": "skill_aoyi_skill_icon_025.png"
   },
   {
     "id": 3923,
-    "NameDesign": "奥义！重锤狂袭",
+    "NameDesign": "奥義！マッドハンマー",
     "Icon": "skill_aoyi_skill_icon_005.png",
     "maxCharges": 2
   },
   {
     "id": 3924,
-    "NameDesign": "绝技！风影缄默",
+    "NameDesign": "絶技！シャドウシール",
     "Icon": "skill_aoyi_skill_icon_027.png"
   },
   {
     "id": 3925,
-    "NameDesign": "绝技！无形冲击",
+    "NameDesign": "絶技！エアインパクト",
     "Icon": "skill_aoyi_skill_icon_028.png"
   },
   {
     "id": 3926,
-    "NameDesign": "奥义！流星陨落",
+    "NameDesign": "奥義！メテオフォール",
     "Icon": "skill_aoyi_skill_icon_029.png"
   },
   {
     "id": 3927,
-    "NameDesign": "绝技！怒吼指令",
+    "NameDesign": "絶技！ロアコマンド",
     "Icon": "skill_aoyi_skill_icon_030.png"
   },
   {
     "id": 3928,
-    "NameDesign": "绝技！追猎猛斩",
+    "NameDesign": "絶技！ハントスラッシュ",
     "Icon": "skill_aoyi_skill_icon_031.png"
   },
   {
     "id": 3929,
-    "NameDesign": "绝技！缩壳防御",
+    "NameDesign": "絶技！シェルプロテクト",
     "Icon": "skill_aoyi_skill_icon_032.png"
   },
   {
     "id": 3930,
-    "NameDesign": "绝技！大地之盾",
+    "NameDesign": "絶技！アースバリア",
     "Icon": "skill_aoyi_skill_icon_033.png"
   },
   {
     "id": 3931,
-    "NameDesign": "奥义！护佑领域",
+    "NameDesign": "奥義！プロテクトフィールド",
     "Icon": "skill_aoyi_skill_icon_034.png"
   },
   {
     "id": 3932,
-    "NameDesign": "绝技！飞轮火舞",
+    "NameDesign": "絶技！ファイアロンド",
     "Icon": "skill_aoyi_skill_icon_035.png"
   },
   {
     "id": 3933,
-    "NameDesign": "绝技！挫志咆哮",
+    "NameDesign": "絶技！ドレッドロア",
     "Icon": "skill_aoyi_skill_icon_036.png"
   },
   {
     "id": 3934,
-    "NameDesign": "绝技！瞬步奇袭",
+    "NameDesign": "絶技！フラッシュレイド",
     "Icon": "skill_aoyi_skill_icon_037.png"
   },
   {
     "id": 3935,
-    "NameDesign": "奥义！雷霆咆哮",
+    "NameDesign": "奥義！サンダーロア",
     "Icon": "skill_aoyi_skill_icon_038.png"
   },
   {
     "id": 3936,
-    "NameDesign": "绝技！静默之水",
+    "NameDesign": "絶技！チルウォーター",
     "Icon": "skill_aoyi_skill_icon_039.png"
   },
   {
     "id": 3937,
-    "NameDesign": "绝技！强压之雷",
+    "NameDesign": "絶技！サンダープレッシャー",
     "Icon": "skill_aoyi_skill_icon_040.png"
   },
   {
     "id": 3938,
-    "NameDesign": "奥义！茧房术",
+    "NameDesign": "奥義！コクーンスペル",
     "Icon": "skill_aoyi_skill_icon_041.png"
   },
   {
     "id": 3939,
-    "NameDesign": "绝技！雷光球",
+    "NameDesign": "絶技！ライトニングボール",
     "Icon": "skill_aoyi_skill_icon_043.png"
   },
   {
     "id": 3940,
-    "NameDesign": "绝技！旋风打击",
+    "NameDesign": "絶技！スピンストライク",
     "Icon": "skill_aoyi_skill_icon_044.png"
   },
   {
     "id": 3941,
-    "NameDesign": "绝技！变身蜜蜂",
+    "NameDesign": "絶技！ミーンに変身",
     "Icon": "skill_aoyi_skill_icon_045.png"
   },
   {
     "id": 3942,
-    "NameDesign": "奥义！毒爆",
+    "NameDesign": "奥義！ヴェノムバースト",
     "Icon": "skill_aoyi_skill_icon_046.png"
   },
   {
     "id": 3943,
-    "NameDesign": "奥义！地狱突刺",
+    "NameDesign": "奥義！ヘルスラスト",
     "Icon": "skill_aoyi_skill_icon_047.png"
   },
   {
     "id": 3944,
-    "NameDesign": "奥义！沧澜风啸",
+    "NameDesign": "奥義！ハウリングウェーブ",
     "Icon": "skill_aoyi_skill_icon_048.png"
   },
   {
     "id": 3945,
-    "NameDesign": "奥义！静默潮汐",
+    "NameDesign": "奥義！サイレントサージ",
     "Icon": "skill_aoyi_skill_icon_049.png"
   },
   {
     "id": 3946,
-    "NameDesign": "奥义！哥布林大行军",
+    "NameDesign": "奥義！ゴブリングランドマーチ",
     "Icon": "skill_aoyi_skill_icon_050.png"
   },
   {
     "id": 3947,
-    "NameDesign": "绝技！螺旋断界",
+    "NameDesign": "絶技！スパイラルブレイク",
     "Icon": "skill_aoyi_skill_icon_051.png"
   },
   {
     "id": 3948,
-    "NameDesign": "奥义！神灵依凭",
+    "NameDesign": "奥義！神霊憑依",
     "Icon": "skill_aoyi_skill_icon_052.png",
     "maxCharges": 2
   },
   {
     "id": 3949,
-    "NameDesign": "奥义！幻象共鸣",
+    "NameDesign": "奥義！幻影共鳴",
     "Icon": "skill_aoyi_skill_icon_053.png"
   },
   {
     "id": 3950,
-    "NameDesign": "奥义！万象升华",
+    "NameDesign": "奥義！万象昇華",
     "Icon": "skill_aoyi_skill_icon_055.png",
     "maxCharges": 2
   },
   {
     "id": 3951,
-    "NameDesign": "奥义！佑世边界",
+    "NameDesign": "奥義！加護結界",
     "Icon": "skill_aoyi_skill_icon_054.png"
   },
   {
     "id": 3952,
-    "NameDesign": "奥义！熊熊烈焰",
+    "NameDesign": "奥義！爆炎奔流",
     "Icon": "skill_aoyi_skill_icon_058.png"
   },
   {
     "id": 3953,
-    "NameDesign": "奥义！无双突刺",
+    "NameDesign": "奥義！無双突撃",
     "Icon": "skill_aoyi_skill_icon_063.png"
   },
   {
     "id": 3954,
-    "NameDesign": "奥义！魅影奇袭",
+    "NameDesign": "奥義！ファントムレイド",
     "Icon": "skill_aoyi_skill_icon_068.png"
   },
   {
     "id": 3955,
-    "NameDesign": "奥义！卷心菜重锤",
+    "NameDesign": "奥義！甘藍ヘビーハンマー",
     "Icon": "skill_aoyi_skill_icon_066.png"
   },
   {
     "id": 3956,
-    "NameDesign": "奥义！炎灵之幸",
+    "NameDesign": "奥義！ラッキーフレイム",
     "Icon": "skill_aoyi_skill_icon_070.png"
   },
   {
     "id": 3957,
-    "NameDesign": "奥义！绝命螺旋",
+    "NameDesign": "奥義！デススパイラル",
     "Icon": "skill_aoyi_skill_icon_057.png"
   },
   {
     "id": 3958,
-    "NameDesign": "绝技！寒霜喷吐",
+    "NameDesign": "絶技！フロストスプレー",
     "Icon": "skill_aoyi_skill_icon_056.png"
   },
   {
     "id": 3959,
-    "NameDesign": "绝技！落雷惩戒",
+    "NameDesign": "絶技！サンダーパニッシュ",
     "Icon": "skill_aoyi_skill_icon_060.png"
   },
   {
     "id": 3960,
-    "NameDesign": "绝技！剑刃风暴",
+    "NameDesign": "絶技！剣刃の嵐",
     "Icon": "skill_aoyi_skill_icon_059.png"
   },
   {
     "id": 3961,
-    "NameDesign": "绝技！全场轰炸",
+    "NameDesign": "絶技！全域爆撃",
     "Icon": "skill_aoyi_skill_icon_061.png"
   },
   {
     "id": 3962,
-    "NameDesign": "绝技！治疗爆弹",
+    "NameDesign": "絶技！ヒールボム",
     "Icon": "skill_aoyi_skill_icon_062.png"
   },
   {
     "id": 3963,
-    "NameDesign": "绝技！灵动出击",
+    "NameDesign": "絶技！ラッシュアタック",
     "Icon": "skill_aoyi_skill_icon_067.png"
   },
   {
     "id": 3964,
-    "NameDesign": "绝技！卷心菜回旋刃",
+    "NameDesign": "絶技！甘藍スウィングブレード",
     "Icon": "skill_aoyi_skill_icon_064.png"
   },
   {
     "id": 3965,
-    "NameDesign": "绝技！卷心菜霹雳闪",
+    "NameDesign": "絶技！甘藍稲妻落とし",
     "Icon": "skill_aoyi_skill_icon_065.png"
   },
   {
     "id": 3966,
-    "NameDesign": "绝技！双重牙",
+    "NameDesign": "絶技！ダブルファング",
     "Icon": "skill_aoyi_skill_icon_069.png"
   },
   {
     "id": 3967,
-    "NameDesign": "退出陶洛斯变身",
+    "NameDesign": "タロス変身解除",
     "Icon": "skill_aoyi_skill_icon_053.png"
   },
   {
     "id": 3968,
-    "NameDesign": "奥义！虚蚀劫刄",
+    "NameDesign": "奥義！虚蝕奪刃",
     "Icon": "skill_aoyi_skill_icon_071.png",
     "maxCharges": 2
   },
   {
     "id": 3969,
-    "NameDesign": "奥义！裂爪反冲",
+    "NameDesign": "奥義！裂空の反動",
     "Icon": "skill_aoyi_skill_icon_072.png",
     "maxCharges": 2
   },
   {
     "id": 3970,
-    "NameDesign": "奥义！指令象限",
+    "NameDesign": "奥義！指令の象限",
     "Icon": "skill_aoyi_skill_icon_073.png"
   },
   {
     "id": 3971,
-    "NameDesign": "奥义！超导波动",
+    "NameDesign": "奥義！超伝導波動",
     "Icon": "skill_aoyi_skill_icon_074.png"
   },
   {
     "id": 3972,
-    "NameDesign": "奥义！梭行毒牙",
+    "NameDesign": "奥義！飛び交う毒牙",
     "Icon": "skill_aoyi_skill_icon_075.png"
   },
   {
     "id": 3973,
-    "NameDesign": "奥义！瞬空践踏",
+    "NameDesign": "奥義！瞬踏撃",
     "Icon": "skill_aoyi_skill_icon_076.png"
   },
   {
     "id": 3974,
-    "NameDesign": "奥义！精准点射",
+    "NameDesign": "奥義！精密点射",
     "Icon": "skill_aoyi_skill_icon_077.png"
   },
   {
     "id": 3975,
-    "NameDesign": "奥义！穿透怒吼",
+    "NameDesign": "奥義！轟く怒号",
     "Icon": "skill_aoyi_skill_icon_078.png"
   },
   {
     "id": 3976,
-    "NameDesign": "奥义！疾风连喰",
+    "NameDesign": "奥義！暴食の嵐",
     "Icon": "skill_aoyi_skill_icon_079.png"
   },
   {
     "id": 3977,
-    "NameDesign": "绝技！隐匿藏击",
+    "NameDesign": "絶技！ステルスアタック",
     "Icon": "skill_aoyi_skill_icon_080.png"
   },
   {
     "id": 3978,
-    "NameDesign": "绝技！绝对零度",
+    "NameDesign": "絶技！絶対零度",
     "Icon": "skill_aoyi_skill_icon_081.png"
   },
   {
     "id": 3979,
-    "NameDesign": "绝技！深渊吐息",
+    "NameDesign": "絶技！深淵の吐息",
     "Icon": "skill_aoyi_skill_icon_082.png"
   },
   {
     "id": 3980,
-    "NameDesign": "绝技！捶地猛击",
+    "NameDesign": "絶技！ラッシュスラム",
     "Icon": "skill_aoyi_skill_icon_083.png"
   },
   {
     "id": 3981,
-    "NameDesign": "绝技！锁定射击",
+    "NameDesign": "絶技！ロックオンショット",
     "Icon": "skill_aoyi_skill_icon_084.png"
   },
   {
     "id": 3982,
-    "NameDesign": "奥义！星灵魔导士",
+    "NameDesign": "奥義！星霊魔導士",
     "Icon": "skill_aoyi_skill_icon_086.png"
   },
   {
     "id": 3983,
-    "NameDesign": "奥义！灭龙魔导士",
+    "NameDesign": "奥義！滅竜魔導士",
     "Icon": "skill_aoyi_skill_icon_085.png"
   },
   {
     "id": 3984,
-    "NameDesign": "退出露西变身",
+    "NameDesign": "ルーシー変身解除",
     "Icon": "skill_aoyi_skill_icon_086.png"
   },
   {
     "id": 3985,
-    "NameDesign": "退出纳兹变身",
+    "NameDesign": "ナツ変身解除",
     "Icon": "skill_aoyi_skill_icon_085.png"
   },
   {
     "id": 3986,
-    "NameDesign": "奥义！星灵魔导士",
+    "NameDesign": "奥義！星霊魔導士",
     "Icon": "skill_aoyi_skill_icon_086.png"
   },
   {
     "id": 3987,
-    "NameDesign": "奥义！灭龙魔导士",
+    "NameDesign": "奥義！滅竜魔導士",
     "Icon": "skill_aoyi_skill_icon_085.png"
   },
   {
     "id": 3988,
-    "NameDesign": "奥义！圣焰龙息",
+    "NameDesign": "奥義！聖炎の竜息 (AI)",
     "Icon": "skill_aoyi_skill_icon_087.png",
     "maxCharges": 2
   },
   {
     "id": 3989,
-    "NameDesign": "奥义！双星角斗",
+    "NameDesign": "奥義！双星の決闘 (AI)",
     "Icon": "skill_aoyi_skill_icon_088.png",
     "maxCharges": 2
   },
   {
     "id": 3990,
-    "NameDesign": "奥义！裂石风暴",
+    "NameDesign": "奥義！裂石の嵐 (AI)",
     "Icon": "skill_aoyi_skill_icon_089.png",
     "maxCharges": 2
   },
   {
     "id": 3991,
-    "NameDesign": "奥义！终焉化身",
+    "NameDesign": "奥義！終焉の化身 (AI)",
     "Icon": "skill_aoyi_skill_icon_090.png",
     "maxCharges": 2
   },
   {
     "id": 3992,
-    "NameDesign": "奥义！堕落一击",
+    "NameDesign": "奥義！堕落の一撃 (AI)",
     "Icon": "skill_aoyi_skill_icon_091.png"
   },
   {
     "id": 3993,
-    "NameDesign": "奥义！逆刃极冻斩",
+    "NameDesign": "奥義！逆刃極凍斬 (AI)",
     "Icon": "skill_aoyi_skill_icon_092.png"
   },
   {
     "id": 3994,
-    "NameDesign": "奥义！斩铁式",
+    "NameDesign": "奥義！斬鉄式 (AI)",
     "Icon": "skill_aoyi_skill_icon_093.png"
   },
   {
     "id": 3995,
-    "NameDesign": "奥义！鲛旋湍流",
+    "NameDesign": "奥義！鮫旋の激流 (AI)",
     "Icon": "skill_aoyi_skill_icon_094.png"
   },
   {
     "id": 3996,
-    "NameDesign": "奥义！泡影之息",
+    "NameDesign": "奥義！泡影の息 (AI)",
     "Icon": "skill_aoyi_skill_icon_095.png"
   },
   {
     "id": 3997,
-    "NameDesign": "绝技！连挟潮柱",
+    "NameDesign": "絶技！連携潮柱 (AI)",
     "Icon": "skill_aoyi_skill_icon_096.png"
   },
   {
     "id": 3998,
-    "NameDesign": "绝技！鳍锤重击",
+    "NameDesign": "絶技！ヒレハンマー強打 (AI)",
     "Icon": "skill_aoyi_skill_icon_097.png",
     "maxCharges": 3
   },
   {
     "id": 3999,
-    "NameDesign": "绝技！爆裂水弹",
+    "NameDesign": "絶技！爆裂水弾 (AI)",
     "Icon": "skill_aoyi_skill_icon_098.png",
     "maxCharges": 1
   }
