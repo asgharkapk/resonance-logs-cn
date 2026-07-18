@@ -721,7 +721,7 @@
   },
   "101249": {
     "MonsterType": 1,
-    "Name": "[ボス]カナミア長老の亡霊"
+    "Name": "[首领]卡尼曼长老游魂"
   },
   "101250": {
     "MonsterType": 0,
@@ -821,7 +821,7 @@
   },
   "101274": {
     "MonsterType": 1,
-    "Name": "バーンハルト・ライフル兵"
+    "Name": "班哈尔特步枪兵"
   },
   "1013": {
     "MonsterType": 2,
@@ -912,7 +912,7 @@
     "Name": "骸·修洛特尔"
   },
   "102402": {
-    "MonsterType": 1,
+    "MonsterType": 2,
     "Name": "神族防御塔"
   },
   "102403": {
@@ -1181,50 +1181,50 @@
   },
   "103100": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・始"
+    "Name": "悖与灾的机骸·始"
   },
   "103101": {
     "MonsterType": 1,
-    "Name": "殲滅砲"
+    "Name": "歼灭炮"
   },
   "103102": {
     "MonsterType": 1,
-    "Name": "殲滅砲"
+    "Name": "歼灭炮"
   },
   "103103": {
     "MonsterType": 1,
-    "Name": "機械幻影Ⅰ型"
+    "Name": "机械幻象I型"
   },
   "103104": {
     "MonsterType": 1,
-    "Name": "機械幻影Ⅴ型"
+    "Name": "机械幻象V型"
   },
   "103105": {
     "MonsterType": 1,
-    "Name": "三脚眼球ポッド"
+    "Name": "三足眼舱"
   },
   "103106": {
     "MonsterType": 1,
-    "Name": "対ドラゴンゴーレムの幻影"
+    "Name": "对龙机像幻象"
   },
   "103107": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・始"
+    "Name": "悖与灾的机骸·始"
   },
   "103108": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・始"
+    "Name": "悖与灾的机骸·始"
   },
   "103109": {
     "MonsterType": 1,
     "Name": "机械幻象V型"
   },
   "103110": {
-    "MonsterType": 1,
+    "MonsterType": 2,
     "Name": "对龙机像-炮管子右"
   },
   "103111": {
-    "MonsterType": 1,
+    "MonsterType": 2,
     "Name": "对龙机像-炮管子左"
   },
   "10314": {
@@ -1233,43 +1233,43 @@
   },
   "103200": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・継"
+    "Name": "悖与灾的机骸·继"
   },
   "103201": {
     "MonsterType": 0,
-    "Name": "ハイドモンスター（フラッシュ先の目標点 長辺）"
+    "Name": "隐身怪（闪现的目标点 长边）"
   },
   "103202": {
     "MonsterType": 0,
-    "Name": "ハイドモンスター（フィールド中心点）"
+    "Name": "隐身怪（场景中心点）"
   },
   "103203": {
     "MonsterType": 1,
-    "Name": "対ドラゴンゴーレムの幻影（フェーズ2）"
+    "Name": "对龙机像幻象（二阶段）"
   },
   "103204": {
     "MonsterType": 0,
-    "Name": "ハイドモンスター（フラッシュ先の目標点 短辺）"
+    "Name": "隐身怪（闪现的目标点 宽边）"
   },
   "103205": {
     "MonsterType": 1,
-    "Name": "機械の衛兵"
+    "Name": "机械守卫"
   },
   "103206": {
     "MonsterType": 1,
-    "Name": "機械眼球ポッド"
+    "Name": "机械眼舱"
   },
   "103207": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・継"
+    "Name": "悖与灾的机骸·继"
   },
   "103208": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・継"
+    "Name": "悖与灾的机骸·继"
   },
   "103209": {
     "MonsterType": 0,
-    "Name": "ハイドモンスター（エンディング演出の突進用）"
+    "Name": "隐身怪（结局表演冲锋用）"
   },
   "103210": {
     "MonsterType": 1,
@@ -1289,43 +1289,43 @@
   },
   "103300": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・終"
+    "Name": "悖与灾的机骸·终"
   },
   "103301": {
-    "MonsterType": 1,
-    "Name": "対ドラゴンゴーレム-砲身右"
+    "MonsterType": 2,
+    "Name": "对龙机像-炮管子右"
   },
   "103302": {
-    "MonsterType": 1,
-    "Name": "対ドラゴンゴーレム-砲身左"
+    "MonsterType": 2,
+    "Name": "对龙机像-炮管子左"
   },
   "103303": {
     "MonsterType": 1,
-    "Name": "ブロックAマーク"
+    "Name": "地块A标记"
   },
   "103304": {
     "MonsterType": 1,
-    "Name": "ブロックAマーク"
+    "Name": "地块A标记"
   },
   "103305": {
     "MonsterType": 1,
-    "Name": "ブロックAマーク"
+    "Name": "地块A标记"
   },
   "103306": {
     "MonsterType": 1,
-    "Name": "ブロックAマーク"
+    "Name": "地块A标记"
   },
   "103307": {
     "MonsterType": 1,
-    "Name": "殲滅砲・幻化"
+    "Name": "歼灭炮·幻化"
   },
   "103308": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・終"
+    "Name": "悖与灾的机骸·终"
   },
   "103309": {
     "MonsterType": 2,
-    "Name": "背理と災いの機骸・終"
+    "Name": "悖与灾的机骸·终"
   },
   "103310": {
     "MonsterType": 2,
@@ -1334,6 +1334,34 @@
   "103311": {
     "MonsterType": 2,
     "Name": "悖与灾的机骸·终幻象"
+  },
+  "103400": {
+    "MonsterType": 2,
+    "Name": "拉普西斯一阶段"
+  },
+  "103500": {
+    "MonsterType": 2,
+    "Name": "拉普西斯二阶段"
+  },
+  "103501": {
+    "MonsterType": 1,
+    "Name": "光之塑形"
+  },
+  "103502": {
+    "MonsterType": 1,
+    "Name": "光之塑形"
+  },
+  "103503": {
+    "MonsterType": 1,
+    "Name": "光之塑形"
+  },
+  "103504": {
+    "MonsterType": 1,
+    "Name": "光之塑形"
+  },
+  "103600": {
+    "MonsterType": 2,
+    "Name": "拉普西斯三阶段"
   },
   "104": {
     "MonsterType": 0,
@@ -1613,7 +1641,7 @@
   },
   "11011": {
     "MonsterType": 0,
-    "Name": "ゴブリン守衛"
+    "Name": "哥布林守卫"
   },
   "11012": {
     "MonsterType": 1,
@@ -2045,43 +2073,43 @@
   },
   "11200": {
     "MonsterType": 0,
-    "Name": "火炎カニクモ"
+    "Name": "火焰蟹蛛"
   },
   "11201": {
     "MonsterType": 0,
-    "Name": "荒野カニクモ"
+    "Name": "荒原蟹蛛"
   },
   "11202": {
     "MonsterType": 1,
-    "Name": "殺し屋カニクモ"
+    "Name": "杀手蟹蛛"
   },
   "11203": {
     "MonsterType": 2,
-    "Name": "捕食カニクモ"
+    "Name": "掠食蟹蛛"
   },
   "11204": {
     "MonsterType": 0,
-    "Name": "砂岩ファットマン"
+    "Name": "砂岩肉山"
   },
   "11205": {
     "MonsterType": 0,
-    "Name": "灰燼ファットマン"
+    "Name": "灰烬肉山"
   },
   "11206": {
     "MonsterType": 1,
-    "Name": "ドゴルマン"
+    "Name": "多戈尔曼"
   },
   "11207": {
     "MonsterType": 2,
-    "Name": "外道王"
+    "Name": "狂悖之王"
   },
   "11208": {
     "MonsterType": 0,
-    "Name": "ワイルドボア"
+    "Name": "野山猪"
   },
   "11209": {
     "MonsterType": 0,
-    "Name": "猟道ワイルドボア"
+    "Name": "猎路山猪"
   },
   "1121": {
     "MonsterType": 0,
@@ -2089,43 +2117,43 @@
   },
   "11210": {
     "MonsterType": 1,
-    "Name": "深緑の牙"
+    "Name": "深绿之牙"
   },
   "11211": {
     "MonsterType": 2,
-    "Name": "峠の牙"
+    "Name": "山脊之牙"
   },
   "11212": {
     "MonsterType": 0,
-    "Name": "トゥース・フラッフ"
+    "Name": "切齿毛球"
   },
   "11213": {
     "MonsterType": 0,
-    "Name": "ニードル・フラッフ"
+    "Name": "尖棘毛球"
   },
   "11214": {
     "MonsterType": 1,
-    "Name": "カニバル・フラッフ"
+    "Name": "食人毛球"
   },
   "11215": {
     "MonsterType": 2,
-    "Name": "嗜血のフラッフ"
+    "Name": "嗜血毛球"
   },
   "11216": {
     "MonsterType": 0,
-    "Name": "巡視のフローティングアイ"
+    "Name": "巡视浮瞳"
   },
   "11217": {
     "MonsterType": 0,
-    "Name": "機心のフローティングアイ"
+    "Name": "机心浮瞳"
   },
   "11218": {
     "MonsterType": 1,
-    "Name": "聖堂の眼"
+    "Name": "圣堂之眼"
   },
   "11219": {
     "MonsterType": 2,
-    "Name": "空洞センチネル"
+    "Name": "空洞监察者"
   },
   "1122": {
     "MonsterType": 1,
@@ -2149,11 +2177,11 @@
   },
   "11224": {
     "MonsterType": 0,
-    "Name": "溪谷姆克"
+    "Name": "溪谷猛士"
   },
   "11225": {
     "MonsterType": 0,
-    "Name": "溪谷姆克"
+    "Name": "溪谷先锋"
   },
   "11226": {
     "MonsterType": 1,
@@ -2165,11 +2193,11 @@
   },
   "11228": {
     "MonsterType": 0,
-    "Name": "青沫哥布林"
+    "Name": "白翎哥布林"
   },
   "11229": {
     "MonsterType": 0,
-    "Name": "紫沫哥布林"
+    "Name": "暗翎哥布林"
   },
   "1123": {
     "MonsterType": 0,
@@ -2201,23 +2229,31 @@
   },
   "11236": {
     "MonsterType": 0,
-    "Name": "鲨鱼人1"
+    "Name": "深谷鱼人"
   },
   "11237": {
     "MonsterType": 0,
-    "Name": "鲨鱼人2"
+    "Name": "溪岸鱼人"
   },
   "11238": {
     "MonsterType": 1,
-    "Name": "鲨鱼人精英"
+    "Name": "暗河之鳍"
   },
   "11239": {
     "MonsterType": 2,
-    "Name": "鲨鱼人首领"
+    "Name": "涧流的异影"
   },
   "1124": {
     "MonsterType": 0,
     "Name": "激光炮"
+  },
+  "11240": {
+    "MonsterType": 0,
+    "Name": "青沫哥布林"
+  },
+  "11241": {
+    "MonsterType": 0,
+    "Name": "紫沫哥布林"
   },
   "113": {
     "MonsterType": 1,
@@ -2293,27 +2329,27 @@
   },
   "1151": {
     "MonsterType": 2,
-    "Name": "ガトグリフ"
+    "Name": "卡特格里夫"
   },
   "1152": {
     "MonsterType": 2,
-    "Name": "ガトグリフ"
+    "Name": "卡特格里夫"
   },
   "1153": {
     "MonsterType": 1,
-    "Name": "幻花晶"
+    "Name": "幻幻花"
   },
   "1154": {
     "MonsterType": 1,
-    "Name": "幻花晶・幻"
+    "Name": "幻幻花·幻"
   },
   "1155": {
     "MonsterType": 0,
-    "Name": "次元遺跡"
+    "Name": "次元遗迹"
   },
   "1156": {
     "MonsterType": 1,
-    "Name": "バトルゴーレム03型"
+    "Name": "战斗机像03型"
   },
   "116": {
     "MonsterType": 2,
@@ -3555,9 +3591,49 @@
     "MonsterType": 0,
     "Name": "遗忘的残魂"
   },
+  "1708": {
+    "MonsterType": 2,
+    "Name": "丹佛"
+  },
+  "1709": {
+    "MonsterType": 2,
+    "Name": "虚蚀丹佛"
+  },
   "1901": {
     "MonsterType": 0,
     "Name": "地狐"
+  },
+  "190101": {
+    "MonsterType": 1,
+    "Name": "卡特格里夫·界域的守护者"
+  },
+  "190102": {
+    "MonsterType": 0,
+    "Name": "伽马型辅助用机"
+  },
+  "190103": {
+    "MonsterType": 0,
+    "Name": "四足机兵"
+  },
+  "190104": {
+    "MonsterType": 0,
+    "Name": "巡视浮瞳"
+  },
+  "190105": {
+    "MonsterType": 0,
+    "Name": "艾露娜"
+  },
+  "190106": {
+    "MonsterType": 0,
+    "Name": "斯莱特的幻影"
+  },
+  "190107": {
+    "MonsterType": 0,
+    "Name": "洛塔尔的幻影"
+  },
+  "190108": {
+    "MonsterType": 0,
+    "Name": "贝塔型作战用机"
   },
   "1902": {
     "MonsterType": 0,
@@ -5001,71 +5077,71 @@
   },
   "3000063": {
     "MonsterType": 0,
-    "Name": "デンヴェル"
+    "Name": "丹佛"
   },
   "3000064": {
     "MonsterType": 0,
-    "Name": "風竜"
+    "Name": "风龙"
   },
   "3000065": {
     "MonsterType": 0,
-    "Name": "幻災ナッポ・太刀"
+    "Name": "幻祸娜宝太刀"
   },
   "3000066": {
     "MonsterType": 0,
-    "Name": "幻災ナッポ・ディバインアーク"
+    "Name": "幻祸娜宝弓箭"
   },
   "3000067": {
     "MonsterType": 0,
-    "Name": "幻災ナッポ・穿雲槍"
+    "Name": "幻祸娜宝长枪"
   },
   "3000068": {
     "MonsterType": 0,
-    "Name": "幻災ナッポ・ギター"
+    "Name": "幻祸娜宝吉他"
   },
   "3000069": {
     "MonsterType": 0,
-    "Name": "巨塔ボス"
+    "Name": "巨塔boss"
   },
   "3000070": {
     "MonsterType": 0,
-    "Name": "捕食カニクモ"
+    "Name": "掠食蟹蛛"
   },
   "3000071": {
     "MonsterType": 0,
-    "Name": "外道王"
+    "Name": "狂悖之王"
   },
   "3000072": {
     "MonsterType": 0,
-    "Name": "空洞センチネル"
+    "Name": "空洞监察者"
   },
   "3000073": {
     "MonsterType": 0,
-    "Name": "峠の牙"
+    "Name": "山脊之牙"
   },
   "3000074": {
     "MonsterType": 0,
-    "Name": "嗜血のフラッフ"
+    "Name": "嗜血毛球"
   },
   "3000075": {
     "MonsterType": 0,
-    "Name": "殺し屋カニクモ"
+    "Name": "杀手蟹蛛"
   },
   "3000076": {
     "MonsterType": 0,
-    "Name": "深緑の牙"
+    "Name": "深绿之牙"
   },
   "3000077": {
     "MonsterType": 0,
-    "Name": "カニバル・フラッフ"
+    "Name": "食人毛球"
   },
   "3000078": {
     "MonsterType": 0,
-    "Name": "ドゴルマン"
+    "Name": "多格尔曼"
   },
   "3000079": {
     "MonsterType": 0,
-    "Name": "聖堂の眼"
+    "Name": "圣堂之眼"
   },
   "3000080": {
     "MonsterType": 0,
@@ -5074,6 +5150,66 @@
   "3000081": {
     "MonsterType": 0,
     "Name": "纳兹-共鸣"
+  },
+  "3000082": {
+    "MonsterType": 0,
+    "Name": "光·托纳蒂乌"
+  },
+  "3000083": {
+    "MonsterType": 0,
+    "Name": "煌之冠·阳炎"
+  },
+  "3000084": {
+    "MonsterType": 0,
+    "Name": "苍之冠·月影"
+  },
+  "3000085": {
+    "MonsterType": 0,
+    "Name": "幻花的陈骸"
+  },
+  "3000086": {
+    "MonsterType": 0,
+    "Name": "蚀花的残影"
+  },
+  "3000087": {
+    "MonsterType": 0,
+    "Name": "拾贝异教徒"
+  },
+  "3000088": {
+    "MonsterType": 0,
+    "Name": "溪谷尖兵"
+  },
+  "3000089": {
+    "MonsterType": 0,
+    "Name": "流浪的游子"
+  },
+  "3000090": {
+    "MonsterType": 0,
+    "Name": "涧流的异影"
+  },
+  "3000091": {
+    "MonsterType": 0,
+    "Name": "梦现宿主"
+  },
+  "3000092": {
+    "MonsterType": 0,
+    "Name": "麻痹虾菇"
+  },
+  "3000093": {
+    "MonsterType": 0,
+    "Name": "暗河之鳍"
+  },
+  "3000094": {
+    "MonsterType": 0,
+    "Name": "溪谷游猎者"
+  },
+  "3000095": {
+    "MonsterType": 0,
+    "Name": "溪谷斗技者"
+  },
+  "3000096": {
+    "MonsterType": 0,
+    "Name": "哥布林贤者"
   },
   "3002": {
     "MonsterType": 2,
@@ -5189,19 +5325,19 @@
   },
   "30134": {
     "MonsterType": 0,
-    "Name": "ゴネル"
+    "Name": "贡纳"
   },
   "30135": {
     "MonsterType": 0,
-    "Name": "フロストリザード"
+    "Name": "冰暗巨蜥"
   },
   "30136": {
     "MonsterType": 0,
-    "Name": "幻影ナッポ"
+    "Name": "幻象娜宝"
   },
   "30137": {
     "MonsterType": 1,
-    "Name": "裁定執行者"
+    "Name": "裁定执行者"
   },
   "3014": {
     "MonsterType": 0,
@@ -5213,15 +5349,15 @@
   },
   "30150": {
     "MonsterType": 0,
-    "Name": "トゥース・フラッフ"
+    "Name": "切齿毛球"
   },
   "30151": {
     "MonsterType": 1,
-    "Name": "ドゴルマン"
+    "Name": "多戈尔曼"
   },
   "30152": {
     "MonsterType": 2,
-    "Name": "外道王"
+    "Name": "狂悖之王"
   },
   "3016": {
     "MonsterType": 0,
@@ -5675,6 +5811,18 @@
     "MonsterType": 0,
     "Name": "黯影军士"
   },
+  "30821": {
+    "MonsterType": 1,
+    "Name": "法加罗守卫"
+  },
+  "30822": {
+    "MonsterType": 1,
+    "Name": "法加罗守卫"
+  },
+  "30823": {
+    "MonsterType": 1,
+    "Name": "法加罗守卫"
+  },
   "30850": {
     "MonsterType": 0,
     "Name": "达雅"
@@ -5975,205 +6123,237 @@
     "MonsterType": 1,
     "Name": "幻祸娜宝分身"
   },
+  "33412": {
+    "MonsterType": 2,
+    "Name": "幻祸娜宝"
+  },
+  "33420": {
+    "MonsterType": 2,
+    "Name": "幻祸娜宝"
+  },
+  "33421": {
+    "MonsterType": 0,
+    "Name": "银娜宝"
+  },
+  "33422": {
+    "MonsterType": 0,
+    "Name": "绿娜宝"
+  },
+  "33423": {
+    "MonsterType": 0,
+    "Name": "金娜宝"
+  },
+  "33424": {
+    "MonsterType": 0,
+    "Name": "银娜宝"
+  },
+  "33425": {
+    "MonsterType": 0,
+    "Name": "绿娜宝"
+  },
+  "33426": {
+    "MonsterType": 0,
+    "Name": "金娜宝"
+  },
   "33500": {
     "MonsterType": 2,
-    "Name": "タナトロス・終式"
+    "Name": "塔纳特洛斯 · 终式"
   },
   "33501": {
     "MonsterType": 0,
-    "Name": "蒸気口"
+    "Name": "蒸汽口"
   },
   "33502": {
     "MonsterType": 0,
-    "Name": "炎の竜巻"
+    "Name": "火龙卷"
   },
   "33503": {
     "MonsterType": 0,
-    "Name": "退避ポイント"
+    "Name": "远离点"
   },
   "33504": {
     "MonsterType": 0,
-    "Name": "ジャンプポイント"
+    "Name": "跳跃点"
   },
   "33505": {
     "MonsterType": 0,
-    "Name": "フィールドマーカー"
+    "Name": "场中标记"
   },
   "33506": {
     "MonsterType": 0,
-    "Name": "トロッコ"
+    "Name": "矿车"
   },
   "33507": {
     "MonsterType": 0,
-    "Name": "フィールドマーカーのオフセットポイント"
+    "Name": "场中标记偏移点"
   },
   "33508": {
     "MonsterType": 0,
-    "Name": "ムーク・半機体ハウンド"
+    "Name": "姆克·半机体猎犬"
   },
   "33509": {
     "MonsterType": 0,
-    "Name": "ムーク・機体執行者"
+    "Name": "姆克·机体执行者"
   },
   "33510": {
     "MonsterType": 0,
-    "Name": "ムーク・重装制圧者"
+    "Name": "姆克·重装压制者"
   },
   "33511": {
     "MonsterType": 0,
-    "Name": "ムーク・炎斧収穫者・零式"
+    "Name": "姆克·炎斧收割者·零式"
   },
   "33512": {
     "MonsterType": 0,
-    "Name": "ムーク・重槌破城者・零式"
+    "Name": "姆克·重锤破城者·零式"
   },
   "33513": {
     "MonsterType": 0,
-    "Name": "ムーク・虹視狙撃者"
+    "Name": "姆克·虹视狙击者"
   },
   "33514": {
     "MonsterType": 0,
-    "Name": "組み立てポイント"
+    "Name": "组装点"
   },
   "33515": {
     "MonsterType": 0,
-    "Name": "電気エネルギー"
+    "Name": "电能"
   },
   "33516": {
     "MonsterType": 0,
-    "Name": "2号パーツ"
+    "Name": "2号零件"
   },
   "33517": {
     "MonsterType": 0,
-    "Name": "3号パーツ"
+    "Name": "3号零件"
   },
   "33518": {
     "MonsterType": 0,
-    "Name": "砲台"
+    "Name": "炮台"
   },
   "33519": {
     "MonsterType": 0,
-    "Name": "フェーズ移行・炎の竜巻"
+    "Name": "转阶段火龙卷"
   },
   "33520": {
     "MonsterType": 0,
-    "Name": "フェーズ移行・弾丸吸収ポイント"
+    "Name": "转阶段吸收子弹点"
   },
   "33521": {
     "MonsterType": 0,
-    "Name": "ムーク・半機体ハウンド"
+    "Name": "姆克·半机体猎犬"
   },
   "33522": {
     "MonsterType": 0,
-    "Name": "ムーク・機体執行者"
+    "Name": "姆克·机体执行者"
   },
   "33523": {
     "MonsterType": 0,
-    "Name": "ムーク・重装制圧者"
+    "Name": "姆克·重装压制者"
   },
   "33524": {
     "MonsterType": 0,
-    "Name": "ムーク・炎斧収穫者・零式"
+    "Name": "姆克·炎斧收割者·零式"
   },
   "33525": {
     "MonsterType": 0,
-    "Name": "ムーク・重槌破城者・零式"
+    "Name": "姆克·重锤破城者·零式"
   },
   "33526": {
     "MonsterType": 0,
-    "Name": "ムーク・虹視狙撃者"
+    "Name": "姆克·虹视狙击者"
   },
   "33527": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の銃士"
+    "Name": "黑石军团枪手"
   },
   "33528": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の盾兵"
+    "Name": "黑石军团盾兵"
   },
   "33529": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の戦士"
+    "Name": "黑石军团战士"
   },
   "33530": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の前衛"
+    "Name": "黑石军团突击兵"
   },
   "33531": {
     "MonsterType": 1,
-    "Name": "黒磊兵団の指揮官"
+    "Name": "黑石军团执令官"
   },
   "33532": {
     "MonsterType": 1,
-    "Name": "黒磊兵団の先鋒隊長"
+    "Name": "黑石军团先锋官"
   },
   "33533": {
     "MonsterType": 0,
-    "Name": "砲台の台座"
+    "Name": "炮台底座"
   },
   "33534": {
     "MonsterType": 0,
-    "Name": "赤水晶"
+    "Name": "红水晶"
   },
   "33535": {
     "MonsterType": 0,
-    "Name": "爆心地"
+    "Name": "原爆点"
   },
   "33536": {
     "MonsterType": 0,
-    "Name": "蒸気口を塞ぐ"
+    "Name": "堵口蒸汽"
   },
   "33537": {
     "MonsterType": 0,
-    "Name": "砲台"
+    "Name": "炮台"
   },
   "33538": {
     "MonsterType": 0,
-    "Name": "爆発"
+    "Name": "爆炸"
   },
   "33539": {
     "MonsterType": 0,
-    "Name": "道中の拡散蒸気"
+    "Name": "道中扩散蒸汽"
   },
   "33540": {
     "MonsterType": 0,
-    "Name": "道中の長方形蒸気トラップ"
+    "Name": "道中矩形蒸汽陷阱"
   },
   "33541": {
     "MonsterType": 0,
-    "Name": "扉を開ける水晶のギミック"
+    "Name": "开门水晶交互物"
   },
   "33542": {
     "MonsterType": 0,
-    "Name": "工場の廃墟"
+    "Name": "工厂废墟"
   },
   "33543": {
     "MonsterType": 0,
-    "Name": "赤水晶"
+    "Name": "红水晶"
   },
   "33544": {
     "MonsterType": 0,
-    "Name": "炎の竜巻の偽弾丸"
+    "Name": "火龙卷假子弹"
   },
   "33545": {
     "MonsterType": 0,
-    "Name": "ダンジョンルートガイド"
+    "Name": "副本路线指引"
   },
   "33546": {
     "MonsterType": 0,
-    "Name": "ノーマル難易度以下の全滅高ダメージ"
+    "Name": "普通难度以下炸团高伤害"
   },
   "33547": {
     "MonsterType": 0,
-    "Name": "工場の廃墟"
+    "Name": "工厂废墟"
   },
   "33548": {
     "MonsterType": 0,
-    "Name": "工場の廃墟"
+    "Name": "工厂废墟"
   },
   "33549": {
     "MonsterType": 0,
-    "Name": "虹視の爆発"
+    "Name": "虹视爆炸"
   },
   "33601": {
     "MonsterType": 2,
@@ -6181,175 +6361,347 @@
   },
   "33701": {
     "MonsterType": 2,
-    "Name": "ティナ・虚蝕心像"
+    "Name": "蒂娜·虚蚀心像"
   },
   "33702": {
     "MonsterType": 0,
-    "Name": "ティナ・虚蝕心像（分身）"
+    "Name": "蒂娜·虚蚀心像(分身)"
   },
   "33703": {
     "MonsterType": 1,
-    "Name": "バーンハルト・ライフル兵"
+    "Name": "班哈尔特步枪兵"
   },
   "33704": {
     "MonsterType": 1,
-    "Name": "バーンハルト・タンク"
+    "Name": "班哈尔特坦克"
   },
   "33705": {
     "MonsterType": 0,
-    "Name": "バーンハルト剣士"
+    "Name": "班哈尔特剑士"
   },
   "33706": {
     "MonsterType": 0,
-    "Name": "カナミア族村人の魂"
+    "Name": "卡尼曼村民亡魂"
   },
   "33707": {
     "MonsterType": 2,
-    "Name": "ティナ・虚蝕心像"
+    "Name": "蒂娜·虚蚀心像"
   },
   "33708": {
     "MonsterType": 2,
-    "Name": "ティナ・虚蝕心像"
+    "Name": "蒂娜·虚蚀心像"
   },
   "33709": {
     "MonsterType": 2,
-    "Name": "ティナ・虚蝕心像"
+    "Name": "蒂娜·虚蚀心像"
   },
   "33799": {
     "MonsterType": 2,
-    "Name": "ティナの立ち位置"
+    "Name": "蒂娜站坑位"
   },
   "33801": {
     "MonsterType": 2,
-    "Name": "破霧の牙"
+    "Name": "破雾之牙"
   },
   "33802": {
     "MonsterType": 0,
-    "Name": "切断の風のオーブ"
+    "Name": "切割风球"
   },
   "33803": {
     "MonsterType": 1,
-    "Name": "グレートファング"
+    "Name": "雷光野猪"
   },
   "33804": {
     "MonsterType": 1,
-    "Name": "変異ミーン"
+    "Name": "变异蜂"
   },
   "33805": {
     "MonsterType": 0,
-    "Name": "ロックリザード"
+    "Name": "岩石蜥蜴"
   },
   "33806": {
     "MonsterType": 0,
-    "Name": "ギャロップイーグル"
+    "Name": "疾驱大鹫"
   },
   "33807": {
     "MonsterType": 0,
-    "Name": "ランドフォックス"
+    "Name": "地狐"
   },
   "33808": {
     "MonsterType": 1,
-    "Name": "ワイルドボア"
+    "Name": "山猪"
   },
   "33809": {
     "MonsterType": 1,
-    "Name": "ボマービー"
+    "Name": "爆破蜂"
   },
   "33810": {
     "MonsterType": 0,
-    "Name": "ロックリザード"
+    "Name": "岩火巨蜥"
   },
   "33811": {
     "MonsterType": 0,
-    "Name": "平原イーグル"
+    "Name": "平原雄鹰"
   },
   "33812": {
     "MonsterType": 0,
-    "Name": "ランドフォックス"
+    "Name": "地狐"
   },
   "33813": {
     "MonsterType": 2,
-    "Name": "虹視のハンター"
+    "Name": "虹视猎手"
   },
   "33901": {
     "MonsterType": 2,
-    "Name": "神罰の代行者"
+    "Name": "神罚代理者"
   },
   "33902": {
     "MonsterType": 1,
-    "Name": "神罰の代行者色変更1"
+    "Name": "神罚代理者换色1"
   },
   "33903": {
     "MonsterType": 1,
-    "Name": "神罰の代行者色変更2"
+    "Name": "神罚代理者换色2"
   },
   "33904": {
     "MonsterType": 0,
-    "Name": "マトリックスタワー"
+    "Name": "元能塔"
   },
   "33905": {
     "MonsterType": 0,
-    "Name": "マトリックスタワー"
+    "Name": "元能塔"
   },
   "33906": {
     "MonsterType": 1,
-    "Name": "浮遊砲"
+    "Name": "浮游炮"
   },
   "33907": {
     "MonsterType": 1,
-    "Name": "浮遊砲"
+    "Name": "浮游炮"
   },
   "33908": {
     "MonsterType": 0,
-    "Name": "突進分身（左側光剣）"
+    "Name": "冲锋分身(左侧光剑）"
   },
   "33909": {
     "MonsterType": 0,
-    "Name": "突進分身（右側光剣）"
+    "Name": "冲锋分身（右侧光剑）"
   },
   "33910": {
     "MonsterType": 1,
-    "Name": "三脚重型眼球ポッド"
+    "Name": "三足重型眼舱"
   },
   "33911": {
     "MonsterType": 0,
-    "Name": "三脚眼球ポッド"
+    "Name": "三足眼舱"
   },
   "33912": {
     "MonsterType": 1,
-    "Name": "煌墓の守護者"
+    "Name": "煌墓守护者"
   },
   "33913": {
     "MonsterType": 0,
-    "Name": "悼亡の回視"
+    "Name": "悼亡回视"
   },
   "33914": {
     "MonsterType": 1,
-    "Name": "終末のスキャナー"
+    "Name": "终末扫描者"
   },
   "33915": {
     "MonsterType": 0,
-    "Name": "光核の瞳"
+    "Name": "光核之瞳"
   },
   "33916": {
     "MonsterType": 1,
-    "Name": "[ボス]煌墓ゴーレム09型"
+    "Name": "[首领]煌墓机像09型"
   },
   "33920": {
     "MonsterType": 1,
-    "Name": "浮遊砲"
+    "Name": "浮游炮"
   },
   "33921": {
     "MonsterType": 0,
-    "Name": "突進分身（瞬間左側光剣）"
+    "Name": "冲锋分身(瞬间左侧光剑）"
   },
   "33922": {
     "MonsterType": 0,
-    "Name": "突進分身（瞬間右側光剣）"
+    "Name": "冲锋分身(瞬间右侧光剑）"
   },
   "33923": {
     "MonsterType": 2,
-    "Name": "テスト木杭"
+    "Name": "测试木桩"
+  },
+  "33951": {
+    "MonsterType": 2,
+    "Name": "拉普西斯"
+  },
+  "33952": {
+    "MonsterType": 0,
+    "Name": "化光眷属"
+  },
+  "33953": {
+    "MonsterType": 0,
+    "Name": "化光眷属(加血）"
+  },
+  "33954": {
+    "MonsterType": 0,
+    "Name": "化光眷属"
+  },
+  "33960": {
+    "MonsterType": 2,
+    "Name": "拉普西斯"
+  },
+  "33961": {
+    "MonsterType": 0,
+    "Name": "化光眷属"
+  },
+  "34000": {
+    "MonsterType": 2,
+    "Name": "反幻想·博伊斯"
+  },
+  "34001": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34002": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34003": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34004": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34005": {
+    "MonsterType": 0,
+    "Name": "博伊斯DD场边大圈"
+  },
+  "34006": {
+    "MonsterType": 0,
+    "Name": "场中标记"
+  },
+  "34007": {
+    "MonsterType": 0,
+    "Name": "博伊斯DD镜子"
+  },
+  "34008": {
+    "MonsterType": 0,
+    "Name": "博伊斯普通镜子"
+  },
+  "34009": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34010": {
+    "MonsterType": 0,
+    "Name": "三连击退1"
+  },
+  "34011": {
+    "MonsterType": 0,
+    "Name": "三连击退2"
+  },
+  "34012": {
+    "MonsterType": 0,
+    "Name": "三连击退3"
+  },
+  "34013": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34014": {
+    "MonsterType": 0,
+    "Name": "地火标记"
+  },
+  "34015": {
+    "MonsterType": 0,
+    "Name": "冰锥"
+  },
+  "34016": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34017": {
+    "MonsterType": 0,
+    "Name": "回想体·愧疚"
+  },
+  "34018": {
+    "MonsterType": 0,
+    "Name": "回想体·罪责"
+  },
+  "34019": {
+    "MonsterType": 0,
+    "Name": "回想体·资格"
+  },
+  "34020": {
+    "MonsterType": 0,
+    "Name": "映现体·森语者"
+  },
+  "34021": {
+    "MonsterType": 0,
+    "Name": "映现体·狂战士"
+  },
+  "34022": {
+    "MonsterType": 0,
+    "Name": "映现体·青岚骑士"
+  },
+  "34023": {
+    "MonsterType": 0,
+    "Name": "映现体·神射手"
+  },
+  "34024": {
+    "MonsterType": 0,
+    "Name": "映现体·守护者"
+  },
+  "34025": {
+    "MonsterType": 0,
+    "Name": "映现体·魔导师"
+  },
+  "34026": {
+    "MonsterType": 0,
+    "Name": "映现体·神官"
+  },
+  "34027": {
+    "MonsterType": 0,
+    "Name": "映现体·神官"
+  },
+  "34028": {
+    "MonsterType": 0,
+    "Name": "映现体·神官"
+  },
+  "34029": {
+    "MonsterType": 0,
+    "Name": "映现体·佣兵"
+  },
+  "34030": {
+    "MonsterType": 0,
+    "Name": "博伊斯DD大师复读镜子"
+  },
+  "34031": {
+    "MonsterType": 0,
+    "Name": "反幻想·博伊斯"
+  },
+  "34032": {
+    "MonsterType": 0,
+    "Name": "映现体·神官"
+  },
+  "34033": {
+    "MonsterType": 0,
+    "Name": "映现体·神官"
+  },
+  "34034": {
+    "MonsterType": 0,
+    "Name": "映现体·神官"
+  },
+  "34035": {
+    "MonsterType": 0,
+    "Name": "博伊斯九连环场中大圈"
+  },
+  "34036": {
+    "MonsterType": 0,
+    "Name": "垂直方向标记"
   },
   "35000": {
     "MonsterType": 2,
@@ -6533,11 +6885,11 @@
   },
   "35215": {
     "MonsterType": 0,
-    "Name": "暴風の目"
+    "Name": "大风车眼球"
   },
   "35216": {
     "MonsterType": 0,
-    "Name": "暴風の目（静止）"
+    "Name": "大风车眼球（静止）"
   },
   "3991": {
     "MonsterType": 0,
@@ -7465,127 +7817,143 @@
   },
   "4601": {
     "MonsterType": 2,
-    "Name": "深海ナッポ"
+    "Name": "深海娜宝"
   },
   "4602": {
     "MonsterType": 1,
-    "Name": "深海スピーカー"
+    "Name": "深海音响"
   },
   "4603": {
     "MonsterType": 1,
-    "Name": "ステルススピーカー"
+    "Name": "隐形音响"
   },
   "4604": {
     "MonsterType": 1,
-    "Name": "アイスホッケー"
+    "Name": "冰球"
   },
   "4605": {
     "MonsterType": 1,
-    "Name": "バブル"
+    "Name": "水泡"
   },
   "4606": {
     "MonsterType": 1,
-    "Name": "深海スピーカー"
+    "Name": "深海音响"
   },
   "4607": {
     "MonsterType": 1,
-    "Name": "深海ナッポ"
+    "Name": "深海娜宝"
   },
   "4608": {
     "MonsterType": 1,
-    "Name": "狂乱の幻影・情熱"
+    "Name": "狂欢幻象·热情"
   },
   "4609": {
     "MonsterType": 1,
-    "Name": "狂乱の幻影・躍動"
+    "Name": "狂欢幻象·动感"
   },
   "4610": {
     "MonsterType": 1,
-    "Name": "アイスホッケー"
+    "Name": "冰球"
   },
   "4611": {
     "MonsterType": 1,
-    "Name": "バブル"
+    "Name": "水泡"
   },
   "4612": {
     "MonsterType": 1,
-    "Name": "深海ナッポ"
+    "Name": "深海娜宝"
   },
   "4613": {
     "MonsterType": 1,
-    "Name": "深海ナッポ"
+    "Name": "深海娜宝"
   },
   "4614": {
     "MonsterType": 1,
-    "Name": "深海ナッポ"
+    "Name": "深海娜宝"
   },
   "4615": {
     "MonsterType": 1,
-    "Name": "深海ナッポ"
+    "Name": "深海娜宝"
   },
   "4621": {
     "MonsterType": 2,
-    "Name": "深海ナッポ"
+    "Name": "深海娜宝"
   },
   "4631": {
     "MonsterType": 1,
-    "Name": "ギルミーの潮召喚者"
+    "Name": "蜥蜴人唤潮者"
   },
   "4632": {
     "MonsterType": 1,
-    "Name": "ギルミーの襲撃者"
+    "Name": "蜥蜴人袭击者"
   },
   "4633": {
     "MonsterType": 1,
-    "Name": "岩礁のスカイフィッシュ"
+    "Name": "海礁飞鱼"
   },
   "4634": {
     "MonsterType": 1,
-    "Name": "深海の凝視者"
+    "Name": "深海凝视者"
   },
   "4635": {
     "MonsterType": 1,
-    "Name": "ギルミーメイジ"
+    "Name": "蜥蜴人法师"
   },
   "4636": {
     "MonsterType": 1,
-    "Name": "ギルミー兵士"
+    "Name": "蜥蜴人士兵"
   },
   "4637": {
     "MonsterType": 1,
-    "Name": "岩礁の捕食者"
+    "Name": "海礁捕食者"
   },
   "4638": {
     "MonsterType": 0,
-    "Name": "小さなカニクモ"
+    "Name": "小蟹蛛"
   },
   "4639": {
     "MonsterType": 1,
-    "Name": "謎のマトリックス"
+    "Name": "谜之矩阵"
   },
   "4640": {
     "MonsterType": 1,
-    "Name": "潮汐のコア"
+    "Name": "潮汐之核"
   },
   "4691": {
     "MonsterType": 1,
-    "Name": "スピーカー"
+    "Name": "音响"
   },
   "4692": {
     "MonsterType": 1,
-    "Name": "ナッポ"
+    "Name": "娜宝"
   },
   "4693": {
     "MonsterType": 1,
-    "Name": "スピーカー"
+    "Name": "音响"
   },
   "4694": {
     "MonsterType": 1,
-    "Name": "輝くゴブリン"
+    "Name": "闪耀哥布林"
   },
   "4695": {
     "MonsterType": 1,
-    "Name": "イー"
+    "Name": "小伊"
+  },
+  "4701": {
+    "MonsterType": 2,
+    "Name": "薇尔达"
+  },
+  "4702": {
+    "MonsterType": 1,
+    "Name": "薇尔达幻影"
+  },
+  "4703": {
+    "MonsterType": 0,
+    "Name": "噩兆"
+  },
+  "4711": {
+    "MonsterType": 2,
+    "Name": "薇尔达"
   },
   "50000": {
     "MonsterType": 0,
@@ -7647,9 +8015,17 @@
     "MonsterType": 0,
     "Name": "雷沫哥布林"
   },
+  "5100603": {
+    "MonsterType": 0,
+    "Name": "青沫哥布林"
+  },
+  "5100604": {
+    "MonsterType": 0,
+    "Name": "紫沫哥布林"
+  },
   "511031": {
     "MonsterType": 1,
-    "Name": "幻祸精英哥布林"
+    "Name": "哥布林贤者"
   },
   "512011": {
     "MonsterType": 0,
@@ -8229,67 +8605,195 @@
   },
   "590001": {
     "MonsterType": 1,
-    "Name": "ギルミー兵士"
+    "Name": "蜥蜴人士兵"
   },
   "590002": {
     "MonsterType": 1,
-    "Name": "深海の凝視者"
+    "Name": "深海凝视者"
   },
   "590101": {
     "MonsterType": 2,
-    "Name": "猛る金色"
+    "Name": "凶猛金牙"
   },
   "590102": {
     "MonsterType": 2,
-    "Name": "ゴーストカニクモ"
+    "Name": "幻妖蟹蛛"
   },
   "590103": {
     "MonsterType": 2,
-    "Name": "破霧の牙"
+    "Name": "破雾之牙"
   },
   "590104": {
     "MonsterType": 0,
-    "Name": "クローゼ"
+    "Name": "克劳泽"
   },
   "590105": {
     "MonsterType": 0,
-    "Name": "ヤゴール将軍"
+    "Name": "雅戈尔将军"
   },
   "591001": {
     "MonsterType": 1,
-    "Name": "三脚重型眼球ポッド"
+    "Name": "三足重型眼舱"
   },
   "591002": {
     "MonsterType": 0,
-    "Name": "三脚眼球ポッド"
+    "Name": "三足眼舱"
   },
   "591003": {
     "MonsterType": 1,
-    "Name": "煌墓の守護者"
+    "Name": "煌墓守护者"
   },
   "591004": {
     "MonsterType": 2,
-    "Name": "神罰の代行者"
+    "Name": "神罚代理者"
   },
   "60000": {
     "MonsterType": 0,
     "Name": "棒槌哥布林"
   },
+  "6000001": {
+    "MonsterType": 2,
+    "Name": "圣域飞鱼"
+  },
   "60001": {
     "MonsterType": 0,
     "Name": "小刀哥布林"
+  },
+  "6000101": {
+    "MonsterType": 1,
+    "Name": "山贼头目"
+  },
+  "6000102": {
+    "MonsterType": 1,
+    "Name": "嗜血毛球"
+  },
+  "6000103": {
+    "MonsterType": 1,
+    "Name": "雷电食人魔"
+  },
+  "6000104": {
+    "MonsterType": 1,
+    "Name": "火焰食人魔"
+  },
+  "6000105": {
+    "MonsterType": 1,
+    "Name": "狂悖之王"
   },
   "60002": {
     "MonsterType": 1,
     "Name": "巫师哥布林"
   },
+  "6000201": {
+    "MonsterType": 1,
+    "Name": "山脊之牙"
+  },
+  "6000202": {
+    "MonsterType": 1,
+    "Name": "铁牙"
+  },
+  "6000203": {
+    "MonsterType": 1,
+    "Name": "赤玉地狐"
+  },
+  "6000204": {
+    "MonsterType": 1,
+    "Name": "炎角"
+  },
+  "6000205": {
+    "MonsterType": 1,
+    "Name": "山贼头目"
+  },
+  "6000206": {
+    "MonsterType": 1,
+    "Name": "雷电食人魔"
+  },
+  "6000207": {
+    "MonsterType": 1,
+    "Name": "山脊之牙"
+  },
+  "6000208": {
+    "MonsterType": 1,
+    "Name": "凶猛金牙"
+  },
+  "6000209": {
+    "MonsterType": 1,
+    "Name": "铁牙"
+  },
   "60003": {
     "MonsterType": 1,
     "Name": "巫师哥布林"
   },
+  "6000301": {
+    "MonsterType": 1,
+    "Name": "雷电食人魔"
+  },
+  "6000302": {
+    "MonsterType": 1,
+    "Name": "雷电食人魔"
+  },
+  "6000303": {
+    "MonsterType": 1,
+    "Name": "剧毒蜂巢"
+  },
+  "6000304": {
+    "MonsterType": 1,
+    "Name": "山贼头目"
+  },
+  "6000305": {
+    "MonsterType": 1,
+    "Name": "哥布林首领"
+  },
+  "6000306": {
+    "MonsterType": 1,
+    "Name": "嗜血毛球"
+  },
+  "6000307": {
+    "MonsterType": 1,
+    "Name": "姆克头目"
+  },
+  "6000308": {
+    "MonsterType": 1,
+    "Name": "姆克头目"
+  },
+  "6000309": {
+    "MonsterType": 1,
+    "Name": "火焰食人魔"
+  },
   "60004": {
     "MonsterType": 1,
     "Name": "巫师哥布林"
+  },
+  "6000401": {
+    "MonsterType": 1,
+    "Name": "蜥蜴人王"
+  },
+  "6000402": {
+    "MonsterType": 1,
+    "Name": "狂悖之王"
+  },
+  "6000403": {
+    "MonsterType": 1,
+    "Name": "哥布林首领"
+  },
+  "6000404": {
+    "MonsterType": 1,
+    "Name": "掠食蟹蛛"
+  },
+  "6000405": {
+    "MonsterType": 1,
+    "Name": "飓风哥布林王"
+  },
+  "6000406": {
+    "MonsterType": 1,
+    "Name": "寒霜食人魔"
+  },
+  "6000407": {
+    "MonsterType": 1,
+    "Name": "凶猛金牙"
+  },
+  "6000408": {
+    "MonsterType": 1,
+    "Name": "凶猛金牙"
   },
   "60005": {
     "MonsterType": 0,
@@ -8302,6 +8806,14 @@
   "60008": {
     "MonsterType": 1,
     "Name": "巨斧哥布林"
+  },
+  "6000901": {
+    "MonsterType": 1,
+    "Name": "自爆兵02型"
+  },
+  "6000902": {
+    "MonsterType": 0,
+    "Name": "毒雾"
   },
   "60010": {
     "MonsterType": 0,
@@ -9377,67 +9889,67 @@
   },
   "644901": {
     "MonsterType": 0,
-    "Name": "フロストリザード"
+    "Name": "冰暗巨蜥"
   },
   "644902": {
     "MonsterType": 0,
-    "Name": "ロックリザード"
+    "Name": "岩火巨蜥"
   },
   "644903": {
     "MonsterType": 0,
-    "Name": "ゲイルリザード"
+    "Name": "森风巨蜥"
   },
   "644904": {
     "MonsterType": 0,
-    "Name": "サンダーリザード"
+    "Name": "电光巨蜥"
   },
   "644905": {
     "MonsterType": 1,
-    "Name": "ブルースパインリザード"
+    "Name": "蓝脊巨蜥"
   },
   "645001": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の兵士"
+    "Name": "黑石军团士兵"
   },
   "645002": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の兵士"
+    "Name": "黑石军团士兵"
   },
   "645003": {
     "MonsterType": 0,
-    "Name": "フロストリザード"
+    "Name": "冰暗巨蜥"
   },
   "645004": {
     "MonsterType": 0,
-    "Name": "ロックリザード"
+    "Name": "岩火巨蜥"
   },
   "645005": {
     "MonsterType": 0,
-    "Name": "ゲイルリザード"
+    "Name": "森风巨蜥"
   },
   "645006": {
     "MonsterType": 0,
-    "Name": "サンダーリザード"
+    "Name": "电光巨蜥"
   },
   "645007": {
     "MonsterType": 1,
-    "Name": "ブルースパインリザード"
+    "Name": "蓝脊巨蜥"
   },
   "645008": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の兵士"
+    "Name": "黑石军团士兵"
   },
   "645009": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の兵士"
+    "Name": "黑石军团士兵"
   },
   "645010": {
     "MonsterType": 0,
-    "Name": "コンラート"
+    "Name": "康拉德"
   },
   "655001": {
     "MonsterType": 2,
-    "Name": "猛る獣"
+    "Name": "赤玉地狐"
   },
   "660301": {
     "MonsterType": 0,
@@ -9465,11 +9977,11 @@
   },
   "660307": {
     "MonsterType": 0,
-    "Name": "莱拉亚"
+    "Name": "法法菈"
   },
   "660308": {
     "MonsterType": 0,
-    "Name": "阿斯特里斯士兵"
+    "Name": "薇尔达"
   },
   "660309": {
     "MonsterType": 0,
@@ -9499,21 +10011,177 @@
     "MonsterType": 1,
     "Name": "幻祸精英哥布林"
   },
+  "6611001": {
+    "MonsterType": 1,
+    "Name": "回响"
+  },
+  "6611002": {
+    "MonsterType": 0,
+    "Name": "未被倾听的祈愿"
+  },
+  "6611003": {
+    "MonsterType": 0,
+    "Name": "幻影"
+  },
+  "6611004": {
+    "MonsterType": 0,
+    "Name": "幻影"
+  },
+  "6611005": {
+    "MonsterType": 0,
+    "Name": "幻影"
+  },
+  "6611006": {
+    "MonsterType": 0,
+    "Name": "呼唤"
+  },
+  "6611007": {
+    "MonsterType": 0,
+    "Name": "未被倾听的信念"
+  },
+  "6611008": {
+    "MonsterType": 0,
+    "Name": "未被倾听的信念"
+  },
+  "6611009": {
+    "MonsterType": 0,
+    "Name": "未被倾听的勇气"
+  },
   "661101": {
     "MonsterType": 0,
-    "Name": "エステバオ"
+    "Name": "埃斯特沃"
+  },
+  "6611010": {
+    "MonsterType": 1,
+    "Name": "试炼"
+  },
+  "6611011": {
+    "MonsterType": 0,
+    "Name": "未被倾听的正义"
+  },
+  "6611012": {
+    "MonsterType": 0,
+    "Name": "未被倾听的执念（废弃）"
+  },
+  "6611013": {
+    "MonsterType": 0,
+    "Name": "未被倾听的执念（废弃）"
+  },
+  "6611014": {
+    "MonsterType": 1,
+    "Name": "未被倾听的执念"
+  },
+  "6611015": {
+    "MonsterType": 0,
+    "Name": "试炼"
+  },
+  "6611016": {
+    "MonsterType": 0,
+    "Name": "恶意（暂时废弃）"
+  },
+  "6611017": {
+    "MonsterType": 0,
+    "Name": "薇尔达"
+  },
+  "6611018": {
+    "MonsterType": 0,
+    "Name": "陷入沉梦的哥布林"
+  },
+  "6611019": {
+    "MonsterType": 0,
+    "Name": "杂鱼小怪（废弃）"
+  },
+  "6611020": {
+    "MonsterType": 1,
+    "Name": "尚未成熟的幻幻花"
+  },
+  "6611021": {
+    "MonsterType": 1,
+    "Name": "幻幻花"
+  },
+  "6611022": {
+    "MonsterType": 0,
+    "Name": "薇尔达"
+  },
+  "6611023": {
+    "MonsterType": 0,
+    "Name": "试炼"
+  },
+  "6611024": {
+    "MonsterType": 1,
+    "Name": "试炼·精英"
+  },
+  "6611025": {
+    "MonsterType": 0,
+    "Name": "陷入沉梦的深谷鱼人"
+  },
+  "6611026": {
+    "MonsterType": 0,
+    "Name": "陷入沉梦的溪岸鱼人"
+  },
+  "6611027": {
+    "MonsterType": 1,
+    "Name": "陷入沉梦的暗河之鳍"
+  },
+  "6611028": {
+    "MonsterType": 0,
+    "Name": "回响"
+  },
+  "6611029": {
+    "MonsterType": 0,
+    "Name": "回响"
+  },
+  "6611030": {
+    "MonsterType": 1,
+    "Name": "回响·精英"
+  },
+  "6611031": {
+    "MonsterType": 0,
+    "Name": "未被倾听的祈愿"
+  },
+  "6611032": {
+    "MonsterType": 1,
+    "Name": "未被倾听的执念"
+  },
+  "6611033": {
+    "MonsterType": 0,
+    "Name": "薇尔达道中精英战场中标记"
+  },
+  "6611034": {
+    "MonsterType": 1,
+    "Name": "尚未成熟的幻幻花"
+  },
+  "6611035": {
+    "MonsterType": 1,
+    "Name": "陷入沉梦的哥布林贤者"
+  },
+  "6611036": {
+    "MonsterType": 0,
+    "Name": "未被倾听的信念"
+  },
+  "6611037": {
+    "MonsterType": 0,
+    "Name": "未被倾听的正义"
+  },
+  "6611038": {
+    "MonsterType": 0,
+    "Name": "未被倾听的勇气"
+  },
+  "6611039": {
+    "MonsterType": 1,
+    "Name": "尚未成熟的幻幻花"
   },
   "661201": {
     "MonsterType": 0,
-    "Name": "デマリオン"
+    "Name": "德马里昂"
   },
   "661301": {
     "MonsterType": 0,
-    "Name": "ティモシー"
+    "Name": "提莫迪"
   },
   "661401": {
     "MonsterType": 0,
-    "Name": "仮面の男"
+    "Name": "面具人"
   },
   "661501": {
     "MonsterType": 2,
@@ -9521,31 +10189,39 @@
   },
   "661502": {
     "MonsterType": 0,
-    "Name": "ジャコブ"
+    "Name": "雅各布"
   },
   "661503": {
     "MonsterType": 0,
-    "Name": "リン"
+    "Name": "琳"
   },
   "661504": {
     "MonsterType": 0,
-    "Name": "ロック"
+    "Name": "洛克"
   },
   "661601": {
     "MonsterType": 0,
-    "Name": "デビッド"
+    "Name": "戴维"
   },
   "661701": {
     "MonsterType": 0,
-    "Name": "ハーゲン"
+    "Name": "哈根"
   },
   "661702": {
     "MonsterType": 0,
-    "Name": "シグルド"
+    "Name": "西格德"
   },
   "661703": {
     "MonsterType": 0,
-    "Name": "コーンラート"
+    "Name": "康恩拉德"
+  },
+  "6620001": {
+    "MonsterType": 0,
+    "Name": "溪谷弩手"
+  },
+  "6621001": {
+    "MonsterType": 0,
+    "Name": "溪谷弩手"
   },
   "69001": {
     "MonsterType": 1,
@@ -9881,11 +10557,15 @@
   },
   "700101": {
     "MonsterType": 1,
-    "Name": "ぷんぷんウリボ"
+    "Name": "呲呲小猪"
   },
   "70011": {
     "MonsterType": 0,
     "Name": "短剑飓风哥布林"
+  },
+  "700111": {
+    "MonsterType": 1,
+    "Name": "溯光灵体"
   },
   "70012": {
     "MonsterType": 0,
@@ -10393,235 +11073,527 @@
   },
   "72001": {
     "MonsterType": 2,
-    "Name": "ボス・捕食カニクモ"
+    "Name": "首领·掠食蟹蛛"
   },
   "72002": {
     "MonsterType": 2,
-    "Name": "ボス・外道王"
+    "Name": "首领·狂悖之王"
   },
   "72003": {
     "MonsterType": 2,
-    "Name": "ボス・峠の牙"
+    "Name": "首领·山脊之牙"
   },
   "72004": {
     "MonsterType": 2,
-    "Name": "ボス・嗜血のフラッフ"
+    "Name": "首领·嗜血毛球"
   },
   "72005": {
     "MonsterType": 2,
-    "Name": "ボス・空洞センチネル"
+    "Name": "首领·空洞监察者"
   },
   "72006": {
     "MonsterType": 2,
-    "Name": "ボス・猛る金色"
+    "Name": "首领·凶猛金牙"
   },
   "72007": {
     "MonsterType": 2,
-    "Name": "ボス・ゴーストカニクモ"
+    "Name": "首领·幻妖蟹蛛"
   },
   "72008": {
     "MonsterType": 2,
-    "Name": "ボス・フレイムオーガ"
+    "Name": "首领·火焰食人魔"
   },
   "72009": {
     "MonsterType": 2,
-    "Name": "ボス・天才甘藍大王"
+    "Name": "首领·天才卷心菜大王"
   },
   "72010": {
     "MonsterType": 2,
-    "Name": "ボス・炎角"
+    "Name": "首领·炎角"
   },
   "72011": {
     "MonsterType": 2,
-    "Name": "ボス・バジリスク"
+    "Name": "首领·巴西利斯克"
   },
   "72012": {
     "MonsterType": 2,
-    "Name": "ボス・ムークボス"
+    "Name": "首领·姆克头目"
   },
   "72013": {
     "MonsterType": 2,
-    "Name": "ボス・キングムーク"
+    "Name": "首领·姆克王"
   },
   "72014": {
     "MonsterType": 2,
-    "Name": "ボス・キングゴブリン"
+    "Name": "首领·哥布林王"
   },
   "72015": {
     "MonsterType": 1,
-    "Name": "精鋭・殺し屋カニクモ"
+    "Name": "精英·杀手蟹蛛"
   },
   "72016": {
     "MonsterType": 1,
-    "Name": "精鋭・ドゴルマン"
+    "Name": "精英·多格尔曼"
   },
   "72017": {
     "MonsterType": 1,
-    "Name": "精鋭・深緑の牙"
+    "Name": "精英·深绿之牙"
   },
   "72018": {
     "MonsterType": 1,
-    "Name": "精鋭・カニバル・フラッフ"
+    "Name": "精英·食人毛球"
   },
   "72019": {
     "MonsterType": 1,
-    "Name": "精鋭・聖堂の眼"
+    "Name": "精英·圣堂之眼"
   },
   "72020": {
     "MonsterType": 1,
-    "Name": "精鋭・ブルースパインリザード"
+    "Name": "精英·蓝脊巨蜥"
   },
   "72021": {
     "MonsterType": 1,
-    "Name": "精鋭・黒磊兵団の指揮官"
+    "Name": "精英·黑石军团执令官"
   },
   "72022": {
     "MonsterType": 1,
-    "Name": "精鋭・黒磊兵団の先鋒隊長"
+    "Name": "精英·黑石军团先锋官"
   },
   "72023": {
     "MonsterType": 1,
-    "Name": "精鋭・トリックエルダー"
+    "Name": "精英·哥布林欺诈师"
   },
   "72024": {
     "MonsterType": 1,
-    "Name": "精鋭・悪しき癒し手"
+    "Name": "精英·哥布林巫医"
   },
   "72025": {
     "MonsterType": 1,
-    "Name": "精鋭・ブラックランドフォックス"
+    "Name": "精英·黑焰地狐"
   },
   "72026": {
     "MonsterType": 1,
-    "Name": "精鋭・甘藍憂鬱者"
+    "Name": "精英·忧郁卷心菜"
   },
   "72027": {
     "MonsterType": 1,
-    "Name": "精鋭・甘藍冷酷者"
+    "Name": "精英·冷酷卷心菜"
   },
   "72028": {
     "MonsterType": 1,
-    "Name": "精鋭・エメラルドホーン"
+    "Name": "精英·翡翠角羊"
   },
   "72029": {
     "MonsterType": 0,
-    "Name": "火炎カニクモ"
+    "Name": "火焰蟹蛛"
   },
   "72030": {
     "MonsterType": 0,
-    "Name": "荒野カニクモ"
+    "Name": "荒原蟹蛛"
   },
   "72031": {
     "MonsterType": 0,
-    "Name": "砂岩ファットマン"
+    "Name": "砂岩肉山"
   },
   "72032": {
     "MonsterType": 0,
-    "Name": "灰燼ファットマン"
+    "Name": "灰烬肉山"
   },
   "72033": {
     "MonsterType": 0,
-    "Name": "ワイルドボア"
+    "Name": "野山猪"
   },
   "72034": {
     "MonsterType": 0,
-    "Name": "猟道ワイルドボア"
+    "Name": "猎路山猪"
   },
   "72035": {
     "MonsterType": 0,
-    "Name": "トゥース・フラッフ"
+    "Name": "切齿毛球"
   },
   "72036": {
     "MonsterType": 0,
-    "Name": "ニードル・フラッフ"
+    "Name": "尖棘毛球"
   },
   "72037": {
     "MonsterType": 0,
-    "Name": "巡視のフローティングアイ"
+    "Name": "巡视浮瞳"
   },
   "72038": {
     "MonsterType": 0,
-    "Name": "機心のフローティングアイ"
+    "Name": "机心浮瞳"
   },
   "72039": {
     "MonsterType": 0,
-    "Name": "フロストリザード"
+    "Name": "冰暗巨蜥"
   },
   "72040": {
     "MonsterType": 0,
-    "Name": "ロックリザード"
+    "Name": "岩火巨蜥"
   },
   "72041": {
     "MonsterType": 0,
-    "Name": "ゲイルリザード"
+    "Name": "森风巨蜥"
   },
   "72042": {
     "MonsterType": 0,
-    "Name": "サンダーリザード"
+    "Name": "电光巨蜥"
   },
   "72043": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の射手"
+    "Name": "黑石军团射手"
   },
   "72044": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の護衛"
+    "Name": "黑石军团卫士"
   },
   "72045": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の戦士"
+    "Name": "黑石军团战士"
   },
   "72046": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の突撃兵"
+    "Name": "黑石军团突击手"
   },
   "72047": {
     "MonsterType": 0,
-    "Name": "ゴブリンウォーリアー"
+    "Name": "哥布林战士"
   },
   "72048": {
     "MonsterType": 0,
-    "Name": "ゴブリン斧兵"
+    "Name": "哥布林斧手"
   },
   "72049": {
     "MonsterType": 0,
-    "Name": "マスターゴブリン"
+    "Name": "哥布林祭祀"
   },
   "72050": {
     "MonsterType": 0,
-    "Name": "ゴブリン衛士"
+    "Name": "哥布林护卫"
   },
   "72051": {
     "MonsterType": 0,
-    "Name": "甘藍暗殺者"
+    "Name": "卷心菜杀手"
   },
   "72052": {
     "MonsterType": 0,
-    "Name": "甘藍狩人"
+    "Name": "卷心菜猎人"
   },
   "72053": {
     "MonsterType": 0,
-    "Name": "甘藍豪腕者"
+    "Name": "卷心菜硬汉"
   },
   "72054": {
     "MonsterType": 0,
-    "Name": "甘藍破壊者"
+    "Name": "卷心菜爆裂者"
   },
   "72055": {
     "MonsterType": 0,
-    "Name": "ランドフォックス"
+    "Name": "地狐"
   },
   "72056": {
     "MonsterType": 0,
-    "Name": "ワイルドランドフォックス"
+    "Name": "荒地狐"
   },
   "72057": {
     "MonsterType": 0,
-    "Name": "スプーキーゴート"
+    "Name": "幽冥角羊"
   },
   "72058": {
     "MonsterType": 0,
-    "Name": "ルミナゴート"
+    "Name": "流光角羊"
+  },
+  "73001": {
+    "MonsterType": 2,
+    "Name": "首领·掠食蟹蛛"
+  },
+  "73002": {
+    "MonsterType": 2,
+    "Name": "首领·溪谷尖兵"
+  },
+  "73003": {
+    "MonsterType": 2,
+    "Name": "首领·山脊之牙"
+  },
+  "73004": {
+    "MonsterType": 2,
+    "Name": "首领·嗜血毛球"
+  },
+  "73005": {
+    "MonsterType": 2,
+    "Name": "首领·梦现宿主"
+  },
+  "73006": {
+    "MonsterType": 2,
+    "Name": "首领·凶猛金牙"
+  },
+  "73007": {
+    "MonsterType": 2,
+    "Name": "首领·拾贝异教徒"
+  },
+  "73008": {
+    "MonsterType": 2,
+    "Name": "首领·流浪的游子"
+  },
+  "73009": {
+    "MonsterType": 2,
+    "Name": "首领·天才卷心菜大王"
+  },
+  "73010": {
+    "MonsterType": 2,
+    "Name": "首领·炎角"
+  },
+  "73011": {
+    "MonsterType": 2,
+    "Name": "首领·涧流的异影"
+  },
+  "73012": {
+    "MonsterType": 2,
+    "Name": "首领·姆克头目"
+  },
+  "73013": {
+    "MonsterType": 2,
+    "Name": "首领·姆克王"
+  },
+  "73014": {
+    "MonsterType": 2,
+    "Name": "首领·哥布林王"
+  },
+  "73015": {
+    "MonsterType": 1,
+    "Name": "精英·杀手蟹蛛"
+  },
+  "73016": {
+    "MonsterType": 1,
+    "Name": "精英·多格尔曼"
+  },
+  "73017": {
+    "MonsterType": 1,
+    "Name": "精英·深绿之牙"
+  },
+  "73018": {
+    "MonsterType": 1,
+    "Name": "精英·食人毛球"
+  },
+  "73019": {
+    "MonsterType": 1,
+    "Name": "精英·圣堂之眼"
+  },
+  "73020": {
+    "MonsterType": 1,
+    "Name": "精英·蓝脊巨蜥"
+  },
+  "73021": {
+    "MonsterType": 1,
+    "Name": "精英·黑石军团执令官"
+  },
+  "73022": {
+    "MonsterType": 1,
+    "Name": "精英·黑石军团先锋官"
+  },
+  "73023": {
+    "MonsterType": 1,
+    "Name": "精英·哥布林欺诈师"
+  },
+  "73024": {
+    "MonsterType": 1,
+    "Name": "精英·哥布林巫医"
+  },
+  "73025": {
+    "MonsterType": 1,
+    "Name": "精英·黑焰地狐"
+  },
+  "73026": {
+    "MonsterType": 1,
+    "Name": "精英·忧郁卷心菜"
+  },
+  "73027": {
+    "MonsterType": 1,
+    "Name": "精英·冷酷卷心菜"
+  },
+  "73028": {
+    "MonsterType": 1,
+    "Name": "精英·翡翠角羊"
+  },
+  "73029": {
+    "MonsterType": 0,
+    "Name": "火焰蟹蛛"
+  },
+  "73030": {
+    "MonsterType": 0,
+    "Name": "荒原蟹蛛"
+  },
+  "73031": {
+    "MonsterType": 0,
+    "Name": "砂岩肉山"
+  },
+  "73032": {
+    "MonsterType": 0,
+    "Name": "灰烬肉山"
+  },
+  "73033": {
+    "MonsterType": 0,
+    "Name": "野山猪"
+  },
+  "73034": {
+    "MonsterType": 0,
+    "Name": "猎路山猪"
+  },
+  "73035": {
+    "MonsterType": 0,
+    "Name": "切齿毛球"
+  },
+  "73036": {
+    "MonsterType": 0,
+    "Name": "尖棘毛球"
+  },
+  "73037": {
+    "MonsterType": 0,
+    "Name": "巡视浮瞳"
+  },
+  "73038": {
+    "MonsterType": 0,
+    "Name": "机心浮瞳"
+  },
+  "73039": {
+    "MonsterType": 0,
+    "Name": "冰暗巨蜥"
+  },
+  "73040": {
+    "MonsterType": 0,
+    "Name": "岩火巨蜥"
+  },
+  "73041": {
+    "MonsterType": 0,
+    "Name": "森风巨蜥"
+  },
+  "73042": {
+    "MonsterType": 0,
+    "Name": "电光巨蜥"
+  },
+  "73043": {
+    "MonsterType": 0,
+    "Name": "黑石军团射手"
+  },
+  "73044": {
+    "MonsterType": 0,
+    "Name": "黑石军团卫士"
+  },
+  "73045": {
+    "MonsterType": 0,
+    "Name": "黑石军团战士"
+  },
+  "73046": {
+    "MonsterType": 0,
+    "Name": "黑石军团突击手"
+  },
+  "73047": {
+    "MonsterType": 0,
+    "Name": "哥布林战士"
+  },
+  "73048": {
+    "MonsterType": 0,
+    "Name": "哥布林斧手"
+  },
+  "73049": {
+    "MonsterType": 0,
+    "Name": "哥布林祭祀"
+  },
+  "73050": {
+    "MonsterType": 0,
+    "Name": "哥布林护卫"
+  },
+  "73051": {
+    "MonsterType": 0,
+    "Name": "卷心菜杀手"
+  },
+  "73052": {
+    "MonsterType": 0,
+    "Name": "卷心菜猎人"
+  },
+  "73053": {
+    "MonsterType": 0,
+    "Name": "卷心菜硬汉"
+  },
+  "73054": {
+    "MonsterType": 0,
+    "Name": "卷心菜爆裂者"
+  },
+  "73055": {
+    "MonsterType": 0,
+    "Name": "地狐"
+  },
+  "73056": {
+    "MonsterType": 0,
+    "Name": "荒地狐"
+  },
+  "73057": {
+    "MonsterType": 0,
+    "Name": "幽冥角羊"
+  },
+  "73058": {
+    "MonsterType": 0,
+    "Name": "流光角羊"
+  },
+  "73059": {
+    "MonsterType": 1,
+    "Name": "精英·麻痹虾菇"
+  },
+  "73060": {
+    "MonsterType": 1,
+    "Name": "精英·溪谷斗技者"
+  },
+  "73061": {
+    "MonsterType": 1,
+    "Name": "精英·哥布林贤者"
+  },
+  "73062": {
+    "MonsterType": 1,
+    "Name": "精英·溪谷游猎者"
+  },
+  "73063": {
+    "MonsterType": 1,
+    "Name": "精英·暗河之鳍"
+  },
+  "73064": {
+    "MonsterType": 0,
+    "Name": "虾菇"
+  },
+  "73065": {
+    "MonsterType": 0,
+    "Name": "剧毒虾菇"
+  },
+  "73066": {
+    "MonsterType": 0,
+    "Name": "溪谷猛士"
+  },
+  "73067": {
+    "MonsterType": 0,
+    "Name": "溪谷先锋"
+  },
+  "73068": {
+    "MonsterType": 0,
+    "Name": "青沫哥布林"
+  },
+  "73069": {
+    "MonsterType": 0,
+    "Name": "紫沫哥布林"
+  },
+  "73070": {
+    "MonsterType": 0,
+    "Name": "溪谷斥候"
+  },
+  "73071": {
+    "MonsterType": 0,
+    "Name": "溪谷弩手"
+  },
+  "73072": {
+    "MonsterType": 0,
+    "Name": "深谷鱼人"
+  },
+  "73073": {
+    "MonsterType": 0,
+    "Name": "溪岸鱼人"
   },
   "760001": {
     "MonsterType": 1,
@@ -10697,27 +11669,47 @@
   },
   "80015": {
     "MonsterType": 1,
-    "Name": "ボス・捕食カニクモ"
+    "Name": "首领·掠食蟹蛛"
   },
   "80016": {
     "MonsterType": 1,
-    "Name": "ボス・外道王"
+    "Name": "首领·狂悖之王"
   },
   "80017": {
     "MonsterType": 1,
-    "Name": "ボス・峠の牙"
+    "Name": "首领·山脊之牙"
   },
   "80018": {
     "MonsterType": 1,
-    "Name": "ボス・嗜血のフラッフ"
+    "Name": "首领·嗜血毛球"
   },
   "80019": {
     "MonsterType": 1,
-    "Name": "ボス・空洞センチネル"
+    "Name": "首领·空洞监察者"
   },
   "8002": {
     "MonsterType": 0,
     "Name": "辛斯特的助手"
+  },
+  "80020": {
+    "MonsterType": 1,
+    "Name": "首领·梦现宿主"
+  },
+  "80021": {
+    "MonsterType": 1,
+    "Name": "首领·溪谷尖兵"
+  },
+  "80022": {
+    "MonsterType": 1,
+    "Name": "首领·拾贝异教徒"
+  },
+  "80023": {
+    "MonsterType": 1,
+    "Name": "首领·流浪的游子"
+  },
+  "80024": {
+    "MonsterType": 1,
+    "Name": "首领·涧流的异影"
   },
   "8003": {
     "MonsterType": 1,
@@ -10729,7 +11721,7 @@
   },
   "8005": {
     "MonsterType": 1,
-    "Name": "聖堂の眼"
+    "Name": "圣堂之眼"
   },
   "8007": {
     "MonsterType": 0,
@@ -10813,7 +11805,7 @@
   },
   "8040": {
     "MonsterType": 0,
-    "Name": "ダフ"
+    "Name": "杜夫"
   },
   "8041": {
     "MonsterType": 0,
@@ -10957,11 +11949,11 @@
   },
   "8081": {
     "MonsterType": 2,
-    "Name": "ゴブリンウォーロード"
+    "Name": "哥布林首领"
   },
   "8082": {
     "MonsterType": 2,
-    "Name": "天才甘藍大王"
+    "Name": "天才卷心菜大王"
   },
   "81000": {
     "MonsterType": 2,
@@ -11225,7 +12217,7 @@
   },
   "8130": {
     "MonsterType": 0,
-    "Name": "不明モンスター 8130"
+    "Name": "？？？"
   },
   "8131": {
     "MonsterType": 0,
@@ -11321,7 +12313,7 @@
   },
   "8315": {
     "MonsterType": 2,
-    "Name": "不明モンスター 8315"
+    "Name": "？？？"
   },
   "8316": {
     "MonsterType": 0,
@@ -11501,7 +12493,7 @@
   },
   "8626": {
     "MonsterType": 0,
-    "Name": "不明モンスター 8626"
+    "Name": "？？？"
   },
   "8627": {
     "MonsterType": 0,
@@ -11509,7 +12501,7 @@
   },
   "8628": {
     "MonsterType": 0,
-    "Name": "不明モンスター 8628"
+    "Name": "？？？"
   },
   "8629": {
     "MonsterType": 0,
@@ -11589,35 +12581,35 @@
   },
   "8648": {
     "MonsterType": 0,
-    "Name": "ウィントン"
+    "Name": "温顿"
   },
   "8649": {
     "MonsterType": 0,
-    "Name": "ミニゴート"
+    "Name": "小角羊"
   },
   "8650": {
     "MonsterType": 1,
-    "Name": "ヘルマン"
+    "Name": "赫尔曼"
   },
   "8651": {
     "MonsterType": 1,
-    "Name": "深緑の牙"
+    "Name": "深绿之牙"
   },
   "8652": {
     "MonsterType": 0,
-    "Name": "ムーク・半機体ハウンド"
+    "Name": "姆克·半机体猎犬"
   },
   "8653": {
     "MonsterType": 0,
-    "Name": "謎の人物"
+    "Name": "神秘人"
   },
   "8654": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の兵士"
+    "Name": "黑石军团士兵"
   },
   "8655": {
     "MonsterType": 0,
-    "Name": "黒磊兵団の兵士"
+    "Name": "黑石军团士兵"
   },
   "8701": {
     "MonsterType": 0,
@@ -11661,23 +12653,23 @@
   },
   "8724": {
     "MonsterType": 0,
-    "Name": "甘藍調査団のメンバー"
+    "Name": "卷心菜调查团成员"
   },
   "8725": {
     "MonsterType": 0,
-    "Name": "甘藍調査団のメンバー"
+    "Name": "卷心菜调查团成员"
   },
   "8726": {
     "MonsterType": 0,
-    "Name": "甘藍調査団のメンバー"
+    "Name": "卷心菜调查团成员"
   },
   "8727": {
     "MonsterType": 1,
-    "Name": "ホークス"
+    "Name": "霍克斯"
   },
   "8728": {
     "MonsterType": 2,
-    "Name": "異国の山賊長ヒグマ"
+    "Name": "山贼头目"
   },
   "8801": {
     "MonsterType": 1,
@@ -11689,7 +12681,7 @@
   },
   "8803": {
     "MonsterType": 1,
-    "Name": "不明モンスター 8803"
+    "Name": "？？？？？"
   },
   "8888": {
     "MonsterType": 0,
@@ -12181,195 +13173,195 @@
   },
   "920500": {
     "MonsterType": 0,
-    "Name": "眠る学者"
+    "Name": "沉眠学者"
   },
   "920501": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920502": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920503": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920504": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920505": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920506": {
     "MonsterType": 2,
-    "Name": "ボス・外道王"
+    "Name": "首领·狂悖之王"
   },
   "920507": {
     "MonsterType": 2,
-    "Name": "ボス・嗜血のフラッフ"
+    "Name": "首领·嗜血毛球"
   },
   "920508": {
     "MonsterType": 2,
-    "Name": "ボス・空洞センチネル"
+    "Name": "首领·空洞监察者"
   },
   "920509": {
     "MonsterType": 2,
-    "Name": "ボス・捕食カニクモ"
+    "Name": "首领·掠食蟹蛛"
   },
   "920510": {
     "MonsterType": 2,
-    "Name": "ボス・峠の牙"
+    "Name": "首领·山脊之牙"
   },
   "920511": {
     "MonsterType": 1,
-    "Name": "ドゴルマン"
+    "Name": "多戈尔曼"
   },
   "920512": {
     "MonsterType": 1,
-    "Name": "カニバル・フラッフ"
+    "Name": "食人毛球"
   },
   "920513": {
     "MonsterType": 1,
-    "Name": "聖堂の眼"
+    "Name": "圣堂之眼"
   },
   "920514": {
     "MonsterType": 1,
-    "Name": "殺し屋カニクモ"
+    "Name": "杀手蟹蛛"
   },
   "920515": {
     "MonsterType": 1,
-    "Name": "深緑の牙"
+    "Name": "深绿之牙"
   },
   "920520": {
     "MonsterType": 0,
-    "Name": "砂岩ファットマン"
+    "Name": "砂岩肉山"
   },
   "920521": {
     "MonsterType": 0,
-    "Name": "灰燼ファットマン"
+    "Name": "灰烬肉山"
   },
   "920522": {
     "MonsterType": 0,
-    "Name": "トゥース・フラッフ"
+    "Name": "切齿毛球"
   },
   "920523": {
     "MonsterType": 0,
-    "Name": "ニードル・フラッフ"
+    "Name": "尖棘毛球"
   },
   "920524": {
     "MonsterType": 0,
-    "Name": "巡視のフローティングアイ"
+    "Name": "巡视浮瞳"
   },
   "920525": {
     "MonsterType": 0,
-    "Name": "機心のフローティングアイ"
+    "Name": "机心浮瞳"
   },
   "920526": {
     "MonsterType": 0,
-    "Name": "火炎カニクモ"
+    "Name": "火焰蟹蛛"
   },
   "920527": {
     "MonsterType": 0,
-    "Name": "荒野カニクモ"
+    "Name": "荒原蟹蛛"
   },
   "920528": {
     "MonsterType": 0,
-    "Name": "ワイルドボア"
+    "Name": "野山猪"
   },
   "920529": {
     "MonsterType": 0,
-    "Name": "猟道ワイルドボア"
+    "Name": "猎路山猪"
   },
   "920530": {
     "MonsterType": 0,
-    "Name": "研究員ジム"
+    "Name": "研究员吉姆"
   },
   "920531": {
     "MonsterType": 0,
-    "Name": "研究員ジディ"
+    "Name": "研究员吉迪"
   },
   "920532": {
     "MonsterType": 0,
-    "Name": "研究員ジミー"
+    "Name": "研究员吉米"
   },
   "920533": {
     "MonsterType": 0,
-    "Name": "迷走・遊離体"
+    "Name": "迷失·游离体"
   },
   "920534": {
     "MonsterType": 0,
-    "Name": "研究員ジム"
+    "Name": "研究员吉姆"
   },
   "920535": {
     "MonsterType": 0,
-    "Name": "研究員ジディ"
+    "Name": "研究员吉迪"
   },
   "920536": {
     "MonsterType": 0,
-    "Name": "迷走・研究員"
+    "Name": "迷失·研究员"
   },
   "920550": {
     "MonsterType": 1,
-    "Name": "迷妄・巨像"
+    "Name": "弥妄·巨像"
   },
   "920551": {
     "MonsterType": 1,
-    "Name": "エルダーゴブリン"
+    "Name": "巫师哥布林"
   },
   "920552": {
     "MonsterType": 1,
-    "Name": "ヘンリー"
+    "Name": "亨利"
   },
   "920553": {
     "MonsterType": 1,
-    "Name": "ヘンリー"
+    "Name": "亨利"
   },
   "920554": {
     "MonsterType": 1,
-    "Name": "幻花晶"
+    "Name": "幻幻花"
   },
   "920561": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920562": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920563": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920564": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920565": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920566": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920567": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920568": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920569": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "920570": {
     "MonsterType": 2,
-    "Name": "迷妄の裁定者・終式"
+    "Name": "弥妄裁定者·终式"
   },
   "9999": {
     "MonsterType": 0,
