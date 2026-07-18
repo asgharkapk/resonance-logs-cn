@@ -1,96 +1,200 @@
-# Resonance Logs CN
+# <img src="app-logo.png" width="64" align="center"> Star Resonance DPS meter & Dungeon/Raid BDM & Skill/Buff Trackers Overlay
 
-[Blue Protocol: Star Resonance](https://www.starresonance.com/) 战斗数据分析桌面应用，支持实时 DPS 统计、Buff 监控、技能 CD 展示等功能。
+<div align="center">
 
-本项目修改自 [resonance-logs](https://github.com/resonance-logs/resonance-logs)
+# <img src="src-tauri/icons/icon.ico" width="64" align="center"> Resonance Logs Documentation
 
-## 功能特性
+A feature-rich companion application for **Star Resonance** with DPS analysis, overlays, combat logging, minimap support, dungeon mechanic guides, and more.
 
-- **DPS 检测**：实时秒伤统计、全局活跃时间、历史记录
-- **Buff 监控**：技能 CD、Buff 监控、Buff 别名、分类快捷监听（食物/炼金）
-- **模组计算**：基于抓包的模组数据，智能筛选最优模组搭配（支持 GPU 加速）
-- **自定义面板**：以进度条形式展示计数器和 Buff 监控
-- **游戏浮窗**：透明置顶窗口，支持遮罩与快捷键切换
-- **自动更新**：支持应用内 OTA 更新
+[![English](https://img.shields.io/badge/README-English-blue?style=for-the-badge)](./README_EN.md)
+[![简体中文](https://img.shields.io/badge/README-简体中文-red?style=for-the-badge)](./README_CN.md)
 
-## 技术栈
+---
 
-- **后端**：Rust + [Tauri 2](https://tauri.app/)
-- **前端**：SvelteKit 5 + Svelte + TypeScript + Tailwind CSS
-- **数据捕获**：WinDivert / Npcap（Windows 网络包捕获）
+### 📖 Documentation
 
-## 系统要求
+| Document                                                                                            | Description                      |
+| --------------------------------------------------------------------------------------------------- | -------------------------------- |
+| 📘 [README](README.md)                    | Main documentation               |
+| 🇺🇸 [README_EN.md](README_EN.md)         | English documentation            |
+| 🇨🇳 [README_CN.md](README_CN.md)         | Simplified Chinese documentation |
+| 📝 [CHANGELOG.md](CHANGELOG.md)           | Project changelog                |
+| 🍴 [CHANGELOG_FORK.md](CHANGELOG_FORK.md) | Fork-specific changes            |
+| 🍴 [TODO.md](TODO.md) | ToDo List            |
 
-- **平台**：Windows（WinDivert 需管理员权限；Npcap 需安装 [Npcap](https://npcap.com/) 并选择正确网卡）
-- **Node.js**：用于前端构建
-- **Rust**：用于 Tauri 构建
+---
 
-## 快速开始
+## 🌍 Available Documentation Languages
 
-### 安装依赖
+The documentation is separated by language.
+
+| Language                | Documentation                        | Description            |
+| ----------------------- | ------------------------------------ | ---------------------- |
+| 🇨🇳 Simplified Chinese | [zh-CN/README.md](doc/zh-CN/README.md) | Default documentation  |
+| 🇺🇸 English            | [en-US/README.md](doc/en-US/README.md) | English documentation  |
+| 🇯🇵 Japanese           | [ja-JP/README.md](doc/ja-JP/README.md) | Japanese documentation |
+
+</div>
+
+---
+
+> [!IMPORTANT]
+> This repository contains the documentation source files only. If you want to contribute translations or improve existing pages, please edit the corresponding language directory.
+
+> [!NOTE]
+> Images are shared across all languages. Every language uses the same image assets to keep documentation consistent and reduce repository size.
+
+> [!TIP]
+> If you're new to Resonance Logs, start with the English or Chinese README before exploring individual feature documentation.
+
+---
+
+# ✨ Features Preview
+
+### Compact Theme
+
+<img src="doc/shared/img/dps/dps_5.png">
+
+A minimal interface designed to keep important combat information visible while occupying as little screen space as possible.
+
+---
+
+### Theme Customization
+
+<img src="doc/shared/img/dps/dps_4.png">
+
+Customize colors, layouts, fonts, and appearance to match your preferences.
+
+---
+
+### Accuracy Test
+
+<img src="/doc/shared/img/dps/dps_1.png">
+
+Verify combat log accuracy and ensure the parser is correctly reading game data.
+
+---
+
+### Dungeon Mechanics Guide Minimap
+
+<table>
+  <tr>
+    <td><img src="doc/shared/img/minimap/s3_minimap_1.png" width="250"></td>
+    <td><img src="doc/shared/img/minimap/s3_minimap_2.png" width="250"></td>
+    <td><img src="doc/shared/img/minimap/s3_minimap_3.png" width="250"></td>
+  </tr>
+</table>
+Interactive minimap overlays help players quickly learn dungeon mechanics and positioning.
+
+---
+
+### DPS Overlay as Your Game UI
+
+<img src="/doc/shared/img/monitor/buff_4.png">
+
+You can disable the in-game UI and rely on the Resonance Logs overlay for combat information while maintaining a clean gameplay experience.
+
+---
+
+## 🌐 Changing the Application Language
+
+<img src="doc/shared/img/faq/faq_5.png">
+
+The application supports multiple languages. Open **Settings → Language** to switch the interface language.
+
+> [!TIP]
+> After changing the language, restart the application if some interface elements do not immediately update.
+
+---
+
+# 🛠 Building the HTML Documentation
+
+Generate the complete HTML documentation with:
 
 ```bash
-npm install
+npm run doc:html
 ```
 
-### 开发模式
+This command expands placeholders such as:
+
+```text
+{{ui:key}}
+```
+
+into their corresponding localized application menu names before generating the documentation.
+
+The generated HTML files are placed in:
+
+```text
+doc/html_doc/
+```
+
+Open:
+
+```text
+doc/html_doc/index.html
+```
+
+in your browser to view the complete documentation.
+
+> [!NOTE]
+> The generated HTML reflects the application's current localization, making it ideal for publishing or offline browsing.
+
+---
+
+# 🔧 Building a Single Language
+
+For faster development and debugging, generate documentation for only one locale:
 
 ```bash
-npm run tauri dev
+node scripts/build-doc-html.cjs --locale=en-US
 ```
 
-### 构建
+Replace `en-US` with another supported locale if needed.
 
-```bash
-npm run tauri build
+---
+
+# 📂 Documentation Maintenance
+
+## Images
+
+All images have a **single source of truth** located in:
+
+```text
+shared/img/
 ```
 
-构建产物默认在 `src-tauri/target/release/bundle/` 下，支持 NSIS 安装包。
+Do **not** duplicate images into language folders.
 
-### 模组计算构建说明
+Use the following relative paths:
 
-模组计算功能依赖 C++ 扩展，并可选用 GPU（CUDA/OpenCL）加速。构建前请参考 [StarResonanceAutoMod](https://github.com/fudiyangjin/StarResonanceAutoMod) 的环境要求：
+| Document Type     | Image Path                |
+| ----------------- | ------------------------- |
+| `faq/*.md`        | `../../shared/img/...`    |
+| `features/*/*.md` | `../../../shared/img/...` |
 
-**基础要求（CPU 版本）：**
+> [!IMPORTANT]
+> Keeping images centralized prevents inconsistencies and significantly reduces repository size.
 
-- **Visual Studio Build Tools 2019/2022** 或 Visual Studio（MSVC 编译器）
-- Windows SDK
+---
 
-**GPU 版本额外要求：**
+## UI Menu Placeholders
 
-- **CUDA Toolkit 12.9**（NVIDIA 显卡，RTX 20XX 及以上, 12.9 以上支持 50XX 的构建）
-- 或 **OpenCL**（NVIDIA/AMD/Intel 显卡，通常随显卡驱动或 CUDA 提供）
+While writing documentation, use placeholders such as:
 
-构建时脚本会自动检测 CUDA/OpenCL：若未检测到，则仅编译 CPU 版本；若 C++ 源码目录 `src-tauri/src/module_optimizer/cpp/` 不存在，则跳过模组计算模块构建，其余功能不受影响。
+```text
+{{ui:routes.tools.dps}}
+```
 
-## 文档
+During HTML generation, these placeholders are automatically replaced with the correct localized menu names from the application's i18n resources.
 
-文档支持 **简体中文**、**English**、**日本語** 三种语言：
+> [!TIP]
+> This approach allows a single documentation source to remain synchronized with interface translations without manually updating menu names for every language.
 
-- 源码：[doc/zh-CN/](./doc/zh-CN/README.md) · [doc/en-US/](./doc/en-US/README.md) · [doc/ja-JP/](./doc/ja-JP/README.md)
-- 首次使用请先阅读各语言的 [快速入门 / Getting Started / はじめに](./doc/zh-CN/getting-started.md)（Npcap 安装、网卡选择、**重启应用**）
-- 构建 HTML：`npm run doc:html` → 输出 [doc/html_doc/](./doc/html_doc/index.html)（含语言切换页）
+---
 
-## 下载
+> [!WARNING]
+> Do not manually replace `{{ui:...}}` placeholders with translated text inside Markdown files. Doing so can cause documentation to become outdated when the application's UI translations change.
 
-- [Releases](https://github.com/fudiyangjin/resonance-logs-cn/releases) - 预构建安装包
-
-## 社区
-
-- QQ 群：1084866292
-- Discord：https://discord.gg/RHeX47wvDU
-
-## 更新日志
-
-详见 [CHANGELOG.md](./CHANGELOG.md)
-
-## 许可证
-
-[AGPL-3.0-only](LICENSE)
-
-## 致谢
-
-- [resonance-logs](https://github.com/resonance-logs/resonance-logs) - 原始项目
-- [BPSR-ZDPS](https://github.com/Blue-Protocol-Source/BPSR-ZDPS) - ZDPS 项目（DPS 统计与相关功能参考）
-- [StarResonanceDamageCounter](https://github.com/dmlgzs/StarResonanceDamageCounter) - 伤害统计参考实现
-- [StarResonanceAutoMod](https://github.com/fudiyangjin/StarResonanceAutoMod) - 模组优化算法与构建参考
+> [!CAUTION]
+> Avoid copying images into language-specific directories. Multiple copies increase maintenance effort and can easily become inconsistent over time.
