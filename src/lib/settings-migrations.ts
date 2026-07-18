@@ -6,6 +6,7 @@ import { commands } from "./bindings";
 import {
   SETTINGS,
   createDefaultLoadoutsState,
+  createDefaultLiveAppearance,
   createDefaultLiveMeterProfileData,
   createDefaultLiveMeterState,
   createDefaultMonsterMonitorState,
@@ -13,7 +14,9 @@ import {
   deepCloneSettings,
   extractMonsterProfileData,
   generateProfileId,
+  startAccessibilityStore,
   startLiveMeterStores,
+  type LiveAppearance,
   type LiveMeterProfile,
   type LiveMeterProfileData,
   type LiveMeterState,
@@ -28,7 +31,7 @@ import {
 import { t } from "$lib/i18n/index.svelte";
 import { isPristineLegacyMonitoring } from "./starter-loadout";
 
-export const CURRENT_MONITORING_SCHEMA_VERSION = 2;
+export const CURRENT_MONITORING_SCHEMA_VERSION = 3;
 
 const READY_EVENT = "monitoring-settings-ready";
 const ERROR_EVENT = "monitoring-settings-error";
@@ -88,6 +91,33 @@ type LegacySkillMonitorState = SkillMonitorState & {
 type LegacyLoadoutsState = LoadoutsState & {
   schemaVersion?: number;
 };
+
+/**
+ * Pre-schema-3 `accessibility` also held the fields that moved into each
+ * live profile's `appearance` (see `LiveAppearance`). Kept here only so the
+ * v2 -> v3 migration can read whatever a user had already customized before
+ * those fields are dropped from the `accessibility` store's type.
+ */
+type LegacyAccessibilityAppearance = {
+  classColors?: Record<string, string>;
+  useClassSpecColors?: boolean;
+  classSpecColors?: Record<string, string>;
+};
+
+/** Reads the pre-migration global color settings to seed each live profile's new `appearance` field. */
+function extractLegacyAppearanceFromAccessibility(): LiveAppearance {
+  const legacy = SETTINGS.accessibility
+    .state as unknown as typeof SETTINGS.accessibility.state &
+    LegacyAccessibilityAppearance;
+  const defaults = createDefaultLiveAppearance();
+  return {
+    themeColors: { ...defaults.themeColors, ...legacy.customThemeColors },
+    classColors: { ...defaults.classColors, ...legacy.classColors },
+    useClassSpecColors:
+      legacy.useClassSpecColors ?? defaults.useClassSpecColors,
+    classSpecColors: { ...defaults.classSpecColors, ...legacy.classSpecColors },
+  };
+}
 
 export type LegacyMonitoringSources = {
   skillMonitor: LegacySkillMonitorState;
@@ -423,16 +453,20 @@ type V1MonitoringState = MonitoringSettingsState & {
 };
 
 /**
- * In-place migration from monitoring schema v1 to v2. v1 kept the skill/
- * monster on/off switches and daily-scene auto-hide as global fields and had
- * no live-meter profile; v2 moves those flags onto each profile and
- * introduces a live-meter profile that every existing loadout shares.
+ * In-place migration from monitoring schema v1 (or v2) up to the current
+ * schema. v1 kept the skill/monster on/off switches and daily-scene
+ * auto-hide as global fields and had no live-meter profile; v2 moves those
+ * flags onto each profile and introduces a live-meter profile that every
+ * existing loadout shares. v3 moves the (until then still global)
+ * challenge-watch forbidden-damage list and appearance colors onto each
+ * live-meter profile too, so both travel with exported loadouts.
  */
 export function migrateMonitoringStateIncrementally(
   input: MonitoringSettingsState,
   liveProfileData: LiveMeterProfileData,
 ): MonitoringSettingsState {
   const state = deepCloneSettings(input) as V1MonitoringState;
+  const fromSchemaVersion = state.schemaVersion || 1;
   const legacySkillEnabled = state.skillMonitor.enabled ?? false;
   const legacySkillAutoHide = state.skillMonitor.autoHideInDailyScenes ?? false;
   delete state.skillMonitor.enabled;
@@ -457,22 +491,39 @@ export function migrateMonitoringStateIncrementally(
     }),
   );
 
-  // Schema v1 had no live-meter profile. Ignore any default `liveMeter`
-  // injected by the current store shape and seed from the legacy live stores.
-  const liveProfile: LiveMeterProfile = {
-    ...deepCloneSettings(liveProfileData),
-    id: generateProfileId("live"),
-    name: "",
-  };
-  state.liveMeter = {
-    mirroredProfileId: liveProfile.id,
-    profiles: [liveProfile],
-  };
+  if (fromSchemaVersion < 2) {
+    // Schema v1 had no live-meter profile at all. Ignore any default
+    // `liveMeter` injected by the current store shape and seed a single
+    // profile from the legacy live stores (which, at this point, already
+    // include `challengeWatch`/`appearance` — see below).
+    const liveProfile: LiveMeterProfile = {
+      ...deepCloneSettings(liveProfileData),
+      id: generateProfileId("live"),
+      name: "",
+    };
+    state.liveMeter = {
+      mirroredProfileId: liveProfile.id,
+      profiles: [liveProfile],
+    };
+    state.loadouts.items = state.loadouts.items.map((item) => ({
+      ...item,
+      liveProfileId: item.liveProfileId ?? liveProfile.id,
+    }));
+  }
 
-  state.loadouts.items = state.loadouts.items.map((item) => ({
-    ...item,
-    liveProfileId: item.liveProfileId ?? liveProfile.id,
-  }));
+  if (fromSchemaVersion < 3) {
+    // Schema v2 already had (possibly several) live-meter profiles, but none
+    // of them carry `challengeWatch`/`appearance` yet — backfill every
+    // profile from the same legacy snapshot instead of only the mirror.
+    state.liveMeter.profiles = state.liveMeter.profiles.map((profile) => ({
+      ...profile,
+      challengeWatch:
+        profile.challengeWatch ??
+        deepCloneSettings(liveProfileData.challengeWatch),
+      appearance:
+        profile.appearance ?? deepCloneSettings(liveProfileData.appearance),
+    }));
+  }
 
   return reconcileMonitoringState(state);
 }
@@ -671,8 +722,14 @@ export function initializeMonitoringSettings(): Promise<MonitoringInitialization
     );
 
     try {
-      await startLiveMeterStores();
+      await Promise.all([startAccessibilityStore(), startLiveMeterStores()]);
       const legacyLiveProfileData = await readLiveMirrorSnapshot();
+      // `appearance` is a brand-new store (unlike `challengeWatch`, which
+      // reuses the pre-existing global store id), so its snapshot only has
+      // built-in defaults — override with whatever the user had already
+      // customized on the old global `accessibility` fields.
+      legacyLiveProfileData.appearance =
+        extractLegacyAppearanceFromAccessibility();
       try {
         await SETTINGS.monitoring.start();
         if (

@@ -56,6 +56,7 @@ export const zhCNMessages = {
   "routes.tools.minimap": "副本机制",
   "routes.tools.appSettings": "应用设置",
   "routes.dps.history": "历史",
+  "routes.dps.challenge": "挑战监控",
   "routes.dps.themes": "主题",
   "routes.dps.settings": "设置",
   "dps.title": "DPS检测",
@@ -117,17 +118,23 @@ export const zhCNMessages = {
   "settings.tabs.history": "历史",
   "settings.tabs.debug": "调试",
   "settings.tabs.language": "语言",
-  "settings.scope.live": "实时计量设置随当前实时计量方案保存，可随总方案导出分享。",
+  "settings.scope.live":
+    "实时计量设置随当前实时计量方案保存，可随总方案导出分享。",
   "settings.scope.history": "历史统计设置为本机配置，不随方案导出。",
   "appSettings.title": "应用设置",
   "appSettings.description":
     "应用级配置：网络抓包、全局快捷键、语言与诊断。这些设置不随方案导出。",
   "appSettings.tabs.general": "通用",
+  "appSettings.tabs.appearance": "外观",
   "appSettings.tabs.network": "网络",
   "appSettings.tabs.shortcuts": "快捷键",
   "appSettings.tabs.diagnostics": "诊断",
   "appSettings.language.title": "语言",
   "appSettings.language.description": "切换界面显示语言。",
+  "appSettings.appearance.scope":
+    "以下外观设置为本机全局配置，不随方案导出分享。",
+  "appSettings.appearance.colorScopeMain":
+    "应用一套预设配色到主窗口界面（不影响实时统计窗口）",
   "challengeWatch.title": "挑战监控（禁用伤害）",
   "challengeWatch.description":
     "按机制/伤害名称搜索并添加禁用伤害。当任意成员在当前战斗段受到这些伤害时，会在 DPS/治疗/承伤 列表中其名字后显示红色三角警告，便于中途判断挑战是否失败。",
@@ -851,6 +858,7 @@ export const zhCNMessages = {
   "themes.header.paddingYDescription": "标签上下内边距",
   "themes.presets.colorTitle": "颜色主题",
   "themes.presets.colorDescription": "选择一个预设颜色主题",
+  "themes.presets.colorScopeLoadout": "应用到当前方案的实时统计窗口配色",
   "themes.presets.sizeTitle": "尺寸预设",
   "themes.presets.sizeDescription": "根据显示器调整表格和标题的大小",
   "components.deathReplay.empty.default":
@@ -1696,8 +1704,7 @@ export const zhCNMessages = {
   "voice.model.import.dialogTitle": "选择模型文件",
   "voice.model.profiles.title": "音色档案",
   "voice.model.finetuned.title": "用户微调音色",
-  "voice.model.finetuned.description":
-    "引用微调导出的 GGUF 部署目录",
+  "voice.model.finetuned.description": "引用微调导出的 GGUF 部署目录",
   "voice.model.finetuned.dialogTitle": "选择微调音色部署目录",
   "voice.model.finetuned.import": "导入",
   "voice.model.finetuned.replace": "替换",

@@ -48,7 +48,7 @@
   );
   let abbreviationStyle = $derived(SETTINGS.live.general.state.abbreviationStyle);
   let customThemeColors = $derived(
-    SETTINGS.accessibility.state.customThemeColors,
+    SETTINGS.live.appearance.state.themeColors,
   );
 
   let sortKey = $derived(SETTINGS.live.sorting.dpsSkills.state.sortKey);

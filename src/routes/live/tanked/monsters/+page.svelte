@@ -95,7 +95,7 @@
     SETTINGS.live.general.state.abbreviationStyle,
   );
   let customThemeColors = $derived(
-    SETTINGS.accessibility.state.customThemeColors,
+    SETTINGS.live.appearance.state.themeColors,
   );
   let SETTINGS_SHORTEN_TPS = $derived(settings.state.live.general.shortenTps);
   let SETTINGS_RELATIVE_TO_TOP = $derived(

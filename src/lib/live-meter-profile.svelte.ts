@@ -53,7 +53,25 @@ type LiveStoreMap = {
     tankedPlayers: LiveStore<LiveMeterProfileData["sorting"]["tankedPlayers"]>;
     tankedSkills: LiveStore<LiveMeterProfileData["sorting"]["tankedSkills"]>;
   };
+  challengeWatch: LiveStore<LiveMeterProfileData["challengeWatch"]>;
+  appearance: LiveStore<LiveMeterProfileData["appearance"]>;
 };
+
+// Compile-time exhaustiveness guard: if a field is added to
+// `LiveMeterProfileData` without a matching entry in `LiveStoreMap` (and
+// thus in `liveStores()`/`extractLiveProfileData()`/`applyProfileData()`
+// below), this stops compiling instead of silently behaving as a global,
+// non-exported setting. Mirrors `MONSTER_PROFILE_FIELD_KEYS` in
+// `settings-store.ts`.
+type MissingLiveMirrorFieldKeys = Exclude<
+  keyof LiveMeterProfileData,
+  keyof LiveStoreMap
+>;
+const _liveMirrorFieldKeysExhaustive: Record<
+  MissingLiveMirrorFieldKeys,
+  never
+> = {};
+void _liveMirrorFieldKeysExhaustive;
 
 function liveStores(): LiveStoreMap {
   const live = SETTINGS.live;
@@ -69,6 +87,8 @@ function liveStores(): LiveStoreMap {
     headerCustomization: live.headerCustomization,
     columnOrder: live.columnOrder,
     sorting: live.sorting,
+    challengeWatch: SETTINGS.challengeWatch,
+    appearance: live.appearance,
   };
 }
 
@@ -134,6 +154,8 @@ export function extractLiveProfileData(): LiveMeterProfileData {
       tankedPlayers: { ...stores.sorting.tankedPlayers.state },
       tankedSkills: { ...stores.sorting.tankedSkills.state },
     },
+    challengeWatch: { ...stores.challengeWatch.state },
+    appearance: { ...stores.appearance.state },
   });
 }
 
@@ -174,6 +196,8 @@ function applyProfileData(data: LiveMeterProfileData): void {
     cloned.sorting.tankedPlayers,
   );
   Object.assign(stores.sorting.tankedSkills.state, cloned.sorting.tankedSkills);
+  Object.assign(stores.challengeWatch.state, cloned.challengeWatch);
+  Object.assign(stores.appearance.state, cloned.appearance);
 }
 
 /** Flushes mirror data into its profile slot (if it still exists). */

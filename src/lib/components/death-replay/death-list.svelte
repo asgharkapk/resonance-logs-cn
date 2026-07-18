@@ -30,7 +30,7 @@
 
   const tableSettings = $derived(SETTINGS.live.tableCustomization.state);
   const customThemeColors = $derived(
-    SETTINGS.accessibility.state.customThemeColors,
+    SETTINGS.live.appearance.state.themeColors,
   );
   const shortenTps = $derived(
     variant === "history"

@@ -11,10 +11,12 @@
   import ShortcutsSettings from "../dps/settings/shortcuts.svelte";
   import DebugSettings from "../dps/settings/debug.svelte";
   import LanguageSettings from "./language.svelte";
+  import AppearanceSettings from "./appearance.svelte";
   import CogIcon from "virtual:icons/lucide/cog";
 
   const settingsTabs = [
     { id: "general", labelKey: "appSettings.tabs.general" },
+    { id: "appearance", labelKey: "appSettings.tabs.appearance" },
     { id: "network", labelKey: "appSettings.tabs.network" },
     { id: "shortcuts", labelKey: "appSettings.tabs.shortcuts" },
     { id: "diagnostics", labelKey: "appSettings.tabs.diagnostics" },
@@ -49,6 +51,10 @@
 
     <Tabs.Content value="general">
       <LanguageSettings />
+    </Tabs.Content>
+
+    <Tabs.Content value="appearance">
+      <AppearanceSettings />
     </Tabs.Content>
 
     <Tabs.Content value="network">

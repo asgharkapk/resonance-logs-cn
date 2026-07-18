@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createDefaultLiveMeterProfileData,
   createDefaultMonsterMonitorProfile,
   createDefaultSkillMonitorProfile,
   omitProfileId,
@@ -247,5 +248,47 @@ describe("parseLoadoutExport", () => {
       JSON.parse(JSON.stringify(parsed.output)),
     );
     expect(roundTrip).toEqual(parsed);
+  });
+
+  it("defaults liveProfile.challengeWatch/appearance for pre-existing exports", () => {
+    // Older exports predate the challengeWatch/appearance fields entirely —
+    // `liveProfile` itself may even be absent (falls back to defaults).
+    const result = parseLoadoutExport(validExport());
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    const defaults = createDefaultLiveMeterProfileData();
+    expect(result.output.liveProfile.challengeWatch).toEqual(
+      defaults.challengeWatch,
+    );
+    expect(result.output.liveProfile.appearance).toEqual(defaults.appearance);
+  });
+
+  it("preserves an explicit liveProfile.challengeWatch/appearance payload", () => {
+    const data = validExport();
+    data["liveProfile"] = {
+      ...omitProfileId({
+        ...createDefaultLiveMeterProfileData(),
+        id: "unused",
+        name: "Live",
+      }),
+      challengeWatch: { forbiddenDamageIds: [123, 456] },
+      appearance: {
+        ...createDefaultLiveMeterProfileData().appearance,
+        classColors: { Warrior: "#abcdef" },
+        useClassSpecColors: true,
+      },
+    };
+
+    const result = parseLoadoutExport(data);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.output.liveProfile.challengeWatch.forbiddenDamageIds).toEqual(
+      [123, 456],
+    );
+    expect(result.output.liveProfile.appearance.classColors).toEqual({
+      Warrior: "#abcdef",
+    });
+    expect(result.output.liveProfile.appearance.useClassSpecColors).toBe(true);
+    expect(parseLoadoutExport(result.output).success).toBe(true);
   });
 });

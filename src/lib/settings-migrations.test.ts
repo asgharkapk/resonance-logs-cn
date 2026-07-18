@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  SETTINGS,
   createDefaultLoadoutsState,
   createDefaultLiveMeterProfileData,
   createDefaultMonitoringSettingsState,
   createDefaultMonsterMonitorProfile,
   createDefaultSkillMonitorProfile,
+  startAccessibilityStore,
 } from "./settings-store";
 import {
   CURRENT_MONITORING_SCHEMA_VERSION,
@@ -20,6 +22,25 @@ function defaultLiveProfileData() {
 }
 
 describe("monitoring recovery coordination", () => {
+  it("joins concurrent accessibility store starts", async () => {
+    const startPromise = Promise.resolve();
+    const start = vi
+      .spyOn(SETTINGS.accessibility, "start")
+      .mockReturnValue(startPromise);
+
+    try {
+      const first = startAccessibilityStore();
+      const second = startAccessibilityStore();
+
+      expect(first).toBe(startPromise);
+      expect(second).toBe(first);
+      expect(start).toHaveBeenCalledOnce();
+      await first;
+    } finally {
+      start.mockRestore();
+    }
+  });
+
   it("allows only the main window to coordinate recovery", () => {
     expect(isMonitoringRecoveryAuthority("main")).toBe(true);
     expect(isMonitoringRecoveryAuthority("skill-monitor-overlay")).toBe(false);
@@ -386,5 +407,62 @@ describe("incremental monitoring migration", () => {
     expect(migrated.loadouts.items[0]!.liveProfileId).toBe(
       migrated.liveMeter.profiles[0]!.id,
     );
+  });
+
+  it("backfills challengeWatch/appearance onto every schema-two live profile without touching other resources", () => {
+    const state = createDefaultMonitoringSettingsState();
+    state.schemaVersion = 2;
+    // Simulate live profiles persisted before schema 3 introduced these
+    // fields — they simply wouldn't be present on disk yet.
+    const firstProfile = { ...state.liveMeter.profiles[0]! } as Partial<
+      (typeof state.liveMeter.profiles)[0]
+    >;
+    delete firstProfile.challengeWatch;
+    delete firstProfile.appearance;
+    const secondProfile = {
+      ...createDefaultLiveMeterProfileData(),
+      id: "live-b",
+      name: "B",
+    } as Partial<(typeof state.liveMeter.profiles)[0]>;
+    delete secondProfile.challengeWatch;
+    delete secondProfile.appearance;
+    state.liveMeter.profiles = [
+      firstProfile,
+      secondProfile,
+    ] as typeof state.liveMeter.profiles;
+
+    const liveProfileData = defaultLiveProfileData();
+    liveProfileData.challengeWatch = { forbiddenDamageIds: [42] };
+    liveProfileData.appearance = {
+      ...liveProfileData.appearance,
+      themeColors: {
+        ...liveProfileData.appearance.themeColors,
+        primary: "#123456",
+      },
+      classColors: {
+        ...liveProfileData.appearance.classColors,
+        Warrior: "#abcdef",
+      },
+      useClassSpecColors: true,
+      classSpecColors: {
+        ...liveProfileData.appearance.classSpecColors,
+        Iaido: "#fedcba",
+      },
+    };
+
+    const migrated = migrateMonitoringStateIncrementally(
+      state,
+      liveProfileData,
+    );
+
+    expect(migrated.schemaVersion).toBe(CURRENT_MONITORING_SCHEMA_VERSION);
+    expect(migrated.liveMeter.profiles).toHaveLength(2);
+    for (const profile of migrated.liveMeter.profiles) {
+      expect(profile.challengeWatch.forbiddenDamageIds).toEqual([42]);
+      expect(profile.appearance.themeColors.primary).toBe("#123456");
+      expect(profile.appearance.classColors["Warrior"]).toBe("#abcdef");
+      expect(profile.appearance.useClassSpecColors).toBe(true);
+      expect(profile.appearance.classSpecColors["Iaido"]).toBe("#fedcba");
+    }
   });
 });

@@ -5,7 +5,6 @@
   import SettingsSwitch from "../settings/settings-switch.svelte";
   import SettingsColor from "../settings/settings-color.svelte";
   import SettingsColorAlpha from "../settings/settings-color-alpha.svelte";
-  import SettingsFilePicker from "../settings/settings-file-picker.svelte";
   import HeaderLayoutEditor from "../settings/header-layout-editor.svelte";
   import { t, type MessageKey } from "$lib/i18n/index.svelte";
   import {
@@ -15,7 +14,9 @@
     CLASS_SPEC_NAMES,
     DEFAULT_CUSTOM_THEME_COLORS,
     CUSTOM_THEME_COLOR_LABELS,
+    type CustomThemeColors,
   } from "$lib/settings-store";
+  import { COLOR_PRESETS } from "$lib/theme-color-presets";
   import { CLASS_NAMES, getClassColorRaw } from "$lib/utils.svelte";
   import ChevronDown from "virtual:icons/lucide/chevron-down";
 
@@ -25,231 +26,12 @@
     { id: "presets", labelKey: "themes.tabs.presets" },
   ] satisfies Array<{ id: string; labelKey: MessageKey }>;
 
-  // === COLOR THEME PRESETS (matching CSS data-theme selectors) ===
-  // Color presets now include full variable mappings (from CSS data-theme blocks)
-  const COLOR_PRESETS: Record<
-    string,
-    {
-      nameKey: MessageKey;
-      descriptionKey: MessageKey;
-      theme: string;
-      preview: { bg: string; primary: string; accent: string; fg: string };
-      vars?: Record<string, string>;
-    }
-  > = {
-    dark: {
-      nameKey: "themes.preset.color.dark.name",
-      descriptionKey: "themes.preset.color.dark.description",
-      theme: "dark",
-      preview: {
-        bg: "#212121",
-        primary: "#a6a6a6",
-        accent: "#525252",
-        fg: "#e2e2e2",
-      },
-      vars: {
-        backgroundMain: "oklch(0.2178 0 0)",
-        backgroundLive: "oklch(0.2178 0 0)",
-        foreground: "oklch(0.8853 0 0)",
-        surface: "oklch(0.2435 0 0)",
-        surfaceForeground: "oklch(0.8853 0 0)",
-        primary: "oklch(0.7058 0 0)",
-        primaryForeground: "oklch(0.2178 0 0)",
-        secondary: "oklch(0.3092 0 0)",
-        secondaryForeground: "oklch(0.8853 0 0)",
-        muted: "oklch(0.2850 0 0)",
-        mutedForeground: "oklch(0.5999 0 0)",
-        accent: "oklch(0.3715 0 0)",
-        accentForeground: "oklch(0.8853 0 0)",
-        destructive: "oklch(0.6591 0.1530 22.1703)",
-        destructiveForeground: "oklch(1 0 0)",
-        border: "oklch(0.3290 0 0)",
-        input: "oklch(0.3092 0 0)",
-        tooltipBg: "oklch(0.275 0 0 / 0.92)",
-        tooltipBorder: "oklch(0.38 0 0 / 0.55)",
-        tooltipFg: "oklch(0.8853 0 0)",
-        tableTextColor: "#ffffff",
-        tableAbbreviatedColor: "#71717a",
-      },
-    },
-    light: {
-      nameKey: "themes.preset.color.light.name",
-      descriptionKey: "themes.preset.color.light.description",
-      theme: "light",
-      preview: {
-        bg: "#fbfbf9",
-        primary: "#5b7fc7",
-        accent: "#d4a84a",
-        fg: "#2a2e40",
-      },
-      vars: {
-        backgroundMain: "oklch(0.985 0.01 95)",
-        backgroundLive: "oklch(0.985 0.01 95)",
-        foreground: "oklch(0.19 0.02 250)",
-        surface: "oklch(0.97 0.01 95)",
-        surfaceForeground: "oklch(0.19 0.02 250)",
-        primary: "oklch(0.65 0.12 250)",
-        primaryForeground: "oklch(0.99 0.01 95)",
-        secondary: "oklch(0.92 0.02 95)",
-        secondaryForeground: "oklch(0.34 0.04 250)",
-        muted: "oklch(0.9 0.015 95)",
-        mutedForeground: "oklch(0.48 0.02 240)",
-        accent: "oklch(0.78 0.14 60)",
-        accentForeground: "oklch(0.18 0.03 250)",
-        destructive: "oklch(0.62 0.24 25)",
-        destructiveForeground: "oklch(0.98 0.01 95)",
-        border: "oklch(0.88 0.02 95)",
-        input: "oklch(0.94 0.015 95)",
-        tooltipBg: "oklch(0.86 0.01 95 / 0.96)",
-        tooltipBorder: "oklch(0.78 0.02 95 / 0.65)",
-        tooltipFg: "oklch(0.19 0.02 250)",
-        tableTextColor: "#2a2e40",
-        tableAbbreviatedColor: "#71717a",
-      },
-    },
-    pink: {
-      nameKey: "themes.preset.color.pink.name",
-      descriptionKey: "themes.preset.color.pink.description",
-      theme: "pink",
-      preview: {
-        bg: "#F8E8EE",
-        primary: "#F2BED1",
-        accent: "#F2BED1",
-        fg: "#582F3B",
-      },
-      vars: {
-        backgroundMain: "#F8E8EE",
-        backgroundLive: "#F8E8EE",
-        foreground: "#582F3B",
-        surface: "#F9F5F6",
-        surfaceForeground: "#582F3B",
-        primary: "#F2BED1",
-        primaryForeground: "#402028",
-        secondary: "#FDCEDF",
-        secondaryForeground: "#5A2F3D",
-        muted: "#F9F5F6",
-        mutedForeground: "#7A5461",
-        accent: "#F2BED1",
-        accentForeground: "#402028",
-        destructive: "#D35D6E",
-        destructiveForeground: "#FFF9FB",
-        border: "#F2BED1",
-        input: "#FDCEDF",
-        tooltipBg: "#F2BED1EE",
-        tooltipBorder: "#F2BED1",
-        tooltipFg: "#582F3B",
-        tableTextColor: "#582F3B",
-        tableAbbreviatedColor: "#7A5461",
-      },
-    },
-    green: {
-      nameKey: "themes.preset.color.green.name",
-      descriptionKey: "themes.preset.color.green.description",
-      theme: "green",
-      preview: {
-        bg: "#e0f0e0",
-        primary: "#6fbf6f",
-        accent: "#7fcf8f",
-        fg: "#1a2a1a",
-      },
-      vars: {
-        backgroundMain: "oklch(0.94 0.03 150)",
-        backgroundLive: "oklch(0.94 0.03 150)",
-        foreground: "oklch(0.20 0.03 150)",
-        surface: "oklch(0.95 0.025 150)",
-        surfaceForeground: "oklch(0.20 0.03 150)",
-        primary: "oklch(0.75 0.09 150)",
-        primaryForeground: "oklch(0.98 0.015 95)",
-        secondary: "oklch(0.90 0.02 145)",
-        secondaryForeground: "oklch(0.34 0.04 160)",
-        muted: "oklch(0.90 0.02 150)",
-        mutedForeground: "oklch(0.42 0.03 140)",
-        accent: "oklch(0.78 0.08 160)",
-        accentForeground: "oklch(0.22 0.03 160)",
-        destructive: "oklch(0.62 0.24 25)",
-        destructiveForeground: "oklch(0.99 0.01 95)",
-        border: "oklch(0.86 0.02 150)",
-        input: "oklch(0.92 0.015 150)",
-        tooltipBg: "oklch(0.90 0.02 150 / 0.96)",
-        tooltipBorder: "oklch(0.80 0.02 150 / 0.55)",
-        tooltipFg: "oklch(0.20 0.03 150)",
-        tableTextColor: "#1a2a1a",
-        tableAbbreviatedColor: "#71717a",
-      },
-    },
-    matcha: {
-      nameKey: "themes.preset.color.matcha.name",
-      descriptionKey: "themes.preset.color.matcha.description",
-      theme: "matcha",
-      preview: {
-        bg: "#d8e8d0",
-        primary: "#5a9f5a",
-        accent: "#6ab06a",
-        fg: "#283828",
-      },
-      vars: {
-        backgroundMain: "oklch(0.90 0.03 125)",
-        backgroundLive: "oklch(0.90 0.03 125)",
-        foreground: "oklch(0.24 0.04 125)",
-        surface: "oklch(0.92 0.03 125)",
-        surfaceForeground: "oklch(0.24 0.04 125)",
-        primary: "oklch(0.70 0.11 125)",
-        primaryForeground: "oklch(0.98 0.015 95)",
-        secondary: "oklch(0.88 0.02 125)",
-        secondaryForeground: "oklch(0.36 0.05 125)",
-        muted: "oklch(0.87 0.02 125)",
-        mutedForeground: "oklch(0.42 0.03 130)",
-        accent: "oklch(0.74 0.10 135)",
-        accentForeground: "oklch(0.25 0.04 125)",
-        destructive: "oklch(0.62 0.24 25)",
-        destructiveForeground: "oklch(0.99 0.01 95)",
-        border: "oklch(0.84 0.02 125)",
-        input: "oklch(0.90 0.02 125)",
-        tooltipBg: "oklch(0.88 0.02 125 / 0.96)",
-        tooltipBorder: "oklch(0.78 0.02 125 / 0.55)",
-        tooltipFg: "oklch(0.24 0.04 125)",
-        tableTextColor: "#283828",
-        tableAbbreviatedColor: "#71717a",
-      },
-    },
-    rainbow: {
-      nameKey: "themes.preset.color.rainbow.name",
-      descriptionKey: "themes.preset.color.rainbow.description",
-      theme: "rainbow",
-      preview: {
-        bg: "linear-gradient(120deg,#ffe5ec,#e0f7fa,#f3e8ff,#e9fbd5)",
-        primary: "#b87fd0",
-        accent: "#d09050",
-        fg: "#383848",
-      },
-      vars: {
-        backgroundMain:
-          "linear-gradient(120deg,#ffe5ec,#e0f7fa,#f3e8ff,#e9fbd5)",
-        backgroundLive:
-          "linear-gradient(120deg,#ffe5ec,#e0f7fa,#f3e8ff,#e9fbd5)",
-        foreground: "oklch(0.25 0.03 250)",
-        surface: "oklch(0.97 0.02 95)",
-        surfaceForeground: "oklch(0.25 0.03 250)",
-        primary: "oklch(0.72 0.14 300)",
-        primaryForeground: "oklch(0.99 0.01 95)",
-        secondary: "oklch(0.80 0.10 140)",
-        secondaryForeground: "oklch(0.28 0.03 240)",
-        muted: "oklch(0.90 0.02 95)",
-        mutedForeground: "oklch(0.45 0.03 250)",
-        accent: "oklch(0.78 0.13 40)",
-        accentForeground: "oklch(0.22 0.03 250)",
-        destructive: "oklch(0.60 0.22 25)",
-        destructiveForeground: "oklch(0.99 0.01 95)",
-        border: "oklch(0.88 0.02 95)",
-        input: "oklch(0.94 0.02 95)",
-        tooltipBg: "oklch(0.93 0.02 95 / 0.94)",
-        tooltipBorder: "oklch(0.83 0.02 95 / 0.5)",
-        tooltipFg: "oklch(0.25 0.03 250)",
-        tableTextColor: "#383848",
-        tableAbbreviatedColor: "#71717a",
-      },
-    },
-  };
+  // This page only edits colors within the active loadout's live appearance
+  // (`SETTINGS.live.appearance.state`) — `backgroundMain` belongs to the
+  // main window's global palette, edited instead under app settings.
+  const LOADOUT_IRRELEVANT_COLOR_KEYS = new Set<
+    keyof CustomThemeColors
+  >(["backgroundMain"]);
 
   // === SIZE PRESETS ===
   const SIZE_PRESETS: Record<
@@ -542,8 +324,8 @@
   function applyColorPreset(presetKey: string) {
     const preset = COLOR_PRESETS[presetKey];
     if (preset) {
-      SETTINGS.accessibility.state.customThemeColors = {
-        ...SETTINGS.accessibility.state.customThemeColors,
+      SETTINGS.live.appearance.state.themeColors = {
+        ...SETTINGS.live.appearance.state.themeColors,
         ...preset.vars,
       };
     }
@@ -569,8 +351,6 @@
   let expandedSections = $state({
     colorThemes: false,
     classSpecColors: false,
-    backgroundImage: false,
-    customFonts: false,
     liveDisplay: false,
     headerSettings: false,
     tableSettings: false,
@@ -585,21 +365,13 @@
 
   // Table size presets removed — sliders shown by default
 
-  // Class/Spec colors tab state - 'class' or 'spec'
-  let colorMode = $state<"class" | "spec">("class");
+  const colorMode = $derived(
+    SETTINGS.live.appearance.state.useClassSpecColors ? "spec" : "class",
+  );
 
-  // Sync useClassSpecColors setting with colorMode
-  $effect(() => {
-    SETTINGS.accessibility.state.useClassSpecColors = colorMode === "spec";
-  });
-
-  $effect(() => {
-    if (
-      typeof SETTINGS.accessibility.state.backgroundImageOpacity !== "number"
-    ) {
-      SETTINGS.accessibility.state.backgroundImageOpacity = 100;
-    }
-  });
+  function setColorMode(mode: "class" | "spec") {
+    SETTINGS.live.appearance.state.useClassSpecColors = mode === "spec";
+  }
 
   // Group custom theme colors by category
   const colorCategories = $derived.by(() => {
@@ -608,6 +380,8 @@
       Array<keyof typeof DEFAULT_CUSTOM_THEME_COLORS>
     > = {};
     for (const [key, info] of Object.entries(CUSTOM_THEME_COLOR_LABELS)) {
+      if (LOADOUT_IRRELEVANT_COLOR_KEYS.has(key as keyof CustomThemeColors))
+        continue;
       if (!categories[info.category]) {
         categories[info.category] = [];
       }
@@ -645,25 +419,25 @@
   }
 
   function updateClassColor(className: string, color: string) {
-    SETTINGS.accessibility.state.classColors = {
-      ...SETTINGS.accessibility.state.classColors,
+    SETTINGS.live.appearance.state.classColors = {
+      ...SETTINGS.live.appearance.state.classColors,
       [className]: color,
     };
   }
 
   function updateClassSpecColor(specName: string, color: string) {
-    SETTINGS.accessibility.state.classSpecColors = {
-      ...SETTINGS.accessibility.state.classSpecColors,
+    SETTINGS.live.appearance.state.classSpecColors = {
+      ...SETTINGS.live.appearance.state.classSpecColors,
       [specName]: color,
     };
   }
 
   function resetClassColors() {
-    SETTINGS.accessibility.state.classColors = { ...DEFAULT_CLASS_COLORS };
+    SETTINGS.live.appearance.state.classColors = { ...DEFAULT_CLASS_COLORS };
   }
 
   function resetClassSpecColors() {
-    SETTINGS.accessibility.state.classSpecColors = {
+    SETTINGS.live.appearance.state.classSpecColors = {
       ...DEFAULT_CLASS_SPEC_COLORS,
     };
   }
@@ -672,14 +446,14 @@
     key: keyof typeof DEFAULT_CUSTOM_THEME_COLORS,
     value: string,
   ) {
-    SETTINGS.accessibility.state.customThemeColors = {
-      ...SETTINGS.accessibility.state.customThemeColors,
+    SETTINGS.live.appearance.state.themeColors = {
+      ...SETTINGS.live.appearance.state.themeColors,
       [key]: value,
     };
   }
 
   function resetCustomThemeColors() {
-    SETTINGS.accessibility.state.customThemeColors = {
+    SETTINGS.live.appearance.state.themeColors = {
       ...DEFAULT_CUSTOM_THEME_COLORS,
     };
   }
@@ -695,6 +469,10 @@
       <Tabs.Trigger value={themesTab.id}>{t(themesTab.labelKey)}</Tabs.Trigger>
     {/each}
   </Tabs.List>
+
+  <p class="text-muted-foreground text-xs">
+    {t("settings.scope.live")}
+  </p>
 
   {#if activeTab === "general"}
     <Tabs.Content value="general">
@@ -754,8 +532,8 @@
                               description={customThemeColorDescription(
                                 colorKey,
                               )}
-                              value={SETTINGS.accessibility.state
-                                .customThemeColors?.[colorKey] ??
+                              value={SETTINGS.live.appearance.state
+                                .themeColors?.[colorKey] ??
                                 DEFAULT_CUSTOM_THEME_COLORS[colorKey] ??
                                 "rgba(128, 128, 128, 1)"}
                               oninput={(value: string) =>
@@ -806,7 +584,7 @@
                   'class'
                     ? 'bg-muted text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-popover/60'}"
-                  onclick={() => (colorMode = "class")}
+                  onclick={() => setColorMode("class")}
                 >
                   {t("themes.classSpec.classColors")}
                 </button>
@@ -816,7 +594,7 @@
                   'spec'
                     ? 'bg-muted text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-popover/60'}"
-                  onclick={() => (colorMode = "spec")}
+                  onclick={() => setColorMode("spec")}
                 >
                   {t("themes.classSpec.specColors")}
                 </button>
@@ -1312,241 +1090,6 @@
                   description={t("themes.skillTable.suffixFontSizeDescription")}
                   unit="px"
                 />
-              </div>
-            </div>
-          {/if}
-        </div>
-        <div
-          class="rounded-lg border bg-card/40 border-border/60 overflow-hidden shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]"
-        >
-          <button
-            type="button"
-            class="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
-            onclick={() => toggleSection("backgroundImage")}
-          >
-            <h2 class="text-base font-semibold text-foreground">
-              {t("themes.background.title")}
-            </h2>
-            <ChevronDown
-              class="w-5 h-5 text-muted-foreground transition-transform duration-200 {expandedSections.backgroundImage
-                ? 'rotate-180'
-                : ''}"
-            />
-          </button>
-          {#if expandedSections.backgroundImage}
-            <div class="px-4 pb-4 space-y-2">
-              <p class="text-xs text-muted-foreground">
-                {t("themes.background.description")}
-              </p>
-              <SettingsSwitch
-                bind:checked={
-                  SETTINGS.accessibility.state.backgroundImageEnabled
-                }
-                label={t("themes.background.enable")}
-                description={t("themes.background.enableDescription")}
-              />
-              {#if SETTINGS.accessibility.state.backgroundImageEnabled}
-                <div class="mt-2 space-y-2">
-                  <SettingsFilePicker
-                    label={t("themes.background.selectImage")}
-                    description={t("themes.background.selectImageDescription")}
-                    accept="image/*"
-                    value={SETTINGS.accessibility.state.backgroundImage}
-                    onchange={(dataUrl, _fileName) => {
-                      SETTINGS.accessibility.state.backgroundImage = dataUrl;
-                    }}
-                    onclear={() => {
-                      SETTINGS.accessibility.state.backgroundImage = "";
-                    }}
-                  />
-                  <SettingsSlider
-                    bind:value={
-                      SETTINGS.accessibility.state.backgroundImageOpacity
-                    }
-                    min={0}
-                    max={100}
-                    step={1}
-                    unit="%"
-                    label={t("themes.background.opacity")}
-                    description={t("themes.background.opacityDescription")}
-                  />
-                  <SettingsSelect
-                    label={t("themes.background.imageMode")}
-                    description={t("themes.background.imageModeDescription")}
-                    bind:selected={
-                      SETTINGS.accessibility.state.backgroundImageMode
-                    }
-                    values={[
-                      {
-                        label: t("themes.background.imageMode.cover"),
-                        value: "cover",
-                      },
-                      {
-                        label: t("themes.background.imageMode.contain"),
-                        value: "contain",
-                      },
-                    ]}
-                  />
-                  {#if SETTINGS.accessibility.state.backgroundImageMode === "contain"}
-                    <SettingsColorAlpha
-                      label={t("themes.background.fillColor")}
-                      description={t("themes.background.fillColorDescription")}
-                      value={SETTINGS.accessibility.state
-                        .backgroundImageContainColor}
-                      oninput={(value: string) => {
-                        SETTINGS.accessibility.state.backgroundImageContainColor =
-                          value;
-                      }}
-                    />
-                  {/if}
-                </div>
-              {/if}
-            </div>
-          {/if}
-        </div>
-        <div
-          class="rounded-lg border bg-card/40 border-border/60 overflow-hidden shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]"
-        >
-          <button
-            type="button"
-            class="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
-            onclick={() => toggleSection("customFonts")}
-          >
-            <h2 class="text-base font-semibold text-foreground">
-              {t("themes.fonts.title")}
-            </h2>
-            <ChevronDown
-              class="w-5 h-5 text-muted-foreground transition-transform duration-200 {expandedSections.customFonts
-                ? 'rotate-180'
-                : ''}"
-            />
-          </button>
-          {#if expandedSections.customFonts}
-            <div class="px-4 pb-4 space-y-4">
-              <p class="text-xs text-muted-foreground">
-                {t("themes.fonts.description")}
-              </p>
-
-              <SettingsSwitch
-                bind:checked={
-                  SETTINGS.accessibility.state.customFontApplyToOverlay
-                }
-                label={t("themes.fonts.applyToOverlay")}
-                description={t("themes.fonts.applyToOverlayDescription")}
-              />
-
-              <!-- Sans-serif Font -->
-              <div class="space-y-2 pt-2 border-t border-border/30">
-                <h3 class="text-sm font-semibold text-foreground">
-                  {t("themes.fonts.sansTitle")}
-                </h3>
-                <p class="text-xs text-muted-foreground">
-                  {t("themes.fonts.defaultSans")}
-                </p>
-                <SettingsSwitch
-                  bind:checked={
-                    SETTINGS.accessibility.state.customFontSansEnabled
-                  }
-                  label={t("themes.fonts.enableSans")}
-                  description={t("themes.fonts.enableSansDescription")}
-                />
-                {#if SETTINGS.accessibility.state.customFontSansEnabled}
-                  <SettingsFilePicker
-                    label={t("themes.fonts.selectFont")}
-                    description={t("themes.fonts.selectFontDescription")}
-                    accept=".woff2,.woff,.ttf,.otf"
-                    value={SETTINGS.accessibility.state.customFontSansUrl}
-                    onchange={(dataUrl, fileName) => {
-                      SETTINGS.accessibility.state.customFontSansUrl = dataUrl;
-                      // Extract font name from file name (remove extension)
-                      const fontName = fileName.replace(
-                        /\.(woff2?|ttf|otf)$/i,
-                        "",
-                      );
-                      SETTINGS.accessibility.state.customFontSansName =
-                        fontName;
-                      // Register the font face
-                      const fontFace = new FontFace(
-                        fontName,
-                        `url(${dataUrl})`,
-                      );
-                      fontFace
-                        .load()
-                        .then((loadedFace) => {
-                          document.fonts.add(loadedFace);
-                        })
-                        .catch((e) => console.error("Failed to load font:", e));
-                    }}
-                    onclear={() => {
-                      SETTINGS.accessibility.state.customFontSansUrl = "";
-                      SETTINGS.accessibility.state.customFontSansName = "";
-                    }}
-                  />
-                  {#if SETTINGS.accessibility.state.customFontSansName}
-                    <p class="text-xs text-muted-foreground pl-3">
-                      {t("themes.fonts.loaded", {
-                        name: SETTINGS.accessibility.state.customFontSansName,
-                      })}
-                    </p>
-                  {/if}
-                {/if}
-              </div>
-
-              <!-- Monospace Font -->
-              <div class="space-y-2 pt-3 border-t border-border/30">
-                <h3 class="text-sm font-semibold text-foreground">
-                  {t("themes.fonts.monoTitle")}
-                </h3>
-                <p class="text-xs text-muted-foreground">
-                  {t("themes.fonts.defaultMono")}
-                </p>
-                <SettingsSwitch
-                  bind:checked={
-                    SETTINGS.accessibility.state.customFontMonoEnabled
-                  }
-                  label={t("themes.fonts.enableMono")}
-                  description={t("themes.fonts.enableMonoDescription")}
-                />
-                {#if SETTINGS.accessibility.state.customFontMonoEnabled}
-                  <SettingsFilePicker
-                    label={t("themes.fonts.selectFont")}
-                    description={t("themes.fonts.selectFontDescription")}
-                    accept=".woff2,.woff,.ttf,.otf"
-                    value={SETTINGS.accessibility.state.customFontMonoUrl}
-                    onchange={(dataUrl, fileName) => {
-                      SETTINGS.accessibility.state.customFontMonoUrl = dataUrl;
-                      // Extract font name from file name (remove extension)
-                      const fontName = fileName.replace(
-                        /\.(woff2?|ttf|otf)$/i,
-                        "",
-                      );
-                      SETTINGS.accessibility.state.customFontMonoName =
-                        fontName;
-                      // Register the font face
-                      const fontFace = new FontFace(
-                        fontName,
-                        `url(${dataUrl})`,
-                      );
-                      fontFace
-                        .load()
-                        .then((loadedFace) => {
-                          document.fonts.add(loadedFace);
-                        })
-                        .catch((e) => console.error("Failed to load font:", e));
-                    }}
-                    onclear={() => {
-                      SETTINGS.accessibility.state.customFontMonoUrl = "";
-                      SETTINGS.accessibility.state.customFontMonoName = "";
-                    }}
-                  />
-                  {#if SETTINGS.accessibility.state.customFontMonoName}
-                    <p class="text-xs text-muted-foreground pl-3">
-                      {t("themes.fonts.loaded", {
-                        name: SETTINGS.accessibility.state.customFontMonoName,
-                      })}
-                    </p>
-                  {/if}
-                {/if}
               </div>
             </div>
           {/if}
@@ -2180,6 +1723,9 @@
             </h2>
             <p class="text-xs text-muted-foreground mt-0.5">
               {t("themes.presets.colorDescription")}
+            </p>
+            <p class="text-xs text-muted-foreground/70 mt-0.5">
+              {t("themes.presets.colorScopeLoadout")}
             </p>
           </div>
           <div class="grid grid-cols-2 gap-3">

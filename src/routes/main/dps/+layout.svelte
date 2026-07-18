@@ -90,8 +90,8 @@
     </nav>
   </div>
 
-  <!-- Live profile switcher: settings/themes tabs edit the active live profile (mirror). -->
-  {#if isActiveTab("/main/dps/settings") || isActiveTab("/main/dps/themes")}
+  <!-- Live profile switcher: settings/themes/challenge tabs all edit the active live profile (mirror). -->
+  {#if isActiveTab("/main/dps/settings") || isActiveTab("/main/dps/themes") || isActiveTab("/main/dps/challenge")}
     <LiveProfileSwitcher />
   {/if}
 

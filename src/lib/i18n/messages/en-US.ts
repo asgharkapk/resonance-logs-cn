@@ -59,6 +59,7 @@ export const enUSMessages = {
   "routes.tools.minimap": "Dungeon Mechanics",
   "routes.tools.appSettings": "App Settings",
   "routes.dps.history": "History",
+  "routes.dps.challenge": "Challenge Watch",
   "routes.dps.themes": "Themes",
   "routes.dps.settings": "Settings",
   "dps.title": "DPS Meter",
@@ -130,11 +131,16 @@ export const enUSMessages = {
   "appSettings.description":
     "Application-level configuration: packet capture, global shortcuts, language and diagnostics. These do not travel with exported loadouts.",
   "appSettings.tabs.general": "General",
+  "appSettings.tabs.appearance": "Appearance",
   "appSettings.tabs.network": "Network",
   "appSettings.tabs.shortcuts": "Shortcuts",
   "appSettings.tabs.diagnostics": "Diagnostics",
   "appSettings.language.title": "Language",
   "appSettings.language.description": "Switch the interface display language.",
+  "appSettings.appearance.scope":
+    "The appearance settings below are local, global settings — they never travel with an exported loadout.",
+  "appSettings.appearance.colorScopeMain":
+    "Apply a preset palette to the main window UI (does not affect the live overlay)",
   "challengeWatch.title": "Challenge Watch (Forbidden Damage)",
   "challengeWatch.description":
     "Search and add forbidden damage by mechanic / damage name. When any member takes one during the current combat segment, a red triangle appears after their name in the DPS / Heal / Tanked lists, so you can tell mid-run whether the challenge has failed.",
@@ -942,6 +948,8 @@ export const enUSMessages = {
   "themes.header.paddingYDescription": "Top/bottom tab padding",
   "themes.presets.colorTitle": "Color Themes",
   "themes.presets.colorDescription": "Choose a preset color theme",
+  "themes.presets.colorScopeLoadout":
+    "Applies to the current loadout's live overlay colors",
   "themes.presets.sizeTitle": "Size Presets",
   "themes.presets.sizeDescription":
     "Adjust table and header sizes for your display",

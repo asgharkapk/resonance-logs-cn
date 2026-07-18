@@ -12,6 +12,7 @@ import MicIcon from "virtual:icons/lucide/mic";
 import PaletteIcon from "virtual:icons/lucide/palette";
 import SettingsIcon from "virtual:icons/lucide/settings";
 import ShieldAlertIcon from "virtual:icons/lucide/shield-alert";
+import ShieldCheckIcon from "virtual:icons/lucide/shield-check";
 import SwordsIcon from "virtual:icons/lucide/swords";
 
 type RouteDefinition = {
@@ -55,6 +56,10 @@ export const TOOL_ROUTES = {
 // Sub-routes for DPS tool (tabs in the right panel)
 export const DPS_SUB_ROUTES = {
   "/main/dps/history": { labelKey: "routes.dps.history", icon: HourglassIcon },
+  "/main/dps/challenge": {
+    labelKey: "routes.dps.challenge",
+    icon: ShieldCheckIcon,
+  },
   "/main/dps/themes": { labelKey: "routes.dps.themes", icon: PaletteIcon },
   "/main/dps/settings": { labelKey: "routes.dps.settings", icon: SettingsIcon },
 } satisfies Record<string, RouteDefinition>;

@@ -1644,6 +1644,10 @@ export type LiveMeterProfileData = {
   headerCustomization: typeof DEFAULT_SETTINGS.live.headerCustomization;
   columnOrder: LiveMeterColumnOrderState;
   sorting: LiveMeterSortingState;
+  /** Forbidden-damage ids for challenge watch — travels with the loadout. */
+  challengeWatch: typeof DEFAULT_SETTINGS.challengeWatch;
+  /** Live theme colors + class/spec colors — travels with the loadout. */
+  appearance: LiveAppearance;
 };
 
 export type LiveMeterProfile = LiveMeterProfileData & {
@@ -1729,6 +1733,8 @@ export function createDefaultLiveMeterProfileData(): LiveMeterProfileData {
       tankedPlayers: { ...DEFAULT_LIVE_SORT_SETTINGS.tankedPlayers },
       tankedSkills: { ...DEFAULT_LIVE_SORT_SETTINGS.tankedSkills },
     },
+    challengeWatch: { forbiddenDamageIds: [] as number[] },
+    appearance: createDefaultLiveAppearance(),
   };
 }
 
@@ -2122,6 +2128,29 @@ export const CUSTOM_THEME_COLOR_LABELS: Record<
   },
 };
 
+/**
+ * Live-meter-scoped appearance: the theme palette and class/spec colors that
+ * apply to the live overlay (and, for class colors, the main window's
+ * history views too) and are shared whenever a loadout is exported. Main
+ * window chrome and global assets (background image, custom fonts) stay on
+ * `accessibility` — see `DEFAULT_SETTINGS.accessibility` below.
+ */
+export type LiveAppearance = {
+  themeColors: CustomThemeColors;
+  classColors: Record<string, string>;
+  useClassSpecColors: boolean;
+  classSpecColors: Record<string, string>;
+};
+
+export function createDefaultLiveAppearance(): LiveAppearance {
+  return {
+    themeColors: { ...DEFAULT_CUSTOM_THEME_COLORS },
+    classColors: { ...DEFAULT_CLASS_COLORS },
+    useClassSpecColors: false,
+    classSpecColors: { ...DEFAULT_CLASS_SPEC_COLORS },
+  };
+}
+
 const DEFAULT_SETTINGS = {
   i18n: {
     locale: "zh-CN" as AppLocale,
@@ -2129,9 +2158,6 @@ const DEFAULT_SETTINGS = {
   accessibility: {
     blur: false,
     clickthrough: false,
-    classColors: { ...DEFAULT_CLASS_COLORS },
-    useClassSpecColors: false,
-    classSpecColors: { ...DEFAULT_CLASS_SPEC_COLORS },
     fontSizes: { ...DEFAULT_FONT_SIZES },
     customThemeColors: { ...DEFAULT_CUSTOM_THEME_COLORS },
     // Background image settings
@@ -2256,6 +2282,17 @@ const monitoringStore = new RuneStore(
   DEFAULT_SETTINGS.monitoring,
   { ...RUNE_STORE_OPTIONS, autoStart: false },
 );
+const accessibilityStore = new RuneStore(
+  "accessibility",
+  DEFAULT_SETTINGS.accessibility,
+  { ...RUNE_STORE_OPTIONS, autoStart: false },
+);
+let accessibilityStartPromise: Promise<void> | null = null;
+
+export function startAccessibilityStore(): Promise<void> {
+  accessibilityStartPromise ??= accessibilityStore.start();
+  return accessibilityStartPromise;
+}
 
 function monitoringSection<
   K extends keyof Omit<MonitoringSettingsState, "schemaVersion">,
@@ -2269,11 +2306,7 @@ function monitoringSection<
 
 export const SETTINGS = {
   i18n: new RuneStore("i18n", DEFAULT_SETTINGS.i18n, RUNE_STORE_OPTIONS),
-  accessibility: new RuneStore(
-    "accessibility",
-    DEFAULT_SETTINGS.accessibility,
-    RUNE_STORE_OPTIONS,
-  ),
+  accessibility: accessibilityStore,
   shortcuts: new RuneStore(
     "shortcuts",
     DEFAULT_SETTINGS.shortcuts,
@@ -2299,15 +2332,26 @@ export const SETTINGS = {
     RUNE_STORE_OPTIONS,
   ),
   voice: new RuneStore("voice", DEFAULT_SETTINGS.voice, RUNE_STORE_OPTIONS),
+  /**
+   * Mirror store for the active loadout's forbidden-damage list (see
+   * `LIVE_METER_STORES`). Kept at the top level (not nested under `live`)
+   * so existing consumers (`SETTINGS.challengeWatch.state...`) keep working
+   * unchanged.
+   */
   challengeWatch: new RuneStore(
     "challengeWatch",
     DEFAULT_SETTINGS.challengeWatch,
-    RUNE_STORE_OPTIONS,
+    LIVE_RUNE_STORE_OPTIONS,
   ),
   live: {
     general: new RuneStore(
       "liveGeneral",
       DEFAULT_SETTINGS.live.general,
+      LIVE_RUNE_STORE_OPTIONS,
+    ),
+    appearance: new RuneStore(
+      "liveAppearance",
+      createDefaultLiveAppearance(),
       LIVE_RUNE_STORE_OPTIONS,
     ),
     dps: {
@@ -2477,6 +2521,8 @@ export const SETTINGS = {
 
 const LIVE_METER_STORES = [
   SETTINGS.live.general,
+  SETTINGS.live.appearance,
+  SETTINGS.challengeWatch,
   SETTINGS.live.dps.players,
   SETTINGS.live.dps.skillBreakdown,
   SETTINGS.live.heal.players,

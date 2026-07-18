@@ -69,7 +69,7 @@
   );
   let abbreviationStyle = $derived(SETTINGS.live.general.state.abbreviationStyle);
   let customThemeColors = $derived(
-    SETTINGS.accessibility.state.customThemeColors,
+    SETTINGS.live.appearance.state.themeColors,
   );
 
   // Update maxDamage when data changes

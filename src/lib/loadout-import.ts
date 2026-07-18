@@ -451,6 +451,42 @@ const liveSortingEntrySchema = v.object({
   sortDesc: v.boolean(),
 });
 
+const challengeWatchSchema = v.object({
+  forbiddenDamageIds: numberArraySchema,
+});
+
+const customThemeColorsSchema = v.object({
+  backgroundMain: v.string(),
+  backgroundLive: v.string(),
+  foreground: v.string(),
+  surface: v.string(),
+  surfaceForeground: v.string(),
+  primary: v.string(),
+  primaryForeground: v.string(),
+  secondary: v.string(),
+  secondaryForeground: v.string(),
+  muted: v.string(),
+  mutedForeground: v.string(),
+  accent: v.string(),
+  accentForeground: v.string(),
+  destructive: v.string(),
+  destructiveForeground: v.string(),
+  border: v.string(),
+  input: v.string(),
+  tooltipBg: v.string(),
+  tooltipBorder: v.string(),
+  tooltipFg: v.string(),
+  tableTextColor: v.string(),
+  tableAbbreviatedColor: v.string(),
+});
+
+const liveAppearanceSchema = v.object({
+  themeColors: customThemeColorsSchema,
+  classColors: stringRecordSchema,
+  useClassSpecColors: v.boolean(),
+  classSpecColors: stringRecordSchema,
+});
+
 const defaultLive = createDefaultLiveMeterProfileData();
 
 const liveProfileSchema = v.object({
@@ -542,6 +578,14 @@ const liveProfileSchema = v.object({
       ),
     }),
     defaultClone(defaultLive.sorting),
+  ),
+  challengeWatch: v.optional(
+    challengeWatchSchema,
+    defaultClone(defaultLive.challengeWatch),
+  ),
+  appearance: v.optional(
+    liveAppearanceSchema,
+    defaultClone(defaultLive.appearance),
   ),
 });
 

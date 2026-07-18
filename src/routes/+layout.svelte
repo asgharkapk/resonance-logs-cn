@@ -142,7 +142,13 @@
       const locale = setLocale(SETTINGS.i18n.state.locale);
       document.documentElement.lang = locale;
 
-      const customThemeColors = SETTINGS.accessibility.state.customThemeColors;
+      // The live overlay renders its own palette (from the active loadout's
+      // live profile) so it can differ from the main window's; every other
+      // window (main, overlays) uses the global main-window palette.
+      const customThemeColors =
+        windowLabel === "live"
+          ? SETTINGS.live.appearance.state.themeColors
+          : SETTINGS.accessibility.state.customThemeColors;
 
       // Always operate in 'custom' theme mode. Apply any custom colors if present.
       document.documentElement.setAttribute("data-theme", "custom");

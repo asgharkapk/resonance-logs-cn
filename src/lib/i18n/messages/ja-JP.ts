@@ -57,6 +57,7 @@ export const jaJPMessages = {
   "routes.tools.minimap": "ダンジョンギミック",
   "routes.tools.appSettings": "アプリ設定",
   "routes.dps.history": "履歴",
+  "routes.dps.challenge": "チャレンジ監視",
   "routes.dps.themes": "テーマ",
   "routes.dps.settings": "設定",
   "dps.title": "DPSメーター",
@@ -128,11 +129,17 @@ export const jaJPMessages = {
   "appSettings.description":
     "アプリ全体の設定：パケットキャプチャ・グローバルショートカット・言語・診断。これらは構成のエクスポートに含まれません。",
   "appSettings.tabs.general": "一般",
+  "appSettings.tabs.appearance": "外観",
   "appSettings.tabs.network": "ネットワーク",
   "appSettings.tabs.shortcuts": "ショートカット",
   "appSettings.tabs.diagnostics": "診断",
   "appSettings.language.title": "言語",
-  "appSettings.language.description": "インターフェースの表示言語を切り替えます。",
+  "appSettings.language.description":
+    "インターフェースの表示言語を切り替えます。",
+  "appSettings.appearance.scope":
+    "以下の外観設定は端末ごとのグローバル設定です。構成のエクスポートには含まれません。",
+  "appSettings.appearance.colorScopeMain":
+    "メインウィンドウのUIにプリセットカラーを適用します（実時統計ウィンドウには影響しません）",
   "challengeWatch.title": "チャレンジ監視（禁止ダメージ）",
   "challengeWatch.description":
     "メカニック／ダメージ名で検索して禁止ダメージを追加します。現在の戦闘区間でいずれかのメンバーが受けると、DPS／ヒール／被ダメのリストで名前の後ろに赤い三角が表示され、途中でチャレンジ失敗を判断できます。",
@@ -924,6 +931,8 @@ export const jaJPMessages = {
   "themes.header.paddingYDescription": "タブの上下パディング",
   "themes.presets.colorTitle": "カラーテーマ",
   "themes.presets.colorDescription": "プリセットカラーテーマを選択",
+  "themes.presets.colorScopeLoadout":
+    "現在の構成のライブオーバーレイの配色に適用されます",
   "themes.presets.sizeTitle": "サイズプリセット",
   "themes.presets.sizeDescription":
     "ディスプレイに合わせてテーブルとヘッダーのサイズを調整",
