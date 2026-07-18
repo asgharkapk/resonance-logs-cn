@@ -48,6 +48,7 @@
   import DeathList from "$lib/components/death-replay/death-list.svelte";
   import DeathReplayDetail from "$lib/components/death-replay/death-replay-detail.svelte";
   import { normalizeHistoryEntities } from "$lib/death-replay-compat";
+  import { toast } from "svelte-sonner";
 
   type HistorySkillType = "dps" | "heal" | "tanked" | "death";
 
@@ -873,7 +874,7 @@
       backToHistory();
     } catch (e) {
       console.error("Failed to delete encounter", e);
-      alert(
+      toast.error(
         t("history.detail.error.deleteFailed", {
           error: String(e),
         }),

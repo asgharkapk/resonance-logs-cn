@@ -167,7 +167,7 @@
       <tbody>
         {#if totalRow}
           <tr
-            class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+            class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
             onclick={() => openSkills("total")}
           >
@@ -205,7 +205,7 @@
         {/if}
         {#each compactData as row (row.entityUuid)}
           <tr
-            class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+            class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
             onclick={() => openSkills(row.entityUuid)}
           >
@@ -302,7 +302,7 @@
       <tbody>
         {#if totalRow}
           <tr
-            class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+            class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
             onclick={() => openSkills("total")}
           >
@@ -372,7 +372,7 @@
         {/if}
         {#each sortedRows as row (row.entityUuid)}
           <tr
-            class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+            class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
             onclick={() => openSkills(row.entityUuid)}
           >

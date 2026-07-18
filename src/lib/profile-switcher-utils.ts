@@ -18,11 +18,3 @@ export function profileDisplayName(
     ? t("monsterMonitor.defaults.defaultProfileName")
     : t("monsterMonitor.defaults.profileName", { index: index + 1 });
 }
-
-export function confirmProfileDeletion(kind: MonitorProfileKind): boolean {
-  return window.confirm(
-    kind === "skill"
-      ? t("skillMonitor.profile.deleteConfirm")
-      : t("monsterMonitor.profile.deleteConfirm"),
-  );
-}

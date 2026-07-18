@@ -267,7 +267,7 @@
 
 {#snippet buffSnapshotCard(title: string, buffs: DeathBuffSnapshot[])}
   <section
-    class="min-w-0 rounded border border-border/50 bg-background/50 p-2"
+    class="min-w-0 rounded border border-border/50 p-2"
   >
     <div class="mb-2 truncate text-xs font-medium text-foreground">
       {title}
@@ -389,7 +389,7 @@
           >
         </tr>
       </thead>
-      <tbody class="bg-background/40">
+      <tbody>
         {#if rows.length === 0}
           <tr>
             <td
@@ -470,7 +470,7 @@
           {#each rows as dmg, idx (idx)}
             {@const pct = glowPercentage(Number(dmg.value))}
             <tr
-              class="relative hover:bg-muted/60 transition-colors bg-background/40"
+              class="relative hover:bg-muted/60 transition-colors"
               style="height: {tableSettings.skillRowHeight}px; font-size: {tableSettings.skillFontSize}px;"
             >
               <td

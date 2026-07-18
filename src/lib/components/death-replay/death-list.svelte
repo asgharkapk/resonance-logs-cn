@@ -173,7 +173,7 @@
           >
         </tr>
       </thead>
-      <tbody class="bg-background/40">
+      <tbody>
         {#if rows.length === 0}
           <tr>
             <td
@@ -251,7 +251,7 @@
           {#each rows as row, idx (`${row.record.victimEntityUuid}-${row.record.deathTimestampMs}`)}
             {@const rel = formatRelative(Number(row.record.deathTimestampMs))}
             <tr
-              class="relative hover:bg-muted/60 transition-colors bg-background/40 cursor-pointer"
+              class="relative hover:bg-muted/60 transition-colors cursor-pointer"
               style="height: {tableSettings.skillRowHeight}px; font-size: {tableSettings.skillFontSize}px;"
               onclick={() => onSelect(Number(row.record.deathTimestampMs))}
             >

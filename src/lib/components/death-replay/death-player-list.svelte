@@ -195,7 +195,7 @@
           >
         </tr>
       </thead>
-      <tbody class="bg-background/40">
+      <tbody>
         {#if sortedRows.length === 0}
           <tr>
             <td
@@ -321,7 +321,7 @@
             {@const info = resolveDisplayName(row.entry)}
             {#if compactMode}
               <tr
-                class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+                class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
                 style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
                 onclick={() => onSelect(row.entry.entityUuid)}
               >
@@ -393,7 +393,7 @@
               </tr>
             {:else}
               <tr
-                class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+                class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
                 style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
                 onclick={() => onSelect(row.entry.entityUuid)}
               >

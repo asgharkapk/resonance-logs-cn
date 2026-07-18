@@ -8,12 +8,14 @@
     open = $bindable(false),
     title,
     defaultValue = "",
+    placeholder = "",
     onconfirm,
     oncancel,
   }: {
     open: boolean;
     title: string;
     defaultValue?: string;
+    placeholder?: string;
     onconfirm: (value: string) => void;
     oncancel?: () => void;
   } = $props();
@@ -67,7 +69,7 @@
         bind:ref={inputRef}
         bind:value={inputValue}
         onkeydown={handleKeydown}
-        placeholder={t("loadout.page.namePrompt")}
+        {placeholder}
       />
     </div>
     <Dialog.Footer>

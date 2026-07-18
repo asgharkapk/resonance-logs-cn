@@ -45,7 +45,9 @@
     <Dialog.Header>
       <Dialog.Title>{title}</Dialog.Title>
       {#if description}
-        <Dialog.Description>{description}</Dialog.Description>
+        <Dialog.Description class="whitespace-pre-line">
+          {description}
+        </Dialog.Description>
       {/if}
     </Dialog.Header>
     <Dialog.Footer>

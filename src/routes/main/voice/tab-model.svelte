@@ -9,6 +9,7 @@
   import XIcon from "virtual:icons/lucide/x";
   import { commands } from "$lib/bindings";
   import { t } from "$lib/i18n/index.svelte";
+  import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
   import {
     refreshVoiceStatus,
     runVoiceOperation,
@@ -26,6 +27,34 @@
   let fineTunedBusy = $state(false);
   let fineTunedMessage = $state<string | null>(null);
   let localError = $state<string | null>(null);
+
+  let confirmOpen = $state(false);
+  let confirmTitle = $state("");
+  let confirmDescription = $state("");
+  let confirmVariant = $state<"default" | "destructive">("destructive");
+  let confirmResolve = $state<(value: boolean) => void>(() => {});
+
+  function askConfirm(opts: {
+    title: string;
+    description?: string;
+    variant?: "default" | "destructive";
+  }): Promise<boolean> {
+    confirmTitle = opts.title;
+    confirmDescription = opts.description ?? "";
+    confirmVariant = opts.variant ?? "destructive";
+    confirmOpen = true;
+    return new Promise<boolean>((resolve) => {
+      confirmResolve = resolve;
+    });
+  }
+
+  function handleConfirm() {
+    confirmResolve(true);
+  }
+
+  function handleCancel() {
+    confirmResolve(false);
+  }
 
   const status = $derived(VOICE.status);
   const profiles = $derived(status?.catalog.profiles ?? []);
@@ -175,18 +204,17 @@
         return;
       }
       const replacing = !!fineTunedVoice;
-      if (
-        replacing &&
-        !confirm(
-          t("voice.model.finetuned.replaceConfirm", {
+      if (replacing) {
+        const confirmed = await askConfirm({
+          title: t("voice.model.finetuned.replace"),
+          description: t("voice.model.finetuned.replaceConfirm", {
             old: fineTunedVoice?.displayName ?? "",
             oldPath: fineTunedVoice?.packagePath ?? "",
             next: inspected.data.displayName,
             nextPath: inspected.data.packagePath,
           }),
-        )
-      ) {
-        return;
+        });
+        if (!confirmed) return;
       }
       const result = await commands.voiceSetFinetunedVoice(
         packagePath,
@@ -220,7 +248,11 @@
 
   async function removeFineTunedVoice() {
     if (!fineTunedVoice || fineTunedBusy) return;
-    if (!confirm(t("voice.model.finetuned.removeConfirm"))) return;
+    const confirmed = await askConfirm({
+      title: t("voice.model.finetuned.remove"),
+      description: t("voice.model.finetuned.removeConfirm"),
+    });
+    if (!confirmed) return;
     fineTunedBusy = true;
     localError = null;
     try {
@@ -555,3 +587,14 @@
     {/if}
   </section>
 </div>
+
+<ConfirmDialog
+  bind:open={confirmOpen}
+  title={confirmTitle}
+  description={confirmDescription}
+  confirmText={t("common.confirm")}
+  cancelText={t("common.cancel")}
+  variant={confirmVariant}
+  onconfirm={handleConfirm}
+  oncancel={handleCancel}
+/>

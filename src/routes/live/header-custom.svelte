@@ -288,7 +288,7 @@
 
 {#snippet trainingDummyStatusItem()}
   <div
-    class="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-foreground shrink-0"
+    class="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-foreground shrink-0"
     {@attach tooltip(() => formatTrainingDummyLabel(trainingDummyState))}
   >
     <CrosshairIcon
@@ -648,7 +648,7 @@
 
         {#if isTrainingDummyActive}
           <div
-            class="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-foreground shrink-0"
+            class="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-foreground shrink-0"
             {@attach tooltip(() =>
               formatTrainingDummyLabel(trainingDummyState),
             )}

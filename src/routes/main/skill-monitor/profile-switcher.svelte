@@ -15,10 +15,9 @@
     setLoadoutSkillProfile,
   } from "$lib/loadouts.svelte.js";
   import { t } from "$lib/i18n/index.svelte";
-  import {
-    confirmProfileDeletion,
-    profileDisplayName,
-  } from "$lib/profile-switcher-utils";
+  import { profileDisplayName } from "$lib/profile-switcher-utils";
+  import NameInputDialog from "$lib/components/NameInputDialog.svelte";
+  import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 
   const profiles = $derived(SETTINGS.skillMonitor.state.profiles);
   const loadout = $derived(activeLoadout());
@@ -27,6 +26,13 @@
     profiles.find((profile) => profile.id === activeProfileId) ?? profiles[0],
   );
 
+  let renameOpen = $state(false);
+  let renameDefault = $state("");
+  let renameTargetId = $state<string | null>(null);
+
+  let deleteOpen = $state(false);
+  let deleteTargetId = $state<string | null>(null);
+
   function selectProfile(profileId: string) {
     if (!loadout) return;
     setLoadoutSkillProfile(loadout.id, profileId);
@@ -34,19 +40,18 @@
 
   function renameActiveProfile() {
     if (!activeProfile) return;
-    const currentIndex = profiles.findIndex((p) => p.id === activeProfile.id);
-    const nextName = window.prompt(
-      t("skillMonitor.profile.renamePrompt"),
-      profileDisplayName("skill", activeProfile.name, currentIndex),
-    );
-    if (!nextName) return;
-    const trimmedName = nextName.trim();
-    if (!trimmedName) return;
+    renameTargetId = activeProfile.id;
+    renameDefault = activeProfile.name ?? "";
+    renameOpen = true;
+  }
+
+  function handleRenameConfirm(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed || !renameTargetId) return;
     SETTINGS.skillMonitor.state.profiles = profiles.map((profile) =>
-      profile.id === activeProfile.id
-        ? { ...profile, name: trimmedName }
-        : profile,
+      profile.id === renameTargetId ? { ...profile, name: trimmed } : profile,
     );
+    renameTargetId = null;
   }
 
   function addProfile() {
@@ -57,8 +62,14 @@
 
   function removeActiveProfile() {
     if (!activeProfile || profiles.length <= 1) return;
-    if (!confirmProfileDeletion("skill")) return;
-    removeSkillProfileEverywhere(activeProfile.id);
+    deleteTargetId = activeProfile.id;
+    deleteOpen = true;
+  }
+
+  function handleDeleteConfirm() {
+    if (!deleteTargetId) return;
+    removeSkillProfileEverywhere(deleteTargetId);
+    deleteTargetId = null;
   }
 </script>
 
@@ -110,3 +121,21 @@
     </button>
   </div>
 </div>
+
+<NameInputDialog
+  bind:open={renameOpen}
+  title={t("skillMonitor.profile.rename")}
+  defaultValue={renameDefault}
+  placeholder={t("skillMonitor.profile.renamePrompt")}
+  onconfirm={handleRenameConfirm}
+/>
+
+<ConfirmDialog
+  bind:open={deleteOpen}
+  title={t("skillMonitor.profile.delete")}
+  description={t("skillMonitor.profile.deleteConfirm")}
+  confirmText={t("common.delete")}
+  cancelText={t("common.cancel")}
+  onconfirm={handleDeleteConfirm}
+  variant="destructive"
+/>

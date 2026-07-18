@@ -145,7 +145,7 @@
               : ""}
           {@const secondaryVal = compactDpsKey === "tdps" ? player.tdps : player.dps}
           <tr
-            class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+            class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
             onclick={() => goto(`/live/dps/skills?entityUuid=${player.entityUuid}`)}
           >
@@ -296,7 +296,7 @@
             ? SETTINGS.live.general.state.showYourSeasonStrength
             : SETTINGS.live.general.state.showOthersSeasonStrength)}
         <tr
-          class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+          class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
           style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
           onclick={() => goto(`/live/dps/skills?entityUuid=${player.entityUuid}`)}
         >

@@ -23,6 +23,7 @@
 :root {
   --background-main: oklch(0.2178 0 0);
   --background-live: oklch(0.2178 0 0);
+  --background: var(--background-main);
   --foreground: oklch(0.8853 0 0);
   --card: oklch(0.2435 0 0);
   --card-foreground: oklch(0.8853 0 0);
@@ -78,6 +79,7 @@
 }
 
 @theme inline {
+  --color-background: var(--background);
   --color-background-main: var(--background-main);
   --color-background-live: var(--background-live);
   --color-foreground: var(--foreground);

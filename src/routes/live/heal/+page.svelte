@@ -134,7 +134,7 @@
               ? player.className
               : ""}
           <tr
-            class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+            class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
             style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
             onclick={() => goto(`/live/heal/skills?entityUuid=${player.entityUuid}`)}
           >
@@ -285,7 +285,7 @@
             ? SETTINGS.live.general.state.showYourSeasonStrength
             : SETTINGS.live.general.state.showOthersSeasonStrength)}
         <tr
-          class="relative bg-background/40 hover:bg-muted/60 transition-colors cursor-pointer group"
+          class="relative hover:bg-muted/60 transition-colors cursor-pointer group"
           style="height: {tableSettings.playerRowHeight}px; font-size: {tableSettings.playerFontSize}px;"
           onclick={() => goto(`/live/heal/skills?entityUuid=${player.entityUuid}`)}
         >

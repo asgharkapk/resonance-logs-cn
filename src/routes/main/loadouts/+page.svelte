@@ -168,6 +168,7 @@
   bind:open={nameDialogOpen}
   title={nameDialogTitle}
   defaultValue={nameDialogDefaultValue}
+  placeholder={t("loadout.page.namePrompt")}
   onconfirm={nameDialogCallback}
 />
 
