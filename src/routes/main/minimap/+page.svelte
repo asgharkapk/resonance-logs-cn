@@ -93,6 +93,10 @@
       ? [initialVoiceCueSeasonGroups[0].season]
       : [],
   );
+  // Scenes (dungeons) default to collapsed since one season can list many
+  // dungeons, each with several mechanics — expanding everything at once
+  // takes up too much vertical space.
+  let expandedSceneIds = $state<string[]>([]);
 
   function toggleVoiceCueExpanded(cueId: string) {
     expandedCueIds = expandedCueIds.includes(cueId)
@@ -104,6 +108,12 @@
     expandedVoiceSeasons = expandedVoiceSeasons.includes(season)
       ? expandedVoiceSeasons.filter((existing) => existing !== season)
       : [...expandedVoiceSeasons, season];
+  }
+
+  function toggleSceneExpanded(sceneId: string) {
+    expandedSceneIds = expandedSceneIds.includes(sceneId)
+      ? expandedSceneIds.filter((existing) => existing !== sceneId)
+      : [...expandedSceneIds, sceneId];
   }
 </script>
 
@@ -462,37 +472,51 @@
               <div class="divide-border/50 divide-y border-t border-border/50">
                 {#each seasonGroup.scenes as group (group.scene.id)}
                   <section class="space-y-2 p-3">
-                    <h3 class="text-foreground text-sm font-semibold">
-                      {resolveSceneName(group.scene.sceneIds[0])}
-                    </h3>
-                    <div class="space-y-2">
-                      {#each group.cues as cue (cue.id)}
-                        <div
-                          class="border-border/50 bg-background/40 space-y-2 rounded border p-2.5"
-                        >
-                          <button
-                            type="button"
-                            class="flex w-full items-center justify-between gap-2 text-xs text-muted-foreground hover:text-foreground"
-                            aria-expanded={expandedCueIds.includes(cue.id)}
-                            onclick={() => toggleVoiceCueExpanded(cue.id)}
+                    <button
+                      type="button"
+                      class="text-foreground flex w-full items-center justify-between gap-2 text-sm font-semibold hover:text-primary"
+                      aria-expanded={expandedSceneIds.includes(group.scene.id)}
+                      onclick={() => toggleSceneExpanded(group.scene.id)}
+                    >
+                      <span>{resolveSceneName(group.scene.sceneIds[0])}</span>
+                      <ChevronDownIcon
+                        class="h-4 w-4 shrink-0 transition-transform duration-200 {expandedSceneIds.includes(
+                          group.scene.id,
+                        )
+                          ? 'rotate-180'
+                          : ''}"
+                      />
+                    </button>
+                    {#if expandedSceneIds.includes(group.scene.id)}
+                      <div class="space-y-2">
+                        {#each group.cues as cue (cue.id)}
+                          <div
+                            class="border-border/50 bg-background/40 space-y-2 rounded border p-2.5"
                           >
-                            <span>{t(cue.labelKey)}</span>
-                            <ChevronDownIcon
-                              class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 {expandedCueIds.includes(
-                                cue.id,
-                              )
-                                ? 'rotate-180'
-                                : ''}"
-                            />
-                          </button>
-                          {#if expandedCueIds.includes(cue.id)}
-                            <VoiceBindingControl
-                              subject={{ kind: "minimapCue", cueId: cue.id }}
-                            />
-                          {/if}
-                        </div>
-                      {/each}
-                    </div>
+                            <button
+                              type="button"
+                              class="flex w-full items-center justify-between gap-2 text-xs text-muted-foreground hover:text-foreground"
+                              aria-expanded={expandedCueIds.includes(cue.id)}
+                              onclick={() => toggleVoiceCueExpanded(cue.id)}
+                            >
+                              <span>{t(cue.labelKey)}</span>
+                              <ChevronDownIcon
+                                class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 {expandedCueIds.includes(
+                                  cue.id,
+                                )
+                                  ? 'rotate-180'
+                                  : ''}"
+                              />
+                            </button>
+                            {#if expandedCueIds.includes(cue.id)}
+                              <VoiceBindingControl
+                                subject={{ kind: "minimapCue", cueId: cue.id }}
+                              />
+                            {/if}
+                          </div>
+                        {/each}
+                      </div>
+                    {/if}
                   </section>
                 {/each}
               </div>
