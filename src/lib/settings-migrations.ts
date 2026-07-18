@@ -3,6 +3,7 @@ import { emit, listen } from "@tauri-apps/api/event";
 import { RuneStore } from "@tauri-store/svelte";
 import { tick } from "svelte";
 import { commands } from "./bindings";
+import { ensureBuffIconOverrides } from "./buff-icons";
 import {
   SETTINGS,
   createDefaultLoadoutsState,
@@ -345,6 +346,9 @@ export function reconcileMonitoringState(
   input: MonitoringSettingsState,
 ): MonitoringSettingsState {
   const state = deepCloneSettings(input);
+  state.skillMonitor.buffIconOverrides = ensureBuffIconOverrides(
+    state.skillMonitor.buffIconOverrides,
+  );
   state.skillMonitor.profiles = normalizeSkillProfiles(
     state.skillMonitor.profiles,
   );
@@ -566,6 +570,7 @@ function createLegacyStores() {
         enabled: false,
         autoHideInDailyScenes: false,
         buffAliases: {},
+        buffIconOverrides: {},
         profiles: [createDefaultSkillMonitorProfile()],
         activeProfileIndex: 0,
       },

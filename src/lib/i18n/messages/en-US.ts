@@ -1073,6 +1073,7 @@ export const enUSMessages = {
   "skillMonitor.buff.status.selected": "Selected",
   "skillMonitor.buff.status.editing": "Editing",
   "skillMonitor.buff.status.aliased": "Alias set",
+  "skillMonitor.buff.status.customIcon": "Custom icon",
   "skillMonitor.buff.title": "Buff Monitor",
   "skillMonitor.buff.description":
     "Search all buffs by name or ID, including icon and text-only buffs",
@@ -1090,6 +1091,17 @@ export const enUSMessages = {
   "skillMonitor.buff.alias.configuredTitle": "Configured Aliases",
   "skillMonitor.buff.alias.empty":
     "No aliases configured yet. Search above to set an alias for any buff.",
+  "skillMonitor.buff.icon.title": "Buff Icon Settings",
+  "skillMonitor.buff.icon.configuredCount": "{count} custom icons",
+  "skillMonitor.buff.icon.placeholder": "Search any buff to customize its icon",
+  "skillMonitor.buff.icon.searchResults": "Search Results",
+  "skillMonitor.buff.icon.configuredTitle": "Customized Icons",
+  "skillMonitor.buff.icon.empty":
+    "No custom icons yet. Search above to set an image for any buff; icon-less buffs will render as icon buffs once set.",
+  "skillMonitor.buff.icon.choose": "Choose Image",
+  "skillMonitor.buff.icon.reset": "Reset",
+  "skillMonitor.buff.icon.noIcon": "No icon",
+  "skillMonitor.buff.icon.importFailed": "Failed to import image: {error}",
   "skillMonitor.buff.display.title": "Buff Display Mode",
   "skillMonitor.buff.display.description":
     "Switch between individual positioning and grouped layout. Saved per profile",

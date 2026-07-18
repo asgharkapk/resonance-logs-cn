@@ -20,6 +20,7 @@
     overlayVisibility,
   } from "./overlay-state.svelte.js";
   import { overlayTextShadow } from "$lib/overlay-text-style";
+  import { initBuffIconDir } from "$lib/buff-icon-dir.svelte";
   import {
     overlayCustomFontFamily,
     setupOverlayCustomFonts,
@@ -36,6 +37,7 @@
   const sharedFontFamilyVar = $derived(overlayCustomFontFamily());
 
   setupOverlayCustomFonts();
+  void initBuffIconDir();
 
   onMount(initOverlay);
 </script>

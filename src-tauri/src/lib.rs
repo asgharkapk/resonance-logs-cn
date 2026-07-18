@@ -1,3 +1,4 @@
+mod buff_icons;
 mod build_app;
 mod live;
 pub mod module_optimizer;
@@ -74,6 +75,9 @@ fn api_builder() -> Builder<tauri::Wry> {
             settings_backup_commands::backup_settings_stores,
             settings_backup_commands::backup_failed_monitoring_stores,
             loadout_commands::export_loadout,
+            buff_icons::commands::buff_icon_dir,
+            buff_icons::commands::import_buff_icon,
+            buff_icons::commands::delete_buff_icon,
             packets::npcap::get_network_devices,
             packets::npcap::check_npcap_status,
             debug_commands::open_log_dir,

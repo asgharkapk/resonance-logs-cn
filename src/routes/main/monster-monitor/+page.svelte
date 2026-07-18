@@ -7,6 +7,7 @@
   import {
     getBuffCategoryDefinitions,
     getAvailableBuffDefinitions,
+    lookupBuffMeta,
     lookupDefaultBuffName,
     resolveBuffDisplayName,
     searchBuffsByName,
@@ -14,6 +15,11 @@
     type BuffDefinition,
     type BuffNameInfo,
   } from "$lib/config/buff-name-table";
+  import {
+    ensureBuffIconOverrides,
+    resolveBuffIconSrc,
+  } from "$lib/buff-icons";
+  import { buffIconDirUrlPrefix } from "$lib/buff-icon-dir.svelte";
   import { resolveMonsterName } from "$lib/config/game-names";
   import {
     searchDbmEntries,
@@ -59,7 +65,6 @@
         kind: "buff";
         label: string;
         buffId: number;
-        spriteFile?: string;
       }
     | {
         key: TeammateBuffColumnKey;
@@ -98,6 +103,9 @@
 
   const monsterMonitor = $derived(SETTINGS.monsterMonitor.state);
   const buffAliases = $derived.by(() => getGlobalBuffAliases());
+  const buffIconOverrides = $derived.by(() =>
+    ensureBuffIconOverrides(SETTINGS.skillMonitor.state.buffIconOverrides),
+  );
   const dbmAliases = $derived.by(() =>
     ensureDbmAliases(monsterMonitor.dbmAliases),
   );
@@ -181,14 +189,12 @@
     orderTeammateColumnItems(
       [
         ...teammateBuffIds.map((buffId): TeammateColumnItem => {
-          const iconBuff = availableBuffMap.get(buffId);
           const item: TeammateColumnItem = {
             key: teammateBuffColumnKey(buffId),
             kind: "buff",
             label: buffName(buffId),
             buffId,
           };
-          if (iconBuff) item.spriteFile = iconBuff.spriteFile;
           return item;
         }),
         ...selectedTeammateBuffCategories.map(
@@ -888,6 +894,16 @@
     return resolveBuffDisplayName(buffId, buffAliases);
   }
 
+  /** Icon src for pickers/previews: player override > game sprite > null. */
+  function buffIconSrc(buffId: number): string | null {
+    return resolveBuffIconSrc(
+      buffId,
+      lookupBuffMeta(buffId)?.spriteFile,
+      buffIconOverrides,
+      buffIconDirUrlPrefix(),
+    );
+  }
+
   function defaultBuffName(buffId: number) {
     return (
       lookupDefaultBuffName(buffId) ??
@@ -1120,6 +1136,7 @@
             onSelect={toggleSelectedBuff}
             isSelected={isSelectedInCurrentTarget}
             getStatusLabel={searchStatusLabel}
+            getIconSrc={buffIconSrc}
             emptyMessage={t("monsterMonitor.buffSearch.empty")}
           />
         {/if}
@@ -1154,16 +1171,16 @@
               class:opacity-50={monsterMonitor.selfAppliedMonitorAll}
             >
               {#each selfAppliedBuffIds as buffId (buffId)}
-                {@const iconBuff = availableBuffMap.get(buffId)}
+                {@const iconSrc = buffIconSrc(buffId)}
                 <button
                   type="button"
                   class="selected-buff"
                   onclick={() => removeBuff("self", buffId)}
                   title={t("monsterMonitor.buffGroups.removeTitle")}
                 >
-                  {#if iconBuff}
+                  {#if iconSrc}
                     <img
-                      src={`/images/buff/${iconBuff.spriteFile}`}
+                      src={iconSrc}
                       alt={buffName(buffId)}
                       class="bg-muted/20 h-8 w-8 rounded object-contain"
                     />
@@ -1193,16 +1210,16 @@
           {#if globalBuffIds.length > 0}
             <div class="flex flex-wrap gap-2">
               {#each globalBuffIds as buffId (buffId)}
-                {@const iconBuff = availableBuffMap.get(buffId)}
+                {@const iconSrc = buffIconSrc(buffId)}
                 <button
                   type="button"
                   class="selected-buff"
                   onclick={() => removeBuff("global", buffId)}
                   title={t("monsterMonitor.buffGroups.removeTitle")}
                 >
-                  {#if iconBuff}
+                  {#if iconSrc}
                     <img
-                      src={`/images/buff/${iconBuff.spriteFile}`}
+                      src={iconSrc}
                       alt={buffName(buffId)}
                       class="bg-muted/20 h-8 w-8 rounded object-contain"
                     />
@@ -1245,6 +1262,7 @@
             items={prioritySearchResults}
             {availableBuffMap}
             onSelect={toggleMonsterBuffPriority}
+            getIconSrc={buffIconSrc}
             emptyMessage={t("monsterMonitor.priority.emptySearch")}
             minColumnWidth={180}
           />
@@ -1315,6 +1333,7 @@
           items={alertSearchResults}
           {availableBuffMap}
           onSelect={(buffId) => upsertMonsterBuffAlert(buffId, {})}
+          getIconSrc={buffIconSrc}
           emptyMessage={t("monsterMonitor.alert.emptySearch")}
           minColumnWidth={180}
         />
@@ -1448,6 +1467,7 @@
                 voiceEditingBuffId = buffId;
                 voiceBuffSearch = "";
               }}
+              getIconSrc={buffIconSrc}
               emptyMessage={t("monsterMonitor.buffVoice.emptySearch")}
               minColumnWidth={180}
             />
@@ -1743,6 +1763,7 @@
             onSelect={toggleTeammateBuff}
             isSelected={isSelectedTeammateBuff}
             getStatusLabel={teammateSearchStatusLabel}
+            getIconSrc={buffIconSrc}
             emptyMessage={t("monsterMonitor.teammate.emptySearch")}
           />
         {/if}
@@ -1763,12 +1784,15 @@
                 <span class="text-muted-foreground w-6 text-center text-xs">
                   {idx + 1}
                 </span>
-                {#if item.kind === "buff" && item.spriteFile}
-                  <img
-                    src={`/images/buff/${item.spriteFile}`}
-                    alt={item.label}
-                    class="bg-muted/20 h-8 w-8 rounded object-contain"
-                  />
+                {#if item.kind === "buff"}
+                  {@const iconSrc = buffIconSrc(item.buffId)}
+                  {#if iconSrc}
+                    <img
+                      src={iconSrc}
+                      alt={item.label}
+                      class="bg-muted/20 h-8 w-8 rounded object-contain"
+                    />
+                  {/if}
                 {/if}
                 <span class="text-foreground min-w-0 flex-1 truncate text-sm">
                   {item.label}

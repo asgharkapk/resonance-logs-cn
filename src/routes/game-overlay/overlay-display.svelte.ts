@@ -17,6 +17,8 @@ import {
   resolveBuffCategoryKey,
   resolveBuffDisplayName,
 } from "$lib/config/buff-name-table";
+import { resolveBuffIconSrc } from "$lib/buff-icons";
+import { buffIconDirUrlPrefix } from "$lib/buff-icon-dir.svelte";
 import type {
   CustomPanelDisplayRow,
   IconBuffDisplay,
@@ -41,6 +43,7 @@ import {
   activeProfile,
   buffAliases,
   buffDisplayMode,
+  buffIconOverrides,
   buffPriorityIds,
   customPanelGroups,
   factorSlotLabels,
@@ -169,6 +172,8 @@ const _buffSnapshot = $derived.by(() => {
   const explicitSelectedBuffIds = monitoredBuffIds();
   const priorityIds = buffPriorityIds();
   const buffDefinitionsMap = buffDefinitions();
+  const iconOverrides = buffIconOverrides();
+  const iconDirUrl = buffIconDirUrlPrefix();
   const panelGroups = customPanelGroups();
   const alertMap = ensureBuffAlerts(activeProfile()?.buffAlerts);
   const resolveAlert = (
@@ -228,16 +233,32 @@ const _buffSnapshot = $derived.by(() => {
     const name = resolveBuffDisplayName(baseId, currentBuffAliases);
     const timeText = formatTimerText(remaining);
     const alert = resolveAlert(baseId, remaining, buff.durationMs);
-    const specialDisplay = resolveSpecialBuffDisplay(
-      _specialBuffConfigMap.get(baseId),
-      buff.layer,
+    const iconSrc = resolveBuffIconSrc(
+      baseId,
+      definition?.spriteFile,
+      iconOverrides,
+      iconDirUrl,
     );
+    // A player override wins over special (per-layer) displays. It counts
+    // only when actually applied (see resolveBuffIconSrc): configured and
+    // the icon directory is ready.
+    const isIconOverrideActive =
+      iconOverrides[String(baseId)] !== undefined && iconDirUrl !== null;
+    const specialDisplay: ResolvedSpecialBuffDisplay = isIconOverrideActive
+      ? {}
+      : resolveSpecialBuffDisplay(
+          _specialBuffConfigMap.get(baseId),
+          buff.layer,
+        );
 
-    if (definition?.spriteFile) {
+    if (iconSrc) {
       nextIconBuffs.push({
         baseId,
         name,
-        spriteFile: definition.spriteFile,
+        iconSrc,
+        ...(isIconOverrideActive && definition?.spriteFile
+          ? { fallbackSrc: `/images/buff/${definition.spriteFile}` }
+          : {}),
         text: timeText,
         layer: buff.layer,
         ...(specialDisplay.specialImages ? specialDisplay : {}),
@@ -265,15 +286,26 @@ const _buffSnapshot = $derived.by(() => {
       if (iconIds.has(baseId) || textIds.has(`buff_${baseId}`)) continue;
       const definition = buffDefinitionsMap.get(baseId);
       const name = resolveBuffDisplayName(baseId, currentBuffAliases);
-      const placeholderSpecialDisplay = resolveSpecialBuffDisplay(
-        _specialBuffConfigMap.get(baseId),
-        0,
+      const iconSrc = resolveBuffIconSrc(
+        baseId,
+        definition?.spriteFile,
+        iconOverrides,
+        iconDirUrl,
       );
-      if (definition?.spriteFile) {
+      const isIconOverrideActive =
+        iconOverrides[String(baseId)] !== undefined && iconDirUrl !== null;
+      const placeholderSpecialDisplay: ResolvedSpecialBuffDisplay =
+        isIconOverrideActive
+          ? {}
+          : resolveSpecialBuffDisplay(_specialBuffConfigMap.get(baseId), 0);
+      if (iconSrc) {
         nextIconBuffs.push({
           baseId,
           name,
-          spriteFile: definition.spriteFile,
+          iconSrc,
+          ...(isIconOverrideActive && definition?.spriteFile
+            ? { fallbackSrc: `/images/buff/${definition.spriteFile}` }
+            : {}),
           text: "--",
           layer: 1,
           isPlaceholder: true,
@@ -555,11 +587,17 @@ const _individualModeIconBuffs = $derived.by(() => {
     const representativeId = getBuffIdsByCategory(categoryKey)[0];
     if (representativeId === undefined) continue;
     const definition = buffDefinitions().get(representativeId);
-    if (!definition?.spriteFile) continue;
+    const iconSrc = resolveBuffIconSrc(
+      representativeId,
+      definition?.spriteFile,
+      buffIconOverrides(),
+      buffIconDirUrlPrefix(),
+    );
+    if (!iconSrc) continue;
     categoryBuffs.push({
       baseId: representativeId,
       name: getBuffCategoryLabel(categoryKey),
-      spriteFile: definition.spriteFile,
+      iconSrc,
       text: "--",
       layer: 1,
       isPlaceholder: true,

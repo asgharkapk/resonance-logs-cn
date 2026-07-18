@@ -3,6 +3,7 @@
  * It uses `@tauri-store/svelte` to create persistent stores for user settings.
  */
 import { RuneStore } from "@tauri-store/svelte";
+import type { BuffIconOverrideMap } from "./buff-icons";
 import type {
   BuffAliasMap as ConfigBuffAliasMap,
   BuffCategoryKey,
@@ -1505,6 +1506,9 @@ export type MonsterMonitorState = MonsterMonitorConfig & {
 
 export type SkillMonitorState = {
   buffAliases: BuffAliasMap;
+  /** Player-customized buff icons (base id -> file name). Global; never
+   * exported with loadouts, same as `buffAliases`. */
+  buffIconOverrides: BuffIconOverrideMap;
   profiles: SkillMonitorProfile[];
 };
 
@@ -1778,6 +1782,7 @@ export function createDefaultMonitoringSettingsState(): MonitoringSettingsState 
     schemaVersion: 0,
     skillMonitor: {
       buffAliases: {},
+      buffIconOverrides: {},
       profiles: [createDefaultSkillMonitorProfile()],
     },
     monsterMonitor: createDefaultMonsterMonitorState(),

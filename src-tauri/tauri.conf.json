@@ -78,7 +78,11 @@
             }
         ],
         "security": {
-            "csp": null
+            "csp": null,
+            "assetProtocol": {
+                "enable": true,
+                "scope": ["$APPLOCALDATA/buff-icons/**"]
+            }
         }
     },
     "bundle": {

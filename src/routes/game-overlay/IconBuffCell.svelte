@@ -34,6 +34,18 @@
   );
   const specialDisplayStyle = $derived(buff.specialDisplayStyle);
   const alert = $derived(buff.alert);
+
+  // A player-override icon file can vanish from disk (asset protocol 403):
+  // fall back to the game sprite, then hide rather than render a broken
+  // image. Keyed by the failed src string itself, so a changed iconSrc
+  // (e.g. a newly imported override) resets the fallback automatically.
+  let failedSrc = $state<string | null>(null);
+  const displayedSrc = $derived.by(() => {
+    if (failedSrc === null) return buff.iconSrc;
+    if (failedSrc === buff.iconSrc) return buff.fallbackSrc ?? null;
+    if (failedSrc === buff.fallbackSrc) return null;
+    return buff.iconSrc;
+  });
 </script>
 
 <div
@@ -86,11 +98,14 @@
         {/each}
       {/if}
     {:else}
-      <img
-        src={`/images/buff/${buff.spriteFile}`}
-        alt={buff.name}
-        class="buff-icon"
-      />
+      {#if displayedSrc}
+        <img
+          src={displayedSrc}
+          alt={buff.name}
+          class="buff-icon"
+          onerror={() => (failedSrc = displayedSrc)}
+        />
+      {/if}
     {/if}
 
     {#if showLayer && !hasSpecialImages && buff.layer > 1}

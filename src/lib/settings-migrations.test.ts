@@ -87,6 +87,29 @@ describe("monitoring settings reconciliation", () => {
     );
   });
 
+  it("normalizes buff icon overrides during reconciliation", () => {
+    const state = createDefaultMonitoringSettingsState();
+    state.skillMonitor.buffIconOverrides = {
+      "997110": "997110_1a2b3c4d.png",
+      "997111": "../escape.png",
+      bad: "997111_1a2b3c4d.png",
+    };
+
+    const repaired = reconcileMonitoringState(state);
+    expect(repaired.skillMonitor.buffIconOverrides).toEqual({
+      "997110": "997110_1a2b3c4d.png",
+    });
+  });
+
+  it("defaults missing buff icon overrides for legacy states", () => {
+    const state = createDefaultMonitoringSettingsState();
+    delete (state.skillMonitor as Partial<typeof state.skillMonitor>)
+      .buffIconOverrides;
+
+    const repaired = reconcileMonitoringState(state);
+    expect(repaired.skillMonitor.buffIconOverrides).toEqual({});
+  });
+
   it("materializes the active loadout monster profile into the mirror", () => {
     const state = createDefaultMonitoringSettingsState();
     const first = state.monsterMonitor.profiles[0]!;

@@ -9,6 +9,10 @@
     isSelected?: (buffId: number) => boolean;
     isDisabled?: (buffId: number) => boolean;
     getStatusLabel?: (buffId: number) => string | null;
+    /** Fully-resolved icon src (player override first, then game sprite).
+     * When provided and non-null it takes precedence over the built-in
+     * `/images/buff/...` lookup, and also gives icon-less buffs an image. */
+    getIconSrc?: (buffId: number) => string | null;
     emptyMessage?: string;
     minColumnWidth?: number;
   }
@@ -20,6 +24,7 @@
     isSelected = () => false,
     isDisabled = () => false,
     getStatusLabel = () => null,
+    getIconSrc = () => null,
     emptyMessage,
     minColumnWidth = 180,
   }: Props = $props();
@@ -36,6 +41,7 @@
   >
     {#each items as item (item.baseId)}
       {@const iconBuff = availableBuffMap.get(item.baseId)}
+      {@const resolvedIconSrc = getIconSrc(item.baseId)}
       {@const selected = isSelected(item.baseId)}
       {@const disabled = isDisabled(item.baseId)}
       {@const statusLabel = getStatusLabel(item.baseId)}
@@ -58,7 +64,13 @@
         onclick={() => onSelect(item.baseId)}
       >
         <div class="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/50 bg-muted/20">
-          {#if iconBuff}
+          {#if resolvedIconSrc}
+            <img
+              src={resolvedIconSrc}
+              alt={item.name}
+              class="h-full w-full object-contain p-1"
+            />
+          {:else if iconBuff}
             <img
               src={`/images/buff/${iconBuff.spriteFile}`}
               alt={item.name}

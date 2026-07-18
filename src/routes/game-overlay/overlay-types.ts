@@ -32,7 +32,11 @@ export type BuffAlertState = {
 export type IconBuffDisplay = {
   baseId: number;
   name: string;
-  spriteFile: string;
+  /** Fully-resolved image src (player override first, else game sprite). */
+  iconSrc: string;
+  /** Game sprite src, present when `iconSrc` is a player override; used as
+   * the `onerror` fallback if the override file fails to load. */
+  fallbackSrc?: string;
   text: string;
   layer: number;
   layoutKey?: string;

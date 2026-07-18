@@ -30,7 +30,6 @@
     monitoredBuffIds: number[];
     monitoredBuffCategories: BuffCategoryKey[];
     expandedSelectedBuffIds: number[];
-    selectedBuffs: BuffDefinition[];
     selectedBuffCategories: BuffCategoryDefinition[];
     availableBuffs: BuffDefinition[];
     buffCategoryDefinitions: BuffCategoryDefinition[];
@@ -48,6 +47,18 @@
     getBuffAlias: (buffId: number) => string;
     setBuffAlias: (buffId: number, alias: string) => void;
     resetBuffAlias: (buffId: number) => void;
+    buffIconSectionExpanded: boolean;
+    setBuffIconSectionExpanded: (expanded: boolean) => void;
+    buffIconSearch: string;
+    setBuffIconSearch: (value: string) => void;
+    buffIconSearchResults: BuffNameInfo[];
+    buffIconEditingBuffId: number | null;
+    setBuffIconEditingBuffId: (buffId: number | null) => void;
+    configuredBuffIconIds: number[];
+    getBuffIconPreviewSrc: (buffId: number) => string | null;
+    hasBuffIconOverride: (buffId: number) => boolean;
+    chooseBuffIconImage: (buffId: number) => void;
+    resetBuffIcon: (buffId: number) => void;
     isBuffSelected: (buffId: number) => boolean;
     isBuffCategorySelected: (categoryKey: BuffCategoryKey) => boolean;
     toggleBuff: (buffId: number) => void;
@@ -144,7 +155,6 @@
     monitoredBuffIds,
     monitoredBuffCategories,
     expandedSelectedBuffIds,
-    selectedBuffs,
     selectedBuffCategories,
     availableBuffs,
     buffCategoryDefinitions,
@@ -162,6 +172,18 @@
     getBuffAlias,
     setBuffAlias,
     resetBuffAlias,
+    buffIconSectionExpanded,
+    setBuffIconSectionExpanded,
+    buffIconSearch,
+    setBuffIconSearch,
+    buffIconSearchResults,
+    buffIconEditingBuffId,
+    setBuffIconEditingBuffId,
+    configuredBuffIconIds,
+    getBuffIconPreviewSrc,
+    hasBuffIconOverride,
+    chooseBuffIconImage,
+    resetBuffIcon,
     isBuffSelected,
     isBuffCategorySelected,
     toggleBuff,
@@ -243,6 +265,14 @@
       return t("skillMonitor.buff.status.editing");
     return configuredBuffAliasIds.includes(buffId)
       ? t("skillMonitor.buff.status.aliased")
+      : null;
+  }
+
+  function buffIconStatusLabel(buffId: number): string | null {
+    if (buffIconEditingBuffId === buffId)
+      return t("skillMonitor.buff.status.editing");
+    return configuredBuffIconIds.includes(buffId)
+      ? t("skillMonitor.buff.status.customIcon")
       : null;
   }
 
@@ -468,6 +498,7 @@
         onSelect={toggleBuff}
         isSelected={isBuffSelected}
         getStatusLabel={buffSearchStatusLabel}
+        getIconSrc={getBuffIconPreviewSrc}
         emptyMessage={t("components.buffSearchResultGrid.empty")}
       />
     {:else}
@@ -482,18 +513,16 @@
       </div>
       <div class="flex flex-wrap gap-2">
         {#each monitoredBuffIds as buffId (buffId)}
-          {@const iconBuff = selectedBuffs.find(
-            (buff) => buff.baseId === buffId,
-          )}
-          {#if iconBuff}
+          {@const iconSrc = getBuffIconPreviewSrc(buffId)}
+          {#if iconSrc}
             <button
               type="button"
               class="border-border/60 bg-muted/20 hover:border-border hover:bg-muted/30 relative size-12 overflow-hidden rounded-md border"
               title={getBuffDisplayName(buffId)}
-              onclick={() => toggleBuff(iconBuff.baseId)}
+              onclick={() => toggleBuff(buffId)}
             >
               <img
-                src={`/images/buff/${iconBuff.spriteFile}`}
+                src={iconSrc}
                 alt={getBuffDisplayName(buffId)}
                 class="h-full w-full object-contain"
               />
@@ -563,6 +592,7 @@
               onSelect={(buffId) => setBuffAliasEditingBuffId(buffId)}
               isSelected={(buffId) => buffAliasEditingBuffId === buffId}
               getStatusLabel={buffAliasStatusLabel}
+              getIconSrc={getBuffIconPreviewSrc}
               emptyMessage={t("components.buffSearchResultGrid.empty")}
             />
 
@@ -611,14 +641,14 @@
             </div>
             <div class="space-y-2">
               {#each configuredBuffAliasIds as buffId (buffId)}
-                {@const iconBuff = availableBuffMap.get(buffId)}
+                {@const iconSrc = getBuffIconPreviewSrc(buffId)}
                 <div
                   class="border-border/60 bg-muted/20 space-y-2 rounded-md border p-3"
                 >
                   <div class="flex items-center gap-3">
-                    {#if iconBuff}
+                    {#if iconSrc}
                       <img
-                        src={`/images/buff/${iconBuff.spriteFile}`}
+                        src={iconSrc}
                         alt={getBuffDisplayName(buffId)}
                         class="border-border/40 bg-muted/20 size-10 rounded border object-contain"
                       />
@@ -665,6 +695,173 @@
         {:else}
           <div class="text-muted-foreground text-xs">
             {t("skillMonitor.buff.alias.empty")}
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </div>
+
+  <div
+    class="border-border/60 bg-card/40 rounded-lg border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]"
+  >
+    <button
+      type="button"
+      class="hover:bg-muted/30 flex w-full items-center justify-between px-4 py-3 transition-colors"
+      onclick={() => setBuffIconSectionExpanded(!buffIconSectionExpanded)}
+    >
+      <div class="text-left">
+        <h2 class="text-foreground text-base font-semibold">
+          {t("skillMonitor.buff.icon.title")}
+        </h2>
+      </div>
+      <ChevronDown
+        class="text-muted-foreground h-5 w-5 transition-transform duration-200 {buffIconSectionExpanded
+          ? 'rotate-180'
+          : ''}"
+      />
+    </button>
+
+    {#if buffIconSectionExpanded}
+      <div class="space-y-4 px-4 pb-4">
+        <div class="space-y-2">
+          <div class="text-muted-foreground text-xs">
+            {t("skillMonitor.buff.icon.configuredCount", {
+              count: configuredBuffIconIds.length,
+            })}
+          </div>
+          <input
+            class="border-border/60 bg-muted/30 text-foreground placeholder:text-muted-foreground focus:ring-primary/50 w-full rounded border px-3 py-2 text-sm focus:ring-2 focus:outline-none sm:w-80"
+            placeholder={t("skillMonitor.buff.icon.placeholder")}
+            value={buffIconSearch}
+            oninput={(event) =>
+              setBuffIconSearch(
+                (event.currentTarget as HTMLInputElement).value,
+              )}
+          />
+        </div>
+
+        {#if buffIconSearch.trim().length > 0}
+          <div class="space-y-2">
+            <div class="text-muted-foreground text-xs">
+              {t("skillMonitor.buff.icon.searchResults")}
+            </div>
+            <BuffSearchResultGrid
+              items={buffIconSearchResults}
+              {availableBuffMap}
+              onSelect={(buffId) => setBuffIconEditingBuffId(buffId)}
+              isSelected={(buffId) => buffIconEditingBuffId === buffId}
+              getStatusLabel={buffIconStatusLabel}
+              getIconSrc={getBuffIconPreviewSrc}
+              emptyMessage={t("components.buffSearchResultGrid.empty")}
+            />
+
+            {#if buffIconEditingBuffId !== null}
+              {@const previewSrc = getBuffIconPreviewSrc(buffIconEditingBuffId)}
+              <div
+                class="border-border/60 bg-muted/20 space-y-2 rounded-md border p-3"
+              >
+                <div class="flex items-center gap-3">
+                  {#if previewSrc}
+                    <img
+                      src={previewSrc}
+                      alt={getBuffDisplayName(buffIconEditingBuffId)}
+                      class="border-border/40 bg-muted/20 size-10 rounded border object-contain"
+                    />
+                  {:else}
+                    <div
+                      class="border-border/40 bg-muted/20 text-muted-foreground flex size-10 items-center justify-center rounded border text-[10px]"
+                    >
+                      {t("skillMonitor.buff.icon.noIcon")}
+                    </div>
+                  {/if}
+                  <div class="min-w-0 flex-1">
+                    <div class="text-foreground truncate text-sm">
+                      {getBuffDisplayName(buffIconEditingBuffId)}
+                    </div>
+                    <div class="text-muted-foreground truncate text-xs">
+                      {t("skillMonitor.buff.alias.defaultWithId", {
+                        name: getBuffDefaultName(buffIconEditingBuffId),
+                        id: buffIconEditingBuffId,
+                      })}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="border-border/60 hover:bg-muted/40 shrink-0 rounded border px-2 py-1 text-xs"
+                    onclick={() => chooseBuffIconImage(buffIconEditingBuffId)}
+                  >
+                    {t("skillMonitor.buff.icon.choose")}
+                  </button>
+                  <button
+                    type="button"
+                    class="border-border/60 hover:bg-muted/40 shrink-0 rounded border px-2 py-1 text-xs disabled:opacity-50"
+                    onclick={() => resetBuffIcon(buffIconEditingBuffId)}
+                    disabled={!hasBuffIconOverride(buffIconEditingBuffId)}
+                  >
+                    {t("skillMonitor.buff.icon.reset")}
+                  </button>
+                </div>
+              </div>
+            {/if}
+          </div>
+        {:else if configuredBuffIconIds.length > 0}
+          <div class="space-y-2">
+            <div class="text-muted-foreground text-xs">
+              {t("skillMonitor.buff.icon.configuredTitle")}
+            </div>
+            <div class="space-y-2">
+              {#each configuredBuffIconIds as buffId (buffId)}
+                {@const previewSrc = getBuffIconPreviewSrc(buffId)}
+                <div
+                  class="border-border/60 bg-muted/20 rounded-md border p-3"
+                >
+                  <div class="flex items-center gap-3">
+                    {#if previewSrc}
+                      <img
+                        src={previewSrc}
+                        alt={getBuffDisplayName(buffId)}
+                        class="border-border/40 bg-muted/20 size-10 rounded border object-contain"
+                      />
+                    {:else}
+                      <div
+                        class="border-border/40 bg-muted/20 text-muted-foreground flex size-10 items-center justify-center rounded border text-[10px]"
+                      >
+                        {t("skillMonitor.buff.icon.noIcon")}
+                      </div>
+                    {/if}
+                    <div class="min-w-0 flex-1">
+                      <div class="text-foreground truncate text-sm">
+                        {getBuffDisplayName(buffId)}
+                      </div>
+                      <div class="text-muted-foreground truncate text-xs">
+                        {t("skillMonitor.buff.alias.defaultWithId", {
+                          name: getBuffDefaultName(buffId),
+                          id: buffId,
+                        })}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="border-border/60 hover:bg-muted/40 shrink-0 rounded border px-2 py-1 text-xs"
+                      onclick={() => chooseBuffIconImage(buffId)}
+                    >
+                      {t("skillMonitor.buff.icon.choose")}
+                    </button>
+                    <button
+                      type="button"
+                      class="border-border/60 hover:bg-muted/40 shrink-0 rounded border px-2 py-1 text-xs"
+                      onclick={() => resetBuffIcon(buffId)}
+                    >
+                      {t("skillMonitor.buff.icon.reset")}
+                    </button>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {:else}
+          <div class="text-muted-foreground text-xs">
+            {t("skillMonitor.buff.icon.empty")}
           </div>
         {/if}
       </div>
@@ -905,6 +1102,7 @@
           items={getFilteredGlobalPrioritySearchResults()}
           {availableBuffMap}
           onSelect={toggleGlobalPriority}
+          getIconSrc={getBuffIconPreviewSrc}
           emptyMessage={t("skillMonitor.buff.priority.globalEmpty")}
           minColumnWidth={180}
         />
@@ -989,6 +1187,7 @@
             items={getFilteredAlertSearchResults()}
             {availableBuffMap}
             onSelect={(buffId) => upsertBuffAlert(buffId, {})}
+            getIconSrc={getBuffIconPreviewSrc}
             emptyMessage={t("skillMonitor.buff.alert.emptySearch")}
             minColumnWidth={180}
           />
@@ -1122,6 +1321,7 @@
               voiceEditingBuffId = buffId;
               setVoiceBuffSearch("");
             }}
+            getIconSrc={getBuffIconPreviewSrc}
             emptyMessage={t("skillMonitor.buff.voice.emptySearch")}
             minColumnWidth={180}
           />
@@ -1385,6 +1585,7 @@
                   items={getGroupSearchResults(group)}
                   {availableBuffMap}
                   onSelect={(buffId) => toggleBuffInGroup(group.id, buffId)}
+                  getIconSrc={getBuffIconPreviewSrc}
                   emptyMessage={t("skillMonitor.buff.group.emptySearch")}
                   minColumnWidth={180}
                 />
@@ -1400,8 +1601,8 @@
                   <div class="flex flex-wrap gap-2">
                     {#if group.buffIds.length > 0}
                       {#each group.buffIds as buffId (buffId)}
-                        {@const selectedBuff = availableBuffMap.get(buffId)}
-                        {#if selectedBuff}
+                        {@const iconSrc = getBuffIconPreviewSrc(buffId)}
+                        {#if iconSrc}
                           <button
                             type="button"
                             class="border-border/60 bg-muted/20 hover:border-border hover:bg-muted/30 relative size-12 overflow-hidden rounded-md border"
@@ -1411,7 +1612,7 @@
                             onclick={() => toggleBuffInGroup(group.id, buffId)}
                           >
                             <img
-                              src={`/images/buff/${selectedBuff.spriteFile}`}
+                              src={iconSrc}
                               alt={getBuffDisplayName(buffId)}
                               class="h-full w-full object-contain"
                             />
@@ -1458,6 +1659,7 @@
                     {availableBuffMap}
                     onSelect={(buffId) =>
                       togglePriorityInGroup(group.id, buffId)}
+                    getIconSrc={getBuffIconPreviewSrc}
                     emptyMessage={t("skillMonitor.buff.priority.groupEmpty")}
                     minColumnWidth={180}
                   />
@@ -1531,18 +1733,19 @@
                 {#if group.monitorAll}
                   {#each availableBuffs.slice(0, Math.max(6, group.columns * group.rows)) as buff (buff.baseId)}
                     <img
-                      src={`/images/buff/${buff.spriteFile}`}
+                      src={getBuffIconPreviewSrc(buff.baseId) ??
+                        `/images/buff/${buff.spriteFile}`}
                       alt={buff.name}
                       class="border-border/30 bg-muted/20 aspect-square w-full rounded border object-contain"
                     />
                   {/each}
                 {:else}
                   {#each group.buffIds.slice(0, Math.max(6, group.columns * group.rows)) as buffId (buffId)}
-                    {@const buff = availableBuffMap.get(buffId)}
-                    {#if buff}
+                    {@const iconSrc = getBuffIconPreviewSrc(buffId)}
+                    {#if iconSrc}
                       <img
-                        src={`/images/buff/${buff.spriteFile}`}
-                        alt={buff.name}
+                        src={iconSrc}
+                        alt={getBuffDisplayName(buffId)}
                         class="border-border/30 bg-muted/20 aspect-square w-full rounded border object-contain"
                       />
                     {:else}

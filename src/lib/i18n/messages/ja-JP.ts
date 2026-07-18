@@ -1057,6 +1057,7 @@ export const jaJPMessages = {
   "skillMonitor.buff.status.selected": "選択済み",
   "skillMonitor.buff.status.editing": "編集中",
   "skillMonitor.buff.status.aliased": "別名設定済み",
+  "skillMonitor.buff.status.customIcon": "カスタムアイコン",
   "skillMonitor.buff.title": "Buff モニター",
   "skillMonitor.buff.description":
     "アイコン付き/テキストのみの Buff を含め、名前または ID ですべての Buff を検索",
@@ -1074,6 +1075,19 @@ export const jaJPMessages = {
   "skillMonitor.buff.alias.configuredTitle": "設定済みの別名",
   "skillMonitor.buff.alias.empty":
     "別名はまだ設定されていません。上で検索して任意の Buff に別名を設定してください。",
+  "skillMonitor.buff.icon.title": "Buff アイコン設定",
+  "skillMonitor.buff.icon.configuredCount": "カスタムアイコン {count} 件",
+  "skillMonitor.buff.icon.placeholder":
+    "任意の Buff を検索してアイコンをカスタマイズ",
+  "skillMonitor.buff.icon.searchResults": "検索結果",
+  "skillMonitor.buff.icon.configuredTitle": "カスタマイズ済みのアイコン",
+  "skillMonitor.buff.icon.empty":
+    "カスタムアイコンはまだありません。上で検索して任意の Buff に画像を設定できます。アイコンのない Buff は設定後アイコン表示になります。",
+  "skillMonitor.buff.icon.choose": "画像を選択",
+  "skillMonitor.buff.icon.reset": "デフォルトに戻す",
+  "skillMonitor.buff.icon.noIcon": "アイコンなし",
+  "skillMonitor.buff.icon.importFailed":
+    "画像のインポートに失敗しました：{error}",
   "skillMonitor.buff.display.title": "Buff 表示モード",
   "skillMonitor.buff.display.description":
     "個別配置とグループレイアウトを切り替え。プロファイルごとに保存",

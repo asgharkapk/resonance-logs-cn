@@ -5,6 +5,11 @@
     SETTINGS,
     type BuffAliasMap,
   } from "$lib/settings-store";
+  import {
+    ensureBuffIconOverrides,
+    resolveBuffIconSrc,
+  } from "$lib/buff-icons";
+  import { buffIconDirUrlPrefix } from "$lib/buff-icon-dir.svelte";
   import type {
     DamageSnapshot,
     DeathBuffSnapshot,
@@ -59,6 +64,9 @@
       : SETTINGS.live.general.state.abbreviationStyle,
   );
   const buffAliases = $derived.by<BuffAliasMap>(() => getGlobalBuffAliases());
+  const buffIconOverrides = $derived.by(() =>
+    ensureBuffIconOverrides(SETTINGS.skillMonitor.state.buffIconOverrides),
+  );
 
   // Reverse so that the fatal hit (0s) sits at the top and older hits descend (-0.2s, -0.5s, ...).
   const rows = $derived.by<DamageSnapshot[]>(() =>
@@ -216,8 +224,15 @@
     return name === `#${baseId}` ? String(baseId) : name;
   }
 
+  /** Fully-resolved icon src: player override > game sprite > null. */
   function resolveBuffIcon(buff: DeathBuffSnapshot): string | null {
-    return lookupBuffMeta(Number(buff.baseId))?.spriteFile ?? null;
+    const baseId = Number(buff.baseId);
+    return resolveBuffIconSrc(
+      baseId,
+      lookupBuffMeta(baseId)?.spriteFile,
+      buffIconOverrides,
+      buffIconDirUrlPrefix(),
+    );
   }
 
   function resolveBuffTooltip(buff: DeathBuffSnapshot): string {
@@ -287,7 +302,7 @@
             {#if icon}
               <img
                 class="size-4 shrink-0 rounded-sm object-contain"
-                src={`/images/buff/${icon}`}
+                src={icon}
                 alt={resolveBuffName(buff)}
               />
             {/if}

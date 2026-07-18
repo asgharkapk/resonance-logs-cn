@@ -26,6 +26,7 @@
     saveAndApplyMonitorRuntimeSnapshot,
   } from "$lib/runtime-monitor-sync";
   import { onMount, untrack } from "svelte";
+  import { initBuffIconDir } from "$lib/buff-icon-dir.svelte";
   import { activeProfileOrDefault } from "$lib/skill-monitor-profile.svelte.js";
   import {
     ensureVoiceListeners,
@@ -199,6 +200,10 @@
 
   onMount(() => {
     showFirstRunPrompt = shouldShowFirstRunPrompt();
+
+    // Resolve the buff-icon directory once so settings previews can render
+    // player-customized icons via the asset protocol.
+    void initBuffIconDir();
 
     // "live" has no auto-hide effect to seed its initial visibility (unlike the
     // other overlays, which sync above), so refresh it explicitly.

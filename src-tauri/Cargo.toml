@@ -25,7 +25,7 @@ cmake = "0.1.57"
 
 [dependencies]
 # image-png for frontend
-tauri = { version = "2.11", features = ["tray-icon", "image-png"] }
+tauri = { version = "2.11", features = ["tray-icon", "image-png", "protocol-asset"] }
 serde = { version = "1.0.219", features = ["derive"] }
 tauri-plugin-single-instance = "2.3.4"
 tracing = "0.1"

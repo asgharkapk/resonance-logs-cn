@@ -7,6 +7,7 @@ import {
   type ShieldDetailStyle,
   type TextBuffPanelStyle,
 } from "$lib/settings-store";
+import { ensureBuffIconOverrides } from "$lib/buff-icons";
 import {
   activeProfile as sharedActiveProfile,
   clampedProfileIndex,
@@ -47,6 +48,9 @@ const _selectedClassKey = $derived.by(
 );
 const _buffAliases = $derived.by(() =>
   ensureBuffAliases(SETTINGS.skillMonitor.state.buffAliases),
+);
+const _buffIconOverrides = $derived.by(() =>
+  ensureBuffIconOverrides(SETTINGS.skillMonitor.state.buffIconOverrides),
 );
 const _monitoredSkillIds = $derived.by(
   () => _activeProfile?.monitoredSkillIds ?? [],
@@ -136,6 +140,10 @@ export function selectedClassKey() {
 
 export function buffAliases() {
   return _buffAliases;
+}
+
+export function buffIconOverrides() {
+  return _buffIconOverrides;
 }
 
 export function monitoredSkillIds() {

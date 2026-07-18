@@ -11,6 +11,7 @@
     getAvailableBuffDefinitions,
     getBuffCategoryDefinitions,
     getBuffIdsByCategory,
+    lookupBuffMeta,
     lookupDefaultBuffName,
     normalizeBuffCategoryKeys,
     resolveBuffDisplayName,
@@ -81,6 +82,14 @@
     ensureInlineBuffEntries,
   } from "$lib/custom-panel-utils";
   import { t } from "$lib/i18n/index.svelte";
+  import { open } from "@tauri-apps/plugin-dialog";
+  import { toast } from "svelte-sonner";
+  import { commands } from "$lib/bindings";
+  import {
+    ensureBuffIconOverrides,
+    resolveBuffIconSrc,
+  } from "$lib/buff-icons";
+  import { buffIconDirUrlPrefix } from "$lib/buff-icon-dir.svelte";
 
   type CounterRuleOption = CounterRulePreset & { origin: "preset" | "user" };
 
@@ -114,6 +123,10 @@
   let buffAliasSearch = $state("");
   let buffAliasSearchResults = $state<BuffNameInfo[]>([]);
   let buffAliasEditingBuffId = $state<number | null>(null);
+  let buffIconSectionExpanded = $state(false);
+  let buffIconSearch = $state("");
+  let buffIconSearchResults = $state<BuffNameInfo[]>([]);
+  let buffIconEditingBuffId = $state<number | null>(null);
 
   const classConfigs = $derived(getClassConfigs());
   const counterRules = $derived(getCounterRules());
@@ -121,6 +134,9 @@
   const slotTemplates = $derived(getSlotTemplates());
   const buffAliases = $derived.by(() =>
     ensureBuffAliases(SETTINGS.skillMonitor.state.buffAliases),
+  );
+  const buffIconOverrides = $derived.by(() =>
+    ensureBuffIconOverrides(SETTINGS.skillMonitor.state.buffIconOverrides),
   );
   const activeProfileIndex = $derived.by(() => clampedProfileIndex());
   const activeProfile = $derived.by(() => activeProfileOrDefault());
@@ -192,6 +208,12 @@
   );
   const configuredBuffAliasIds = $derived.by(() =>
     Object.keys(buffAliases)
+      .map((baseId) => Number(baseId))
+      .filter((baseId) => Number.isFinite(baseId))
+      .sort((a, b) => a - b),
+  );
+  const configuredBuffIconIds = $derived.by(() =>
+    Object.keys(buffIconOverrides)
       .map((baseId) => Number(baseId))
       .filter((baseId) => Number.isFinite(baseId))
       .sort((a, b) => a - b),
@@ -475,6 +497,60 @@
     SETTINGS.skillMonitor.state.buffAliases = next;
   }
 
+  function hasBuffIconOverride(buffId: number): boolean {
+    return buffIconOverrides[String(buffId)] !== undefined;
+  }
+
+  /** Preview src for pickers/previews: override > game sprite > null. */
+  function getBuffIconPreviewSrc(buffId: number): string | null {
+    return resolveBuffIconSrc(
+      buffId,
+      lookupBuffMeta(buffId)?.spriteFile,
+      buffIconOverrides,
+      buffIconDirUrlPrefix(),
+    );
+  }
+
+  async function chooseBuffIconImage(buffId: number) {
+    const selected = await open({
+      multiple: false,
+      filters: [
+        {
+          name: "Images",
+          extensions: ["png", "jpg", "jpeg", "webp", "gif"],
+        },
+      ],
+    });
+    if (typeof selected !== "string") return;
+    const result = await commands.importBuffIcon(buffId, selected);
+    if (result.status === "error") {
+      toast.error(
+        t("skillMonitor.buff.icon.importFailed", {
+          error: String(result.error),
+        }),
+      );
+      return;
+    }
+    SETTINGS.skillMonitor.state.buffIconOverrides = {
+      ...buffIconOverrides,
+      [String(buffId)]: result.data,
+    };
+  }
+
+  async function resetBuffIcon(buffId: number) {
+    const fileName = buffIconOverrides[String(buffId)];
+    if (!fileName) return;
+    const next = { ...buffIconOverrides };
+    delete next[String(buffId)];
+    SETTINGS.skillMonitor.state.buffIconOverrides = next;
+    // Best-effort file cleanup; the settings change above already took effect
+    // and a leftover file is harmless (re-importing the same image reuses it).
+    const result = await commands.deleteBuffIcon(fileName);
+    if (result.status === "error") {
+      console.error("failed to delete buff icon file:", result.error);
+    }
+  }
+
   function setGlobalPrioritySearch(value: string) {
     globalPrioritySearch = value;
   }
@@ -521,6 +597,14 @@
 
   function setBuffAliasEditingBuffId(buffId: number | null) {
     buffAliasEditingBuffId = buffId;
+  }
+
+  function setBuffIconSectionExpanded(expanded: boolean) {
+    buffIconSectionExpanded = expanded;
+  }
+
+  function setBuffIconEditingBuffId(buffId: number | null) {
+    buffIconEditingBuffId = buffId;
   }
 
   function toggleBuff(buffId: number) {
@@ -613,12 +697,6 @@
     }
     return map;
   });
-  const selectedBuffs = $derived.by(
-    () =>
-      monitoredBuffIds
-        .map((id) => availableBuffMap.get(id))
-        .filter(Boolean) as BuffDefinition[],
-  );
 
   $effect(() => {
     buffSearchResults = searchBuffsByName(buffSearch, buffAliases);
@@ -639,10 +717,21 @@
     buffAliasSearchResults = searchBuffsByName(buffAliasSearch, buffAliases);
   });
 
+  $effect(() => {
+    buffIconSearchResults = searchBuffsByName(buffIconSearch, buffAliases);
+  });
+
   function setBuffAliasSearch(value: string) {
     buffAliasSearch = value;
     if (!value.trim()) {
       buffAliasEditingBuffId = null;
+    }
+  }
+
+  function setBuffIconSearch(value: string) {
+    buffIconSearch = value;
+    if (!value.trim()) {
+      buffIconEditingBuffId = null;
     }
   }
 
@@ -1730,7 +1819,6 @@
         {monitoredBuffIds}
         {monitoredBuffCategories}
         {expandedSelectedBuffIds}
-        {selectedBuffs}
         {selectedBuffCategories}
         {availableBuffs}
         {buffCategoryDefinitions}
@@ -1748,6 +1836,18 @@
         {getBuffAlias}
         {setBuffAlias}
         {resetBuffAlias}
+        {buffIconSectionExpanded}
+        {setBuffIconSectionExpanded}
+        {buffIconSearch}
+        {setBuffIconSearch}
+        {buffIconSearchResults}
+        {buffIconEditingBuffId}
+        {setBuffIconEditingBuffId}
+        {configuredBuffIconIds}
+        {getBuffIconPreviewSrc}
+        {hasBuffIconOverride}
+        {chooseBuffIconImage}
+        {resetBuffIcon}
         {isBuffSelected}
         {isBuffCategorySelected}
         {toggleBuff}
@@ -1846,6 +1946,7 @@
       {userCounterRules}
       {availableBuffMap}
       {getBuffDisplayName}
+      {getBuffIconPreviewSrc}
       {inlineBuffSearch}
       {filteredInlineBuffSearchResults}
       {customPanelGroups}

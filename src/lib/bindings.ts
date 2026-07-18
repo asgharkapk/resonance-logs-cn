@@ -354,6 +354,43 @@ async exportLoadout(destinationPath: string, contents: string) : Promise<Result<
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Returns the buff-icon directory as a webview-ready prefix (forward
+ * slashes, trailing `/`) for `convertFileSrc` concatenation.
+ */
+async buffIconDir() : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("buff_icon_dir") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Copies `source_path` into the buff-icon directory under a
+ * content-addressed name, removing superseded icons for the same buff.
+ * Returns the stored file name for persistence in settings.
+ */
+async importBuffIcon(baseId: number, sourcePath: string) : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("import_buff_icon", { baseId, sourcePath }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Deletes a previously imported icon. Missing files are treated as
+ * already deleted.
+ */
+async deleteBuffIcon(fileName: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_buff_icon", { fileName }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getNetworkDevices() : Promise<Result<Device[], string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_network_devices") };

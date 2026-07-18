@@ -37,6 +37,7 @@
     userCounterRules: UserCounterRule[];
     availableBuffMap: Map<number, BuffDefinition>;
     getBuffDisplayName: (buffId: number) => string;
+    getBuffIconPreviewSrc: (buffId: number) => string | null;
     inlineBuffSearch: string;
     filteredInlineBuffSearchResults: BuffNameInfo[];
     customPanelGroups: CustomPanelGroup[];
@@ -95,6 +96,7 @@
     userCounterRules,
     availableBuffMap,
     getBuffDisplayName,
+    getBuffIconPreviewSrc,
     inlineBuffSearch,
     filteredInlineBuffSearchResults,
     customPanelGroups,
@@ -652,6 +654,7 @@
               addCustomPanelEntry(selectedGroup.id, "buff", buffId)}
             isDisabled={(buffId) => Boolean(getEntryLocation("buff", buffId))}
             getStatusLabel={buffStatusLabel}
+            getIconSrc={getBuffIconPreviewSrc}
             emptyMessage={t("skillMonitor.customPanel.noMatchingBuff")}
           />
         {/if}

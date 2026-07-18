@@ -972,6 +972,7 @@ export const zhCNMessages = {
   "skillMonitor.buff.status.selected": "已选择",
   "skillMonitor.buff.status.editing": "编辑中",
   "skillMonitor.buff.status.aliased": "已设别名",
+  "skillMonitor.buff.status.customIcon": "已自定义图标",
   "skillMonitor.buff.title": "Buff 监控",
   "skillMonitor.buff.description":
     "统一通过 Buff 名称或 ID 搜索（含有图标/无图标 Buff）",
@@ -989,6 +990,17 @@ export const zhCNMessages = {
   "skillMonitor.buff.alias.configuredTitle": "已设置的别名",
   "skillMonitor.buff.alias.empty":
     "暂未设置任何别名，输入上方搜索词后可对任意 Buff 设置别名。",
+  "skillMonitor.buff.icon.title": "Buff 图标设置",
+  "skillMonitor.buff.icon.configuredCount": "已自定义图标 {count}",
+  "skillMonitor.buff.icon.placeholder": "搜索任意 Buff 后自定义图标",
+  "skillMonitor.buff.icon.searchResults": "搜索结果",
+  "skillMonitor.buff.icon.configuredTitle": "已自定义的图标",
+  "skillMonitor.buff.icon.empty":
+    "暂未自定义任何图标，输入上方搜索词后可对任意 Buff 设置图片；无图标 Buff 设置后将显示为图标。",
+  "skillMonitor.buff.icon.choose": "选择图片",
+  "skillMonitor.buff.icon.reset": "恢复默认",
+  "skillMonitor.buff.icon.noIcon": "无图标",
+  "skillMonitor.buff.icon.importFailed": "导入图片失败：{error}",
   "skillMonitor.buff.display.title": "Buff 显示模式",
   "skillMonitor.buff.display.description":
     "可在独立定位和分组布局间切换，配置会按方案保存",
