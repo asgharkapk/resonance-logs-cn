@@ -1,4 +1,4 @@
-# <img src="app-logo.png" width="64" align="center"> Star Resonance DPS meter & Dungeon/Raid BDM & Skill/Buff Trackers Overlay
+# <img src="app-logo.png" width="64" align="center"> Star Resonance DPS meter & Dungeon/Raid DBM & Minimap & voice callout & Skill/Buff Trackers Overlay
 
 <div align="center">
 
