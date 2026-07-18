@@ -317,29 +317,43 @@ export function createLoadoutFromPreset(preset: LoadoutPreset): string {
       ? onlyLoadout.id
       : null;
 
-  const skillState = SETTINGS.skillMonitor.state;
-  const skillProfile: SkillMonitorProfile = {
-    // Deep-clone: preset objects are shared across repeated applications.
-    ...deepCloneSettings(preset.skillProfile),
-    id: generateProfileId("skill"),
-  };
-  skillState.profiles = [...skillState.profiles, skillProfile];
-
-  const monsterProfileId = createMonsterProfile(
-    preset.monsterProfile.name,
-    preset.monsterProfile,
-  );
-
-  const newId = createLoadout({
-    name: preset.className,
-    skillProfileId: skillProfile.id,
-    monsterProfileId,
-  });
+  const newId = materializeLoadout(preset.data, preset.name, true);
 
   if (replaceableDefaultId) {
     removeLoadout(replaceableDefaultId);
   }
   return newId;
+}
+
+function materializeLoadout(
+  data: LoadoutExport,
+  name: string,
+  activate: boolean,
+): string {
+  const skillState = SETTINGS.skillMonitor.state;
+  const skillProfile: SkillMonitorProfile = {
+    // Each created loadout owns all nested profile data.
+    ...deepCloneSettings(data.skillProfile),
+    id: generateProfileId("skill"),
+  };
+  skillState.profiles = [...skillState.profiles, skillProfile];
+
+  const monsterProfileId = createMonsterProfile(
+    data.monsterProfile.name,
+    data.monsterProfile,
+  );
+  const liveProfileId = createLiveProfile(
+    data.liveProfile.name,
+    data.liveProfile,
+  );
+
+  return createLoadout({
+    name,
+    skillProfileId: skillProfile.id,
+    monsterProfileId,
+    liveProfileId,
+    activate,
+  });
 }
 
 /**
@@ -394,29 +408,5 @@ export function exportLoadout(id: string): LoadoutExport | null {
 
 /** Imports a previously-exported loadout, generating fresh ids for its profiles. */
 export function importLoadout(data: LoadoutExport): string {
-  const skillState = SETTINGS.skillMonitor.state;
-  const skillProfile: SkillMonitorProfile = {
-    // Deep-clone so the imported profile owns its nested data.
-    ...deepCloneSettings(data.skillProfile),
-    id: generateProfileId("skill"),
-  };
-  skillState.profiles = [...skillState.profiles, skillProfile];
-
-  const monsterProfileId = createMonsterProfile(
-    data.monsterProfile.name,
-    data.monsterProfile,
-  );
-
-  const liveProfileId = createLiveProfile(
-    data.liveProfile?.name ?? "",
-    data.liveProfile,
-  );
-
-  return createLoadout({
-    name: data.name,
-    skillProfileId: skillProfile.id,
-    monsterProfileId,
-    liveProfileId,
-    activate: false,
-  });
+  return materializeLoadout(data, data.name, false);
 }

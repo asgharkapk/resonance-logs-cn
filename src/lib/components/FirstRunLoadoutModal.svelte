@@ -2,6 +2,7 @@
   import { getLocale, t } from "$lib/i18n/index.svelte";
   import { buildLoadoutPresets } from "$lib/config/loadout-presets";
   import { createLoadoutFromPreset } from "$lib/loadouts.svelte.js";
+  import LoadoutPresetCard from "$lib/components/LoadoutPresetCard.svelte";
 
   let { onclose }: { onclose?: () => void } = $props();
 
@@ -36,22 +37,16 @@
       </p>
     </div>
     <div class="flex-1 overflow-auto px-6 py-5">
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        {#each presets as preset (preset.classKey)}
-          <button
-            type="button"
-            class="flex flex-col items-center gap-1.5 rounded-lg border border-border/60 bg-muted/20 px-3 py-4 text-sm font-medium text-foreground transition-colors hover:border-primary/60 hover:bg-primary/10"
-            onclick={() => applyPreset(preset)}
-          >
-            {preset.className}
-          </button>
+      <div class="max-w-md">
+        {#each presets as preset (preset.id)}
+          <LoadoutPresetCard {preset} onselect={() => applyPreset(preset)} />
         {/each}
       </div>
     </div>
     <div class="border-border flex items-center justify-end border-t px-6 py-4">
       <button
         type="button"
-        class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        class="text-muted-foreground hover:text-foreground text-sm transition-colors"
         onclick={skip}
       >
         {t("loadout.firstRun.skip")}

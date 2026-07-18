@@ -27,7 +27,7 @@ export const enUSMessages = {
   "loadout.page.liveProfileLabel": "Live meter profile",
   "loadout.page.presetsTitle": "Presets",
   "loadout.page.presetsDescription":
-    "Quickly create a complete loadout (skill monitor + monster monitor) per class, then fine-tune it yourself",
+    "Apply a curated loadout with skill, monster, and live meter settings",
   "loadout.page.presetApplied": 'Created loadout "{name}"',
   "loadout.page.importButton": "Import",
   "loadout.page.exportButton": "Export",
@@ -37,7 +37,7 @@ export const enUSMessages = {
   "loadout.page.exportError": "Export failed",
   "loadout.firstRun.title": "Pick a starter loadout",
   "loadout.firstRun.description":
-    "Choose a preset for your class to start monitoring quickly. You can adjust or create more loadouts anytime on the Loadouts page",
+    "Choose a configured preset to start monitoring. You can adjust it anytime on the Loadouts page",
   "loadout.firstRun.skip": "Maybe later",
   "monitoring.recovery.loading": "Loading monitoring settings...",
   "monitoring.recovery.recovering":
