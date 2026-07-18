@@ -1645,6 +1645,14 @@ export const jaJPMessages = {
   "minimap.settings.localFacing.label": "向きを表示",
   "minimap.settings.localFacing.description":
     "有効にすると、自分のマーカーに現在の向きを指す小さな矢印を描画します。",
+  "minimap.settings.deadStyle.title": "死亡時の表示",
+  "minimap.settings.deadStyle.description":
+    "自身と味方が倒れた際のミニマップ表示をカスタマイズします。ギミックの色指定を上書きします。",
+  "minimap.settings.deadStyle.xShape.label": "× マークを使用",
+  "minimap.settings.deadStyle.xShape.description":
+    "オフの場合は通常の塗りつぶし丸、オンの場合は × マークを表示します。",
+  "minimap.settings.deadStyle.color": "死亡時の色",
+  "minimap.settings.deadStyle.opacity": "死亡時の不透明度",
   "minimap.settings.voiceCues.title": "ギミック音声通知",
   "minimap.settings.voiceCues.description":
     "各マップで対応済みのギミックに音声通知を割り当てます。展開してBuff/ボスと同じ方法で設定できます。",

@@ -1532,6 +1532,14 @@ export const zhCNMessages = {
   "minimap.settings.localFacing.label": "显示朝向指示",
   "minimap.settings.localFacing.description":
     "开启后，在自己的标记上绘制一个指向当前朝向的小箭头。",
+  "minimap.settings.deadStyle.title": "阵亡样式",
+  "minimap.settings.deadStyle.description":
+    "自定义自己及队友阵亡时在小地图上的显示样式，会覆盖机制点名颜色。",
+  "minimap.settings.deadStyle.xShape.label": "使用 × 标记",
+  "minimap.settings.deadStyle.xShape.description":
+    "关闭时显示默认实心圆点，开启时显示 × 标记。",
+  "minimap.settings.deadStyle.color": "阵亡颜色",
+  "minimap.settings.deadStyle.opacity": "阵亡透明度",
   "minimap.settings.voiceCues.title": "机制语音播报",
   "minimap.settings.voiceCues.description":
     "为各地图已支持的机制预警绑定语音播报，展开后配置方式与 Buff/Boss 机制一致。",

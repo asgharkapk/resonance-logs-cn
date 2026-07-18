@@ -22,6 +22,7 @@
     localRing?: Partial<typeof defaultMinimapConfig.localRing>;
     localFacing?: Partial<typeof defaultMinimapConfig.localFacing>;
     infoPanelStyle?: Partial<typeof defaultMinimapConfig.infoPanelStyle>;
+    deadStyle?: Partial<typeof defaultMinimapConfig.deadStyle>;
   };
 
   function ensureMinimapSettingsDefaults() {
@@ -53,6 +54,10 @@
     state.infoPanelStyle ??= { ...defaultMinimapConfig.infoPanelStyle };
     state.infoPanelStyle.backgroundOpacity ??=
       defaultMinimapConfig.infoPanelStyle.backgroundOpacity;
+    state.deadStyle ??= { ...defaultMinimapConfig.deadStyle };
+    state.deadStyle.shape ??= defaultMinimapConfig.deadStyle.shape;
+    state.deadStyle.color ??= defaultMinimapConfig.deadStyle.color;
+    state.deadStyle.opacity ??= defaultMinimapConfig.deadStyle.opacity;
   }
 
   ensureMinimapSettingsDefaults();
@@ -69,6 +74,7 @@
     void minimapSettings.localRing;
     void minimapSettings.localFacing;
     void minimapSettings.infoPanelStyle;
+    void minimapSettings.deadStyle;
     ensureMinimapSettingsDefaults();
   });
 
@@ -286,6 +292,43 @@
           max={24}
           step={1}
           unit="px"
+        />
+      </div>
+    {/if}
+  </section>
+
+  <section
+    class="border-border/60 bg-card/40 space-y-4 rounded-lg border p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]"
+  >
+    <div>
+      <h2 class="text-foreground text-base font-semibold">
+        {t("minimap.settings.deadStyle.title")}
+      </h2>
+      <p class="text-muted-foreground text-xs">
+        {t("minimap.settings.deadStyle.description")}
+      </p>
+    </div>
+
+    {#if minimapSettings.deadStyle}
+      <SettingsSwitch
+        checked={minimapSettings.deadStyle.shape === "x"}
+        onCheckedChange={(checked) =>
+          (minimapSettings.deadStyle.shape = checked ? "x" : "default")}
+        label={t("minimap.settings.deadStyle.xShape.label")}
+        description={t("minimap.settings.deadStyle.xShape.description")}
+      />
+      <div class="grid gap-2 lg:grid-cols-2">
+        <SettingsColor
+          bind:value={minimapSettings.deadStyle.color}
+          label={t("minimap.settings.deadStyle.color")}
+        />
+        <SettingsSlider
+          bind:value={minimapSettings.deadStyle.opacity}
+          label={t("minimap.settings.deadStyle.opacity")}
+          min={0.05}
+          max={1}
+          step={0.05}
+          unit=""
         />
       </div>
     {/if}

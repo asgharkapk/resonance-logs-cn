@@ -471,6 +471,16 @@ export type MinimapInfoPanelStyle = {
   backgroundOpacity: number;
 };
 
+/**
+ * How dead team members (local player + teammates) render on the minimap.
+ * Overrides mechanic coloring entirely while a team member is dead.
+ */
+export type MinimapDeadStyle = {
+  shape: "default" | "x";
+  color: string;
+  opacity: number;
+};
+
 export type MinimapConfig = {
   autoHideInDailyScenes: boolean;
   hideNormalTeammates: boolean;
@@ -487,6 +497,7 @@ export type MinimapConfig = {
   localRing: MinimapLocalRing;
   localFacing: MinimapLocalFacing;
   infoPanelStyle: MinimapInfoPanelStyle;
+  deadStyle: MinimapDeadStyle;
   /**
    * Voice bindings for scene-specific mechanic cues (see
    * `SceneDefinition.voiceCues` in the minimap overlay), keyed by cue id.
@@ -1815,6 +1826,11 @@ export function createDefaultMinimapConfig(): MinimapConfig {
     },
     infoPanelStyle: {
       backgroundOpacity: 0.76,
+    },
+    deadStyle: {
+      shape: "default",
+      color: "#ef4444",
+      opacity: 0.35,
     },
     mechanicVoiceConfigs: {},
   };

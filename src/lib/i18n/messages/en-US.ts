@@ -1658,6 +1658,14 @@ export const enUSMessages = {
   "minimap.settings.localFacing.label": "Show facing indicator",
   "minimap.settings.localFacing.description":
     "When enabled, a small arrow pointing in your current facing direction is drawn on your own marker.",
+  "minimap.settings.deadStyle.title": "Death Style",
+  "minimap.settings.deadStyle.description":
+    "Customize how you and your teammates appear on the minimap when dead. Overrides mechanic coloring.",
+  "minimap.settings.deadStyle.xShape.label": "Use × marker",
+  "minimap.settings.deadStyle.xShape.description":
+    "Off: default filled circle. On: × mark.",
+  "minimap.settings.deadStyle.color": "Dead color",
+  "minimap.settings.deadStyle.opacity": "Dead opacity",
   "minimap.settings.voiceCues.title": "Mechanic voice callouts",
   "minimap.settings.voiceCues.description":
     "Bind voice callouts to mechanics already supported on each map; expand a cue to configure it the same way as buff/boss cues.",

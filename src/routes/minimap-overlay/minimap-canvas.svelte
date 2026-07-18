@@ -18,6 +18,8 @@
   const DEFAULT_BOSS_COLOR = "#ef4444";
   const DEFAULT_LOCAL_RING_COLOR = "#ffffff";
   const DEFAULT_LOCAL_RING_WIDTH = 2;
+  const DEFAULT_DEAD_COLOR = "#ef4444";
+  const DEFAULT_DEAD_OPACITY = 0.35;
   const minimapSettings = $derived(SETTINGS.minimap.state);
 
   type Projector = (x: number, z: number) => [number, number];
@@ -119,6 +121,27 @@
     return Number.isFinite(width) ? Math.max(1, Math.min(6, width)) : 2;
   }
 
+  // Dead team members render with a dedicated style that fully overrides
+  // mechanic coloring. Reads are defensive because the overlay window never
+  // runs the settings page's defaults backfill (legacy configs may lack the
+  // key).
+  function deadShape(): "default" | "x" {
+    return minimapSettings.deadStyle?.shape === "x" ? "x" : "default";
+  }
+
+  function deadColor(): string {
+    return minimapSettings.deadStyle?.color ?? DEFAULT_DEAD_COLOR;
+  }
+
+  function deadOpacity(): number {
+    const opacity = Number(
+      minimapSettings.deadStyle?.opacity ?? DEFAULT_DEAD_OPACITY,
+    );
+    return Number.isFinite(opacity)
+      ? Math.max(0.05, Math.min(1, opacity))
+      : DEFAULT_DEAD_OPACITY;
+  }
+
   function shouldDrawLocalRing(): boolean {
     return minimapSettings.localRing?.enabled !== false;
   }
@@ -200,6 +223,24 @@
     ctx.lineTo(cx - r * 0.866, cy + r * 0.5);
     ctx.closePath();
     ctx.fill();
+  }
+
+  // × mark centered on (cx, cy), used for dead team members when the dead
+  // style shape is "x". Stroked (not filled), so callers set strokeStyle and
+  // lineWidth first.
+  function drawX(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    r: number,
+  ) {
+    const half = r * 0.866;
+    ctx.beginPath();
+    ctx.moveTo(cx - half, cy - half);
+    ctx.lineTo(cx + half, cy + half);
+    ctx.moveTo(cx + half, cy - half);
+    ctx.lineTo(cx - half, cy + half);
+    ctx.stroke();
   }
 
   function draw() {
@@ -291,6 +332,31 @@
       }
 
       const [sx, sy] = project(entity.x, entity.z);
+
+      // Dead team members render with the configured dead style, fully
+      // overriding mechanic coloring and glow. Dead bosses/other entities
+      // fall through to the regular path and keep the hardcoded dim.
+      if (entity.isDead && team) {
+        ctx.globalAlpha = deadOpacity();
+        ctx.shadowBlur = 0;
+        const radius = radiusFor(entity.kind);
+        if (deadShape() === "x") {
+          ctx.strokeStyle = deadColor();
+          ctx.lineWidth = Math.max(1, radius * 0.5);
+          drawX(ctx, sx, sy, radius);
+        } else {
+          ctx.fillStyle = deadColor();
+          ctx.beginPath();
+          ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (entity.kind === "local") {
+          drawLocalRing(ctx, sx, sy);
+          drawLocalFacing(ctx, sx, sy, entity, project, deadColor());
+        }
+        continue;
+      }
+
       const dotColor = hasSafeStatus
         ? safeStatus
           ? slotColor(1) // green = inside safe zone
@@ -606,6 +672,9 @@
     void minimapSettings.localRing?.color;
     void minimapSettings.localRing?.width;
     void minimapSettings.localFacing?.enabled;
+    void minimapSettings.deadStyle?.shape;
+    void minimapSettings.deadStyle?.color;
+    void minimapSettings.deadStyle?.opacity;
     void minimapSettings.entitySizes?.local;
     void minimapSettings.entitySizes?.teammate;
     void minimapSettings.entitySizes?.boss;
