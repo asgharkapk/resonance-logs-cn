@@ -71,6 +71,9 @@ fn api_builder() -> Builder<tauri::Wry> {
             database::commands::get_recent_players_command,
             database::commands::get_player_name_command,
             packet_settings_commands::save_packet_capture_settings,
+            settings_backup_commands::backup_settings_stores,
+            settings_backup_commands::backup_failed_monitoring_stores,
+            loadout_commands::export_loadout,
             packets::npcap::get_network_devices,
             packets::npcap::check_npcap_status,
             debug_commands::open_log_dir,
@@ -317,6 +320,178 @@ mod packet_settings_commands {
         }
 
         Err(last_err.unwrap_or_else(|| "Failed to save packet capture config".to_string()))
+    }
+}
+
+mod settings_backup_commands {
+    use super::*;
+
+    const STORE_DIR_NAME: &str = "tauri-plugin-svelte";
+    const MONITORING_STORE_FILES: [&str; 8] = [
+        "monitoring.json",
+        "monitoring.dev.json",
+        "skillMonitor.json",
+        "skillMonitor.dev.json",
+        "monsterMonitor.json",
+        "monsterMonitor.dev.json",
+        "loadouts.json",
+        "loadouts.dev.json",
+    ];
+
+    fn copy_store_files(
+        source_dir: &Path,
+        destination_dir: &Path,
+        include: impl Fn(&str) -> bool,
+        skip_existing: bool,
+    ) -> Result<usize, String> {
+        std::fs::create_dir_all(destination_dir)
+            .map_err(|e| format!("create_dir_all {}: {e}", destination_dir.display()))?;
+        let entries = std::fs::read_dir(source_dir)
+            .map_err(|e| format!("read_dir {}: {e}", source_dir.display()))?;
+        let mut copied = 0;
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("read_dir entry: {e}"))?;
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Some(file_name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+            if !include(file_name) {
+                continue;
+            }
+            let destination = destination_dir.join(file_name);
+            if skip_existing && destination.exists() {
+                continue;
+            }
+            std::fs::copy(&path, &destination).map_err(|e| {
+                format!("copy {} -> {}: {e}", path.display(), destination.display())
+            })?;
+            copied += 1;
+        }
+        Ok(copied)
+    }
+
+    fn create_unique_recovery_dir(parent: &Path, stem: &str) -> Result<PathBuf, String> {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("create_dir_all {}: {e}", parent.display()))?;
+        for suffix in 0_u32.. {
+            let directory_name = if suffix == 0 {
+                stem.to_owned()
+            } else {
+                format!("{stem}-{suffix}")
+            };
+            let candidate = parent.join(directory_name);
+            match std::fs::create_dir(&candidate) {
+                Ok(()) => return Ok(candidate),
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => {
+                    return Err(format!("create_dir {}: {error}", candidate.display()));
+                }
+            }
+        }
+        unreachable!("u32 recovery directory suffixes cannot be exhausted")
+    }
+
+    /// Best-effort backup of the persisted settings stores before running a
+    /// one-time frontend migration. Copies every RuneStore JSON file into
+    /// `tauri-plugin-svelte/backup-v1/` without replacing the first snapshot.
+    #[tauri::command]
+    #[specta::specta]
+    pub fn backup_settings_stores(app_handle: tauri::AppHandle) -> Result<(), String> {
+        let app_data_dirs = [
+            app_handle.path().app_data_dir(),
+            app_handle.path().app_local_data_dir(),
+        ];
+        let mut any_stores_dir_found = false;
+        let mut last_err: Option<String> = None;
+
+        for dir in app_data_dirs.into_iter().flatten() {
+            let stores_dir = dir.join(STORE_DIR_NAME);
+            if !stores_dir.is_dir() {
+                continue;
+            }
+            any_stores_dir_found = true;
+
+            let backup_dir = stores_dir.join("backup-v1");
+            if let Err(error) = copy_store_files(
+                &stores_dir,
+                &backup_dir,
+                |file_name| file_name.ends_with(".json"),
+                true,
+            ) {
+                last_err = Some(error);
+            }
+        }
+
+        if !any_stores_dir_found {
+            info!("no settings stores directory found, nothing to back up");
+            return Ok(());
+        }
+
+        if let Some(err) = last_err {
+            warn!("settings backup completed with errors: {err}");
+        } else {
+            info!("backed up settings stores before migration");
+        }
+        Ok(())
+    }
+
+    /// Copies only monitoring-related RuneStore files to a timestamped recovery
+    /// directory before the frontend destroys the failed stores.
+    #[tauri::command]
+    #[specta::specta]
+    pub fn backup_failed_monitoring_stores(app_handle: tauri::AppHandle) -> Result<String, String> {
+        let app_data_dir = app_handle
+            .path()
+            .app_data_dir()
+            .map_err(|e| format!("resolve app data directory: {e}"))?;
+        let stores_dir = app_data_dir.join(STORE_DIR_NAME);
+        std::fs::create_dir_all(&stores_dir)
+            .map_err(|e| format!("create_dir_all {}: {e}", stores_dir.display()))?;
+
+        let timestamp = chrono::Utc::now().format("%Y%m%d-%H%M%S-%3f");
+        let recovery_dir =
+            create_unique_recovery_dir(&stores_dir.join("recovery"), &timestamp.to_string())?;
+        let copied = copy_store_files(
+            &stores_dir,
+            &recovery_dir,
+            |file_name| MONITORING_STORE_FILES.contains(&file_name),
+            false,
+        )?;
+        info!(
+            "backed up {copied} failed monitoring store files to {}",
+            recovery_dir.display()
+        );
+        Ok(recovery_dir.to_string_lossy().into_owned())
+    }
+}
+
+mod loadout_commands {
+    use super::*;
+
+    /// Writes a loadout export (JSON) to a user-chosen path.
+    ///
+    /// The frontend picks `destination_path` via the dialog plugin's `save()`
+    /// picker; a `.json` extension is appended when the user omitted it.
+    #[tauri::command]
+    #[specta::specta]
+    pub fn export_loadout(destination_path: String, contents: String) -> Result<(), String> {
+        let mut path = PathBuf::from(&destination_path);
+        if path.extension().is_none() {
+            path.set_extension("json");
+        }
+        if let Some(parent) = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("create_dir_all {}: {}", parent.display(), e))?;
+        }
+        std::fs::write(&path, contents).map_err(|e| format!("write {}: {}", path.display(), e))?;
+        info!("exported loadout to {}", path.display());
+        Ok(())
     }
 }
 

@@ -17,6 +17,9 @@
   import * as Popover from "$lib/components/ui/popover/index.js";
   import ChevronDown from "virtual:icons/lucide/chevron-down";
   import Languages from "virtual:icons/lucide/languages";
+  import LayersIcon from "virtual:icons/lucide/layers";
+  import SettingsIcon from "virtual:icons/lucide/settings";
+  import { activeLoadout, listLoadouts, switchLoadout } from "$lib/loadouts.svelte.js";
 
   // Check if current path matches or starts with the tool path
   function isActiveRoute(toolPath: string): boolean {
@@ -35,6 +38,9 @@
       .then((v) => (appVersion = v))
       .catch((err) => console.error("Failed to get app version", err));
   });
+
+  const loadouts = $derived(listLoadouts());
+  const currentLoadout = $derived(activeLoadout());
 </script>
 
 <aside
@@ -46,6 +52,51 @@
       {t("app.name")}
     </h1>
     <p class="text-xs text-muted-foreground mt-0.5">{t("toolbox.subtitle")}</p>
+  </div>
+
+  <!-- Global loadout switcher -->
+  <div class="px-3 py-3 border-b border-border/50">
+    <p class="px-1 pb-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+      {t("loadout.sidebar.label")}
+    </p>
+    <div class="flex items-center gap-1.5">
+      <Popover.Root>
+        <Popover.Trigger
+          class="group flex-1 flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border border-border/60 bg-muted/30 text-sm text-foreground cursor-pointer transition-colors hover:bg-muted hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-0"
+        >
+          <span class="flex items-center gap-2 min-w-0">
+            <LayersIcon class="w-3.5 h-3.5 opacity-70 shrink-0" />
+            <span class="truncate">
+              {currentLoadout?.name || t("loadout.sidebar.empty")}
+            </span>
+          </span>
+          <ChevronDown
+            class="w-3 h-3 opacity-60 transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0"
+          />
+        </Popover.Trigger>
+        <Popover.Content class="w-52 p-1" align="start" side="bottom" sideOffset={6}>
+          {#each loadouts as loadout (loadout.id)}
+            <button
+              type="button"
+              onclick={() => switchLoadout(loadout.id)}
+              class="w-full text-left px-2 py-1.5 rounded text-xs transition-colors truncate {currentLoadout?.id ===
+              loadout.id
+                ? 'bg-muted text-foreground font-medium'
+                : 'text-muted-foreground hover:bg-popover/70 hover:text-foreground'}"
+            >
+              {loadout.name}
+            </button>
+          {/each}
+        </Popover.Content>
+      </Popover.Root>
+      <a
+        href="/main/loadouts"
+        title={t("loadout.sidebar.manage")}
+        class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      >
+        <SettingsIcon class="w-3.5 h-3.5" />
+      </a>
+    </div>
   </div>
 
   <!-- Tool list -->

@@ -3,23 +3,33 @@ import {
   createDefaultSkillMonitorProfile,
   type SkillMonitorProfile,
 } from "$lib/settings-store";
+import { activeLoadout } from "$lib/loadouts.svelte.js";
 
-const _clampedProfileIndex = $derived.by(() => {
+function resolveActiveIndex(profiles: SkillMonitorProfile[]): number {
+  if (profiles.length === 0) return -1;
+  const targetId = activeLoadout()?.skillProfileId;
+  const index = profiles.findIndex((profile) => profile.id === targetId);
+  return index !== -1 ? index : 0;
+}
+
+const _activeProfileIndex = $derived.by(() => {
   const profiles = SETTINGS.skillMonitor.state.profiles;
-  if (profiles.length === 0) return 0;
-  return Math.min(
-    Math.max(SETTINGS.skillMonitor.state.activeProfileIndex, 0),
-    profiles.length - 1,
-  );
+  return Math.max(0, resolveActiveIndex(profiles));
 });
 
 const _activeProfile = $derived.by(() => {
   const profiles = SETTINGS.skillMonitor.state.profiles;
-  return profiles[_clampedProfileIndex] ?? null;
+  const index = resolveActiveIndex(profiles);
+  return index === -1 ? null : (profiles[index] ?? null);
 });
 
+/**
+ * @deprecated Kept only so existing `{#key}` blocks keyed off the active
+ * profile keep re-rendering when it changes. Prefer `activeProfile()?.id`
+ * for new code.
+ */
 export function clampedProfileIndex(): number {
-  return _clampedProfileIndex;
+  return _activeProfileIndex;
 }
 
 export function activeProfile(): SkillMonitorProfile | null {
@@ -39,15 +49,12 @@ export function updateActiveProfile(
   if (profiles.length === 0) {
     if (options?.createDefaultIfEmpty) {
       state.profiles = [createDefaultSkillMonitorProfile()];
-      state.activeProfileIndex = 0;
     }
     return;
   }
-  const index = Math.min(
-    Math.max(state.activeProfileIndex, 0),
-    profiles.length - 1,
-  );
+  const index = resolveActiveIndex(profiles);
+  const resolvedIndex = index === -1 ? 0 : index;
   state.profiles = profiles.map((profile, i) =>
-    i === index ? updater(profile) : profile,
+    i === resolvedIndex ? updater(profile) : profile,
   );
 }

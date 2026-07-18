@@ -32,9 +32,15 @@
   } from "$lib/stores/voice-store.svelte";
   import ToolSidebar from "./tool-sidebar.svelte";
   import ChangelogModal from "$lib/components/ChangelogModal.svelte";
+  import FirstRunLoadoutModal from "$lib/components/FirstRunLoadoutModal.svelte";
   import UpdateModal from "$lib/components/UpdateModal.svelte";
+  import {
+    dismissFirstRunPrompt,
+    shouldShowFirstRunPrompt,
+  } from "$lib/loadouts.svelte.js";
   import { getVersion } from "@tauri-apps/api/app";
   import AppBackgroundLayer from "$lib/components/app-background-layer.svelte";
+  import { Toaster } from "svelte-sonner";
 
   let { children } = $props();
 
@@ -163,6 +169,7 @@
   let navigateUnlisten: (() => void) | null = null;
 
   let showChangelog = $state(false);
+  let showFirstRunPrompt = $state(false);
   let currentVersion = $state("");
   type UpdateInfo = {
     version: string;
@@ -190,6 +197,8 @@
   }
 
   onMount(() => {
+    showFirstRunPrompt = shouldShowFirstRunPrompt();
+
     // "live" has no auto-hide effect to seed its initial visibility (unlike the
     // other overlays, which sync above), so refresh it explicitly.
     void refreshOverlayWindowVisibility("live");
@@ -252,7 +261,7 @@
       .then((v) => {
         currentVersion = v;
         // Compare persisted last-seen version with current app version
-        if ((SETTINGS.appVersion.state as any).value !== v) {
+        if (SETTINGS.appVersion.state.value !== v) {
           showChangelog = true;
           void revealMainWindowForNotice();
         }
@@ -289,7 +298,7 @@
   function handleClose() {
     // mark changelog as seen for this version
     try {
-      (SETTINGS.appVersion.state as any).value = currentVersion;
+      SETTINGS.appVersion.state.value = currentVersion;
     } catch (e) {
       console.error("Failed to set appVersion setting", e);
     }
@@ -300,6 +309,15 @@
 <div
   class="text-foreground relative isolate h-screen overflow-hidden font-sans"
 >
+  <!-- Global toast outlet: svelte-sonner renders nothing without this.
+       Colors track the active custom theme via CSS variables. -->
+  <Toaster
+    position="bottom-right"
+    toastOptions={{
+      style:
+        "background: var(--popover); color: var(--popover-foreground); border-color: var(--border); box-shadow: var(--toast-shadow);",
+    }}
+  />
   <AppBackgroundLayer
     enabled={SETTINGS.accessibility.state.backgroundImageEnabled}
     image={SETTINGS.accessibility.state.backgroundImage}
@@ -331,6 +349,15 @@
         {currentVersion}
         onclose={() => {
           updateInfo = null;
+        }}
+      />
+    {/if}
+
+    {#if !showChangelog && !updateInfo && showFirstRunPrompt}
+      <FirstRunLoadoutModal
+        onclose={() => {
+          dismissFirstRunPrompt();
+          showFirstRunPrompt = false;
         }}
       />
     {/if}

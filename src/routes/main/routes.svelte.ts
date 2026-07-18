@@ -5,6 +5,7 @@ import type { MessageKey } from "$lib/i18n/index.svelte";
 import ActivityIcon from "virtual:icons/lucide/activity";
 import CalculatorIcon from "virtual:icons/lucide/calculator";
 import HourglassIcon from "virtual:icons/lucide/hourglass";
+import LayersIcon from "virtual:icons/lucide/layers";
 import MapIcon from "virtual:icons/lucide/map";
 import MicIcon from "virtual:icons/lucide/mic";
 import PaletteIcon from "virtual:icons/lucide/palette";
@@ -20,6 +21,10 @@ type RouteDefinition = {
 // Tool-level routes for the left sidebar
 export const TOOL_ROUTES = {
   "/main/dps": { labelKey: "routes.tools.dps", icon: ActivityIcon },
+  "/main/loadouts": {
+    labelKey: "routes.tools.loadouts",
+    icon: LayersIcon,
+  },
   "/main/module-calc": {
     labelKey: "routes.tools.moduleCalc",
     icon: CalculatorIcon,

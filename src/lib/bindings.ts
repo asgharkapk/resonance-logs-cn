@@ -315,6 +315,45 @@ async savePacketCaptureSettings(method: string, npcapDevice: string) : Promise<R
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Best-effort backup of the persisted settings stores before running a
+ * one-time frontend migration. Copies every RuneStore JSON file into
+ * `tauri-plugin-svelte/backup-v1/` without replacing the first snapshot.
+ */
+async backupSettingsStores() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("backup_settings_stores") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Copies only monitoring-related RuneStore files to a timestamped recovery
+ * directory before the frontend destroys the failed stores.
+ */
+async backupFailedMonitoringStores() : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("backup_failed_monitoring_stores") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Writes a loadout export (JSON) to a user-chosen path.
+ *
+ * The frontend picks `destination_path` via the dialog plugin's `save()`
+ * picker; a `.json` extension is appended when the user omitted it.
+ */
+async exportLoadout(destinationPath: string, contents: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("export_loadout", { destinationPath, contents }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getNetworkDevices() : Promise<Result<Device[], string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_network_devices") };

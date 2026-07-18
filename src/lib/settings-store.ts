@@ -1008,6 +1008,7 @@ export type BuffGroup = {
 };
 
 export type SkillMonitorProfile = {
+  id: string;
   name: string;
   selectedClass: string;
   monitoredSkillIds: number[];
@@ -1071,6 +1072,33 @@ export function getGlobalBuffAliases(): BuffAliasMap {
     ...ensureBuffAliases(SETTINGS.monsterMonitor.state.buffAliases),
     ...ensureBuffAliases(SETTINGS.skillMonitor.state.buffAliases),
   };
+}
+
+/**
+ * Generates a stable, unique id for a profile/loadout record. Prefixed so
+ * ids are easy to recognize when inspecting persisted JSON.
+ */
+export function generateProfileId(prefix: string): string {
+  return `${prefix}_${crypto.randomUUID()}`;
+}
+
+/**
+ * Deep-clones JSON-compatible settings data. Used when copying profile data
+ * between the live "mirror" fields and profile slots (or when duplicating /
+ * importing profiles) so the two sides never alias the same nested
+ * arrays/objects. Works on $state proxies too, since `JSON.stringify` only
+ * performs ordinary property reads.
+ */
+export function deepCloneSettings<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+export function omitProfileId<T extends { id: string }>(
+  value: T,
+): Omit<T, "id"> {
+  const { id, ...rest } = value;
+  void id;
+  return rest;
 }
 
 export function createDefaultBuffAlertRule(): BuffAlertRule {
@@ -1362,6 +1390,7 @@ export function createDefaultSkillMonitorProfile(
   classKey = "wind_knight",
 ): SkillMonitorProfile {
   return {
+    id: generateProfileId("skill"),
     name,
     selectedClass: classKey,
     monitoredSkillIds: [],
@@ -1425,6 +1454,176 @@ export function createDefaultMonsterMonitorConfig(): MonsterMonitorConfig {
     fantasyPanelStyle: createDefaultCustomPanelStyle(),
     bossDbmPanelStyle: createDefaultBossDbmStyle(),
     stunPanelStyle: createDefaultStunPanelStyle(),
+  };
+}
+
+/**
+ * The subset of `MonsterMonitorConfig` that varies per monster-monitor
+ * profile. Excludes the fields that stay global regardless of which
+ * profile is active (on/off switch, daily-scene auto-hide, buff aliases).
+ */
+export type MonsterMonitorProfileData = Omit<
+  MonsterMonitorConfig,
+  "enabled" | "autoHideInDailyScenes" | "buffAliases"
+>;
+
+export type MonsterMonitorProfile = MonsterMonitorProfileData & {
+  id: string;
+  name: string;
+};
+
+/**
+ * Persisted shape of the `monsterMonitor` store. The profile-data fields
+ * (inherited from `MonsterMonitorConfig`) act as a "mirror": they always
+ * hold a live working copy of whichever profile in `profiles` matches
+ * `mirroredProfileId`, so every existing consumer of
+ * `SETTINGS.monsterMonitor.state.<field>` keeps working unchanged. Switching
+ * profiles (see `monster-monitor-profile.svelte.ts`) flushes the mirror into
+ * its previous slot, then copies the newly-selected profile into the mirror.
+ */
+export type MonsterMonitorState = MonsterMonitorConfig & {
+  /** Id of the profile currently materialized into the mirror fields above. */
+  mirroredProfileId: string;
+  profiles: MonsterMonitorProfile[];
+};
+
+export type SkillMonitorState = {
+  enabled: boolean;
+  autoHideInDailyScenes: boolean;
+  buffAliases: BuffAliasMap;
+  profiles: SkillMonitorProfile[];
+};
+
+/** Field names that belong to a monster-monitor profile (mirror <-> profile sync). */
+export const MONSTER_PROFILE_FIELD_KEYS = [
+  "hateListEnabled",
+  "hateListMaxDisplay",
+  "stunListEnabled",
+  "monitoredBuffIds",
+  "selfAppliedBuffIds",
+  "selfAppliedMonitorAll",
+  "teammateBuffIds",
+  "teammateBuffCategories",
+  "teammateBuffColumnOrder",
+  "fantasyWhitelistMonsterIds",
+  "fantasyMonsterAliases",
+  "dbmAliases",
+  "dbmVoiceConfigs",
+  "monsterBuffVoiceConfigs",
+  "fantasyShowAll",
+  "fantasyPersistentDisplay",
+  "buffPriorityIds",
+  "buffAlerts",
+  "overlayPositions",
+  "overlaySizes",
+  "overlayVisibility",
+  "panelStyle",
+  "teammatePanelStyle",
+  "hatePanelStyle",
+  "fantasyPanelStyle",
+  "bossDbmPanelStyle",
+  "stunPanelStyle",
+] as const satisfies readonly (keyof MonsterMonitorProfileData)[];
+
+// Compile-time exhaustiveness guard: if a field is added to
+// `MonsterMonitorConfig` (and thus to `MonsterMonitorProfileData`) without
+// being listed in `MONSTER_PROFILE_FIELD_KEYS` above, this stops compiling.
+// Without it, a forgotten field would silently behave as a global setting.
+type MissingMonsterProfileFieldKeys = Exclude<
+  keyof MonsterMonitorProfileData,
+  (typeof MONSTER_PROFILE_FIELD_KEYS)[number]
+>;
+const _monsterProfileFieldKeysExhaustive: Record<
+  MissingMonsterProfileFieldKeys,
+  never
+> = {};
+void _monsterProfileFieldKeysExhaustive;
+
+export function createDefaultMonsterMonitorProfile(
+  name = "",
+): MonsterMonitorProfile {
+  const { enabled, autoHideInDailyScenes, buffAliases, ...profileData } =
+    createDefaultMonsterMonitorConfig();
+  void enabled;
+  void autoHideInDailyScenes;
+  void buffAliases;
+  return {
+    ...profileData,
+    id: generateProfileId("monster"),
+    name,
+  };
+}
+
+export function extractMonsterProfileData(
+  state: MonsterMonitorProfileData,
+): MonsterMonitorProfileData {
+  const result = {} as MonsterMonitorProfileData;
+  for (const key of MONSTER_PROFILE_FIELD_KEYS) {
+    (result as Record<string, unknown>)[key] = state[key];
+  }
+  // Deep-clone so the mirror and the profile slots never share nested
+  // arrays/objects (JSON-safe: settings are persisted as JSON anyway, and
+  // this also unwraps any $state proxies).
+  return deepCloneSettings(result);
+}
+
+export function createDefaultMonsterMonitorState(): MonsterMonitorState {
+  const profile = createDefaultMonsterMonitorProfile();
+  const { id, name, ...profileData } = profile;
+  void id;
+  void name;
+  return {
+    enabled: false,
+    autoHideInDailyScenes: false,
+    buffAliases: {},
+    ...profileData,
+    mirroredProfileId: profile.id,
+    profiles: [profile],
+  };
+}
+
+export type Loadout = {
+  id: string;
+  name: string;
+  skillProfileId: string;
+  monsterProfileId: string;
+  /** True only for the untouched system-created first-run placeholder. */
+  starterPlaceholder: boolean;
+};
+
+export type LoadoutsState = {
+  activeId: string;
+  items: Loadout[];
+  /** Whether the new-user "pick a starter preset" prompt has been shown/dismissed. */
+  firstRunPromptDismissed: boolean;
+};
+
+export function createDefaultLoadoutsState(): LoadoutsState {
+  return {
+    activeId: "",
+    items: [],
+    firstRunPromptDismissed: false,
+  };
+}
+
+export type MonitoringSettingsState = {
+  schemaVersion: number;
+  skillMonitor: SkillMonitorState;
+  monsterMonitor: MonsterMonitorState;
+  loadouts: LoadoutsState;
+};
+
+export function createDefaultMonitoringSettingsState(): MonitoringSettingsState {
+  return {
+    schemaVersion: 0,
+    skillMonitor: {
+      enabled: false,
+      autoHideInDailyScenes: false,
+      buffAliases: {},
+      profiles: [createDefaultSkillMonitorProfile()],
+    },
+    monsterMonitor: createDefaultMonsterMonitorState(),
+    loadouts: createDefaultLoadoutsState(),
   };
 }
 
@@ -1830,14 +2029,7 @@ const DEFAULT_SETTINGS = {
     autoUpload: true,
     marketUpload: true,
   },
-  skillMonitor: {
-    enabled: false,
-    autoHideInDailyScenes: false,
-    activeProfileIndex: 0,
-    buffAliases: {} as BuffAliasMap,
-    profiles: [createDefaultSkillMonitorProfile()] as SkillMonitorProfile[],
-  },
-  monsterMonitor: createDefaultMonsterMonitorConfig(),
+  monitoring: createDefaultMonitoringSettingsState(),
   minimap: createDefaultMinimapConfig(),
   voice: createDefaultVoiceSettings(),
   challengeWatch: {
@@ -1912,6 +2104,22 @@ const DEFAULT_SETTINGS = {
 
 // We need flattened settings for every update to be able to auto-detect new changes
 const RUNE_STORE_OPTIONS = { autoStart: true, saveOnChange: true };
+const monitoringStore = new RuneStore(
+  "monitoring",
+  DEFAULT_SETTINGS.monitoring,
+  { ...RUNE_STORE_OPTIONS, autoStart: false },
+);
+
+function monitoringSection<
+  K extends keyof Omit<MonitoringSettingsState, "schemaVersion">,
+>(key: K): { readonly state: MonitoringSettingsState[K] } {
+  return {
+    get state() {
+      return monitoringStore.state[key];
+    },
+  };
+}
+
 export const SETTINGS = {
   i18n: new RuneStore("i18n", DEFAULT_SETTINGS.i18n, RUNE_STORE_OPTIONS),
   accessibility: new RuneStore(
@@ -1929,16 +2137,13 @@ export const SETTINGS = {
     DEFAULT_SETTINGS.moduleSync,
     RUNE_STORE_OPTIONS,
   ),
-  skillMonitor: new RuneStore(
-    "skillMonitor",
-    DEFAULT_SETTINGS.skillMonitor,
-    RUNE_STORE_OPTIONS,
-  ),
-  monsterMonitor: new RuneStore(
-    "monsterMonitor",
-    DEFAULT_SETTINGS.monsterMonitor,
-    RUNE_STORE_OPTIONS,
-  ),
+  monitoring: monitoringStore,
+  /** @deprecated Read/write through SETTINGS.monitoring.state.skillMonitor. */
+  skillMonitor: monitoringSection("skillMonitor"),
+  /** @deprecated Read/write through SETTINGS.monitoring.state.monsterMonitor. */
+  monsterMonitor: monitoringSection("monsterMonitor"),
+  /** @deprecated Read/write through SETTINGS.monitoring.state.loadouts. */
+  loadouts: monitoringSection("loadouts"),
   minimap: new RuneStore(
     "minimap",
     DEFAULT_SETTINGS.minimap,
@@ -2128,8 +2333,15 @@ export const settings = {
     accessibility: SETTINGS.accessibility.state,
     shortcuts: SETTINGS.shortcuts.state,
     moduleSync: SETTINGS.moduleSync.state,
-    skillMonitor: SETTINGS.skillMonitor.state,
-    monsterMonitor: SETTINGS.monsterMonitor.state,
+    get skillMonitor() {
+      return SETTINGS.monitoring.state.skillMonitor;
+    },
+    get monsterMonitor() {
+      return SETTINGS.monitoring.state.monsterMonitor;
+    },
+    get loadouts() {
+      return SETTINGS.monitoring.state.loadouts;
+    },
     minimap: SETTINGS.minimap.state,
     voice: SETTINGS.voice.state,
     challengeWatch: SETTINGS.challengeWatch.state,

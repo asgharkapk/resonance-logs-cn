@@ -1,0 +1,426 @@
+import * as v from "valibot";
+import {
+  createDefaultCustomPanelGroup,
+  createDefaultMonsterMonitorProfile,
+  createDefaultSkillMonitorProfile,
+  deepCloneSettings,
+  omitProfileId,
+  type MonsterMonitorProfile,
+  type SkillMonitorProfile,
+} from "./settings-store";
+import { ensureShieldDetailStyle } from "./skill-monitor-normalize";
+
+export type LoadoutExport = {
+  kind: "resonance-logs-loadout";
+  version: 1;
+  name: string;
+  skillProfile: Omit<SkillMonitorProfile, "id">;
+  monsterProfile: Omit<MonsterMonitorProfile, "id">;
+};
+
+export type LoadoutParseResult =
+  | { success: true; output: LoadoutExport }
+  | { success: false; issues: string[] };
+
+const finiteNumberSchema = v.pipe(v.number(), v.finite());
+const numericKeySchema = v.pipe(v.string(), v.regex(/^\d+$/));
+const numberArraySchema = v.array(finiteNumberSchema);
+const stringArraySchema = v.array(v.string());
+const stringRecordSchema = v.record(v.string(), v.string());
+const numericStringRecordSchema = v.record(numericKeySchema, v.string());
+const numberRecordSchema = v.record(numericKeySchema, finiteNumberSchema);
+
+function defaultClone<T>(value: T): () => T {
+  return () => deepCloneSettings(value);
+}
+
+const pointSchema = v.object({
+  x: finiteNumberSchema,
+  y: finiteNumberSchema,
+});
+
+const overlayTextStyleEntries = {
+  textShadowEnabled: v.boolean(),
+  backgroundEnabled: v.boolean(),
+  backgroundOpacity: finiteNumberSchema,
+};
+
+const overlayTextStyleSchema = v.object(overlayTextStyleEntries);
+
+const customPanelStyleSchema = v.object({
+  gap: finiteNumberSchema,
+  columnGap: finiteNumberSchema,
+  fontSize: finiteNumberSchema,
+  nameColor: v.string(),
+  valueColor: v.string(),
+  progressColor: v.string(),
+  progressOpacity: finiteNumberSchema,
+  ...overlayTextStyleEntries,
+});
+
+const teammatePanelStyleSchema = v.object({
+  gap: finiteNumberSchema,
+  columnGap: finiteNumberSchema,
+  fontSize: finiteNumberSchema,
+  nameColor: v.string(),
+  valueColor: v.string(),
+  progressColor: v.string(),
+  progressOpacity: finiteNumberSchema,
+  ...overlayTextStyleEntries,
+  rowHeight: finiteNumberSchema,
+  nameColumnWidth: finiteNumberSchema,
+  buffColumnWidth: finiteNumberSchema,
+});
+
+const textBuffPanelStyleSchema = v.object({
+  displayMode: v.picklist(["modern", "classic"]),
+  gap: finiteNumberSchema,
+  columnGap: finiteNumberSchema,
+  fontSize: finiteNumberSchema,
+  nameColor: v.string(),
+  valueColor: v.string(),
+  progressColor: v.string(),
+  progressOpacity: finiteNumberSchema,
+  ...overlayTextStyleEntries,
+});
+
+const shieldDetailStyleSchema = v.object({
+  fontSize: finiteNumberSchema,
+  barWidth: finiteNumberSchema,
+  gap: finiteNumberSchema,
+  showHpBar: v.boolean(),
+  showTotalShieldBar: v.boolean(),
+  showShieldEntries: v.boolean(),
+  hpColor: v.string(),
+  shieldColor: v.string(),
+  healShieldColor: v.string(),
+  ...overlayTextStyleEntries,
+});
+
+const voicePhraseBindingSchema = v.variant("source", [
+  v.object({ source: v.literal("auto") }),
+  v.object({ source: v.literal("custom"), text: v.string() }),
+  v.object({ source: v.literal("phrase"), phraseId: v.string() }),
+]);
+
+const voiceEventSchema = v.object({
+  enabled: v.boolean(),
+  phrase: voicePhraseBindingSchema,
+});
+
+const voiceExpiringEventSchema = v.object({
+  enabled: v.boolean(),
+  phrase: voicePhraseBindingSchema,
+  secondsBefore: finiteNumberSchema,
+});
+
+const buffVoiceConfigSchema = v.object({
+  gained: v.optional(voiceEventSchema),
+  expiring: v.optional(voiceExpiringEventSchema),
+  lost: v.optional(voiceEventSchema),
+});
+
+const counterSlotVoiceConfigSchema = v.object({
+  threshold: v.optional(voiceEventSchema),
+  expiring: v.optional(voiceExpiringEventSchema),
+});
+
+const dbmVoiceConfigSchema = v.object({
+  onCast: v.optional(voiceEventSchema),
+  expiring: v.optional(voiceExpiringEventSchema),
+});
+
+const buffVoiceConfigMapSchema = v.record(
+  numericKeySchema,
+  buffVoiceConfigSchema,
+);
+const counterVoiceConfigMapSchema = v.record(
+  numericKeySchema,
+  counterSlotVoiceConfigSchema,
+);
+const presetCounterVoiceConfigMapSchema = v.record(
+  numericKeySchema,
+  counterVoiceConfigMapSchema,
+);
+const dbmVoiceConfigMapSchema = v.record(
+  numericKeySchema,
+  dbmVoiceConfigSchema,
+);
+
+const buffAlertRuleSchema = v.object({
+  thresholdSeconds: finiteNumberSchema,
+  highlightColor: v.string(),
+  flash: v.boolean(),
+  flashIntervalMs: v.optional(finiteNumberSchema),
+  applyToProgress: v.optional(v.boolean()),
+});
+const buffAlertMapSchema = v.record(numericKeySchema, buffAlertRuleSchema);
+
+const panelAttrSchema = v.object({
+  attrId: finiteNumberSchema,
+  label: v.string(),
+  color: v.string(),
+  enabled: v.boolean(),
+  format: v.picklist(["percent", "integer"]),
+});
+
+const buffGroupSchema = v.object({
+  id: v.string(),
+  name: v.string(),
+  buffIds: numberArraySchema,
+  priorityBuffIds: numberArraySchema,
+  monitorAll: v.boolean(),
+  position: pointSchema,
+  iconSize: finiteNumberSchema,
+  columns: finiteNumberSchema,
+  rows: finiteNumberSchema,
+  gap: finiteNumberSchema,
+  showName: v.boolean(),
+  showTime: v.boolean(),
+  showLayer: v.boolean(),
+});
+
+const inlineBuffEntrySchema = v.object({
+  id: v.string(),
+  sourceType: v.picklist(["buff", "counter"]),
+  sourceId: finiteNumberSchema,
+  counterSlotId: v.optional(finiteNumberSchema),
+  hideWhenZero: v.optional(v.boolean()),
+  label: v.string(),
+  format: v.picklist(["active", "stacks_timer", "timer"]),
+});
+
+const customPanelGroupSchema = v.object({
+  id: v.string(),
+  name: v.string(),
+  kind: v.picklist(["manual", "seasonCultivateFactor"]),
+  entries: v.array(inlineBuffEntrySchema),
+  hideZeroCounters: v.optional(v.boolean(), false),
+  position: pointSchema,
+  scale: finiteNumberSchema,
+  style: customPanelStyleSchema,
+});
+
+const userCounterRuleSchema = v.object({
+  ruleId: finiteNumberSchema,
+  name: v.string(),
+  sourceRefs: stringArraySchema,
+  slotRefs: stringArraySchema,
+  voice: v.optional(counterVoiceConfigMapSchema),
+});
+
+const panelAreaRowSchema = v.object({
+  type: v.literal("attr"),
+  attrId: finiteNumberSchema,
+});
+
+const categorySchema = v.picklist(["food", "alchemy"]);
+const categoryPointRecordSchema = v.record(categorySchema, pointSchema);
+const categoryNumberRecordSchema = v.record(categorySchema, finiteNumberSchema);
+
+const overlayPositionsSchema = v.object({
+  skillCdGroup: pointSchema,
+  resourceGroup: pointSchema,
+  textBuffPanel: pointSchema,
+  specialBuffGroup: pointSchema,
+  panelAttrGroup: pointSchema,
+  customPanelGroup: pointSchema,
+  shieldDetailGroup: pointSchema,
+  iconBuffPositions: v.record(numericKeySchema, pointSchema),
+  skillDurationPositions: v.record(numericKeySchema, pointSchema),
+  categoryIconPositions: v.optional(categoryPointRecordSchema, {}),
+});
+
+const overlaySizesSchema = v.object({
+  skillCdGroupScale: finiteNumberSchema,
+  resourceGroupScale: finiteNumberSchema,
+  textBuffPanelScale: finiteNumberSchema,
+  panelAttrGroupScale: finiteNumberSchema,
+  customPanelGroupScale: finiteNumberSchema,
+  shieldDetailGroupScale: finiteNumberSchema,
+  panelAttrGap: finiteNumberSchema,
+  panelAttrFontSize: finiteNumberSchema,
+  panelAttrColumnGap: finiteNumberSchema,
+  panelAttrTextStyle: overlayTextStyleSchema,
+  iconBuffSizes: numberRecordSchema,
+  skillDurationSizes: numberRecordSchema,
+  categoryIconSizes: v.optional(categoryNumberRecordSchema, {}),
+});
+
+const overlayVisibilitySchema = v.object({
+  showSkillCdGroup: v.boolean(),
+  showSkillDurationGroup: v.boolean(),
+  showResourceGroup: v.boolean(),
+  showPanelAttrGroup: v.boolean(),
+  showCustomPanelGroup: v.boolean(),
+  showShieldDetailGroup: v.boolean(),
+});
+
+const monsterOverlayPositionsSchema = v.object({
+  monsterBuffPanel: pointSchema,
+  teammateBuffPanel: pointSchema,
+  hatePanel: pointSchema,
+  fantasyPanel: pointSchema,
+  bossDbmPanel: pointSchema,
+  stunPanel: pointSchema,
+});
+
+const monsterOverlaySizesSchema = v.object({
+  monsterBuffPanelScale: finiteNumberSchema,
+  teammateBuffPanelScale: finiteNumberSchema,
+  hatePanelScale: finiteNumberSchema,
+  fantasyPanelScale: finiteNumberSchema,
+  bossDbmPanelScale: finiteNumberSchema,
+  stunPanelScale: finiteNumberSchema,
+});
+
+const monsterOverlayVisibilitySchema = v.object({
+  showMonsterBuffPanel: v.boolean(),
+  showTeammateBuffPanel: v.boolean(),
+  showHatePanel: v.boolean(),
+  showFantasyPanel: v.boolean(),
+  showBossDbmPanel: v.boolean(),
+  showStunPanel: v.boolean(),
+});
+
+const defaultSkill = omitProfileId(createDefaultSkillMonitorProfile());
+const defaultMonster = omitProfileId(createDefaultMonsterMonitorProfile());
+
+const skillProfileSchema = v.object({
+  name: v.string(),
+  selectedClass: v.string(),
+  monitoredSkillIds: numberArraySchema,
+  monitoredSkillDurationIds: numberArraySchema,
+  monitoredBuffIds: numberArraySchema,
+  monitoredBuffCategories: v.optional(
+    v.array(categorySchema),
+    defaultClone(defaultSkill.monitoredBuffCategories ?? []),
+  ),
+  monitoredPanelAttrs: v.array(panelAttrSchema),
+  buffPriorityIds: numberArraySchema,
+  buffAlerts: v.optional(
+    buffAlertMapSchema,
+    defaultClone(defaultSkill.buffAlerts ?? {}),
+  ),
+  buffVoiceConfigs: v.optional(
+    buffVoiceConfigMapSchema,
+    defaultClone(defaultSkill.buffVoiceConfigs ?? {}),
+  ),
+  presetCounterVoiceConfigs: v.optional(
+    presetCounterVoiceConfigMapSchema,
+    defaultClone(defaultSkill.presetCounterVoiceConfigs ?? {}),
+  ),
+  buffDisplayMode: v.picklist(["individual", "grouped"]),
+  buffGroups: v.array(buffGroupSchema),
+  individualMonitorAllGroup: v.optional(
+    v.nullable(buffGroupSchema),
+    defaultSkill.individualMonitorAllGroup ?? null,
+  ),
+  userCounterRules: v.optional(
+    v.array(userCounterRuleSchema),
+    defaultClone(defaultSkill.userCounterRules ?? []),
+  ),
+  customPanelGroups: v.optional(
+    v.array(customPanelGroupSchema),
+    defaultClone(defaultSkill.customPanelGroups ?? []),
+  ),
+  factorSlotLabels: v.optional(
+    stringRecordSchema,
+    defaultClone(defaultSkill.factorSlotLabels ?? {}),
+  ),
+  inlineBuffEntries: v.optional(
+    v.array(inlineBuffEntrySchema),
+    defaultClone(defaultSkill.inlineBuffEntries ?? []),
+  ),
+  panelAreaRowOrder: v.optional(
+    v.array(panelAreaRowSchema),
+    defaultClone(defaultSkill.panelAreaRowOrder ?? []),
+  ),
+  customPanelStyle: v.optional(
+    customPanelStyleSchema,
+    defaultClone(createDefaultCustomPanelGroup().style),
+  ),
+  textBuffPanelStyle: v.optional(
+    textBuffPanelStyleSchema,
+    defaultClone(defaultSkill.textBuffPanelStyle!),
+  ),
+  shieldDetailStyle: v.optional(
+    shieldDetailStyleSchema,
+    defaultClone(ensureShieldDetailStyle({ ...defaultSkill, id: "schema" })),
+  ),
+  overlayTextStyle: v.optional(
+    overlayTextStyleSchema,
+    defaultClone(defaultSkill.overlayTextStyle!),
+  ),
+  textBuffMaxVisible: finiteNumberSchema,
+  overlayPositions: overlayPositionsSchema,
+  overlaySizes: overlaySizesSchema,
+  overlayVisibility: overlayVisibilitySchema,
+});
+
+const teammateColumnSchema = v.pipe(
+  v.string(),
+  v.regex(/^(?:buff:\d+|category:(?:food|alchemy))$/),
+);
+
+const monsterProfileSchema = v.object({
+  name: v.string(),
+  hateListEnabled: v.boolean(),
+  hateListMaxDisplay: finiteNumberSchema,
+  stunListEnabled: v.boolean(),
+  monitoredBuffIds: numberArraySchema,
+  selfAppliedBuffIds: numberArraySchema,
+  selfAppliedMonitorAll: v.boolean(),
+  teammateBuffIds: numberArraySchema,
+  teammateBuffCategories: v.optional(
+    v.array(categorySchema),
+    defaultClone(defaultMonster.teammateBuffCategories ?? []),
+  ),
+  teammateBuffColumnOrder: v.optional(
+    v.array(teammateColumnSchema),
+    defaultClone(defaultMonster.teammateBuffColumnOrder ?? []),
+  ),
+  fantasyWhitelistMonsterIds: numberArraySchema,
+  fantasyMonsterAliases: numericStringRecordSchema,
+  dbmAliases: numericStringRecordSchema,
+  dbmVoiceConfigs: v.optional(
+    dbmVoiceConfigMapSchema,
+    defaultClone(defaultMonster.dbmVoiceConfigs ?? {}),
+  ),
+  monsterBuffVoiceConfigs: v.optional(
+    buffVoiceConfigMapSchema,
+    defaultClone(defaultMonster.monsterBuffVoiceConfigs ?? {}),
+  ),
+  fantasyShowAll: v.boolean(),
+  fantasyPersistentDisplay: v.boolean(),
+  buffPriorityIds: numberArraySchema,
+  buffAlerts: buffAlertMapSchema,
+  overlayPositions: monsterOverlayPositionsSchema,
+  overlaySizes: monsterOverlaySizesSchema,
+  overlayVisibility: monsterOverlayVisibilitySchema,
+  panelStyle: customPanelStyleSchema,
+  teammatePanelStyle: teammatePanelStyleSchema,
+  hatePanelStyle: customPanelStyleSchema,
+  fantasyPanelStyle: customPanelStyleSchema,
+  bossDbmPanelStyle: customPanelStyleSchema,
+  stunPanelStyle: customPanelStyleSchema,
+});
+
+const loadoutExportSchema = v.object({
+  kind: v.literal("resonance-logs-loadout"),
+  version: v.literal(1),
+  name: v.pipe(v.string(), v.trim(), v.minLength(1)),
+  skillProfile: skillProfileSchema,
+  monsterProfile: monsterProfileSchema,
+});
+
+export function parseLoadoutExport(data: unknown): LoadoutParseResult {
+  const result = v.safeParse(loadoutExportSchema, data);
+  if (!result.success) {
+    return {
+      success: false,
+      issues: result.issues.map((issue) => issue.message),
+    };
+  }
+  return { success: true, output: result.output as LoadoutExport };
+}

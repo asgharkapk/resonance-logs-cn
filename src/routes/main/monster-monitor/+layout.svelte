@@ -7,6 +7,7 @@
   import PauseIcon from "virtual:icons/lucide/pause";
   import ShieldAlertIcon from "virtual:icons/lucide/shield-alert";
   import { t } from "$lib/i18n/index.svelte";
+  import ProfileSwitcher from "./profile-switcher.svelte";
   import {
     isOverlayWindowVisible,
     toggleOverlayWindow,
@@ -71,6 +72,8 @@
       </button>
     </div>
   </div>
+
+  <ProfileSwitcher />
 
   <div class="min-h-0">
     {@render children()}

@@ -1,0 +1,540 @@
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { emit, listen } from "@tauri-apps/api/event";
+import { RuneStore } from "@tauri-store/svelte";
+import { tick } from "svelte";
+import { commands } from "./bindings";
+import {
+  SETTINGS,
+  createDefaultLoadoutsState,
+  createDefaultMonsterMonitorState,
+  createDefaultSkillMonitorProfile,
+  deepCloneSettings,
+  extractMonsterProfileData,
+  generateProfileId,
+  type Loadout,
+  type LoadoutsState,
+  type MonitoringSettingsState,
+  type MonsterMonitorProfile,
+  type MonsterMonitorState,
+  type SkillMonitorProfile,
+  type SkillMonitorState,
+} from "./settings-store";
+import { t } from "$lib/i18n/index.svelte";
+import { isPristineLegacyMonitoring } from "./starter-loadout";
+
+export const CURRENT_MONITORING_SCHEMA_VERSION = 1;
+
+const READY_EVENT = "monitoring-settings-ready";
+const ERROR_EVENT = "monitoring-settings-error";
+const RECOVERY_EVENT = "monitoring-settings-recovery-reload";
+const RECOVERY_ATTEMPTED_SESSION_KEY = "monitoring-recovery-attempted";
+const REMOTE_INITIALIZATION_TIMEOUT_MS = 15_000;
+export const RECOVERY_NOTICE_STORAGE_KEY = "monitoring-recovery-notice";
+
+export type MonitoringInitializationResult =
+  | { status: "ready" }
+  | { status: "reload-required"; recoveryPath: string };
+
+type RecoveryEventPayload = { recoveryPath: string };
+
+export function isMonitoringRecoveryAuthority(windowLabel: string): boolean {
+  return windowLabel === "main";
+}
+
+export function canAttemptMonitoringRecovery(
+  recoveryAttempted: string | null,
+): boolean {
+  return recoveryAttempted !== "1";
+}
+
+function waitForRemoteInitialization(
+  remoteResult: Promise<MonitoringSettingsState | RecoveryEventPayload>,
+): Promise<MonitoringSettingsState | RecoveryEventPayload> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(
+      () =>
+        reject(
+          new Error("timed out waiting for main-window monitoring recovery"),
+        ),
+      REMOTE_INITIALIZATION_TIMEOUT_MS,
+    );
+    remoteResult.then(
+      (result) => {
+        window.clearTimeout(timeout);
+        resolve(result);
+      },
+      (error) => {
+        window.clearTimeout(timeout);
+        reject(error);
+      },
+    );
+  });
+}
+
+type LegacySkillMonitorState = SkillMonitorState & {
+  activeProfileIndex?: number;
+};
+
+type LegacyLoadoutsState = LoadoutsState & {
+  schemaVersion?: number;
+};
+
+export type LegacyMonitoringSources = {
+  skillMonitor: LegacySkillMonitorState;
+  monsterMonitor: MonsterMonitorState;
+  loadouts: LegacyLoadoutsState;
+};
+
+function nextUniqueId(
+  currentId: unknown,
+  prefix: string,
+  seen: Set<string>,
+): string {
+  const candidate = typeof currentId === "string" ? currentId.trim() : "";
+  if (candidate && !seen.has(candidate)) {
+    seen.add(candidate);
+    return candidate;
+  }
+  let generated = generateProfileId(prefix);
+  while (seen.has(generated)) generated = generateProfileId(prefix);
+  seen.add(generated);
+  return generated;
+}
+
+function normalizeSkillProfiles(
+  profiles: SkillMonitorProfile[] | null | undefined,
+): SkillMonitorProfile[] {
+  const source = Array.isArray(profiles) ? profiles : [];
+  const fallback =
+    source.length > 0 ? source : [createDefaultSkillMonitorProfile()];
+  const seen = new Set<string>();
+  return fallback.map((profile) => ({
+    ...profile,
+    id: nextUniqueId(profile.id, "skill", seen),
+  }));
+}
+
+function normalizeMonsterProfiles(
+  state: MonsterMonitorState,
+): MonsterMonitorProfile[] {
+  const source = Array.isArray(state.profiles) ? state.profiles : [];
+  const fallback =
+    source.length > 0
+      ? source
+      : [
+          {
+            ...extractMonsterProfileData(state),
+            id: generateProfileId("monster"),
+            name: "",
+          },
+        ];
+  const seen = new Set<string>();
+  return fallback.map((profile) => ({
+    ...profile,
+    id: nextUniqueId(profile.id, "monster", seen),
+  }));
+}
+
+function materializeLegacyMonsterMirror(
+  state: MonsterMonitorState,
+): MonsterMonitorProfile[] {
+  const profiles = normalizeMonsterProfiles(state);
+  const mirroredIndex = profiles.findIndex(
+    (profile) => profile.id === state.mirroredProfileId,
+  );
+  const targetIndex = mirroredIndex === -1 ? 0 : mirroredIndex;
+  const target = profiles[targetIndex]!;
+  profiles[targetIndex] = {
+    ...target,
+    ...extractMonsterProfileData(state),
+  };
+  state.mirroredProfileId = target.id;
+  return profiles;
+}
+
+function defaultLoadoutName(
+  profile: SkillMonitorProfile,
+  index: number,
+): string {
+  return (
+    profile.name.trim() ||
+    (index === 0
+      ? t("skillMonitor.defaults.defaultProfileName")
+      : t("skillMonitor.defaults.profileName", { index: index + 1 }))
+  );
+}
+
+function buildDefaultLoadouts(
+  skillProfiles: SkillMonitorProfile[],
+  monsterProfileId: string,
+  activeProfileIndex = 0,
+  starterPlaceholder = false,
+): LoadoutsState {
+  const items = skillProfiles.map<Loadout>((profile, index) => ({
+    id: generateProfileId("loadout"),
+    name: defaultLoadoutName(profile, index),
+    skillProfileId: profile.id,
+    monsterProfileId,
+    starterPlaceholder: starterPlaceholder && skillProfiles.length === 1,
+  }));
+  const activeIndex = Math.min(
+    Math.max(Number.isFinite(activeProfileIndex) ? activeProfileIndex : 0, 0),
+    items.length - 1,
+  );
+  return {
+    ...createDefaultLoadoutsState(),
+    activeId: items[activeIndex]?.id ?? items[0]?.id ?? "",
+    items,
+  };
+}
+
+function normalizeLoadouts(
+  state: LoadoutsState,
+  skillProfiles: SkillMonitorProfile[],
+  monsterProfiles: MonsterMonitorProfile[],
+): LoadoutsState {
+  const skillIds = new Set(skillProfiles.map((profile) => profile.id));
+  const monsterIds = new Set(monsterProfiles.map((profile) => profile.id));
+  const fallbackSkillId = skillProfiles[0]!.id;
+  const fallbackMonsterId = monsterProfiles[0]!.id;
+  const seen = new Set<string>();
+  const items = (Array.isArray(state.items) ? state.items : []).map(
+    (item, index): Loadout => ({
+      id: nextUniqueId(item.id, "loadout", seen),
+      name: item.name.trim() || `Loadout ${index + 1}`,
+      skillProfileId: skillIds.has(item.skillProfileId)
+        ? item.skillProfileId
+        : fallbackSkillId,
+      monsterProfileId: monsterIds.has(item.monsterProfileId)
+        ? item.monsterProfileId
+        : fallbackMonsterId,
+      starterPlaceholder: Boolean(item.starterPlaceholder),
+    }),
+  );
+  if (items.length === 0) {
+    return buildDefaultLoadouts(skillProfiles, fallbackMonsterId);
+  }
+  return {
+    activeId: items.some((item) => item.id === state.activeId)
+      ? state.activeId
+      : items[0]!.id,
+    items,
+    firstRunPromptDismissed: Boolean(state.firstRunPromptDismissed),
+  };
+}
+
+function reconcileMonsterMirror(state: MonitoringSettingsState): void {
+  const monsterState = state.monsterMonitor;
+  const mirroredIndex = monsterState.profiles.findIndex(
+    (profile) => profile.id === monsterState.mirroredProfileId,
+  );
+  if (mirroredIndex !== -1) {
+    monsterState.profiles[mirroredIndex] = {
+      ...monsterState.profiles[mirroredIndex]!,
+      ...extractMonsterProfileData(monsterState),
+    };
+  }
+
+  const active = state.loadouts.items.find(
+    (item) => item.id === state.loadouts.activeId,
+  );
+  const target =
+    monsterState.profiles.find(
+      (profile) => profile.id === active?.monsterProfileId,
+    ) ?? monsterState.profiles[0]!;
+  Object.assign(
+    monsterState,
+    deepCloneSettings(extractMonsterProfileData(target)),
+  );
+  monsterState.mirroredProfileId = target.id;
+}
+
+export function reconcileMonitoringState(
+  input: MonitoringSettingsState,
+): MonitoringSettingsState {
+  const state = deepCloneSettings(input);
+  state.skillMonitor.profiles = normalizeSkillProfiles(
+    state.skillMonitor.profiles,
+  );
+  state.monsterMonitor.profiles = normalizeMonsterProfiles(
+    state.monsterMonitor,
+  );
+  state.loadouts = normalizeLoadouts(
+    state.loadouts,
+    state.skillMonitor.profiles,
+    state.monsterMonitor.profiles,
+  );
+  reconcileMonsterMirror(state);
+  state.schemaVersion = CURRENT_MONITORING_SCHEMA_VERSION;
+  return state;
+}
+
+export function migrateLegacyMonitoringState(
+  sources: LegacyMonitoringSources,
+): MonitoringSettingsState {
+  const skillMonitor = deepCloneSettings(sources.skillMonitor);
+  const monsterMonitor = deepCloneSettings(sources.monsterMonitor);
+  skillMonitor.profiles = normalizeSkillProfiles(skillMonitor.profiles);
+
+  const hasExistingLoadouts = sources.loadouts.items.length > 0;
+  const pristineLegacyMonitoring =
+    !hasExistingLoadouts &&
+    isPristineLegacyMonitoring(skillMonitor, monsterMonitor);
+  if (!hasExistingLoadouts) {
+    monsterMonitor.profiles = materializeLegacyMonsterMirror(monsterMonitor);
+  } else {
+    monsterMonitor.profiles = normalizeMonsterProfiles(monsterMonitor);
+  }
+
+  const activeMonsterProfileId =
+    monsterMonitor.profiles.find(
+      (profile) => profile.id === monsterMonitor.mirroredProfileId,
+    )?.id ?? monsterMonitor.profiles[0]!.id;
+
+  const loadouts = hasExistingLoadouts
+    ? deepCloneSettings(sources.loadouts)
+    : buildDefaultLoadouts(
+        skillMonitor.profiles,
+        activeMonsterProfileId,
+        sources.skillMonitor.activeProfileIndex ?? 0,
+        pristineLegacyMonitoring,
+      );
+  if (!hasExistingLoadouts && !pristineLegacyMonitoring) {
+    loadouts.firstRunPromptDismissed = true;
+  }
+  delete (loadouts as LegacyLoadoutsState).schemaVersion;
+
+  return reconcileMonitoringState({
+    schemaVersion: CURRENT_MONITORING_SCHEMA_VERSION,
+    skillMonitor,
+    monsterMonitor,
+    loadouts,
+  });
+}
+
+function applyMonitoringState(next: MonitoringSettingsState): void {
+  const target = SETTINGS.monitoring.state;
+  target.schemaVersion = next.schemaVersion;
+  target.skillMonitor = deepCloneSettings(next.skillMonitor);
+  target.monsterMonitor = deepCloneSettings(next.monsterMonitor);
+  target.loadouts = deepCloneSettings(next.loadouts);
+}
+
+function createLegacyStores() {
+  const options = {
+    autoStart: false,
+    save: false,
+    saveOnChange: false,
+    saveOnExit: false,
+    sync: false,
+  } as const;
+  return {
+    skillMonitor: new RuneStore<LegacySkillMonitorState>(
+      "skillMonitor",
+      {
+        enabled: false,
+        autoHideInDailyScenes: false,
+        buffAliases: {},
+        profiles: [createDefaultSkillMonitorProfile()],
+        activeProfileIndex: 0,
+      },
+      options,
+    ),
+    monsterMonitor: new RuneStore<MonsterMonitorState>(
+      "monsterMonitor",
+      createDefaultMonsterMonitorState(),
+      options,
+    ),
+    loadouts: new RuneStore<LegacyLoadoutsState>(
+      "loadouts",
+      { ...createDefaultLoadoutsState(), schemaVersion: 0 },
+      options,
+    ),
+  };
+}
+
+async function migrateAsMainWindow(): Promise<void> {
+  try {
+    const result = await commands.backupSettingsStores();
+    if (result.status === "error") throw new Error(String(result.error));
+  } catch (error) {
+    console.error("[monitoring-settings] backup failed, continuing", error);
+  }
+
+  const legacy = createLegacyStores();
+  try {
+    await Promise.all([
+      legacy.skillMonitor.start(),
+      legacy.monsterMonitor.start(),
+      legacy.loadouts.start(),
+    ]);
+    const migrated = migrateLegacyMonitoringState({
+      skillMonitor: legacy.skillMonitor.state,
+      monsterMonitor: legacy.monsterMonitor.state,
+      loadouts: legacy.loadouts.state,
+    });
+    applyMonitoringState(migrated);
+    await tick();
+    await SETTINGS.monitoring.saveNow();
+  } finally {
+    await Promise.allSettled([
+      legacy.skillMonitor.stop(),
+      legacy.monsterMonitor.stop(),
+      legacy.loadouts.stop(),
+    ]);
+  }
+}
+
+async function destroyMonitoringStores(): Promise<void> {
+  const legacy = createLegacyStores();
+  const stores = [
+    SETTINGS.monitoring,
+    legacy.skillMonitor,
+    legacy.monsterMonitor,
+    legacy.loadouts,
+  ];
+  const failures: string[] = [];
+  for (const store of stores) {
+    try {
+      await store.stop();
+    } catch (error) {
+      console.warn(`[monitoring-settings] failed to stop ${store.id}`, error);
+    }
+    try {
+      await store.destroy();
+    } catch (error) {
+      failures.push(
+        `${store.id}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  if (failures.length > 0) {
+    throw new Error(
+      `failed to reset monitoring stores: ${failures.join("; ")}`,
+    );
+  }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function recoverAsMainWindow(
+  originalError: unknown,
+): Promise<MonitoringInitializationResult> {
+  if (
+    !canAttemptMonitoringRecovery(
+      sessionStorage.getItem(RECOVERY_ATTEMPTED_SESSION_KEY),
+    )
+  ) {
+    const message = errorMessage(originalError);
+    await emit(ERROR_EVENT, message).catch(() => {});
+    throw new Error(message);
+  }
+  sessionStorage.setItem(RECOVERY_ATTEMPTED_SESSION_KEY, "1");
+
+  try {
+    const backupResult = await commands.backupFailedMonitoringStores();
+    if (backupResult.status === "error") {
+      throw new Error(String(backupResult.error));
+    }
+    const recoveryPath = backupResult.data;
+    await destroyMonitoringStores();
+    localStorage.setItem(RECOVERY_NOTICE_STORAGE_KEY, recoveryPath);
+    await emit(RECOVERY_EVENT, { recoveryPath }).catch((error) => {
+      console.error(
+        "[monitoring-settings] failed to broadcast recovery",
+        error,
+      );
+    });
+    return { status: "reload-required", recoveryPath };
+  } catch (recoveryError) {
+    const message = `initialization failed: ${errorMessage(originalError)}; recovery failed: ${errorMessage(recoveryError)}`;
+    await emit(ERROR_EVENT, message).catch(() => {});
+    throw new Error(message);
+  }
+}
+
+let initializationPromise: Promise<MonitoringInitializationResult> | null =
+  null;
+
+export function initializeMonitoringSettings(): Promise<MonitoringInitializationResult> {
+  initializationPromise ??= (async () => {
+    const isMainWindow = isMonitoringRecoveryAuthority(
+      getCurrentWebviewWindow().label,
+    );
+    let resolveRemote:
+      | ((result: MonitoringSettingsState | RecoveryEventPayload) => void)
+      | undefined;
+    let rejectReady: ((error: Error) => void) | undefined;
+    const remoteResult = new Promise<
+      MonitoringSettingsState | RecoveryEventPayload
+    >((resolve, reject) => {
+      resolveRemote = resolve;
+      rejectReady = reject;
+    });
+    const unlistenReady = await listen<MonitoringSettingsState>(
+      READY_EVENT,
+      (event) => resolveRemote?.(event.payload),
+    );
+    const unlistenRecovery = await listen<RecoveryEventPayload>(
+      RECOVERY_EVENT,
+      (event) => resolveRemote?.(event.payload),
+    );
+    const unlistenError = await listen<string>(ERROR_EVENT, (event) =>
+      rejectReady?.(new Error(event.payload)),
+    );
+
+    try {
+      try {
+        await SETTINGS.monitoring.start();
+        if (
+          SETTINGS.monitoring.state.schemaVersion >=
+          CURRENT_MONITORING_SCHEMA_VERSION
+        ) {
+          const reconciled = reconcileMonitoringState(
+            SETTINGS.monitoring.state,
+          );
+          applyMonitoringState(reconciled);
+          await tick();
+          await SETTINGS.monitoring.saveNow();
+          if (isMainWindow) {
+            await emit(READY_EVENT, deepCloneSettings(reconciled));
+          }
+          sessionStorage.removeItem(RECOVERY_ATTEMPTED_SESSION_KEY);
+          return { status: "ready" };
+        }
+
+        if (isMainWindow) {
+          await migrateAsMainWindow();
+          await emit(READY_EVENT, deepCloneSettings(SETTINGS.monitoring.state));
+          sessionStorage.removeItem(RECOVERY_ATTEMPTED_SESSION_KEY);
+          return { status: "ready" };
+        }
+      } catch (error) {
+        if (isMainWindow) return await recoverAsMainWindow(error);
+        console.error(
+          "[monitoring-settings] waiting for main-window recovery",
+          error,
+        );
+      }
+
+      const remote = await waitForRemoteInitialization(remoteResult);
+      if ("recoveryPath" in remote) {
+        return {
+          status: "reload-required",
+          recoveryPath: remote.recoveryPath,
+        };
+      }
+      applyMonitoringState(remote);
+      await tick();
+      sessionStorage.removeItem(RECOVERY_ATTEMPTED_SESSION_KEY);
+      return { status: "ready" };
+    } finally {
+      unlistenReady();
+      unlistenRecovery();
+      unlistenError();
+    }
+  })();
+  return initializationPromise;
+}

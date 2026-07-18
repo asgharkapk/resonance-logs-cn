@@ -1,0 +1,28 @@
+import { t } from "$lib/i18n/index.svelte";
+
+export type MonitorProfileKind = "skill" | "monster";
+
+export function profileDisplayName(
+  kind: MonitorProfileKind,
+  name: string | undefined,
+  index: number,
+): string {
+  const trimmed = name?.trim();
+  if (trimmed) return trimmed;
+  if (kind === "skill") {
+    return index === 0
+      ? t("skillMonitor.defaults.defaultProfileName")
+      : t("skillMonitor.defaults.profileName", { index: index + 1 });
+  }
+  return index === 0
+    ? t("monsterMonitor.defaults.defaultProfileName")
+    : t("monsterMonitor.defaults.profileName", { index: index + 1 });
+}
+
+export function confirmProfileDeletion(kind: MonitorProfileKind): boolean {
+  return window.confirm(
+    kind === "skill"
+      ? t("skillMonitor.profile.deleteConfirm")
+      : t("monsterMonitor.profile.deleteConfirm"),
+  );
+}
