@@ -95,8 +95,6 @@ fn api_builder() -> Builder<tauri::Wry> {
             voice::commands::voice_create_phrase,
             voice::commands::voice_update_phrase,
             voice::commands::voice_delete_phrase,
-            voice::commands::voice_confirm_asset,
-            voice::commands::voice_delete_asset,
             voice::commands::voice_generate,
             voice::commands::voice_cancel_generation,
             voice::commands::voice_preview_asset,

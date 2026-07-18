@@ -184,8 +184,6 @@ pub struct VoiceAssetMeta {
     pub created_at_ms: i64,
     pub duration_sec: f64,
     pub sample_rate: i32,
-    /// Whether the user has confirmed this take as the active asset for the phrase.
-    pub confirmed: bool,
     /// True when the phrase/profile/model changed after this asset was generated.
     pub stale: bool,
 }

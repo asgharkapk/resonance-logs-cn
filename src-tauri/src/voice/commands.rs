@@ -270,32 +270,6 @@ pub async fn voice_delete_phrase(voice: State<'_, VoiceService>, id: String) -> 
 
 #[tauri::command]
 #[specta::specta]
-pub fn voice_confirm_asset(
-    voice: State<'_, VoiceService>,
-    phrase_id: String,
-    asset_id: String,
-) -> CommandResult<()> {
-    voice
-        .confirm_asset(
-            PhraseId::parse(phrase_id).map_err(VoiceCommandError::from)?,
-            AssetId::parse(asset_id).map_err(VoiceCommandError::from)?,
-        )
-        .map_err(VoiceCommandError::from)
-}
-
-#[tauri::command]
-#[specta::specta]
-pub async fn voice_delete_asset(
-    voice: State<'_, VoiceService>,
-    asset_id: String,
-) -> CommandResult<()> {
-    let asset_id = AssetId::parse(asset_id).map_err(VoiceCommandError::from)?;
-    let service = voice.inner().clone();
-    run_blocking_voice_operation("asset deletion", move || service.delete_asset(asset_id)).await
-}
-
-#[tauri::command]
-#[specta::specta]
 pub async fn voice_generate(
     voice: State<'_, VoiceService>,
     request: VoiceGenerateRequestDto,

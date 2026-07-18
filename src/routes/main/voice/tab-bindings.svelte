@@ -106,6 +106,19 @@
     }
   }
 
+  const fineTunedState = $derived(VOICE.status?.fineTunedVoice ?? null);
+  const selectedSource = $derived(SETTINGS.voice.state.selectedSource);
+  const selectedProfileId = $derived(SETTINGS.voice.state.selectedProfileId);
+
+  function resolveGenerationSource(): VoiceGenerateRequestDto["source"] | null {
+    if (selectedSource === "fineTuned") {
+      return fineTunedState?.kind === "ready" ? { mode: "fineTuned" } : null;
+    }
+    return selectedProfileId
+      ? { mode: "cloneExisting", profileId: selectedProfileId }
+      : null;
+  }
+
   async function generateMissing() {
     generateMessage = null;
     const phraseIds = Array.from(
@@ -119,14 +132,15 @@
       generateMessage = t("voice.bindings.generateMissing.none");
       return;
     }
-    const profileId = SETTINGS.voice.state.selectedProfileId;
-    if (!profileId) {
+    const source = resolveGenerationSource();
+    if (!source) {
       generateMessage = t("voice.bindings.generateMissing.needProfile");
       return;
     }
     const request: VoiceGenerateRequestDto = {
-      source: { mode: "cloneExisting", profileId },
+      source,
       phraseIds,
+      backendPreference: SETTINGS.voice.state.generationBackend,
     };
     const summary = await runVoiceGeneration(request);
     if (VOICE.generationError) {

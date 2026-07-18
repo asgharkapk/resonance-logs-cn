@@ -319,7 +319,16 @@ pub struct VoiceService {
 impl VoiceService {
     pub fn new(app_handle: AppHandle) -> VoiceResult<Self> {
         let voice_root = catalog::voice_root_dir(&app_handle)?;
-        let catalog_data = catalog::load_catalog(&voice_root)?;
+        let mut catalog_data = catalog::load_catalog(&voice_root)?;
+        // Upgrades catalogs written before generation started enforcing a
+        // single asset per phrase (e.g. from an older build), so leftover
+        // unconfirmed takes don't linger forever with no way to clean them
+        // up from the UI.
+        let removed_assets = reconcile_single_asset_per_phrase(&mut catalog_data);
+        if !removed_assets.is_empty() {
+            catalog::save_catalog(&voice_root, &catalog_data)?;
+            remove_asset_files_best_effort(&voice_root, &removed_assets);
+        }
         let http_client = reqwest::Client::builder()
             .https_only(true)
             .build()
@@ -1015,66 +1024,6 @@ impl VoiceService {
         self.commit_catalog(updated_catalog)
     }
 
-    pub fn confirm_asset(&self, phrase_id: PhraseId, asset_id: AssetId) -> VoiceResult<()> {
-        let _guard = self
-            .inner
-            .operation
-            .try_begin(VoiceOperationState::UpdatingCatalog)?;
-        let mut updated_catalog = self.inner.catalog.lock().clone();
-        if !updated_catalog
-            .assets
-            .iter()
-            .any(|asset| asset.id == asset_id.as_str() && asset.phrase_id == phrase_id.as_str())
-        {
-            return Err(VoiceError::not_found("voice asset", asset_id.to_string()));
-        }
-        for asset in &mut updated_catalog.assets {
-            if asset.id == asset_id.as_str() {
-                asset.confirmed = true;
-                asset.stale = false;
-            }
-        }
-        if let Some(phrase) = updated_catalog
-            .phrases
-            .iter_mut()
-            .find(|phrase| phrase.id == phrase_id.as_str())
-        {
-            phrase.active_asset_id = Some(asset_id.into_inner());
-        }
-        self.commit_catalog(updated_catalog)
-    }
-
-    pub fn delete_asset(&self, asset_id: AssetId) -> VoiceResult<()> {
-        let _guard = self
-            .inner
-            .operation
-            .try_begin(VoiceOperationState::UpdatingCatalog)?;
-        let catalog = self.inner.catalog.lock();
-        let asset = catalog
-            .assets
-            .iter()
-            .find(|asset| asset.id == asset_id.as_str())
-            .cloned()
-            .ok_or_else(|| VoiceError::not_found("voice asset", asset_id.to_string()))?;
-        let mut updated_catalog = catalog.clone();
-        updated_catalog
-            .assets
-            .retain(|asset| asset.id != asset_id.as_str());
-        for phrase in &mut updated_catalog.phrases {
-            if phrase.active_asset_id.as_deref() == Some(asset_id.as_str()) {
-                phrase.active_asset_id = None;
-            }
-        }
-        let wav_path =
-            catalog::asset_wav_path(&self.inner.voice_root, &asset.phrase_id, asset_id.as_str());
-        drop(catalog);
-        if wav_path.exists() {
-            std::fs::remove_file(&wav_path)
-                .map_err(|error| VoiceError::io(format!("remove {}", wav_path.display()), error))?;
-        }
-        self.commit_catalog(updated_catalog)
-    }
-
     pub fn cancel_generation(&self) {
         if self.inner.operation.cancel_generation() {
             self.inner.generation_cancel.lock().cancel();
@@ -1378,6 +1327,11 @@ impl VoiceService {
             VoiceAssetSource::CloneProfile { profile_id } => Some(profile_id.clone()),
             VoiceAssetSource::FineTuned { .. } => None,
         };
+        // A phrase keeps at most one asset: the freshly generated take
+        // becomes active immediately and replaces whatever used to be
+        // there, so users never need to manually confirm a take or clean
+        // up old versions by hand.
+        let mut replaced_assets: Vec<(String, String)> = Vec::new();
         for item in &outcome.item_results {
             if !item.ok {
                 continue;
@@ -1395,22 +1349,37 @@ impl VoiceService {
                 )));
             }
             let wav = audio::read_wav_info(expected_path)?;
+            for stale in catalog
+                .assets
+                .iter()
+                .filter(|asset| asset.phrase_id == phrase_id)
+            {
+                replaced_assets.push((phrase_id.clone(), stale.id.clone()));
+            }
+            catalog.assets.retain(|asset| asset.phrase_id != phrase_id);
             catalog.assets.push(VoiceAssetMeta {
                 id: item.id.clone(),
-                phrase_id,
+                phrase_id: phrase_id.clone(),
                 source: asset_source.clone(),
                 model_version: generation_model_version.clone(),
                 params_fingerprint: fingerprints.get(&item.id).cloned().unwrap_or_default(),
                 created_at_ms: now_ms(),
                 duration_sec: wav.duration_sec,
                 sample_rate: wav.sample_rate as i32,
-                confirmed: false,
                 stale: false,
             });
+            if let Some(phrase) = catalog
+                .phrases
+                .iter_mut()
+                .find(|phrase| phrase.id == phrase_id)
+            {
+                phrase.active_asset_id = Some(item.id.clone());
+            }
             committed_asset_ids.push(item.id.clone());
         }
         self.commit_catalog(catalog)?;
         artifacts.commit();
+        remove_asset_files_best_effort(&self.inner.voice_root, &replaced_assets);
         Ok(GenerationSummary {
             completed: outcome.completed,
             failed: outcome.failed,
@@ -1598,6 +1567,80 @@ fn generation_sampling_params(source: &VoiceAssetSource) -> (Option<f32>, Option
     }
 }
 
+/// Enforces the "at most one asset per phrase" invariant. For any phrase
+/// with more than one asset, keeps the phrase's active asset if it's still
+/// present, otherwise the most recently created one, and drops the rest
+/// from the catalog. Returns the `(phrase_id, asset_id)` pairs that were
+/// dropped so the caller can remove their WAV files afterwards.
+fn reconcile_single_asset_per_phrase(catalog: &mut models::VoiceCatalog) -> Vec<(String, String)> {
+    let mut removed = Vec::new();
+    let phrase_ids: Vec<String> = catalog.phrases.iter().map(|phrase| phrase.id.clone()).collect();
+    for phrase_id in phrase_ids {
+        let mut candidate_indices: Vec<usize> = catalog
+            .assets
+            .iter()
+            .enumerate()
+            .filter(|(_, asset)| asset.phrase_id == phrase_id)
+            .map(|(index, _)| index)
+            .collect();
+        if candidate_indices.len() <= 1 {
+            continue;
+        }
+        candidate_indices.sort_by_key(|&index| catalog.assets[index].created_at_ms);
+        let active_asset_id = catalog
+            .phrases
+            .iter()
+            .find(|phrase| phrase.id == phrase_id)
+            .and_then(|phrase| phrase.active_asset_id.clone());
+        let keep_index = active_asset_id
+            .as_deref()
+            .and_then(|active_id| {
+                candidate_indices
+                    .iter()
+                    .copied()
+                    .find(|&index| catalog.assets[index].id == active_id)
+            })
+            .or_else(|| candidate_indices.last().copied());
+        let Some(keep_index) = keep_index else { continue };
+        let keep_id = catalog.assets[keep_index].id.clone();
+        for &index in &candidate_indices {
+            let asset_id = &catalog.assets[index].id;
+            if *asset_id != keep_id {
+                removed.push((phrase_id.clone(), asset_id.clone()));
+            }
+        }
+        catalog
+            .assets
+            .retain(|asset| asset.phrase_id != phrase_id || asset.id == keep_id);
+        if let Some(phrase) = catalog
+            .phrases
+            .iter_mut()
+            .find(|phrase| phrase.id == phrase_id)
+        {
+            phrase.active_asset_id = Some(keep_id);
+        }
+    }
+    removed
+}
+
+/// Best-effort deletion of generated WAV files for `(phrase_id, asset_id)`
+/// pairs that have already been dropped from the catalog. Failures are
+/// logged rather than propagated: the catalog (the source of truth) has
+/// already been committed without these assets, so a stray file left on
+/// disk is a cosmetic leak, not a correctness issue.
+fn remove_asset_files_best_effort(voice_root: &Path, assets: &[(String, String)]) {
+    for (phrase_id, asset_id) in assets {
+        let path = catalog::asset_wav_path(voice_root, phrase_id, asset_id);
+        if path.exists() && let Err(error) = std::fs::remove_file(&path) {
+            warn!(
+                target: "app::voice",
+                "failed to remove replaced voice asset {}: {error}",
+                path.display()
+            );
+        }
+    }
+}
+
 fn mark_fine_tuned_assets_stale(catalog: &mut models::VoiceCatalog, model_sha256: &str) {
     for asset in &mut catalog.assets {
         if matches!(
@@ -1751,6 +1794,83 @@ mod tests {
         assert!(catalog.assets[0].stale);
         assert!(!catalog.assets[1].stale);
         assert!(!catalog.assets[2].stale);
+    }
+
+    fn phrase_stub(id: &str, active_asset_id: Option<&str>) -> VoicePhraseMeta {
+        VoicePhraseMeta {
+            id: id.to_string(),
+            active_asset_id: active_asset_id.map(str::to_string),
+            ..VoicePhraseMeta::default()
+        }
+    }
+
+    fn asset_stub(id: &str, phrase_id: &str, created_at_ms: i64) -> VoiceAssetMeta {
+        VoiceAssetMeta {
+            id: id.to_string(),
+            phrase_id: phrase_id.to_string(),
+            created_at_ms,
+            ..VoiceAssetMeta::default()
+        }
+    }
+
+    #[test]
+    fn reconcile_keeps_the_active_asset_over_a_newer_unconfirmed_one() {
+        let mut catalog = models::VoiceCatalog::default();
+        catalog.phrases = vec![phrase_stub("phrase-1", Some("asset-old"))];
+        catalog.assets = vec![
+            asset_stub("asset-old", "phrase-1", 100),
+            asset_stub("asset-new", "phrase-1", 200),
+        ];
+
+        let removed = reconcile_single_asset_per_phrase(&mut catalog);
+
+        assert_eq!(removed, vec![("phrase-1".to_string(), "asset-new".to_string())]);
+        assert_eq!(catalog.assets.len(), 1);
+        assert_eq!(catalog.assets[0].id, "asset-old");
+        assert_eq!(
+            catalog.phrases[0].active_asset_id.as_deref(),
+            Some("asset-old")
+        );
+    }
+
+    #[test]
+    fn reconcile_falls_back_to_the_newest_asset_when_none_is_active() {
+        let mut catalog = models::VoiceCatalog::default();
+        catalog.phrases = vec![phrase_stub("phrase-1", None)];
+        catalog.assets = vec![
+            asset_stub("asset-1", "phrase-1", 100),
+            asset_stub("asset-2", "phrase-1", 300),
+            asset_stub("asset-3", "phrase-1", 200),
+        ];
+
+        let mut removed = reconcile_single_asset_per_phrase(&mut catalog);
+        removed.sort();
+
+        assert_eq!(
+            removed,
+            vec![
+                ("phrase-1".to_string(), "asset-1".to_string()),
+                ("phrase-1".to_string(), "asset-3".to_string()),
+            ]
+        );
+        assert_eq!(catalog.assets.len(), 1);
+        assert_eq!(catalog.assets[0].id, "asset-2");
+        assert_eq!(
+            catalog.phrases[0].active_asset_id.as_deref(),
+            Some("asset-2")
+        );
+    }
+
+    #[test]
+    fn reconcile_is_a_no_op_for_phrases_with_a_single_asset() {
+        let mut catalog = models::VoiceCatalog::default();
+        catalog.phrases = vec![phrase_stub("phrase-1", Some("asset-1"))];
+        catalog.assets = vec![asset_stub("asset-1", "phrase-1", 100)];
+
+        let removed = reconcile_single_asset_per_phrase(&mut catalog);
+
+        assert!(removed.is_empty());
+        assert_eq!(catalog.assets.len(), 1);
     }
 
     #[test]

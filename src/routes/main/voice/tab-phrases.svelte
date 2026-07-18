@@ -1,15 +1,17 @@
 <script lang="ts">
   import { open } from "@tauri-apps/plugin-dialog";
-  import CheckIcon from "virtual:icons/lucide/check";
   import ChevronDownIcon from "virtual:icons/lucide/chevron-down";
   import ChevronRightIcon from "virtual:icons/lucide/chevron-right";
   import PlayIcon from "virtual:icons/lucide/play";
   import PlusIcon from "virtual:icons/lucide/plus";
+  import RefreshCwIcon from "virtual:icons/lucide/refresh-cw";
+  import SparklesIcon from "virtual:icons/lucide/sparkles";
   import Trash2Icon from "virtual:icons/lucide/trash-2";
   import XIcon from "virtual:icons/lucide/x";
   import { SvelteSet } from "svelte/reactivity";
   import {
     commands,
+    type VoiceAssetMeta,
     type VoiceGenerateRequestDto,
     type VoiceLanguage,
     type VoicePhraseMeta,
@@ -30,6 +32,10 @@
   const fineTunedState = $derived(status?.fineTunedVoice ?? null);
   const assets = $derived(status?.catalog.assets ?? []);
   const operationActive = $derived(VOICE.operation.kind !== "idle");
+  const generating = $derived(
+    VOICE.generationPhase === "running" ||
+      VOICE.generationPhase === "cancelling",
+  );
 
   const LANGUAGES: { value: VoiceLanguage; labelKey: MessageKey }[] = [
     { value: "zhCn", labelKey: "voice.language.zhCN" },
@@ -49,11 +55,7 @@
   let editLanguage = $state<VoiceLanguage>("zhCn");
   let savingEdit = $state(false);
   let deletingId = $state<string | null>(null);
-
-  let expandedId = $state<string | null>(null);
-  let confirmingAssetId = $state<string | null>(null);
-  let deletingAssetId = $state<string | null>(null);
-  let previewingAssetId = $state<string | null>(null);
+  let regeneratingId = $state<string | null>(null);
 
   let generatePanelOpen = $state(false);
   let profileMode = $state<"existing" | "new">("existing");
@@ -78,10 +80,17 @@
     );
   }
 
-  function assetsForPhrase(phraseId: string) {
-    return assets
-      .filter((a) => a.phraseId === phraseId)
-      .sort((a, b) => b.createdAtMs - a.createdAtMs);
+  function activeAssetOf(phrase: VoicePhraseMeta): VoiceAssetMeta | null {
+    if (!phrase.activeAssetId) return null;
+    return assets.find((a) => a.id === phrase.activeAssetId) ?? null;
+  }
+
+  type PhraseStatus = "ready" | "stale" | "pending";
+
+  function phraseStatus(phrase: VoicePhraseMeta): PhraseStatus {
+    const asset = activeAssetOf(phrase);
+    if (!asset) return "pending";
+    return asset.stale ? "stale" : "ready";
   }
 
   async function createPhrase() {
@@ -154,43 +163,6 @@
     }
   }
 
-  async function confirmAsset(phraseId: string, assetId: string) {
-    confirmingAssetId = assetId;
-    try {
-      const res = await runVoiceOperation({ kind: "updatingCatalog" }, () =>
-        commands.voiceConfirmAsset(phraseId, assetId),
-      );
-      if (res.status === "error") {
-        localError = voiceErrorMessage(res.error);
-      }
-    } finally {
-      confirmingAssetId = null;
-    }
-  }
-
-  async function deleteAsset(assetId: string) {
-    deletingAssetId = assetId;
-    try {
-      const res = await runVoiceOperation({ kind: "updatingCatalog" }, () =>
-        commands.voiceDeleteAsset(assetId),
-      );
-      if (res.status === "error") {
-        localError = voiceErrorMessage(res.error);
-      }
-    } finally {
-      deletingAssetId = null;
-    }
-  }
-
-  async function previewAsset(phraseId: string, assetId: string) {
-    previewingAssetId = assetId;
-    try {
-      await commands.voicePreviewAsset(phraseId, assetId);
-    } finally {
-      previewingAssetId = null;
-    }
-  }
-
   async function testTrigger(phraseId: string) {
     await commands.voiceTestTrigger(phraseId);
   }
@@ -220,6 +192,18 @@
     }
   }
 
+  // Only the "clone an already-saved profile" and "fine-tuned voice"
+  // sources make sense for a single-phrase inline regenerate: creating a
+  // brand-new cloned profile is inherently a one-shot, multi-phrase action
+  // that belongs in the batch panel below.
+  const rowSourceReady = $derived(
+    status?.model.kind === "ready" &&
+      (selectedSource === "fineTuned"
+        ? fineTunedState?.kind === "ready"
+        : !!selectedProfileId),
+  );
+  const canRegenerateRow = $derived(!operationActive && rowSourceReady);
+
   const canGenerate = $derived(
     !operationActive &&
       status?.model.kind === "ready" &&
@@ -230,6 +214,31 @@
           ? !!selectedProfileId
           : !!referenceWavPath && newProfileName.trim().length > 0),
   );
+
+  function buildRowSource(): VoiceGenerateRequestDto["source"] | null {
+    if (selectedSource === "fineTuned") {
+      return fineTunedState?.kind === "ready" ? { mode: "fineTuned" } : null;
+    }
+    return selectedProfileId
+      ? { mode: "cloneExisting", profileId: selectedProfileId }
+      : null;
+  }
+
+  async function regeneratePhrase(phraseId: string) {
+    if (!canRegenerateRow || regeneratingId) return;
+    const source = buildRowSource();
+    if (!source) return;
+    regeneratingId = phraseId;
+    try {
+      await runVoiceGeneration({
+        source,
+        phraseIds: [phraseId],
+        backendPreference: SETTINGS.voice.state.generationBackend,
+      });
+    } finally {
+      regeneratingId = null;
+    }
+  }
 
   async function submitGeneration() {
     if (!canGenerate) return;
@@ -334,175 +343,141 @@
     {#if phrases.length > 0}
       <div class="space-y-2">
         {#each phrases as phrase (phrase.id)}
-          {@const phraseAssets = assetsForPhrase(phrase.id)}
-          <div class="border-border/60 bg-background/50 rounded-lg border">
-            <div class="flex items-center gap-2 p-3">
-              <button
-                type="button"
-                class="text-muted-foreground shrink-0"
-                onclick={() => {
-                  expandedId = expandedId === phrase.id ? null : phrase.id;
+          {@const state = phraseStatus(phrase)}
+          {@const activeAsset = activeAssetOf(phrase)}
+          <div
+            class="border-border/60 bg-background/50 flex items-center gap-2 rounded-lg border p-3"
+          >
+            <input
+              type="checkbox"
+              checked={selectedPhraseIds.has(phrase.id)}
+              disabled={operationActive}
+              onchange={() => togglePhraseSelection(phrase.id)}
+            />
+
+            {#if editingId === phrase.id}
+              <input
+                class="border-border/60 bg-muted/30 text-foreground w-32 rounded border px-2 py-1 text-sm"
+                value={editName}
+                oninput={(event) => {
+                  editName = (event.currentTarget as HTMLInputElement).value;
+                }}
+              />
+              <input
+                class="border-border/60 bg-muted/30 text-foreground min-w-0 flex-1 rounded border px-2 py-1 text-sm"
+                value={editText}
+                oninput={(event) => {
+                  editText = (event.currentTarget as HTMLInputElement).value;
+                }}
+              />
+              <select
+                class="border-border/60 bg-muted/30 text-foreground rounded border px-2 py-1 text-sm"
+                value={editLanguage}
+                onchange={(event) => {
+                  editLanguage = (event.currentTarget as HTMLSelectElement)
+                    .value as VoiceLanguage;
                 }}
               >
-                {#if expandedId === phrase.id}
-                  <ChevronDownIcon class="h-4 w-4" />
-                {:else}
-                  <ChevronRightIcon class="h-4 w-4" />
-                {/if}
+                {#each LANGUAGES as lang (lang.value)}
+                  <option value={lang.value}>{t(lang.labelKey)}</option>
+                {/each}
+              </select>
+              <button
+                type="button"
+                class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 text-xs disabled:opacity-50"
+                disabled={operationActive || savingEdit}
+                onclick={saveEdit}
+              >
+                {t("voice.phrases.save")}
               </button>
-
-              <input
-                type="checkbox"
-                checked={selectedPhraseIds.has(phrase.id)}
-                disabled={operationActive}
-                onchange={() => togglePhraseSelection(phrase.id)}
-              />
-
-              {#if editingId === phrase.id}
-                <input
-                  class="border-border/60 bg-muted/30 text-foreground w-32 rounded border px-2 py-1 text-sm"
-                  value={editName}
-                  oninput={(event) => {
-                    editName = (event.currentTarget as HTMLInputElement).value;
-                  }}
-                />
-                <input
-                  class="border-border/60 bg-muted/30 text-foreground min-w-0 flex-1 rounded border px-2 py-1 text-sm"
-                  value={editText}
-                  oninput={(event) => {
-                    editText = (event.currentTarget as HTMLInputElement).value;
-                  }}
-                />
-                <select
-                  class="border-border/60 bg-muted/30 text-foreground rounded border px-2 py-1 text-sm"
-                  value={editLanguage}
-                  onchange={(event) => {
-                    editLanguage = (event.currentTarget as HTMLSelectElement)
-                      .value as VoiceLanguage;
-                  }}
-                >
-                  {#each LANGUAGES as lang (lang.value)}
-                    <option value={lang.value}>{t(lang.labelKey)}</option>
-                  {/each}
-                </select>
-                <button
-                  type="button"
-                  class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 text-xs disabled:opacity-50"
-                  disabled={operationActive || savingEdit}
-                  onclick={saveEdit}
-                >
-                  {t("voice.phrases.save")}
-                </button>
-                <button
-                  type="button"
-                  class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 text-xs"
-                  onclick={cancelEdit}
-                >
-                  {t("voice.phrases.cancelEdit")}
-                </button>
-              {:else}
-                <div class="min-w-0 flex-1">
-                  <div class="text-foreground truncate text-sm font-medium">
-                    {phrase.name}
-                    <span class="text-muted-foreground ml-1 text-xs"
-                      >({languageLabel(phrase.language)})</span
-                    >
-                  </div>
-                  <div class="text-muted-foreground truncate text-xs">
-                    {phrase.text}
-                  </div>
-                </div>
-                {#if phrase.activeAssetId}
-                  <button
-                    type="button"
-                    class="border-border/60 hover:bg-muted/40 flex items-center gap-1 rounded border px-2 py-1 text-xs"
-                    onclick={() => testTrigger(phrase.id)}
+              <button
+                type="button"
+                class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 text-xs"
+                onclick={cancelEdit}
+              >
+                {t("voice.phrases.cancelEdit")}
+              </button>
+            {:else}
+              <div class="min-w-0 flex-1">
+                <div class="text-foreground flex items-center gap-1.5 truncate text-sm font-medium">
+                  {phrase.name}
+                  <span class="text-muted-foreground text-xs"
+                    >({languageLabel(phrase.language)})</span
                   >
-                    <PlayIcon class="h-3.5 w-3.5" />
-                    {t("voice.phrases.tryPlay")}
-                  </button>
-                {/if}
+                  {#if state === "ready"}
+                    <span
+                      class="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-normal text-emerald-500"
+                    >
+                      {t("voice.phrases.status.ready")}
+                      {#if activeAsset}
+                        · {activeAsset.durationSec.toFixed(1)}s
+                      {/if}
+                    </span>
+                  {:else if state === "stale"}
+                    <span
+                      class="bg-amber-500/15 text-amber-500 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-normal"
+                    >
+                      {t("voice.phrases.status.stale")}
+                    </span>
+                  {:else}
+                    <span
+                      class="bg-muted/50 text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[11px] font-normal"
+                    >
+                      {t("voice.phrases.status.pending")}
+                    </span>
+                  {/if}
+                </div>
+                <div class="text-muted-foreground truncate text-xs">
+                  {phrase.text}
+                </div>
+              </div>
+
+              {#if state !== "pending"}
                 <button
                   type="button"
-                  class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 text-xs"
-                  disabled={operationActive}
-                  onclick={() => startEdit(phrase)}
+                  class="border-border/60 hover:bg-muted/40 flex items-center gap-1 rounded border px-2 py-1 text-xs"
+                  onclick={() => testTrigger(phrase.id)}
                 >
-                  {t("voice.phrases.edit")}
-                </button>
-                <button
-                  type="button"
-                  class="border-border/60 text-destructive hover:bg-destructive/10 rounded border px-2 py-1 text-xs disabled:opacity-50"
-                  disabled={operationActive || deletingId === phrase.id}
-                  onclick={() => deletePhrase(phrase.id)}
-                >
-                  <Trash2Icon class="h-3.5 w-3.5" />
+                  <PlayIcon class="h-3.5 w-3.5" />
+                  {t("voice.phrases.tryPlay")}
                 </button>
               {/if}
-            </div>
 
-            {#if expandedId === phrase.id}
-              <div class="border-border/60 space-y-2 border-t p-3">
-                {#if phraseAssets.length > 0}
-                  {#each phraseAssets as asset (asset.id)}
-                    <div
-                      class="border-border/60 flex items-center justify-between gap-2 rounded border p-2 text-xs"
-                    >
-                      <div class="flex items-center gap-2">
-                        {#if phrase.activeAssetId === asset.id}
-                          <span
-                            class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-500"
-                            >{t("voice.phrases.asset.active")}</span
-                          >
-                        {:else if asset.stale}
-                          <span
-                            class="bg-destructive/15 text-destructive rounded px-1.5 py-0.5"
-                            >{t("voice.phrases.asset.stale")}</span
-                          >
-                        {/if}
-                        <span class="text-muted-foreground">
-                          {asset.durationSec.toFixed(1)}s · {asset.sampleRate}Hz
-                        </span>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 disabled:opacity-50"
-                          disabled={previewingAssetId === asset.id}
-                          onclick={() => previewAsset(phrase.id, asset.id)}
-                        >
-                          <PlayIcon class="h-3 w-3" />
-                        </button>
-                        {#if phrase.activeAssetId !== asset.id}
-                          <button
-                            type="button"
-                            class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 disabled:opacity-50"
-                            disabled={operationActive ||
-                              confirmingAssetId === asset.id}
-                            onclick={() => confirmAsset(phrase.id, asset.id)}
-                          >
-                            <CheckIcon class="h-3 w-3" />
-                            {t("voice.phrases.asset.confirm")}
-                          </button>
-                        {/if}
-                        <button
-                          type="button"
-                          class="border-border/60 text-destructive hover:bg-destructive/10 rounded border px-2 py-1 disabled:opacity-50"
-                          disabled={operationActive ||
-                            deletingAssetId === asset.id}
-                          onclick={() => deleteAsset(asset.id)}
-                        >
-                          <Trash2Icon class="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  {/each}
-                {:else}
-                  <div class="text-muted-foreground text-xs">
-                    {t("voice.phrases.asset.empty")}
-                  </div>
-                {/if}
-              </div>
+              <button
+                type="button"
+                class="border-border/60 hover:bg-muted/40 flex items-center gap-1 rounded border px-2 py-1 text-xs disabled:opacity-50"
+                disabled={!canRegenerateRow || regeneratingId === phrase.id}
+                title={!rowSourceReady
+                  ? t("voice.phrases.rowGenerateHint")
+                  : undefined}
+                onclick={() => regeneratePhrase(phrase.id)}
+              >
+                <RefreshCwIcon
+                  class="h-3.5 w-3.5 {regeneratingId === phrase.id
+                    ? 'animate-spin'
+                    : ''}"
+                />
+                {state === "pending"
+                  ? t("voice.phrases.generateOne")
+                  : t("voice.phrases.regenerateOne")}
+              </button>
+
+              <button
+                type="button"
+                class="border-border/60 hover:bg-muted/40 rounded border px-2 py-1 text-xs"
+                disabled={operationActive}
+                onclick={() => startEdit(phrase)}
+              >
+                {t("voice.phrases.edit")}
+              </button>
+              <button
+                type="button"
+                class="border-border/60 text-destructive hover:bg-destructive/10 rounded border px-2 py-1 text-xs disabled:opacity-50"
+                disabled={operationActive || deletingId === phrase.id}
+                onclick={() => deletePhrase(phrase.id)}
+              >
+                <Trash2Icon class="h-3.5 w-3.5" />
+              </button>
             {/if}
           </div>
         {/each}
@@ -671,13 +646,15 @@
           disabled={!canGenerate}
           onclick={submitGeneration}
         >
-          {VOICE.generationPhase === "running" ||
-          VOICE.generationPhase === "cancelling"
+          {#if generating}
+            <SparklesIcon class="mr-1 inline h-4 w-4 animate-spin" />
+          {/if}
+          {generating
             ? t("voice.phrases.generate.generating")
             : t("voice.phrases.generate.start")}
         </button>
 
-        {#if VOICE.generationPhase === "running" || VOICE.generationPhase === "cancelling"}
+        {#if generating}
           <button
             type="button"
             class="border-border/60 hover:bg-muted/40 inline-flex items-center gap-1.5 rounded border px-4 py-2 text-sm disabled:opacity-50"

@@ -513,22 +513,6 @@ async voiceDeletePhrase(id: string) : Promise<Result<null, VoiceCommandError>> {
     else return { status: "error", error: e  as any };
 }
 },
-async voiceConfirmAsset(phraseId: string, assetId: string) : Promise<Result<null, VoiceCommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("voice_confirm_asset", { phraseId, assetId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async voiceDeleteAsset(assetId: string) : Promise<Result<null, VoiceCommandError>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("voice_delete_asset", { assetId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
 async voiceGenerate(request: VoiceGenerateRequestDto) : Promise<Result<GenerationSummary, VoiceCommandError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("voice_generate", { request }) };
@@ -859,10 +843,6 @@ export type VoiceAssetMeta = { id: string; phraseId: string; source: VoiceAssetS
  * Used to detect staleness without storing absolute paths in rules.
  */
 paramsFingerprint: string; createdAtMs: number; durationSec: number; sampleRate: number;
-/**
- * Whether the user has confirmed this take as the active asset for the phrase.
- */
-confirmed: boolean;
 /**
  * True when the phrase/profile/model changed after this asset was generated.
  */
