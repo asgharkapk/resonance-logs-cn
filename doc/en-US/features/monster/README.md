@@ -28,7 +28,7 @@ Independent from **Live Monitor** (your skill CD, your buffs, etc.): config live
 - **Toggle Monster Overlay**: Show or hide in-game **Monster Monitor** overlay.
 - **Edit Monster Layout**: Drag and resize areas on the overlay (monster buff, teammate buff, threat list, Boss DBM, etc.).
 
-Config is **global** (no multi-profile like Live Monitor); changes persist—if lists look wrong on first enable, try toggling the master switch off and on (see release notes on persistence).
+Monster Monitor supports multiple **configuration profiles**. The active loadout references one of them; switching the loadout or selecting another profile on the Monster Monitor page switches its buff, threat, DBM, voice-announcement, and layout settings together. The master switch, auto-hide in daily scenes, and buff aliases remain global and do not change with profiles.
 
 ## vs Live Monitor
 
@@ -36,5 +36,5 @@ Config is **global** (no multi-profile like Live Monitor); changes persist—if 
 |------|----------|----------|
 | Overlay | Game overlay | Monster overlay |
 | Main focus | Your skills, your buffs, stats, etc. | Main-target buffs, teammate buffs, threat |
-| Profiles | Multiple switchable profiles | Single global config |
+| Profiles | Multiple profiles referenced and switched by loadouts | Multiple profiles referenced and switched by loadouts |
 | Buff scope | Player-related | On monster + teammates on monster |
