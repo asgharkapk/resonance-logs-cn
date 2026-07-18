@@ -3182,13 +3182,13 @@
   {
     "Icon": "buff_abnormal_icon_02",
     "Id": 2110049,
-    "NameDesign": "機械の故障",
+    "NameDesign": "機械の故障（カットグリフCD）",
     "SpriteFile": "buff_abnormal_icon_02_-6301183379485455628.png"
   },
   {
     "Icon": "buff_abnormal_icon_02",
     "Id": 2110050,
-    "NameDesign": "属性停滞",
+    "NameDesign": "属性停滞（バジリスクCD）",
     "SpriteFile": "buff_abnormal_icon_02_-6301183379485455628.png"
   },
   {
@@ -3218,19 +3218,19 @@
   {
     "Icon": "buff_abnormal_icon_02",
     "Id": 2110055,
-    "NameDesign": "疲労・烈火の焼身",
+    "NameDesign": "疲労・烈火の焼身（ターターCD）",
     "SpriteFile": "buff_abnormal_icon_02_-6301183379485455628.png"
   },
   {
     "Icon": "buff_abnormal_icon_02",
     "Id": 2110056,
-    "NameDesign": "時間凝固",
+    "NameDesign": "時間凝固（ティナCD）",
     "SpriteFile": "buff_abnormal_icon_02_-6301183379485455628.png"
   },
   {
     "Icon": "buff_abnormal_icon_02",
     "Id": 2110057,
-    "NameDesign": "虚弱・祈り禁止",
+    "NameDesign": "虚弱・祈り禁止（復活CD）",
     "SpriteFile": "buff_abnormal_icon_02_-6301183379485455628.png"
   },
   {
@@ -3254,7 +3254,7 @@
   {
     "Icon": "talent_passive_icon_general_sup_grassarea",
     "Id": 2110061,
-    "NameDesign": "フレイムハート",
+    "NameDesign": "フレイムハート（ターター）",
     "SpriteFile": "talent_passive_icon_general_sup_grassarea_-2699280676978229692.png"
   },
   {
@@ -3278,7 +3278,7 @@
   {
     "Icon": "buff_passive_icon_dps_crit04",
     "Id": 2110065,
-    "NameDesign": "灼熱の戦意",
+    "NameDesign": "灼熱の戦意（山賊頭目）",
     "SpriteFile": "buff_passive_icon_dps_crit04_-5330410982362793317.png"
   },
   {
@@ -3464,7 +3464,7 @@
   {
     "Icon": "buff_abnormal_red_icon_03",
     "Id": 2110099,
-    "NameDesign": "剧毒蜂巢-dot易伤",
+    "NameDesign": "ヴェノム脆弱（劇毒蜂巣）",
     "SpriteFile": "buff_abnormal_red_icon_03_-6411525200381862591.png"
   },
   {
@@ -3542,7 +3542,7 @@
   {
     "Icon": "buff_red_def",
     "Id": 2110111,
-    "NameDesign": "呪術",
+    "NameDesign": "呪術（ロリーラ）",
     "SpriteFile": "buff_red_def_2516734868688990745.png"
   },
   {
@@ -3626,7 +3626,7 @@
   {
     "Icon": "buff_icon78",
     "Id": 2110125,
-    "NameDesign": "高原血統",
+    "NameDesign": "高原血統（バジリスク）",
     "SpriteFile": "buff_icon78_-2560800184268380271.png"
   },
   {
@@ -3686,7 +3686,7 @@
   {
     "Icon": "",
     "Id": 2110135,
-    "NameDesign": "罗罗拉-主动记时",
+    "NameDesign": "呪術スタック（ロリーラ）",
     "SpriteFile": null
   },
   {
@@ -3716,7 +3716,7 @@
   {
     "Icon": "buff_icon136",
     "Id": 2110140,
-    "NameDesign": "機械の力",
+    "NameDesign": "機械の力（カットグリフ）",
     "SpriteFile": "buff_icon136_3861372500749577434.png"
   },
   {

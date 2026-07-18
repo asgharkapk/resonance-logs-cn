@@ -27,6 +27,52 @@ Some buffs change display by **stack count** (e.g. different icons at 1 vs 2 sta
 |------|-----------|----------|
 | Qinglan Knight | Pursuit Footwork | 1 stack: single icon; 2 stacks: dual-icon combo for stack distinction |
 
+## Common Buff Reference
+
+Searchable names below are in the config tables. Player buffs go under **Live Monitor → Buff Monitor**; monster debuffs / amp go under **Monster Monitor → Buff Monitor** (see [Monster Buff](../monster/buff.md)).
+
+### Class
+
+| Class | Buff Name | Notes |
+|------|-----------|------|
+| Qinglan Knight | Pursuit Footwork | Special buff: different icons at 1 / 2 stacks (see Special Buffs above) |
+
+> More class buffs will be added later.
+
+### Common Fantasies (player buffs)
+
+Search these under **Live Monitor → Buff Monitor**:
+
+| Fantasy | Buff ID | Search name | Notes |
+|---------|---------|-------------|-------|
+| Bandit Chief | 2110065 | Fiery Battle Will (Bandit Chief) | Damage amp on players |
+| Tata | 2110061 | Heart of Flames (Tata) | Death-save on players |
+| Tina | 2110034 | Lower CD | Cooldown reduction on players |
+| Basilisk | 2110125 | Highland Blood (Basilisk) | Damage amp on players |
+| Catagriff | 2110140 | Mechanical Power (Catagriff) | Damage amp on players |
+
+### Common Fantasies (monster debuffs / amp)
+
+Search under **Monster Monitor → Buff Monitor**:
+
+| Fantasy | Buff ID | Search name | Notes |
+|---------|---------|-------------|-------|
+| Poison Hive | 2110099 | Venom Vulnerability (Poison Hive) | Vulnerability on monsters |
+| Lorola | 2110111 | Enchantment (Lorola) | Damage amp on monsters |
+| Lorola | 2110135 | Enchantment Stacks (Lorola) | Stacking amp on monsters |
+
+### Fantasy CD
+
+After using a fantasy, a CD buff blocks re-applying the same kind for a while:
+
+| Fantasy / effect | Buff ID | Search name |
+|------------------|---------|--------------|
+| Catagriff | 2110049 | Mechanical Failure (Catagriff CD) |
+| Tina | 2110056 | Time Stasis (Tina CD) |
+| Tata | 2110055 | Exhausted: Flame Devour (Tata CD) |
+| Revive | 2110057 | Weakened: Wish Sealed (Revive CD) |
+| Basilisk | 2110050 | Element Stasis (Basilisk CD) |
+
 ## Buff Aliases
 
 Some in-game buff names are unclear. Set aliases under **Buff Monitor → Buff Alias Settings**:

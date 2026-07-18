@@ -4,6 +4,18 @@ Corresponds to **Monster Monitor → Buff Monitor** tab.
 
 Configure which buffs to show on your **current main attack target** (which monster updates automatically from in-game target). Search list uses **Boss Buff** config—not the Live Monitor player buff list.
 
+## Common Fantasy Buffs (on monsters)
+
+These debuffs / amp effects are on **monsters**. Search and add them here (player fantasy buffs: [Live Monitor · Buff](../monitor/buff.md#common-buff-reference)):
+
+| Fantasy | Buff ID | Search name | Notes |
+|---------|---------|-------------|-------|
+| Poison Hive | 2110099 | Venom Vulnerability (Poison Hive) | Vulnerability |
+| Lorola | 2110111 | Enchantment (Lorola) | Damage amp |
+| Lorola | 2110135 | Enchantment Stacks (Lorola) | Stacking amp |
+
+Fantasy CDs and player fantasy buffs (Bandit Chief / Tata / Tina / Basilisk / Catagriff, etc.) are listed in the Live Monitor buff doc.
+
 ## Buff Search & Selection
 
 Choose how to add before searching:
