@@ -1835,6 +1835,10 @@ export const enUSMessages = {
   "voice.overview.status.generating": "Generating audio, please wait…",
 
   "voice.model.title": "Voice model",
+  "voice.model.downloadSource": "Model download source",
+  "voice.model.downloadSourceAuto": "Automatic (mirror for China)",
+  "voice.model.downloadSourceHuggingFace": "Hugging Face",
+  "voice.model.downloadSourceMirror": "HF-Mirror",
   "voice.model.description":
     "The model is downloaded and managed separately from the app installer",
   "voice.model.installed": "Installed",

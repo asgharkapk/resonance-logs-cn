@@ -1822,6 +1822,10 @@ export const jaJPMessages = {
   "voice.overview.status.generating": "音声を生成中です…",
 
   "voice.model.title": "音声モデル",
+  "voice.model.downloadSource": "モデルのダウンロード元",
+  "voice.model.downloadSourceAuto": "自動（中国ではミラー優先）",
+  "voice.model.downloadSourceHuggingFace": "Hugging Face",
+  "voice.model.downloadSourceMirror": "HF-Mirror",
   "voice.model.description":
     "モデルはアプリ本体とは別に単独でダウンロード・管理されます",
   "voice.model.installed": "インストール済み",

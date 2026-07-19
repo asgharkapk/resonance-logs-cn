@@ -1703,6 +1703,10 @@ export const zhCNMessages = {
   "voice.overview.status.generating": "正在生成语音，请稍候…",
 
   "voice.model.title": "语音模型",
+  "voice.model.downloadSource": "模型下载源",
+  "voice.model.downloadSourceAuto": "自动（中国优先镜像）",
+  "voice.model.downloadSourceHuggingFace": "Hugging Face",
+  "voice.model.downloadSourceMirror": "HF-Mirror",
   "voice.model.description": "模型文件独立下载与管理",
   "voice.model.installed": "已安装",
   "voice.model.notInstalled": "尚未安装模型",
