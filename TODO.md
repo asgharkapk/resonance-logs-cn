@@ -22,7 +22,7 @@
 * [ ] **Overlay Presets**
 
   * [ ] Save and load overlay layouts.
-  * [ ] Include built-in presets (Healer, DPS, Raid, Dungeon, Streaming, Minimal, etc.).
+  * ⚒️ Include built-in presets (Healer, DPS, Raid, Dungeon, Streaming, Minimal, etc.).
 
 * [ ] **Role Skills Overlay**
 
@@ -32,9 +32,8 @@
 
   * [ ] Allow adjusting the minimap panel opacity independently.
 
-* [ ] **Stamina & Dash Skill Overlay**
+* [ ] **Dash Skill Overlay**
 
-  * [ ] Display current stamina.
   * [ ] Show dash skill charges and cooldowns.
 
 * [ ] **Stats Tracker**
