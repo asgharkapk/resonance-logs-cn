@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# <img src="src-tauri/icons/icon.ico" width="64" align="center"> Resonance Logs Documentation
+# [<img src="src-tauri/icons/icon.ico" width="64" align="center"> Resonance Logs Documentation](https://asgharkapk.github.io/resonance-logs-cn/index_old.html)
 
 A feature-rich companion application for **Star Resonance** with DPS analysis, overlays, combat logging, minimap support, dungeon mechanic guides, and more.
 
