@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Resonance Logs — The Ultimate Star Resonance Companion</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+html{
+scroll-behavior:smooth;
+}
+
+body{
+
+font-family:Inter,sans-serif;
+background:#08080b;
+color:white;
+overflow-x:hidden;
+
+}
+
+body::before{
+
+content:"";
+position:fixed;
+left:0;
+top:0;
+width:100%;
+height:100%;
+pointer-events:none;
+
+background:
+radial-gradient(circle at 20% 10%,rgba(124,92,255,.25),transparent 30%),
+radial-gradient(circle at 80% 0%,rgba(71,124,255,.2),transparent 35%),
+radial-gradient(circle at center,transparent 40%,rgba(0,0,0,.55));
+
+z-index:-2;
+
+}
+
+body::after{
+
+content:"";
+position:fixed;
+inset:0;
+pointer-events:none;
+
+background-image:
+
+linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+
+background-size:80px 80px;
+
+opacity:.25;
+
+z-index:-1;
+
+}
+
+section{
+
+padding:120px 8%;
+
+}
+
+a{
+
+text-decoration:none;
+color:white;
+
+}
+
+img{
+
+display:block;
+max-width:100%;
+
+}
+
+header{
+
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:90px;
+
+display:flex;
+align-items:center;
+justify-content:space-between;
+
+padding:0 80px;
+
+background:rgba(10,10,16,.45);
+
+backdrop-filter:blur(18px);
+
+border-bottom:1px solid rgba(255,255,255,.08);
+
+z-index:999;
+
+}
+
+.logo{
+
+display:flex;
+align-items:center;
+gap:16px;
+
+}
+
+.logo img{
+
+width:52px;
+
+}
+
+.logo h2{
+
+font-family:Cinzel,serif;
+
+font-size:28px;
+
+font-weight:700;
+
+letter-spacing:2px;
+
+}
+
+nav{
+
+display:flex;
+gap:45px;
+
+}
+
+nav a{
+
+font-size:15px;
+
+text-transform:uppercase;
+
+letter-spacing:2px;
+
+opacity:.8;
+
+transition:.3s;
+
+}
+
+nav a:hover{
+
+opacity:1;
+color:#a88bff;
+
+}
+
+.download{
+
+padding:14px 30px;
+
+background:linear-gradient(135deg,#6f4cff,#8e5eff);
+
+border-radius:999px;
+
+font-weight:700;
+
+box-shadow:0 0 40px rgba(130,90,255,.4);
+
+transition:.3s;
+
+}
+
+.download:hover{
+
+transform:translateY(-3px);
+
+box-shadow:0 0 60px rgba(130,90,255,.7);
+
+}
+
+.hero{
+
+height:100vh;
+
+display:flex;
+
+align-items:center;
+
+position:relative;
+
+overflow:hidden;
+
+padding-top:90px;
+
+}
+
+.hero video,
+.hero img.bg{
+
+position:absolute;
+
+left:0;
+top:0;
+
+width:100%;
+height:100%;
+
+object-fit:cover;
+
+filter:brightness(.35);
+
+}
+
+.overlay{
+
+position:absolute;
+
+inset:0;
+
+background:
+
+linear-gradient(to top,#08080b 5%,transparent 50%),
+
+linear-gradient(to bottom,rgba(0,0,0,.4),rgba(0,0,0,.55));
+
+}
+
+.hero-content{
+
+position:relative;
+
+width:700px;
+
+z-index:5;
+
+}
+
+.tag{
+
+display:inline-flex;
+
+padding:10px 18px;
+
+border-radius:999px;
+
+background:rgba(255,255,255,.08);
+
+border:1px solid rgba(255,255,255,.1);
+
+margin-bottom:28px;
+
+letter-spacing:2px;
+
+font-size:13px;
+
+text-transform:uppercase;
+
+backdrop-filter:blur(20px);
+
+}
+
+.hero h1{
+
+font-family:Cinzel,serif;
+
+font-size:82px;
+
+line-height:1.05;
+
+margin-bottom:25px;
+
+}
+
+.hero h1 span{
+
+color:#aa8cff;
+
+text-shadow:
+
+0 0 20px rgba(140,100,255,.8),
+
+0 0 60px rgba(140,100,255,.5);
+
+}
+
+.hero p{
+
+font-size:20px;
+
+line-height:1.9;
+
+opacity:.85;
+
+margin-bottom:45px;
+
+max-width:620px;
+
+}
+
+.buttons{
+
+display:flex;
+
+gap:20px;
+
+}
+
+.btn{
+
+padding:18px 42px;
+
+border-radius:999px;
+
+font-weight:700;
+
+font-size:16px;
+
+transition:.35s;
+
+}
+
+.btn-primary{
+
+background:linear-gradient(135deg,#6f4cff,#a36fff);
+
+box-shadow:0 0 45px rgba(111,76,255,.55);
+
+}
+
+.btn-primary:hover{
+
+transform:translateY(-5px);
+
+}
+
+.btn-secondary{
+
+border:1px solid rgba(255,255,255,.2);
+
+background:rgba(255,255,255,.05);
+
+backdrop-filter:blur(18px);
+
+}
+
+.btn-secondary:hover{
+
+background:rgba(255,255,255,.1);
+
+}
+
+.hero-overlay{
+
+position:absolute;
+
+right:5%;
+
+bottom:0;
+
+width:760px;
+
+filter:
+
+drop-shadow(0 40px 80px rgba(0,0,0,.8))
+
+drop-shadow(0 0 50px rgba(111,76,255,.35));
+
+animation:float 5s ease-in-out infinite;
+
+}
+
+@keyframes float{
+
+0%{
+
+transform:translateY(0);
+
+}
+
+50%{
+
+transform:translateY(-15px);
+
+}
+
+100%{
+
+transform:translateY(0);
+
+}
+
+}
+
+.scroll{
+
+position:absolute;
+
+bottom:30px;
+
+left:50%;
+
+transform:translateX(-50%);
+
+letter-spacing:4px;
+
+font-size:13px;
+
+opacity:.55;
+
+text-transform:uppercase;
+
+animation:updown 2s infinite;
+
+}
+
+@keyframes updown{
+
+0%{
+
+transform:translate(-50%,0);
+
+}
+
+50%{
+
+transform:translate(-50%,10px);
+
+}
+
+100%{
+
+transform:translate(-50%,0);
+
+}
+
+}
+
+.divider{
+
+height:180px;
+
+background:
+
+linear-gradient(to bottom,transparent,#09090d);
+
+}
+
+.features-title{
+
+text-align:center;
+
+margin-bottom:90px;
+
+}
+
+.features-title h2{
+
+font-family:Cinzel,serif;
+
+font-size:58px;
+
+margin-bottom:25px;
+
+}
+
+.features-title p{
+
+opacity:.75;
+
+font-size:20px;
+
+}
+
+.feature{
+
+display:grid;
+
+grid-template-columns:1fr 1fr;
+
+gap:80px;
+
+align-items:center;
+
+margin-bottom:160px;
+
+}
+
+.feature.reverse{
+
+grid-template-columns:1fr 1fr;
+
+}
+
+.feature.reverse .text{
+
+order:2;
+
+}
+
+.feature.reverse .image{
+
+order:1;
+
+}
+
+.feature .image{
+
+position:relative;
+
+}
+
+.feature .image::before{
+
+content:"";
+
+position:absolute;
+
+inset:-30px;
+
+background:
+
+radial-gradient(circle,#6f4cff55,transparent 70%);
+
+z-index:-1;
+
+filter:blur(40px);
+
+}
+
+.feature img{
+
+border-radius:24px;
+
+border:1px solid rgba(255,255,255,.08);
+
+box-shadow:
+
+0 40px 80px rgba(0,0,0,.6);
+
+}
+
+.feature h3{
+
+font-family:Cinzel;
+
+font-size:48px;
+
+margin-bottom:30px;
+
+}
+
+.feature p{
+
+font-size:18px;
+
+line-height:2;
+
+opacity:.82;
+
+margin-bottom:30px;
+
+}
+
+.feature ul{
+
+list-style:none;
+
+display:grid;
+
+gap:18px;
+
+}
+
+.feature li{
+
+padding-left:32px;
+
+position:relative;
+
+font-size:17px;
+
+}
+.feature li::before{
+
+content:"✦";
+
+position:absolute;
+
+left:0;
+
+color:#9b7cff;
+
+font-size:20px;
+
+text-shadow:0 0 12px #8b6cff;
+
+}
+
+.gallery{
+
+padding-top:40px;
+
+}
+
+.gallery-title{
+
+text-align:center;
+
+margin-bottom:80px;
+
+}
+
+.gallery-title h2{
+
+font-family:Cinzel;
+
+font-size:58px;
+
+margin-bottom:20px;
+
+}
+
+.gallery-grid{
+
+display:grid;
+
+grid-template-columns:2fr 1fr;
+
+grid-template-rows:320px 320px;
+
+gap:24px;
+
+}
+
+.gallery-grid img{
+
+width:100%;
+
+height:100%;
+
+object-fit:cover;
+
+border-radius:24px;
+
+border:1px solid rgba(255,255,255,.08);
+
+transition:.45s;
+
+box-shadow:0 20px 60px rgba(0,0,0,.6);
+
+}
+
+.gallery-grid img:hover{
+
+transform:scale(1.03);
+
+box-shadow:
+
+0 0 60px rgba(120,90,255,.4),
+
+0 30px 80px rgba(0,0,0,.7);
+
+}
+
+.gallery-grid img:first-child{
+
+grid-row:1/3;
+
+}
+
+.stats{
+
+display:grid;
+
+grid-template-columns:repeat(4,1fr);
+
+gap:30px;
+
+margin-top:140px;
+
+}
+
+.stat{
+
+padding:40px;
+
+border-radius:24px;
+
+background:rgba(255,255,255,.04);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+text-align:center;
+
+transition:.35s;
+
+}
+
+.stat:hover{
+
+transform:translateY(-8px);
+
+background:rgba(255,255,255,.06);
+
+}
+
+.stat h4{
+
+font-family:Cinzel;
+
+font-size:54px;
+
+color:#a58cff;
+
+margin-bottom:12px;
+
+}
+
+.stat span{
+
+opacity:.7;
+
+letter-spacing:2px;
+
+text-transform:uppercase;
+
+font-size:13px;
+
+}
+
+.download-section{
+
+text-align:center;
+
+padding:180px 8%;
+
+position:relative;
+
+overflow:hidden;
+
+}
+
+.download-section::before{
+
+content:"";
+
+position:absolute;
+
+width:900px;
+
+height:900px;
+
+left:50%;
+
+top:50%;
+
+transform:translate(-50%,-50%);
+
+background:
+
+radial-gradient(circle,rgba(111,76,255,.18),transparent 70%);
+
+pointer-events:none;
+
+}
+
+.download-section h2{
+
+font-family:Cinzel;
+
+font-size:68px;
+
+margin-bottom:25px;
+
+position:relative;
+
+}
+
+.download-section p{
+
+font-size:20px;
+
+opacity:.75;
+
+max-width:760px;
+
+margin:auto;
+
+line-height:1.9;
+
+position:relative;
+
+}
+
+.download-buttons{
+
+display:flex;
+
+justify-content:center;
+
+gap:30px;
+
+margin-top:60px;
+
+flex-wrap:wrap;
+
+position:relative;
+
+}
+
+.download-card{
+
+width:280px;
+
+padding:40px;
+
+border-radius:24px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+transition:.35s;
+
+backdrop-filter:blur(18px);
+
+}
+
+.download-card:hover{
+
+transform:translateY(-10px);
+
+border-color:#7e5fff;
+
+box-shadow:
+
+0 0 60px rgba(120,90,255,.3);
+
+}
+
+.download-card h3{
+
+font-family:Cinzel;
+
+margin-bottom:15px;
+
+font-size:28px;
+
+}
+
+.download-card p{
+
+font-size:15px;
+
+line-height:1.8;
+
+margin-bottom:25px;
+
+}
+
+.download-card a{
+
+display:inline-block;
+
+padding:14px 28px;
+
+background:linear-gradient(135deg,#6f4cff,#9a6bff);
+
+border-radius:999px;
+
+font-weight:700;
+
+}
+
+.docs{
+
+padding-top:120px;
+
+}
+
+.docs h2{
+
+text-align:center;
+
+font-family:Cinzel;
+
+font-size:60px;
+
+margin-bottom:70px;
+
+}
+
+.doc-grid{
+
+display:grid;
+
+grid-template-columns:repeat(3,1fr);
+
+gap:28px;
+
+}
+
+.doc{
+
+padding:35px;
+
+border-radius:24px;
+
+background:rgba(255,255,255,.04);
+
+border:1px solid rgba(255,255,255,.08);
+
+transition:.35s;
+
+}
+
+.doc:hover{
+
+transform:translateY(-8px);
+
+border-color:#8d6eff;
+
+}
+
+.doc h3{
+
+font-family:Cinzel;
+
+margin-bottom:18px;
+
+}
+
+.doc p{
+
+opacity:.75;
+
+line-height:1.8;
+
+margin-bottom:22px;
+
+}
+
+.doc a{
+
+color:#9f87ff;
+
+font-weight:600;
+
+}
+
+footer{
+
+padding:80px 8%;
+
+margin-top:120px;
+
+border-top:1px solid rgba(255,255,255,.08);
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+flex-wrap:wrap;
+
+gap:30px;
+
+}
+
+footer .left h3{
+
+font-family:Cinzel;
+
+margin-bottom:10px;
+
+}
+
+footer p{
+
+opacity:.6;
+
+}
+
+footer nav{
+
+display:flex;
+
+gap:30px;
+
+}
+
+@media(max-width:1200px){
+
+.hero h1{
+
+font-size:60px;
+
+}
+
+.hero-overlay{
+
+width:520px;
+
+}
+
+.feature{
+
+grid-template-columns:1fr;
+
+}
+
+.feature.reverse .text{
+
+order:1;
+
+}
+
+.feature.reverse .image{
+
+order:2;
+
+}
+
+.gallery-grid{
+
+grid-template-columns:1fr;
+
+grid-template-rows:auto;
+
+}
+
+.gallery-grid img:first-child{
+
+grid-row:auto;
+
+}
+
+.stats{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+.doc-grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+@media(max-width:768px){
+
+header{
+
+padding:0 25px;
+
+}
+
+nav{
+
+display:none;
+
+}
+
+.hero{
+
+padding:140px 25px 40px;
+
+}
+
+.hero h1{
+
+font-size:46px;
+
+}
+
+.hero p{
+
+font-size:17px;
+
+}
+
+.hero-overlay{
+
+position:relative;
+
+right:auto;
+
+width:100%;
+
+margin-top:60px;
+
+}
+
+.buttons{
+
+flex-direction:column;
+
+}
+
+.stats{
+
+grid-template-columns:1fr;
+
+}
+
+.download-buttons{
+
+flex-direction:column;
+
+align-items:center;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+
+<img src="app-logo.png">
+
+<h2>Resonance Logs</h2>
+
+</div>
+
+<nav>
+
+<a href="#">Home</a>
+
+<a href="#features">Features</a>
+
+<a href="#gallery">Gallery</a>
+
+<a href="#download">Download</a>
+
+<a href="#docs">Documentation</a>
+
+</nav>
+
+<a class="download" href="#">Download</a>
+
+</header>
+
+<section class="hero">
+
+<img class="bg" src="images/hero.jpg">
+
+<div class="overlay"></div>
+
+<div class="hero-content">
+
+<div class="tag">
+
+Ultimate Star Resonance Companion
+
+</div>
+
+<h1>
+
+Conquer Every <span>Dungeon</span><br>
+
+Master Every <span>Raid</span>
+
+</h1>
+
+<p>
+
+Real-time DPS Meter, Raid DBM, Voice Callouts, Interactive Minimap, Buff Tracking,
+Combat Analytics, Party Performance, and powerful overlay tools built specifically
+for Star Resonance.
+
+</p>
+
+<div class="buttons">
+
+<a class="btn btn-primary" href="#download">
+
+Download Now
+
+</a>
+
+<a class="btn btn-secondary" href="#features">
+
+Explore Features
+
+</a>
+
+</div>
+
+</div>
+
+<img class="hero-overlay"
+
+src="doc/shared/img/dps/dps_5.png">
+
+<div class="scroll">
+
+Scroll Down
+
+</div>
+
+</section>
+<section class="divider"></section>
+
+<section id="features">
+
+<div class="features-title">
+
+<h2>Everything You Need for Endgame</h2>
+
+<p>
+
+Built for raids, dungeons, optimization and progression.
+
+</p>
+
+</div>
+
+<div class="feature">
+
+<div class="text">
+
+<h3>DPS Meter</h3>
+
+<p>
+
+Monitor every battle in real time with a beautiful overlay designed specifically
+for Star Resonance. Track personal performance, party contribution,
+burst windows, deaths, healing, mitigation, and encounter history.
+
+</p>
+
+<ul>
+
+<li>Real-time Damage Meter</li>
+
+<li>Healing & Tank Statistics</li>
+
+<li>Death Counter</li>
+
+<li>Combat Timeline</li>
+
+<li>Detailed Session History</li>
+
+<li>Overlay Presets</li>
+
+</ul>
+
+</div>
+
+<div class="image">
+
+<img src="doc/shared/img/dps/dps_5.png">
+
+</div>
+
+</div>
+
+<div class="feature reverse">
+
+<div class="text">
+
+<h3>Dungeon DBM</h3>
+
+<p>
+
+Never miss another mechanic.
+
+Boss abilities are detected automatically and displayed with countdown timers,
+warnings, visual indicators and voice callouts before dangerous attacks happen.
+
+Perfect for both new and experienced players.
+
+</p>
+
+<ul>
+
+<li>Raid Warnings</li>
+
+<li>Dungeon Timers</li>
+
+<li>Boss Mechanics</li>
+
+<li>Voice Callouts</li>
+
+<li>Automatic Alerts</li>
+
+<li>Upcoming Ability Timeline</li>
+
+</ul>
+
+</div>
+
+<div class="image">
+
+<img src="doc/shared/img/monitor/buff_4.png">
+
+</div>
+
+</div>
+
+<div class="feature">
+
+<div class="text">
+
+<h3>Interactive Minimap</h3>
+
+<p>
+
+Mechanics become much easier when you can actually see them.
+
+The minimap overlay shows positioning, safe zones, movement paths,
+raid markers and mechanic helpers directly on top of the game.
+
+</p>
+
+<ul>
+
+<li>Safe Zone Display</li>
+
+<li>Mechanic Indicators</li>
+
+<li>Position Helpers</li>
+
+<li>Raid Strategy Support</li>
+
+<li>Training Mode</li>
+
+<li>Automatic Updates</li>
+
+</ul>
+
+</div>
+
+<div class="image">
+
+<img src="doc/shared/img/minimap/s3_minimap_2.png">
+
+</div>
+
+</div>
+
+<div class="feature reverse">
+
+<div class="text">
+
+<h3>Skill & Buff Tracker</h3>
+
+<p>
+
+Track cooldowns, buffs, debuffs, party effects,
+consumables and important combat windows
+without looking away from the fight.
+
+Everything is fully customizable.
+
+</p>
+
+<ul>
+
+<li>Cooldown Timers</li>
+
+<li>Buff Duration</li>
+
+<li>Party Buff Tracking</li>
+
+<li>Debuff Display</li>
+
+<li>Custom Icons</li>
+
+<li>Transparent Overlay</li>
+
+</ul>
+
+</div>
+
+<div class="image">
+
+<img src="doc/shared/img/dps/dps_4.png">
+
+</div>
+
+</div>
+
+</section>
+
+<section id="gallery" class="gallery">
+
+<div class="gallery-title">
+
+<h2>Gallery</h2>
+
+<p>
+
+Designed to blend naturally into your gameplay.
+
+</p>
+
+</div>
+
+<div class="gallery-grid">
+
+<img src="doc/shared/img/dps/dps_1.png">
+
+<img src="doc/shared/img/minimap/s3_minimap_1.png">
+
+<img src="doc/shared/img/minimap/s3_minimap_3.png">
+
+</div>
+
+<div class="stats">
+
+<div class="stat">
+
+<h4>20+</h4>
+
+<span>Overlay Modules</span>
+
+</div>
+
+<div class="stat">
+
+<h4>100+</h4>
+
+<span>Boss Mechanics</span>
+
+</div>
+
+<div class="stat">
+
+<h4>10+</h4>
+
+<span>Languages</span>
+
+</div>
+
+<div class="stat">
+
+<h4>∞</h4>
+
+<span>Customization</span>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="download-section" id="download">
+
+<h2>Begin Your Adventure</h2>
+
+<p>
+
+Download Resonance Logs and transform the way you play Star Resonance.
+
+Whether you're clearing raids,
+optimizing your DPS,
+or learning boss mechanics,
+everything you need is here.
+
+</p>
+
+<div class="download-buttons">
+
+<div class="download-card">
+
+<h3>Windows</h3>
+
+<p>
+
+Recommended installation with automatic updates.
+
+</p>
+
+<a href="#">
+
+Download
+
+</a>
+
+</div>
+
+<div class="download-card">
+
+<h3>Portable</h3>
+
+<p>
+
+No installation required.
+
+Simply extract and play.
+
+</p>
+
+<a href="#">
+
+Portable
+
+</a>
+
+</div>
+
+<div class="download-card">
+
+<h3>GitHub</h3>
+
+<p>
+
+Source code, releases,
+issues and documentation.
+
+</p>
+
+<a href="#">
+
+Repository
+
+</a>
+
+</div>
+
+</div>
+
+</section>
+<section class="docs" id="docs">
+
+<h2>Documentation</h2>
+
+<div class="doc-grid">
+
+<div class="doc">
+
+<h3>README</h3>
+
+<p>
+
+Getting started, installation,
+configuration and first launch guide.
+
+</p>
+
+<a href="README.md">
+
+Open Documentation →
+
+</a>
+
+</div>
+
+<div class="doc">
+
+<h3>English</h3>
+
+<p>
+
+Complete English documentation
+covering every feature.
+
+</p>
+
+<a href="doc/en-US/README.md">
+
+Read Guide →
+
+</a>
+
+</div>
+
+<div class="doc">
+
+<h3>简体中文</h3>
+
+<p>
+
+官方中文文档。
+
+</p>
+
+<a href="doc/zh-CN/README.md">
+
+阅读 →
+
+</a>
+
+</div>
+
+<div class="doc">
+
+<h3>日本語</h3>
+
+<p>
+
+Japanese documentation.
+
+</p>
+
+<a href="doc/ja-JP/README.md">
+
+Open →
+
+</a>
+
+</div>
+
+<div class="doc">
+
+<h3>Changelog</h3>
+
+<p>
+
+Latest updates,
+new features and fixes.
+
+</p>
+
+<a href="CHANGELOG.md">
+
+View →
+
+</a>
+
+</div>
+
+<div class="doc">
+
+<h3>Fork Changes</h3>
+
+<p>
+
+Fork-specific additions and
+project roadmap.
+
+</p>
+
+<a href="CHANGELOG_FORK.md">
+
+View →
+
+</a>
+
+</div>
+
+</div>
+
+</section>
+
+<footer>
+
+<div class="left">
+
+<h3>Resonance Logs</h3>
+
+<p>
+
+The Ultimate Companion for Star Resonance
+
+</p>
+
+</div>
+
+<nav>
+
+<a href="#">
+
+Home
+
+</a>
+
+<a href="#features">
+
+Features
+
+</a>
+
+<a href="#gallery">
+
+Gallery
+
+</a>
+
+<a href="#download">
+
+Download
+
+</a>
+
+<a href="#docs">
+
+Docs
+
+</a>
+
+</nav>
+
+</footer>
+
+<script>
+
+/* Scroll Reveal */
+
+const observer = new IntersectionObserver(entries => {
+
+entries.forEach(entry=>{
+
+if(entry.isIntersecting){
+
+entry.target.animate(
+
+[
+{
+opacity:0,
+transform:"translateY(80px)"
+},
+{
+opacity:1,
+transform:"translateY(0)"
+}
+],
+{
+duration:900,
+fill:"forwards",
+easing:"ease"
+});
+
+observer.unobserve(entry.target);
+
+}
+
+});
+
+},{
+threshold:.15
+});
+
+document.querySelectorAll(
+
+".feature,.gallery-grid,.stat,.download-card,.doc"
+
+).forEach(el=>observer.observe(el));
+
+/* Floating Particles */
+
+const canvas=document.createElement("canvas");
+
+canvas.style.position="fixed";
+
+canvas.style.left=0;
+
+canvas.style.top=0;
+
+canvas.style.width="100%";
+
+canvas.style.height="100%";
+
+canvas.style.pointerEvents="none";
+
+canvas.style.zIndex="-1";
+
+document.body.appendChild(canvas);
+
+const ctx=canvas.getContext("2d");
+
+let particles=[];
+
+function resize(){
+
+canvas.width=window.innerWidth;
+
+canvas.height=window.innerHeight;
+
+}
+
+window.addEventListener("resize",resize);
+
+resize();
+
+for(let i=0;i<120;i++){
+
+particles.push({
+
+x:Math.random()*canvas.width,
+
+y:Math.random()*canvas.height,
+
+r:Math.random()*2+1,
+
+s:Math.random()*0.6+0.15
+
+});
+
+}
+
+function animate(){
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="rgba(180,150,255,.45)";
+
+particles.forEach(p=>{
+
+ctx.beginPath();
+
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+
+ctx.fill();
+
+p.y-=p.s;
+
+if(p.y<0){
+
+p.y=canvas.height;
+
+p.x=Math.random()*canvas.width;
+
+}
+
+});
+
+requestAnimationFrame(animate);
+
+}
+
+animate();
+
+/* Header Background */
+
+window.addEventListener("scroll",()=>{
+
+const header=document.querySelector("header");
+
+if(window.scrollY>80){
+
+header.style.background="rgba(10,10,16,.85)";
+
+header.style.boxShadow="0 15px 45px rgba(0,0,0,.45)";
+
+}else{
+
+header.style.background="rgba(10,10,16,.45)";
+
+header.style.boxShadow="none";
+
+}
+
+});
+
+</script>
+
+</body>
+
+</html>
