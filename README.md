@@ -98,6 +98,8 @@ You can disable the in-game UI and rely on the Resonance Logs overlay for combat
 
 ## 🌐 Changing the Application Language
 
+* Complete translations powered by the official game client localization, with AI translations filling in missing or untranslated text.
+
 <img src="doc/shared/img/faq/faq_5.png">
 
 The application supports multiple languages. Open **Settings → Language** to switch the interface language.
