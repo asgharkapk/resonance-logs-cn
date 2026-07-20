@@ -1,7 +1,7 @@
 {
   "kind": "resonance-logs-loadout",
   "version": 1,
-  "name": "光盾",
+  "name": "惩击",
   "skillProfile": {
     "autoHideInDailyScenes": false,
     "buffAlerts": {},
@@ -11,147 +11,191 @@
     "buffVoiceConfigs": {},
     "customPanelGroups": [
       {
-        "entries": [],
-        "hideZeroCounters": false,
         "id": "custom_panel_group_1784376508216_1",
-        "kind": "seasonCultivateFactor",
         "name": "factor",
+        "kind": "seasonCultivateFactor",
+        "entries": [],
         "position": {
           "x": 500,
           "y": 288
         },
         "scale": 1,
         "style": {
-          "backgroundEnabled": false,
-          "backgroundOpacity": 0.76,
+          "gap": 6,
           "columnGap": 12,
           "fontSize": 14,
-          "gap": 6,
           "nameColor": "#fde68a",
+          "valueColor": "#f8fafc",
           "progressColor": "#fbbf24",
           "progressOpacity": 0.4,
           "textShadowEnabled": true,
-          "valueColor": "#f8fafc"
+          "backgroundEnabled": false,
+          "backgroundOpacity": 0.76
         }
       },
       {
+        "id": "custom_panel_group_1784376568984_2",
+        "name": "fantasy_buff_cd",
+        "kind": "manual",
         "entries": [
           {
-            "format": "timer",
             "id": "inline_1784376913635_3245",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110056,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784376930421_2393",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110057,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784376936929_843",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110049,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784376943193_6549",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110050,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784376951908_6552",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110055,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           }
         ],
-        "hideZeroCounters": false,
-        "id": "custom_panel_group_1784376568984_2",
-        "kind": "manual",
-        "name": "fantasy_buff_cd",
         "position": {
           "x": 1130,
           "y": 345
         },
         "scale": 1,
         "style": {
-          "backgroundEnabled": false,
-          "backgroundOpacity": 0.76,
+          "gap": 6,
           "columnGap": 12,
           "fontSize": 14,
-          "gap": 6,
           "nameColor": "#bae6fd",
+          "valueColor": "#f8fafc",
           "progressColor": "#38bdf8",
           "progressOpacity": 0.4,
           "textShadowEnabled": true,
-          "valueColor": "#f8fafc"
+          "backgroundEnabled": false,
+          "backgroundOpacity": 0.76
         }
       },
       {
+        "id": "custom_panel_group_1784377062118_3",
+        "name": "fantasy_buff",
+        "kind": "manual",
         "entries": [
           {
-            "format": "timer",
             "id": "inline_1784377142023_5806",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110061,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784377181609_5686",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110125,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784377190442_4799",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110140,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784377201372_8302",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110034,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           },
           {
-            "format": "timer",
             "id": "inline_1784377229064_882",
-            "label": "",
+            "sourceType": "buff",
             "sourceId": 2110065,
-            "sourceType": "buff"
+            "label": "",
+            "format": "timer"
           }
         ],
-        "hideZeroCounters": false,
-        "id": "custom_panel_group_1784377062118_3",
-        "kind": "manual",
-        "name": "fantasy_buff",
         "position": {
           "x": 1126,
           "y": 810
         },
         "scale": 1,
         "style": {
-          "backgroundEnabled": false,
-          "backgroundOpacity": 0.76,
+          "gap": 6,
           "columnGap": 12,
           "fontSize": 14,
-          "gap": 6,
           "nameColor": "#bbf7d0",
+          "valueColor": "#f8fafc",
           "progressColor": "#22c55e",
           "progressOpacity": 0.4,
           "textShadowEnabled": true,
-          "valueColor": "#f8fafc"
+          "backgroundEnabled": false,
+          "backgroundOpacity": 0.76
+        }
+      },
+      {
+        "id": "custom_panel_group_1784561431848_4",
+        "name": "",
+        "kind": "manual",
+        "entries": [
+          {
+            "id": "inline_1784561722872_8327",
+            "sourceType": "counter",
+            "sourceId": 4,
+            "counterSlotId": 1,
+            "label": "炎角-被动 #1",
+            "format": "timer"
+          },
+          {
+            "id": "inline_1784561723599_6612",
+            "sourceType": "counter",
+            "sourceId": 4,
+            "counterSlotId": 2,
+            "label": "炎角-被动 #2",
+            "format": "timer"
+          },
+          {
+            "id": "inline_1784561751352_973",
+            "sourceType": "buff",
+            "sourceId": 3210141,
+            "label": "",
+            "format": "timer"
+          }
+        ],
+        "position": {
+          "x": 1125,
+          "y": 510
+        },
+        "scale": 1,
+        "style": {
+          "gap": 6,
+          "columnGap": 12,
+          "fontSize": 14,
+          "nameColor": "#d9f99d",
+          "valueColor": "#f8fafc",
+          "progressColor": "#a3e635",
+          "progressOpacity": 0.4,
+          "textShadowEnabled": true,
+          "backgroundEnabled": false,
+          "backgroundOpacity": 0.76
         }
       }
     ],
@@ -176,17 +220,13 @@
       "alchemy"
     ],
     "monitoredBuffIds": [
-      2206011,
-      55417,
-      55413,
-      2206542,
       2302421,
       3003411,
       55333,
       3003052,
-      2110026,
-      873631,
-      510571
+      2202081,
+      2202251,
+      2202331
     ],
     "monitoredPanelAttrs": [
       {
@@ -458,7 +498,7 @@
     ],
     "monitoredSkillDurationIds": [],
     "monitoredSkillIds": [],
-    "name": "光盾-buff",
+    "name": "惩击-buff",
     "overlayPositions": {
       "categoryIconPositions": {
         "alchemy": {
@@ -498,6 +538,18 @@
         "2110026": {
           "x": 1127,
           "y": 482
+        },
+        "2202081": {
+          "x": 1235,
+          "y": 671
+        },
+        "2202251": {
+          "x": 1120,
+          "y": 675
+        },
+        "2202331": {
+          "x": 1326,
+          "y": 672
         },
         "2206011": {
           "x": 1214,
@@ -555,6 +607,9 @@
         "510571": 120,
         "873631": 120,
         "2110026": 120,
+        "2202081": 73,
+        "2202251": 98,
+        "2202331": 73,
         "2206011": 79,
         "2206542": 78
       },
@@ -633,7 +688,7 @@
       }
     ],
     "presetCounterVoiceConfigs": {},
-    "selectedClass": "wind_knight",
+    "selectedClass": "verdant_oracle",
     "shieldDetailStyle": {
       "backgroundEnabled": false,
       "backgroundOpacity": 0.76,
@@ -725,7 +780,7 @@
       2110099
     ],
     "monsterBuffVoiceConfigs": {},
-    "name": "光盾-怪物",
+    "name": "惩击-怪物",
     "overlayPositions": {
       "bossDbmPanel": {
         "x": 800,
@@ -780,7 +835,9 @@
       "textShadowEnabled": true,
       "valueColor": "#f8fafc"
     },
-    "selfAppliedBuffIds": [],
+    "selfAppliedBuffIds": [
+      21424
+    ],
     "selfAppliedMonitorAll": false,
     "stunListEnabled": false,
     "stunPanelStyle": {
@@ -821,248 +878,74 @@
     }
   },
   "liveProfile": {
-    "general": {
-      "showYourName": "显示你的名称 - 专精",
-      "showOthersName": "显示他人名称 - 专精",
-      "showYourAbilityScore": true,
-      "showOthersAbilityScore": true,
-      "showYourSeasonStrength": true,
-      "showOthersSeasonStrength": true,
-      "showFantasyCastIcons": true,
-      "relativeToTopDPSPlayer": true,
-      "relativeToTopDPSSkill": true,
-      "relativeToTopHealPlayer": true,
-      "relativeToTopHealSkill": false,
-      "relativeToTopTankedPlayer": true,
-      "relativeToTopTankedSkill": true,
-      "shortenAbilityScore": false,
-      "shortenDps": true,
-      "shortenTps": true,
-      "abbreviationStyle": "cn",
-      "abbreviatedDecimalPlaces": 2,
-      "eventUpdateRateMs": 200,
-      "bossOnlyDps": false,
-      "useDummyData": false,
-      "dungeonSegmentsEnabled": false,
-      "wipeDetection": true
-    },
-    "dpsPlayers": {
-      "totalDmg": true,
-      "dps": true,
-      "effectiveTotal": true,
-      "effectiveDps": true,
-      "tdps": true,
-      "bossDmg": true,
-      "bossDps": true,
-      "dmgPct": true,
-      "critRate": true,
-      "critDmgRate": false,
-      "luckyRate": true,
-      "luckyDmgRate": false,
-      "hits": false,
-      "hitsPerMinute": false,
-      "property": true,
-      "damageMode": true
-    },
-    "dpsSkillBreakdown": {
-      "totalDmg": true,
-      "dps": true,
-      "effectiveTotal": true,
-      "effectiveDps": true,
-      "tdps": false,
-      "bossDmg": true,
-      "bossDps": true,
-      "dmgPct": true,
-      "critRate": true,
-      "critDmgRate": true,
-      "luckyRate": true,
-      "luckyDmgRate": true,
-      "hits": true,
-      "hitsPerMinute": true,
-      "property": true,
-      "damageMode": true
-    },
-    "healPlayers": {
-      "totalDmg": true,
-      "dps": true,
-      "effectiveTotal": true,
-      "effectiveDps": true,
-      "tdps": false,
-      "bossDmg": true,
-      "bossDps": true,
-      "dmgPct": true,
-      "critRate": true,
-      "critDmgRate": true,
-      "luckyRate": false,
-      "luckyDmgRate": false,
-      "hits": false,
-      "hitsPerMinute": true,
-      "property": true,
-      "damageMode": true
-    },
-    "healSkillBreakdown": {
-      "totalDmg": true,
-      "dps": true,
-      "effectiveTotal": true,
-      "effectiveDps": true,
-      "tdps": false,
-      "bossDmg": true,
-      "bossDps": true,
-      "dmgPct": true,
-      "critRate": true,
-      "critDmgRate": true,
-      "luckyRate": false,
-      "luckyDmgRate": false,
-      "hits": true,
-      "hitsPerMinute": false,
-      "property": true,
-      "damageMode": true
-    },
-    "tankedPlayers": {
-      "totalDmg": true,
-      "dps": true,
-      "dmgPct": true,
-      "critRate": false,
-      "critDmgRate": false,
-      "luckyRate": false,
-      "luckyDmgRate": false,
-      "blockRate": true,
-      "luckyBlockRate": true,
-      "hits": false,
-      "hitsPerMinute": false,
-      "bossDps": true,
-      "effectiveDps": true,
-      "effectiveTotal": true,
-      "tdps": false,
-      "bossDmg": true
-    },
-    "tankedSkillBreakdown": {
-      "totalDmg": true,
-      "dps": true,
-      "dmgPct": true,
-      "critRate": true,
-      "critDmgRate": true,
-      "luckyRate": false,
-      "luckyDmgRate": false,
-      "blockRate": true,
-      "luckyBlockRate": true,
-      "hits": false,
-      "hitsPerMinute": false,
-      "property": true,
-      "damageMode": true,
-      "bossDps": true,
-      "tdps": false,
-      "effectiveTotal": true,
-      "effectiveDps": true,
-      "bossDmg": true
-    },
-    "tableCustomization": {
-      "compactMode": true,
-      "compactDpsKey": "tdps",
-      "playerRowHeight": 22,
-      "playerFontSize": 11,
-      "playerIconSize": 20,
-      "showTableHeader": true,
-      "tableHeaderHeight": 27,
-      "tableHeaderFontSize": 12,
-      "tableHeaderTextColor": "#24248f",
-      "abbreviatedFontSize": 10,
-      "skillRowHeight": 24,
-      "skillFontSize": 12,
-      "skillIconSize": 18,
-      "skillShowHeader": true,
-      "skillHeaderHeight": 22,
-      "skillHeaderFontSize": 10,
-      "skillHeaderTextColor": "#a1a1aa",
-      "skillAbbreviatedFontSize": 9,
-      "skillRowGlowMode": "gradient-underline",
-      "skillRowGlowOpacity": 0.5,
-      "skillRowBorderRadius": 0,
-      "rowGlowMode": "gradient-underline",
-      "rowGlowOpacity": 0.5,
-      "rowGlowBorderHeight": 2,
-      "rowGlowSpread": 8,
-      "rowBorderRadius": 0
-    },
-    "headerCustomization": {
-      "windowPadding": 12,
-      "headerPadding": 8,
-      "headerLayoutMode": "custom",
-      "headerCustomLayout": {
-        "itemGap": 11,
-        "rowGap": 0,
-        "rows": [
-          {
-            "id": "unassigned",
-            "zones": {
-              "end": [
-                "trainingDummyStatus",
-                "totalDps",
-                "totalDamage",
-                "controlButtons"
-              ],
-              "start": [
-                "timer",
-                "sceneName"
-              ]
-            }
-          },
-          {
-            "id": "custom-1777172416319",
-            "zones": {
-              "end": [
-                "navigationTabs"
-              ],
-              "start": [
-                "bossHealth"
-              ]
-            }
-          }
-        ]
+    "appearance": {
+      "themeColors": {
+        "backgroundMain": "rgba(173, 210, 178, 1)",
+        "backgroundLive": "rgba(222, 241, 225, 0.73)",
+        "foreground": "oklch(0.20 0.03 150)",
+        "surface": "rgba(227, 244, 230, 0.38)",
+        "surfaceForeground": "oklch(0.20 0.03 150)",
+        "primary": "oklch(0.75 0.09 150)",
+        "primaryForeground": "oklch(0.98 0.015 95)",
+        "secondary": "oklch(0.90 0.02 145)",
+        "secondaryForeground": "oklch(0.34 0.04 160)",
+        "muted": "oklch(0.90 0.02 150)",
+        "mutedForeground": "oklch(0.42 0.03 140)",
+        "accent": "oklch(0.78 0.08 160)",
+        "accentForeground": "oklch(0.22 0.03 160)",
+        "destructive": "oklch(0.62 0.24 25)",
+        "destructiveForeground": "oklch(0.99 0.01 95)",
+        "border": "oklch(0.86 0.02 150)",
+        "input": "oklch(0.92 0.015 150)",
+        "tooltipBg": "oklch(0.90 0.02 150 / 0.96)",
+        "tooltipBorder": "oklch(0.80 0.02 150 / 0.55)",
+        "tooltipFg": "oklch(0.20 0.03 150)",
+        "tableTextColor": "#1a2a1a",
+        "tableAbbreviatedColor": "#71717a"
       },
-      "showTimer": true,
-      "showActiveTimer": false,
-      "showSceneName": true,
-      "showResetButton": true,
-      "showPauseButton": true,
-      "showBossOnlyButton": true,
-      "showSettingsButton": true,
-      "showMinimizeButton": true,
-      "showHeaderControl": true,
-      "showTotalDamage": true,
-      "showTotalDps": true,
-      "showBossHealth": true,
-      "showNavigationTabs": true,
-      "showDeathTab": true,
-      "timerLabelFontSize": 11,
-      "timerFontSize": 14,
-      "activeTimerFontSize": 18,
-      "sceneNameFontSize": 14,
-      "resetButtonSize": 14,
-      "resetButtonPadding": 2,
-      "pauseButtonSize": 14,
-      "pauseButtonPadding": 2,
-      "bossOnlyButtonSize": 20,
-      "bossOnlyButtonPadding": 8,
-      "settingsButtonSize": 14,
-      "settingsButtonPadding": 2,
-      "minimizeButtonSize": 14,
-      "minimizeButtonPadding": 2,
-      "totalDamageLabelFontSize": 11,
-      "totalDamageValueFontSize": 13,
-      "totalDpsLabelFontSize": 11,
-      "totalDpsValueFontSize": 13,
-      "bossHealthLayout": "horizontal",
-      "bossHealthLabelFontSize": 10,
-      "bossHealthNameFontSize": 12,
-      "bossHealthValueFontSize": 12,
-      "bossHealthPercentFontSize": 12,
-      "navTabFontSize": 10,
-      "navTabPaddingX": 8,
-      "navTabPaddingY": 3,
-      "showTrainingDummyButton": false,
-      "showSegmentInfo": true,
-      "segmentFontSize": 14
+      "classColors": {
+        "Beat Performer": "#ee2e48",
+        "Flame Berserker": "#e64a19",
+        "Frost Mage": "#4de3d1",
+        "Heavy Guardian": "#b38915",
+        "Marksman": "#ffee00",
+        "Shield Knight": "#7b9aa2",
+        "Stormblade": "#674598",
+        "Verdant Oracle": "#66aa00",
+        "Wind Knight": "#0099c6"
+      },
+      "useClassSpecColors": false,
+      "classSpecColors": {
+        "Blazecrimson": "#c41e00",
+        "Block": "#7b5b08",
+        "Concerto": "#9f1322",
+        "Dissonance": "#ff7b94",
+        "Earthfort": "#e6c25a",
+        "Falconry": "#cab400",
+        "Frostbeam": "#2fbfb3",
+        "Iaido": "#9b6cf0",
+        "Icicle": "#8ff7ee",
+        "Lifebind": "#3b6d00",
+        "Moonstrike": "#4a2f80",
+        "Recovery": "#b6d1d6",
+        "Shield": "#4f6b70",
+        "Skyward": "#006b8f",
+        "Smite": "#b9f36e",
+        "Vanguard": "#4ddff6",
+        "Voidflame": "#ff6d3a",
+        "Wildpack": "#fff9a6"
+      }
+    },
+    "challengeWatch": {
+      "forbiddenDamageIds": [
+        110098100102,
+        110098110103,
+        110098130103,
+        110098140102,
+        110098140104,
+        110098140107,
+        120016180102
+      ]
     },
     "columnOrder": {
       "dpsPlayers": {
@@ -1165,6 +1048,184 @@
         ]
       }
     },
+    "dpsPlayers": {
+      "totalDmg": true,
+      "dps": true,
+      "effectiveTotal": true,
+      "effectiveDps": true,
+      "tdps": true,
+      "bossDmg": true,
+      "bossDps": true,
+      "dmgPct": true,
+      "critRate": true,
+      "critDmgRate": false,
+      "luckyRate": true,
+      "luckyDmgRate": false,
+      "hits": false,
+      "hitsPerMinute": false,
+      "property": true,
+      "damageMode": true
+    },
+    "dpsSkillBreakdown": {
+      "totalDmg": true,
+      "dps": true,
+      "effectiveTotal": true,
+      "effectiveDps": true,
+      "tdps": false,
+      "bossDmg": true,
+      "bossDps": true,
+      "dmgPct": true,
+      "critRate": true,
+      "critDmgRate": true,
+      "luckyRate": true,
+      "luckyDmgRate": true,
+      "hits": true,
+      "hitsPerMinute": true,
+      "property": true,
+      "damageMode": true
+    },
+    "general": {
+      "showYourName": "显示你的名称 - 专精",
+      "showOthersName": "显示他人名称 - 专精",
+      "showYourAbilityScore": true,
+      "showOthersAbilityScore": true,
+      "showYourSeasonStrength": true,
+      "showOthersSeasonStrength": true,
+      "showFantasyCastIcons": true,
+      "relativeToTopDPSPlayer": true,
+      "relativeToTopDPSSkill": true,
+      "relativeToTopHealPlayer": true,
+      "relativeToTopHealSkill": false,
+      "relativeToTopTankedPlayer": true,
+      "relativeToTopTankedSkill": true,
+      "shortenAbilityScore": false,
+      "shortenDps": true,
+      "shortenTps": true,
+      "abbreviationStyle": "cn",
+      "abbreviatedDecimalPlaces": 2,
+      "eventUpdateRateMs": 200,
+      "dungeonSegmentsEnabled": false,
+      "bossOnlyDps": false,
+      "wipeDetection": true,
+      "useDummyData": false
+    },
+    "headerCustomization": {
+      "windowPadding": 12,
+      "headerPadding": 8,
+      "headerLayoutMode": "custom",
+      "headerCustomLayout": {
+        "itemGap": 11,
+        "rowGap": 0,
+        "rows": [
+          {
+            "id": "unassigned",
+            "zones": {
+              "end": [
+                "trainingDummyStatus",
+                "totalDps",
+                "totalDamage",
+                "controlButtons"
+              ],
+              "start": [
+                "timer",
+                "sceneName"
+              ]
+            }
+          },
+          {
+            "id": "custom-1777172416319",
+            "zones": {
+              "end": [
+                "navigationTabs"
+              ],
+              "start": [
+                "bossHealth"
+              ]
+            }
+          }
+        ]
+      },
+      "showTimer": true,
+      "showActiveTimer": false,
+      "showSceneName": true,
+      "showResetButton": true,
+      "showPauseButton": true,
+      "showBossOnlyButton": true,
+      "showSettingsButton": true,
+      "showMinimizeButton": true,
+      "showHeaderControl": true,
+      "showTotalDamage": true,
+      "showTotalDps": true,
+      "showBossHealth": true,
+      "showNavigationTabs": true,
+      "showDeathTab": true,
+      "timerLabelFontSize": 11,
+      "timerFontSize": 14,
+      "activeTimerFontSize": 18,
+      "sceneNameFontSize": 14,
+      "resetButtonSize": 14,
+      "resetButtonPadding": 2,
+      "pauseButtonSize": 14,
+      "pauseButtonPadding": 2,
+      "bossOnlyButtonSize": 20,
+      "bossOnlyButtonPadding": 8,
+      "settingsButtonSize": 14,
+      "settingsButtonPadding": 2,
+      "minimizeButtonSize": 14,
+      "minimizeButtonPadding": 2,
+      "totalDamageLabelFontSize": 11,
+      "totalDamageValueFontSize": 13,
+      "totalDpsLabelFontSize": 11,
+      "totalDpsValueFontSize": 13,
+      "bossHealthLayout": "horizontal",
+      "bossHealthLabelFontSize": 10,
+      "bossHealthNameFontSize": 12,
+      "bossHealthValueFontSize": 12,
+      "bossHealthPercentFontSize": 12,
+      "navTabFontSize": 10,
+      "navTabPaddingX": 8,
+      "navTabPaddingY": 3,
+      "showTrainingDummyButton": false,
+      "showSegmentInfo": true,
+      "segmentFontSize": 14
+    },
+    "healPlayers": {
+      "totalDmg": true,
+      "dps": true,
+      "effectiveTotal": true,
+      "effectiveDps": true,
+      "tdps": false,
+      "bossDmg": true,
+      "bossDps": true,
+      "dmgPct": true,
+      "critRate": true,
+      "critDmgRate": true,
+      "luckyRate": false,
+      "luckyDmgRate": false,
+      "hits": false,
+      "hitsPerMinute": true,
+      "property": true,
+      "damageMode": true
+    },
+    "healSkillBreakdown": {
+      "totalDmg": true,
+      "dps": true,
+      "effectiveTotal": true,
+      "effectiveDps": true,
+      "tdps": false,
+      "bossDmg": true,
+      "bossDps": true,
+      "dmgPct": true,
+      "critRate": true,
+      "critDmgRate": true,
+      "luckyRate": false,
+      "luckyDmgRate": false,
+      "hits": true,
+      "hitsPerMinute": false,
+      "property": true,
+      "damageMode": true
+    },
+    "name": "",
     "sorting": {
       "dpsPlayers": {
         "sortKey": "totalDmg",
@@ -1191,75 +1252,71 @@
         "sortDesc": true
       }
     },
-    "challengeWatch": {
-      "forbiddenDamageIds": [
-        110098100102,
-        110098110103,
-        110098130103,
-        110098140102,
-        110098140104,
-        110098140107,
-        120016180102
-      ]
+    "tableCustomization": {
+      "compactMode": true,
+      "compactDpsKey": "tdps",
+      "playerRowHeight": 22,
+      "playerFontSize": 11,
+      "playerIconSize": 20,
+      "showTableHeader": true,
+      "tableHeaderHeight": 27,
+      "tableHeaderFontSize": 12,
+      "tableHeaderTextColor": "#24248f",
+      "abbreviatedFontSize": 10,
+      "skillRowHeight": 24,
+      "skillFontSize": 12,
+      "skillIconSize": 18,
+      "skillShowHeader": true,
+      "skillHeaderHeight": 22,
+      "skillHeaderFontSize": 10,
+      "skillHeaderTextColor": "#a1a1aa",
+      "skillAbbreviatedFontSize": 9,
+      "skillRowGlowMode": "gradient-underline",
+      "skillRowGlowOpacity": 0.5,
+      "skillRowBorderRadius": 0,
+      "rowGlowMode": "gradient-underline",
+      "rowGlowOpacity": 0.5,
+      "rowGlowBorderHeight": 2,
+      "rowGlowSpread": 8,
+      "rowBorderRadius": 0
     },
-    "appearance": {
-      "themeColors": {
-        "accent": "oklch(0.78 0.08 160)",
-        "accentForeground": "oklch(0.22 0.03 160)",
-        "backgroundLive": "rgba(222, 241, 225, 0.73)",
-        "backgroundMain": "rgba(173, 210, 178, 1)",
-        "border": "oklch(0.86 0.02 150)",
-        "destructive": "oklch(0.62 0.24 25)",
-        "destructiveForeground": "oklch(0.99 0.01 95)",
-        "foreground": "oklch(0.20 0.03 150)",
-        "input": "oklch(0.92 0.015 150)",
-        "muted": "oklch(0.90 0.02 150)",
-        "mutedForeground": "oklch(0.42 0.03 140)",
-        "primary": "oklch(0.75 0.09 150)",
-        "primaryForeground": "oklch(0.98 0.015 95)",
-        "secondary": "oklch(0.90 0.02 145)",
-        "secondaryForeground": "oklch(0.34 0.04 160)",
-        "surface": "rgba(227, 244, 230, 0.38)",
-        "surfaceForeground": "oklch(0.20 0.03 150)",
-        "tableAbbreviatedColor": "#71717a",
-        "tableTextColor": "#1a2a1a",
-        "tooltipBg": "oklch(0.90 0.02 150 / 0.96)",
-        "tooltipBorder": "oklch(0.80 0.02 150 / 0.55)",
-        "tooltipFg": "oklch(0.20 0.03 150)"
-      },
-      "classColors": {
-        "Beat Performer": "#ee2e48",
-        "Flame Berserker": "#e64a19",
-        "Frost Mage": "#4de3d1",
-        "Heavy Guardian": "#b38915",
-        "Marksman": "#ffee00",
-        "Shield Knight": "#7b9aa2",
-        "Stormblade": "#674598",
-        "Verdant Oracle": "#66aa00",
-        "Wind Knight": "#0099c6"
-      },
-      "useClassSpecColors": false,
-      "classSpecColors": {
-        "Blazecrimson": "#c41e00",
-        "Block": "#7b5b08",
-        "Concerto": "#9f1322",
-        "Dissonance": "#ff7b94",
-        "Earthfort": "#e6c25a",
-        "Falconry": "#cab400",
-        "Frostbeam": "#2fbfb3",
-        "Iaido": "#9b6cf0",
-        "Icicle": "#8ff7ee",
-        "Lifebind": "#3b6d00",
-        "Moonstrike": "#4a2f80",
-        "Recovery": "#b6d1d6",
-        "Shield": "#4f6b70",
-        "Skyward": "#006b8f",
-        "Smite": "#b9f36e",
-        "Vanguard": "#4ddff6",
-        "Voidflame": "#ff6d3a",
-        "Wildpack": "#fff9a6"
-      }
+    "tankedPlayers": {
+      "totalDmg": true,
+      "dps": true,
+      "dmgPct": true,
+      "critRate": false,
+      "critDmgRate": false,
+      "luckyRate": false,
+      "luckyDmgRate": false,
+      "blockRate": true,
+      "luckyBlockRate": true,
+      "hits": false,
+      "hitsPerMinute": false,
+      "effectiveTotal": true,
+      "effectiveDps": true,
+      "bossDps": true,
+      "tdps": false,
+      "bossDmg": true
     },
-    "name": ""
+    "tankedSkillBreakdown": {
+      "totalDmg": true,
+      "dps": true,
+      "dmgPct": true,
+      "critRate": true,
+      "critDmgRate": true,
+      "luckyRate": false,
+      "luckyDmgRate": false,
+      "blockRate": true,
+      "luckyBlockRate": true,
+      "hits": false,
+      "hitsPerMinute": false,
+      "property": true,
+      "damageMode": true,
+      "tdps": false,
+      "bossDmg": true,
+      "effectiveTotal": true,
+      "effectiveDps": true,
+      "bossDps": true
+    }
   }
 }
