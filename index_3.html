@@ -1,0 +1,3555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resonance Logs Documentation</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <style>
+    :root {
+      --bg: #060816;
+      --bg-secondary: #0b1020;
+      --bg-card: rgba(15, 23, 42, 0.78);
+      --bg-card-solid: #0f172a;
+      --bg-glass: rgba(255,255,255,0.05);
+      --border: rgba(148,163,184,0.18);
+      --border-strong: rgba(148,163,184,0.32);
+      --text: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --primary: #60a5fa;
+      --primary-dark: #2563eb;
+      --primary-glow: rgba(96,165,250,0.35);
+      --accent: #a78bfa;
+      --accent-glow: rgba(167,139,250,0.25);
+      --success: #34d399;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --shadow-lg: 0 20px 60px rgba(2,6,23,0.55);
+      --shadow-md: 0 10px 30px rgba(2,6,23,0.45);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --max-width: 1400px;
+      --nav-height: 72px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(96,165,250,0.16), transparent 32%),
+        radial-gradient(circle at 85% 20%, rgba(167,139,250,0.14), transparent 28%),
+        radial-gradient(circle at 50% 80%, rgba(52,211,153,0.10), transparent 26%),
+        linear-gradient(180deg, #050816 0%, #070b18 38%, #050816 100%);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+      opacity: 0.55;
+    }
+
+    .container {
+      width: min(var(--max-width), calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    /* Navigation */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(20px);
+      background: rgba(5, 8, 22, 0.75);
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+      height: var(--nav-height);
+    }
+
+    .nav-inner {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      text-decoration: none;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(96,165,250,0.16), rgba(167,139,250,0.16));
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 10px 30px rgba(96,165,250,0.18);
+      flex-shrink: 0;
+    }
+
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-text h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-text span {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      padding: 0.65rem 0.9rem;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .nav-links a.active {
+      color: var(--text);
+      background: rgba(96,165,250,0.14);
+      border: 1px solid rgba(96,165,250,0.28);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .nav-links .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding-inline: 1rem;
+    }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      padding: 5.5rem 0 4.5rem;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: auto -20% -30% auto;
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, rgba(96,165,250,0.22), transparent 70%);
+      filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: -20% auto auto -15%;
+      width: 360px;
+      height: 360px;
+      background: radial-gradient(circle, rgba(167,139,250,0.18), transparent 70%);
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.55rem 0.95rem;
+      border-radius: 999px;
+      border: 1px solid rgba(96,165,250,0.28);
+      background: rgba(96,165,250,0.10);
+      color: #bfdbfe;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .hero h2 {
+      font-size: clamp(2.8rem, 6vw, 4.8rem);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+      margin-bottom: 1.25rem;
+      text-wrap: balance;
+    }
+
+    .hero h2 .gradient {
+      background: linear-gradient(135deg, #ffffff 0%, #bfdbfe 35%, #a78bfa 70%, #34d399 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.12rem;
+      color: var(--text-secondary);
+      max-width: 720px;
+      margin-bottom: 1.75rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.95rem 1.35rem;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 16px 40px rgba(37,99,235,0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 50px rgba(37,99,235,0.45);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      border-color: rgba(148,163,184,0.2);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .hero-meta .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.6rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(148,163,184,0.16);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .hero-card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(9,14,30,0.92));
+      border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 28px;
+      padding: 1.35rem;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(96,165,250,0.45), rgba(167,139,250,0.28), rgba(52,211,153,0.18));
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .hero-card .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .hero-card .card-header span {
+      color: var(--text-secondary);
+      font-weight: 700;
+    }
+
+    .hero-card .card-header .live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 16px rgba(52,211,153,0.7);
+    }
+
+    .hero-card img {
+      width: 100%;
+      display: block;
+      border-radius: 18px;
+      border: 1px solid rgba(148,163,184,0.16);
+      box-shadow: 0 18px 40px rgba(2,6,23,0.45);
+    }
+
+    .hero-card .card-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-card .metric {
+      min-width: 120px;
+    }
+
+    .hero-card .metric strong {
+      display: block;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .hero-card .metric span {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    .section {
+      padding: 4.5rem 0;
+    }
+
+    .section-header {
+      margin-bottom: 2rem;
+      max-width: 760px;
+    }
+
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #bfdbfe;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.85rem;
+    }
+
+    .section h3 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.85rem;
+    }
+
+    .section p.lead {
+      color: var(--text-secondary);
+      font-size: 1.02rem;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.35rem;
+      backdrop-filter: blur(14px);
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(96,165,250,0.08), rgba(167,139,250,0.05), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(96,165,250,0.32);
+      box-shadow: 0 18px 45px rgba(2,6,23,0.38);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card .icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: rgba(96,165,250,0.12);
+      color: var(--primary);
+      font-size: 1.35rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(96,165,250,0.18);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+
+    .card h4 {
+      font-size: 1.12rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.96rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .card ul {
+      list-style: none;
+      display: grid;
+      gap: 0.45rem;
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+
+    .card ul li {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .card ul li i {
+      color: var(--success);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.2rem;
+      text-align: center;
+      backdrop-filter: blur(14px);
+    }
+
+    .stat .value {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat .label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .feature-showcase {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .feature-copy {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .feature-copy .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #bfdbfe;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .feature-copy h4 {
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .feature-copy p {
+      color: var(--text-secondary);
+    }
+
+    .feature-points {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .feature-point {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .feature-point i {
+      color: var(--success);
+      margin-top: 0.1rem;
+    }
+
+    .feature-point strong {
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .feature-point span {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .feature-image {
+      background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(9,14,30,0.92));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 1rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .feature-image img {
+      width: 100%;
+      border-radius: 18px;
+      display: block;
+      border: 1px solid rgba(148,163,184,0.12);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(96,165,250,0.28);
+      box-shadow: 0 20px 50px rgba(2,6,23,0.4);
+    }
+
+    .feature-card img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+    }
+
+    .feature-card-body {
+      padding: 1.15rem 1.2rem 1.25rem;
+    }
+
+    .feature-card-body h4 {
+      font-size: 1.08rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card-body p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .feature-card-body ul {
+      list-style: none;
+      display: grid;
+      gap: 0.45rem;
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+
+    .feature-card-body li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .feature-card-body li i {
+      color: var(--success);
+    }
+
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .doc-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.2rem;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      backdrop-filter: blur(14px);
+    }
+
+    .doc-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(96,165,250,0.28);
+      box-shadow: 0 16px 40px rgba(2,6,23,0.35);
+    }
+
+    .doc-card .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .doc-card .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(96,165,250,0.12);
+      color: var(--primary);
+      border: 1px solid rgba(96,165,250,0.18);
+    }
+
+    .doc-card .arrow {
+      color: var(--text-muted);
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .doc-card:hover .arrow {
+      transform: translateX(2px);
+      color: var(--text);
+    }
+
+    .doc-card h4 {
+      margin-bottom: 0.45rem;
+      font-size: 1.05rem;
+    }
+
+    .doc-card p {
+      color: var(--text-secondary);
+      font-size: 0.94rem;
+    }
+
+    .doc-card .meta {
+      margin-top: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .cta {
+      position: relative;
+      padding: 4.5rem 0;
+    }
+
+    .cta-card {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(37,99,235,0.92), rgba(124,58,237,0.92));
+      border-radius: 32px;
+      padding: 3rem;
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .cta-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.18), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(255,255,255,0.12), transparent 30%);
+      pointer-events: none;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .cta-copy {
+      max-width: 640px;
+    }
+
+    .cta-copy h3 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.08;
+      margin-bottom: 0.85rem;
+    }
+
+    .cta-copy p {
+      color: rgba(255,255,255,0.88);
+      font-size: 1rem;
+    }
+
+    .cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+    }
+
+    .btn-light {
+      background: white;
+      color: #111827;
+      box-shadow: 0 14px 32px rgba(15,23,42,0.2);
+    }
+
+    .btn-light:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-outline-light {
+      background: rgba(255,255,255,0.10);
+      color: white;
+      border-color: rgba(255,255,255,0.28);
+    }
+
+    .btn-outline-light:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.16);
+    }
+
+    .footer {
+      padding: 3rem 0 2rem;
+      border-top: 1px solid rgba(148,163,184,0.12);
+      background: rgba(5,8,22,0.72);
+      backdrop-filter: blur(10px);
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .footer-brand img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .footer-links a:hover {
+      color: var(--text);
+    }
+
+    .footer-meta {
+      width: 100%;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 1100px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy {
+        max-width: none;
+      }
+
+      .feature-showcase {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .nav {
+        height: auto;
+      }
+
+      .nav-inner {
+        padding: 0.9rem 0;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav-links {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .hero {
+        padding-top: 4.5rem;
+      }
+
+      .cta-card {
+        padding: 2.4rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        width: min(var(--max-width), calc(100% - 1.2rem));
+      }
+
+      .hero-actions,
+      .cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .hero-meta {
+        gap: 0.6rem;
+      }
+
+      .hero-meta .chip {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .cta-card {
+        padding: 2rem 1.3rem;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .footer-meta {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="#top" class="brand">
+        <div class="brand-logo">
+          <img src="src-tauri/icons/icon.ico" alt="Resonance Logs" />
+        </div>
+        <div class="brand-text">
+          <h1>Resonance Logs</h1>
+          <span>Star Resonance Companion Suite</span>
+        </div>
+      </a>
+
+      <div class="nav-links">
+        <a href="#features" class="active">Features</a>
+        <a href="#showcase">Showcase</a>
+        <a href="#docs">Documentation</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/asgharkapk/resonance-logs-cn" target="_blank" rel="noreferrer" class="github-link">
+          <i class="fab fa-github"></i>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero" id="top">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <div class="hero-badge">
+          <i class="fas fa-sparkles"></i>
+          Feature-rich companion for Star Resonance
+        </div>
+
+        <h2>
+          <span class="gradient">DPS meter, raid DBM, minimap, voice callouts & overlays.</span>
+        </h2>
+
+        <p>
+          Analyze combat in real time, track buffs and cooldowns, navigate dungeon mechanics with minimap overlays,
+          and customize a clean, streamer-friendly interface built for raids, dungeons, and progression.
+        </p>
+
+        <div class="hero-actions">
+          <a href="../../releases" class="btn btn-primary">
+            <i class="fab fa-windows"></i>
+            Download for Windows
+          </a>
+          <a href="#docs" class="btn btn-secondary">
+            <i class="fas fa-book-open"></i>
+            Read Documentation
+          </a>
+        </div>
+
+        <div class="hero-meta">
+          <div class="chip"><i class="fas fa-check-circle"></i> Windows 10 / 11</div>
+          <div class="chip"><i class="fas fa-language"></i> EN · 中文 · 日本語</div>
+          <div class="chip"><i class="fas fa-code-branch"></i> Open Source (MIT)</div>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="card-header">
+          <span>Live DPS Overlay</span>
+          <div class="live-dot" aria-hidden="true"></div>
+        </div>
+
+        <img src="doc/shared/img/dps/dps_5.png" alt="Resonance Logs live DPS overlay" />
+
+        <div class="card-footer">
+          <div class="metric">
+            <strong>Real-time</strong>
+            <span>Combat analysis</span>
+          </div>
+          <div class="metric">
+            <strong>Customizable</strong>
+            <span>Themes & layouts</span>
+          </div>
+          <div class="metric">
+            <strong>Low profile</strong>
+            <span>Streamer-friendly</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <span class="badge">
+                    <i class="fa-solid fa-bolt"></i>
+                    Star Resonance Companion
+                </span>
+
+                <h1>
+                    Resonance Logs
+                    <span class="gradient">Ultimate Overlay Suite</span>
+                </h1>
+
+                <p class="hero-description">
+                    A modern companion application for
+                    <strong>Star Resonance</strong> featuring
+                    real-time DPS analysis,
+                    Raid DBM,
+                    Minimap mechanics,
+                    Buff & Skill trackers,
+                    Voice callouts,
+                    combat history,
+                    and customizable overlays designed for raids,
+                    dungeons,
+                    progression,
+                    and high-end gameplay.
+                </p>
+
+                <div class="hero-buttons">
+                    <a href="../../releases" class="btn btn-primary">
+                        <i class="fa-brands fa-windows"></i>
+                        Download
+                    </a>
+
+                    <a href="#features" class="btn btn-secondary">
+                        <i class="fa-solid fa-gamepad"></i>
+                        Explore Features
+                    </a>
+
+                    <a href="#documentation" class="btn btn-outline">
+                        <i class="fa-solid fa-book"></i>
+                        Documentation
+                    </a>
+                </div>
+
+                <div class="hero-stats">
+
+                    <div class="stat-card">
+                        <h2>DPS</h2>
+                        <span>Real-Time Meter</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <h2>DBM</h2>
+                        <span>Boss Mechanics</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <h2>Maps</h2>
+                        <span>Dungeon Overlay</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <h2>Voice</h2>
+                        <span>Callouts</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="hero-image">
+
+                <div class="floating-window main-window">
+
+                    <div class="window-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+
+                        <span class="window-title">
+                            Live DPS Meter
+                        </span>
+                    </div>
+
+                    <img
+                        src="doc/shared/img/dps/dps_5.png"
+                        alt="Live DPS Meter"
+                    >
+
+                </div>
+
+                <div class="floating-window overlay-window">
+
+                    <div class="window-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+
+                        <span class="window-title">
+                            Buff Overlay
+                        </span>
+                    </div>
+
+                    <img
+                        src="doc/shared/img/monitor/buff_4.png"
+                        alt="Overlay"
+                    >
+
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================= -->
+    <!-- FEATURE HIGHLIGHTS -->
+    <!-- ========================= -->
+
+    <section class="highlights">
+
+        <div class="container">
+
+            <div class="section-title">
+
+                <span>
+                    Why Players Use Resonance Logs
+                </span>
+
+                <h2>
+                    Everything Needed for
+                    High-End PvE
+                </h2>
+
+                <p>
+                    From progression raiding to casual dungeon runs,
+                    every system works together to provide useful,
+                    lightweight,
+                    and highly customizable combat information.
+                </p>
+
+            </div>
+
+            <div class="highlight-grid">
+
+                <div class="highlight-card">
+
+                    <div class="icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+
+                    <h3>Real-Time DPS Analysis</h3>
+
+                    <p>
+                        Accurate live combat statistics with DPS,
+                        True DPS,
+                        damage share,
+                        skill breakdown,
+                        healing,
+                        tanking,
+                        support metrics,
+                        history,
+                        and encounter replay.
+                    </p>
+
+                </div>
+
+                <div class="highlight-card">
+
+                    <div class="icon">
+                        <i class="fa-solid fa-dragon"></i>
+                    </div>
+
+                    <h3>Raid DBM</h3>
+
+                    <p>
+                        Boss ability timers,
+                        mechanic warnings,
+                        countdown bars,
+                        encounter alerts,
+                        and visual indicators
+                        for supported raids and dungeons.
+                    </p>
+
+                </div>
+
+                <div class="highlight-card">
+
+                    <div class="icon">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+
+                    <h3>Interactive Minimap</h3>
+
+                    <p>
+                        Dungeon mechanic overlays with player
+                        positioning,
+                        safe zones,
+                        markers,
+                        puzzle solutions,
+                        boss locations,
+                        and real-time mechanic tracking.
+                    </p>
+
+                </div>
+
+                <div class="highlight-card">
+
+                    <div class="icon">
+                        <i class="fa-solid fa-wave-square"></i>
+                    </div>
+
+                    <h3>Buff & Skill Tracking</h3>
+
+                    <p>
+                        Track cooldowns,
+                        buffs,
+                        debuffs,
+                        resources,
+                        factor progress,
+                        custom counters,
+                        teammate buffs,
+                        monster buffs,
+                        and character attributes.
+                    </p>
+
+                </div>
+
+                <div class="highlight-card">
+
+                    <div class="icon">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </div>
+
+                    <h3>Voice Callouts</h3>
+
+                    <p>
+                        Configurable voice announcements
+                        for buffs,
+                        mechanics,
+                        cooldowns,
+                        boss abilities,
+                        and important combat events.
+                    </p>
+
+                </div>
+
+                <div class="highlight-card">
+
+                    <div class="icon">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+
+                    <h3>Highly Customizable</h3>
+
+                    <p>
+                        Multiple themes,
+                        layouts,
+                        colors,
+                        profiles,
+                        overlay modules,
+                        fonts,
+                        compact modes,
+                        and complete UI customization.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- FEATURES -->
+    <!-- ========================= -->
+
+    <section id="features" class="features">
+
+        <div class="container">
+
+            <div class="section-title">
+
+                <span>Main Features</span>
+
+                <h2>
+                    Powerful Tools
+                    Built for Every Player
+                </h2>
+
+            </div>
+
+            <div class="feature-list">
+
+                <article class="feature-card">
+
+                    <div class="feature-image">
+                        <img src="doc/shared/img/dps/dps_5.png" alt="DPS Meter">
+                    </div>
+
+                    <div class="feature-content">
+
+                        <span class="feature-tag">
+                            Combat Analysis
+                        </span>
+
+                        <h3>Real-Time DPS Meter</h3>
+
+                        <p>
+                            Analyze every encounter with live DPS,
+                            True DPS,
+                            healing,
+                            tanking,
+                            support,
+                            skill breakdowns,
+                            encounter history,
+                            player comparisons,
+                            and advanced statistics designed for
+                            progression groups.
+                        </p>
+
+                        <ul>
+
+                            <li>✔ Live DPS & True DPS</li>
+                            <li>✔ Damage Breakdown</li>
+                            <li>✔ Skill Statistics</li>
+                            <li>✔ Encounter History</li>
+                            <li>✔ Custom Themes</li>
+
+                        </ul>
+
+                    </div>
+
+                </article>
+
+                <article class="feature-card reverse">
+
+                    <div class="feature-image">
+                        <img src="doc/shared/img/minimap/s3_minimap_1.png"
+                             alt="Dungeon Mechanics">
+                    </div>
+
+                    <div class="feature-content">
+
+                        <span class="feature-tag">
+                            Dungeon Guide
+                        </span>
+
+                        <h3>Dungeon Mechanics & Minimap</h3>
+
+                        <p>
+                            Learn every mechanic through
+                            interactive maps,
+                            player markers,
+                            safe zones,
+                            boss positioning,
+                            mechanic callouts,
+                            and visual guidance for supported
+                            dungeons and raids.
+                        </p>
+
+                        <ul>
+
+                            <li>✔ Live Minimap</li>
+                            <li>✔ Safe Zones</li>
+                            <li>✔ Mechanic Timers</li>
+                            <li>✔ Player Positions</li>
+                            <li>✔ Boss Tracking</li>
+
+                        </ul>
+
+                    </div>
+
+                </article>
+
+                <article class="feature-card">
+
+                    <div class="feature-image">
+                        <img src="doc/shared/img/monitor/buff_4.png"
+                             alt="Overlay">
+                    </div>
+
+                    <div class="feature-content">
+
+                        <span class="feature-tag">
+                            Overlay
+                        </span>
+
+                        <h3>Fully Customizable Overlay</h3>
+
+                        <p>
+                            Replace your in-game interface with
+                            lightweight transparent overlays
+                            showing buffs,
+                            cooldowns,
+                            resources,
+                            attributes,
+                            counters,
+                            party information,
+                            and combat data exactly where
+                            you want it.
+                        </p>
+
+                        <ul>
+
+                            <li>✔ Buff Tracker</li>
+                            <li>✔ Skill Cooldowns</li>
+                            <li>✔ Character Attributes</li>
+                            <li>✔ Custom Panels</li>
+                            <li>✔ Layout Editor</li>
+
+                        </ul>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- DOCUMENTATION -->
+    <!-- ========================= -->
+
+    <section
+        id="documentation"
+        class="documentation"
+    >
+
+        <div class="container">
+
+            <div class="section-title">
+
+                <span>Documentation</span>
+
+                <h2>
+                    Learn Every Feature
+                </h2>
+
+                <p>
+                    Detailed guides covering every part of the
+                    application from installation to advanced
+                    configuration.
+                </p>
+
+            </div>
+
+            <div class="docs-grid">
+
+                <div class="doc-card">
+
+                    <div class="doc-icon">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+
+                    <h3>Getting Started</h3>
+
+                    <p>
+                        Installation, Npcap setup, network adapter
+                        selection, troubleshooting, and first launch guide.
+                    </p>
+
+                    <a href="./getting-started.html">
+                        Read Guide
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                </div>
+
+                <div class="doc-card">
+
+                    <div class="doc-icon">
+                        <i class="fa-solid fa-chart-column"></i>
+                    </div>
+
+                    <h3>DPS Meter</h3>
+
+                    <p>
+                        Learn how to customize themes,
+                        layouts,
+                        statistics,
+                        history,
+                        columns,
+                        and combat analysis.
+                    </p>
+
+                    <a href="./features/dps/index.html">
+                        View Documentation
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                </div>
+
+                <div class="doc-card">
+
+                    <div class="doc-icon">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+
+                    <h3>Live Monitor</h3>
+
+                    <p>
+                        Configure overlays,
+                        buff monitoring,
+                        skill cooldowns,
+                        custom panels,
+                        factor tracking,
+                        and overlay layouts.
+                    </p>
+
+                    <a href="./features/monitor/index.html">
+                        Open Guide
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                </div>
+
+                <div class="doc-card">
+
+                    <div class="doc-icon">
+                        <i class="fa-solid fa-dragon"></i>
+                    </div>
+
+                    <h3>Monster Monitor</h3>
+
+                    <p>
+                        Boss buffs,
+                        teammate buffs,
+                        threat lists,
+                        DBM timers,
+                        monster overlays,
+                        and encounter monitoring.
+                    </p>
+
+                    <a href="./features/monster/index.html">
+                        Explore
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                </div>
+
+                <div class="doc-card">
+
+                    <div class="doc-icon">
+                        <i class="fa-solid fa-map"></i>
+                    </div>
+
+                    <h3>Dungeon Mechanics</h3>
+
+                    <p>
+                        Interactive minimaps,
+                        positioning,
+                        mechanic callouts,
+                        supported dungeons,
+                        and raid guidance.
+                    </p>
+
+                    <a href="./features/minimap/index.html">
+                        Learn More
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                </div>
+
+                <div class="doc-card">
+
+                    <div class="doc-icon">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </div>
+
+                    <h3>FAQ</h3>
+
+                    <p>
+                        Solutions for installation,
+                        overlays,
+                        DPS,
+                        network capture,
+                        layouts,
+                        performance,
+                        and common issues.
+                    </p>
+
+                    <a href="./faq.html">
+                        Browse FAQ
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- DOWNLOAD -->
+    <!-- ========================= -->
+
+    <section class="download">
+
+        <div class="container">
+
+            <div class="download-box">
+
+                <h2>
+                    Ready to Upgrade
+                    Your Star Resonance Experience?
+                </h2>
+
+                <p>
+                    Download the latest version of
+                    Resonance Logs and enjoy powerful
+                    overlays,
+                    advanced combat analytics,
+                    customizable layouts,
+                    and comprehensive raid assistance.
+                </p>
+
+                <div class="download-buttons">
+
+                    <a href="../../releases"
+                       class="btn btn-primary">
+
+                        <i class="fa-brands fa-windows"></i>
+
+                        Windows x64
+
+                    </a>
+
+                    <a href="../../releases"
+                       class="btn btn-secondary">
+
+                        <i class="fa-solid fa-box"></i>
+
+                        Portable Version
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- FOOTER -->
+    <!-- ========================= -->
+
+    <footer class="footer">
+
+        <div class="container">
+
+            <div class="footer-grid">
+
+                <div class="footer-column">
+
+                    <h3>Resonance Logs</h3>
+
+                    <p>
+                        A modern companion application for
+                        Star Resonance featuring advanced combat
+                        analytics, overlays, dungeon mechanics,
+                        voice announcements, and customizable UI.
+                    </p>
+
+                    <div class="social-links">
+
+                        <a href="https://github.com/asgharkapk/resonance-logs-cn">
+                            <i class="fab fa-github"></i>
+                        </a>
+
+                        <a href="https://discord.gg/RHeX47wvDU">
+                            <i class="fab fa-discord"></i>
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="footer-column">
+
+                    <h4>Documentation</h4>
+
+                    <ul>
+
+                        <li>
+                            <a href="./getting-started.html">
+                                Getting Started
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./features/dps/index.html">
+                                DPS Meter
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./features/monitor/index.html">
+                                Live Monitor
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./features/monster/index.html">
+                                Monster Monitor
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./features/minimap/index.html">
+                                Dungeon Mechanics
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+                <div class="footer-column">
+
+                    <h4>Resources</h4>
+
+                    <ul>
+
+                        <li>
+                            <a href="./faq.html">
+                                FAQ
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./changelog/index.html">
+                                Changelog
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./todo.html">
+                                Roadmap
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="../../issues">
+                                Report Issues
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="../../pulls">
+                                Contribute
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+                <div class="footer-column">
+
+                    <h4>Languages</h4>
+
+                    <ul>
+
+                        <li>
+                            <a href="./README_EN.html">
+                                🇺🇸 English
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./README_CN.html">
+                                🇨🇳 简体中文
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="./README_JP.html">
+                                🇯🇵 日本語
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+
+                <p>
+                    © 2026 Resonance Logs.
+                    Made for the Star Resonance community.
+                </p>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+</body>
+</html>
+
+<style>
+
+/* ==========================================================
+   RESET
+========================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        sans-serif;
+
+    background:#070b12;
+    color:#fff;
+    overflow-x:hidden;
+}
+
+a{
+    color:inherit;
+    text-decoration:none;
+}
+
+img{
+    display:block;
+    max-width:100%;
+}
+
+.container{
+    width:min(1400px,92%);
+    margin:auto;
+}
+
+/* ==========================================================
+   VARIABLES
+========================================================== */
+
+:root{
+
+    --bg:#070b12;
+
+    --bg2:#0e1420;
+
+    --panel:#131b29;
+
+    --panel2:#182235;
+
+    --line:#243148;
+
+    --primary:#4ea8ff;
+
+    --purple:#8c5bff;
+
+    --green:#43d18d;
+
+    --text:#edf3ff;
+
+    --muted:#97a8c3;
+
+    --radius:22px;
+
+}
+
+/* ==========================================================
+   NAVBAR
+========================================================== */
+
+.navbar{
+
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    z-index:999;
+
+    backdrop-filter:blur(18px);
+
+    background:rgba(8,12,20,.72);
+
+    border-bottom:1px solid rgba(255,255,255,.05);
+
+}
+
+.nav-inner{
+
+    width:min(1400px,92%);
+    margin:auto;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    height:78px;
+
+}
+
+.logo{
+
+    display:flex;
+    align-items:center;
+    gap:14px;
+
+    font-size:1.25rem;
+    font-weight:700;
+
+}
+
+.logo img{
+
+    width:52px;
+    height:52px;
+
+    border-radius:14px;
+
+}
+
+.nav-links{
+
+    display:flex;
+    gap:34px;
+
+    align-items:center;
+
+}
+
+.nav-links a{
+
+    color:var(--muted);
+
+    transition:.25s;
+
+    font-weight:500;
+
+}
+
+.nav-links a:hover{
+
+    color:white;
+
+}
+
+.nav-actions{
+
+    display:flex;
+    gap:12px;
+
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+.btn{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    padding:15px 28px;
+
+    border-radius:999px;
+
+    font-weight:700;
+
+    transition:.3s;
+
+}
+
+.btn-primary{
+
+    background:linear-gradient(
+        135deg,
+        var(--primary),
+        var(--purple)
+    );
+
+    color:white;
+
+    box-shadow:
+        0 20px 60px rgba(80,120,255,.35);
+
+}
+
+.btn-primary:hover{
+
+    transform:translateY(-3px);
+
+}
+
+.btn-secondary{
+
+    background:var(--panel);
+
+    border:1px solid var(--line);
+
+}
+
+.btn-secondary:hover{
+
+    background:var(--panel2);
+
+}
+
+.btn-outline{
+
+    border:1px solid var(--line);
+
+    color:var(--text);
+
+}
+
+.btn-outline:hover{
+
+    background:rgba(255,255,255,.05);
+
+}
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.hero{
+
+    padding-top:170px;
+
+    padding-bottom:140px;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.hero::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:700px;
+    height:700px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(85,140,255,.18),
+            transparent 70%
+        );
+
+    left:-180px;
+    top:-200px;
+
+    pointer-events:none;
+
+}
+
+.hero::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:600px;
+    height:600px;
+
+    right:-120px;
+    bottom:-200px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(156,82,255,.18),
+            transparent 70%
+        );
+
+}
+
+.hero-content{
+
+    display:grid;
+
+    grid-template-columns:
+        1.05fr
+        .95fr;
+
+    gap:80px;
+
+    align-items:center;
+
+}
+
+.badge{
+
+    display:inline-flex;
+
+    gap:10px;
+
+    align-items:center;
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    padding:12px 20px;
+
+    border-radius:999px;
+
+    color:#9fd2ff;
+
+    margin-bottom:28px;
+
+}
+
+.hero h1{
+
+    font-size:4.2rem;
+
+    line-height:1.05;
+
+    margin-bottom:28px;
+
+}
+
+.gradient{
+
+    display:block;
+
+    background:
+        linear-gradient(
+            90deg,
+            #64d7ff,
+            #7a83ff,
+            #d474ff
+        );
+
+    -webkit-background-clip:text;
+
+    color:transparent;
+
+}
+
+.hero-description{
+
+    color:var(--muted);
+
+    font-size:1.15rem;
+
+    line-height:1.9;
+
+    max-width:700px;
+
+    margin-bottom:40px;
+
+}
+
+.hero-buttons{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:18px;
+
+    margin-bottom:55px;
+
+}
+
+.hero-stats{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:20px;
+
+}
+
+/* ==========================================================
+   HERO STATS
+========================================================== */
+
+.stat-card{
+
+    background:rgba(255,255,255,.04);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    border-radius:18px;
+
+    padding:24px;
+
+    transition:.3s;
+
+    backdrop-filter:blur(10px);
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-8px);
+
+    border-color:rgba(120,170,255,.4);
+
+    box-shadow:
+        0 20px 60px rgba(60,120,255,.18);
+
+}
+
+.stat-card h2{
+
+    font-size:2rem;
+
+    margin-bottom:6px;
+
+    color:white;
+
+}
+
+.stat-card span{
+
+    color:var(--muted);
+
+    font-size:.95rem;
+
+}
+
+/* ==========================================================
+   FLOATING WINDOWS
+========================================================== */
+
+.hero-image{
+
+    position:relative;
+
+    min-height:760px;
+
+}
+
+.floating-window{
+
+    position:absolute;
+
+    overflow:hidden;
+
+    border-radius:22px;
+
+    background:var(--panel);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.45);
+
+}
+
+.main-window{
+
+    width:640px;
+
+    right:0;
+
+    top:0;
+
+    animation:floatOne 7s ease-in-out infinite;
+
+}
+
+.overlay-window{
+
+    width:360px;
+
+    left:20px;
+
+    bottom:40px;
+
+    animation:floatTwo 6s ease-in-out infinite;
+
+}
+
+.window-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:15px 20px;
+
+    background:#0f1726;
+
+    border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.window-title{
+
+    margin-left:10px;
+
+    color:var(--muted);
+
+    font-size:.95rem;
+
+}
+
+.dot{
+
+    width:12px;
+    height:12px;
+
+    border-radius:50%;
+
+}
+
+.red{background:#ff5f56;}
+.yellow{background:#ffbd2f;}
+.green{background:#27c93f;}
+
+.floating-window img{
+
+    width:100%;
+
+    display:block;
+
+}
+
+/* ==========================================================
+   SECTION
+========================================================== */
+
+section{
+
+    padding:110px 0;
+
+}
+
+.section-title{
+
+    text-align:center;
+
+    max-width:900px;
+
+    margin:0 auto 70px;
+
+}
+
+.section-title span{
+
+    color:#74c3ff;
+
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    text-transform:uppercase;
+
+}
+
+.section-title h2{
+
+    font-size:3rem;
+
+    margin:18px 0;
+
+}
+
+.section-title p{
+
+    color:var(--muted);
+
+    line-height:1.8;
+
+    font-size:1.1rem;
+
+}
+
+/* ==========================================================
+   HIGHLIGHTS
+========================================================== */
+
+.highlight-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap:30px;
+
+}
+
+.highlight-card{
+
+    background:var(--panel);
+
+    border:1px solid var(--line);
+
+    border-radius:22px;
+
+    padding:36px;
+
+    transition:.3s;
+
+}
+
+.highlight-card:hover{
+
+    transform:translateY(-8px);
+
+    border-color:var(--primary);
+
+}
+
+.highlight-card .icon{
+
+    width:68px;
+
+    height:68px;
+
+    border-radius:18px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin-bottom:24px;
+
+    font-size:1.7rem;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--primary),
+            var(--purple)
+        );
+
+}
+
+.highlight-card h3{
+
+    margin-bottom:16px;
+
+    font-size:1.45rem;
+
+}
+
+.highlight-card p{
+
+    color:var(--muted);
+
+    line-height:1.8;
+
+}
+
+/* ==========================================================
+   FEATURE CARDS
+========================================================== */
+
+.feature-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:80px;
+
+}
+
+.feature-card{
+
+    display:grid;
+
+    grid-template-columns:
+        1fr
+        1fr;
+
+    gap:60px;
+
+    align-items:center;
+
+}
+
+.feature-card.reverse{
+
+    direction:rtl;
+
+}
+
+.feature-card.reverse>*{
+
+    direction:ltr;
+
+}
+
+.feature-image{
+
+    border-radius:24px;
+
+    overflow:hidden;
+
+    border:1px solid var(--line);
+
+    background:var(--panel);
+
+    box-shadow:
+        0 25px 70px rgba(0,0,0,.35);
+
+}
+
+.feature-image img{
+
+    width:100%;
+
+    transition:.45s;
+
+}
+
+.feature-image:hover img{
+
+    transform:scale(1.04);
+
+}
+
+.feature-content{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:22px;
+
+}
+
+.feature-tag{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    width:max-content;
+
+    padding:8px 18px;
+
+    border-radius:999px;
+
+    background:
+        rgba(78,168,255,.12);
+
+    color:#7cc7ff;
+
+    font-size:.82rem;
+
+    letter-spacing:1px;
+
+    text-transform:uppercase;
+
+    font-weight:700;
+
+}
+
+.feature-content h3{
+
+    font-size:2.3rem;
+
+    line-height:1.15;
+
+}
+
+.feature-content p{
+
+    color:var(--muted);
+
+    line-height:1.9;
+
+    font-size:1.05rem;
+
+}
+
+.feature-content ul{
+
+    list-style:none;
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+    gap:14px;
+
+}
+
+.feature-content li{
+
+    color:#d7e8ff;
+
+}
+
+/* ==========================================================
+   DOCUMENTATION
+========================================================== */
+
+.docs-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap:30px;
+
+}
+
+.doc-card{
+
+    background:var(--panel);
+
+    border:1px solid var(--line);
+
+    border-radius:22px;
+
+    padding:36px;
+
+    transition:.35s;
+
+}
+
+.doc-card:hover{
+
+    transform:translateY(-8px);
+
+    border-color:var(--primary);
+
+    box-shadow:
+        0 20px 60px rgba(60,120,255,.18);
+
+}
+
+.doc-icon{
+
+    width:70px;
+
+    height:70px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--primary),
+            var(--purple)
+        );
+
+    font-size:1.7rem;
+
+    margin-bottom:24px;
+
+}
+
+.doc-card h3{
+
+    font-size:1.45rem;
+
+    margin-bottom:16px;
+
+}
+
+.doc-card p{
+
+    color:var(--muted);
+
+    line-height:1.8;
+
+    margin-bottom:24px;
+
+}
+
+.doc-card a{
+
+    color:#74c3ff;
+
+    font-weight:700;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+/* ==========================================================
+   DOWNLOAD SECTION
+========================================================== */
+
+.download{
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.download::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+        radial-gradient(
+            circle at top,
+            rgba(80,120,255,.16),
+            transparent 60%
+        );
+
+    pointer-events:none;
+
+}
+
+.download-box{
+
+    position:relative;
+
+    text-align:center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #121d30,
+            #18253d
+        );
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:30px;
+
+    padding:80px 60px;
+
+    overflow:hidden;
+
+}
+
+.download-box::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:420px;
+    height:420px;
+
+    right:-120px;
+    top:-120px;
+
+    border-radius:50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(132,102,255,.22),
+            transparent 70%
+        );
+
+}
+
+.download-box h2{
+
+    position:relative;
+
+    font-size:3rem;
+
+    margin-bottom:24px;
+
+}
+
+.download-box p{
+
+    position:relative;
+
+    color:var(--muted);
+
+    max-width:760px;
+
+    margin:0 auto 45px;
+
+    line-height:1.9;
+
+    font-size:1.1rem;
+
+}
+
+.download-buttons{
+
+    position:relative;
+
+    display:flex;
+
+    justify-content:center;
+
+    flex-wrap:wrap;
+
+    gap:20px;
+
+}
+
+/* ==========================================================
+   FOOTER
+========================================================== */
+
+.footer{
+
+    padding:90px 0 40px;
+
+    border-top:1px solid rgba(255,255,255,.06);
+
+    background:#05070c;
+
+}
+
+.footer-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        2fr
+        1fr
+        1fr
+        1fr;
+
+    gap:50px;
+
+}
+
+.footer-column h3{
+
+    font-size:1.8rem;
+
+    margin-bottom:20px;
+
+}
+
+.footer-column h4{
+
+    margin-bottom:20px;
+
+    font-size:1.15rem;
+
+}
+
+.footer-column p{
+
+    color:var(--muted);
+
+    line-height:1.9;
+
+    margin-bottom:24px;
+
+}
+
+.footer-column ul{
+
+    list-style:none;
+
+}
+
+.footer-column li{
+
+    margin-bottom:14px;
+
+}
+
+.footer-column a{
+
+    color:var(--muted);
+
+    transition:.25s;
+
+}
+
+.footer-column a:hover{
+
+    color:white;
+
+}
+
+.social-links{
+
+    display:flex;
+
+    gap:16px;
+
+}
+
+.social-links a{
+
+    width:46px;
+
+    height:46px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:var(--panel);
+
+    border:1px solid var(--line);
+
+    font-size:1.2rem;
+
+}
+
+.social-links a:hover{
+
+    background:var(--primary);
+
+    border-color:var(--primary);
+
+}
+
+.footer-bottom{
+
+    margin-top:70px;
+
+    padding-top:28px;
+
+    text-align:center;
+
+    border-top:1px solid rgba(255,255,255,.06);
+
+    color:var(--muted);
+
+}
+
+/* ==========================================================
+   ANIMATIONS
+========================================================== */
+
+@keyframes floatOne{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    50%{
+        transform:translateY(-18px);
+    }
+
+    100%{
+        transform:translateY(0px);
+    }
+
+}
+
+@keyframes floatTwo{
+
+    0%{
+        transform:translateY(0px);
+    }
+
+    50%{
+        transform:translateY(16px);
+    }
+
+    100%{
+        transform:translateY(0px);
+    }
+
+}
+
+@keyframes fadeUp{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            translateY(40px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+            translateY(0);
+
+    }
+
+}
+
+.highlight-card,
+.feature-card,
+.doc-card,
+.stat-card{
+
+    animation:
+        fadeUp
+        .8s
+        ease;
+
+}
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+::-webkit-scrollbar{
+
+    width:12px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#08101b;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#2a436d;
+
+    border-radius:999px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#4ea8ff;
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width:1400px){
+
+.hero-content{
+
+    gap:50px;
+
+}
+
+.main-window{
+
+    width:560px;
+
+}
+
+.overlay-window{
+
+    width:320px;
+
+}
+
+}
+
+@media (max-width:1200px){
+
+.hero-content{
+
+    grid-template-columns:1fr;
+
+}
+
+.hero-image{
+
+    min-height:680px;
+
+}
+
+.main-window{
+
+    position:relative;
+
+    margin:auto;
+
+    right:auto;
+
+}
+
+.overlay-window{
+
+    left:0;
+
+    bottom:0;
+
+}
+
+.footer-grid{
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+}
+
+.highlight-grid{
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+}
+
+.docs-grid{
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+}
+
+.hero h1{
+
+    font-size:3.5rem;
+
+}
+
+}
+
+@media (max-width:992px){
+
+.nav-links{
+
+    display:none;
+
+}
+
+.nav-actions{
+
+    display:none;
+
+}
+
+.hero{
+
+    padding-top:130px;
+
+    padding-bottom:90px;
+
+}
+
+.hero h1{
+
+    font-size:3rem;
+
+}
+
+.hero-description{
+
+    font-size:1.05rem;
+
+}
+
+.hero-stats{
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+}
+
+.feature-card{
+
+    grid-template-columns:1fr;
+
+    gap:40px;
+
+}
+
+.feature-card.reverse{
+
+    direction:ltr;
+
+}
+
+.feature-content ul{
+
+    grid-template-columns:1fr;
+
+}
+
+.highlight-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+.docs-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+.download-box{
+
+    padding:60px 40px;
+
+}
+
+.download-box h2{
+
+    font-size:2.4rem;
+
+}
+
+.footer-grid{
+
+    grid-template-columns:1fr;
+
+    gap:40px;
+
+}
+
+.main-window{
+
+    width:100%;
+
+}
+
+.overlay-window{
+
+    position:relative;
+
+    width:70%;
+
+    margin:30px auto 0;
+
+}
+
+}
+
+@media (max-width:768px){
+
+.container{
+
+    width:94%;
+
+}
+
+.hero{
+
+    padding-top:110px;
+
+}
+
+.hero h1{
+
+    font-size:2.4rem;
+
+    line-height:1.15;
+
+}
+
+.hero-buttons{
+
+    flex-direction:column;
+
+    align-items:stretch;
+
+}
+
+.hero-buttons .btn{
+
+    width:100%;
+
+}
+
+.hero-stats{
+
+    grid-template-columns:1fr;
+
+}
+
+.stat-card{
+
+    text-align:center;
+
+}
+
+.section-title h2{
+
+    font-size:2.2rem;
+
+}
+
+.section-title p{
+
+    font-size:1rem;
+
+}
+
+.download-box{
+
+    padding:50px 28px;
+
+}
+
+.download-box h2{
+
+    font-size:2rem;
+
+}
+
+.overlay-window{
+
+    width:100%;
+
+}
+
+}
+
+@media (max-width:576px){
+
+    body{
+        font-size:15px;
+    }
+
+    .navbar{
+        backdrop-filter:blur(12px);
+    }
+
+    .nav-inner{
+        height:68px;
+    }
+
+    .logo{
+        font-size:1.05rem;
+        gap:10px;
+    }
+
+    .logo img{
+        width:42px;
+        height:42px;
+        border-radius:12px;
+    }
+
+    .badge{
+        width:100%;
+        justify-content:center;
+        font-size:.82rem;
+        padding:10px 16px;
+    }
+
+    .hero{
+        padding-top:95px;
+        padding-bottom:70px;
+    }
+
+    .hero h1{
+        font-size:2rem;
+    }
+
+    .hero-description{
+        font-size:.96rem;
+        line-height:1.75;
+    }
+
+    .section-title{
+        margin-bottom:50px;
+    }
+
+    .section-title h2{
+        font-size:1.8rem;
+    }
+
+    .section-title span{
+        font-size:.78rem;
+        letter-spacing:1.5px;
+    }
+
+    .highlight-card,
+    .doc-card,
+    .stat-card{
+        padding:24px;
+    }
+
+    .feature-content h3{
+        font-size:1.7rem;
+    }
+
+    .feature-content p,
+    .highlight-card p,
+    .doc-card p{
+        font-size:.95rem;
+    }
+
+    .window-header{
+        padding:12px 16px;
+    }
+
+    .window-title{
+        font-size:.82rem;
+    }
+
+    .download-buttons{
+        flex-direction:column;
+    }
+
+    .download-buttons .btn{
+        width:100%;
+    }
+
+    .footer{
+        padding:70px 0 30px;
+    }
+
+    .footer-bottom{
+        margin-top:40px;
+        font-size:.9rem;
+    }
+
+}
+
+/* ==========================================================
+   PRINT
+========================================================== */
+
+@media print{
+
+    .navbar,
+    .hero-buttons,
+    .download,
+    .footer,
+    .social-links{
+        display:none !important;
+    }
+
+    body{
+        background:white;
+        color:black;
+    }
+
+    section{
+        padding:30px 0;
+    }
+
+    .feature-card,
+    .highlight-card,
+    .doc-card{
+        break-inside:avoid;
+    }
+
+}
+
