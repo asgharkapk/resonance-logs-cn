@@ -11,7 +11,7 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 [![日本語](https://img.shields.io/badge/README-日本語-purple?style=for-the-badge)](./README_JP.md)
 
 [![DPS Meter](https://img.shields.io/badge/DPS%20Meter-✓-blue?style=for-the-badge)](#compact-theme)
-[![Raid DBM](https://img.shields.io/badge/Raid%20DBM-✓-purple?style=for-the-badge)](#theme-customization)
+[![Raid DBM](https://img.shields.io/badge/Raid%20DBM-✓-purple?style=for-the-badge)](#dungeon-mechanics-guide-minimap)
 [![Minimap](https://img.shields.io/badge/Minimap-✓-green?style=for-the-badge)](#dungeon-mechanics-guide-minimap)
 [![Voice Callouts](https://img.shields.io/badge/Voice%20Callouts-✓-red?style=for-the-badge)](#-changing-the-application-language)
 [![Buff Tracker](https://img.shields.io/badge/Buff%20Tracker-✓-orange?style=for-the-badge)](#-changing-the-application-language)
