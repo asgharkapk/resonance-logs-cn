@@ -17,9 +17,9 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 [![Buff Tracker](https://img.shields.io/badge/Buff%20Tracker-✓-orange?style=for-the-badge)](#-changing-the-application-language)
 [![Overlay](https://img.shields.io/badge/Overlay-✓-teal?style=for-the-badge)](#dps-overlay-as-your-game-ui)
 
-[![Windows x64](https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge)](/releases)
-[![Portable](https://img.shields.io/badge/Portable-Available-success?style=for-the-badge)](/releases)
-[![Installer](https://img.shields.io/badge/Installer-MSI-blue?style=for-the-badge)](/releases)
+[![Windows x64](https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge)](../../releases)
+[![Portable](https://img.shields.io/badge/Portable-Available-success?style=for-the-badge)](../../releases)
+[![Installer](https://img.shields.io/badge/Installer-MSI-blue?style=for-the-badge)](../../releases)
 
 [![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 ](https://www.microsoft.com/en-us/windows)
@@ -32,9 +32,9 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 [![Actively Developed](https://img.shields.io/badge/Status-Actively%20Developed-brightgreen?style=for-the-badge)](#)
 [![Stable](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](#)
 [![MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](https://www.mit.edu/)
-[![GitHub Issues](https://img.shields.io/badge/Issues-Welcome-success?style=for-the-badge)](#)
-[![Pull Requests](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](#)
-[![Contributions](https://img.shields.io/badge/Contributions-Welcome-blue?style=for-the-badge)](#)
+[![GitHub Issues](https://img.shields.io/badge/Issues-Welcome-success?style=for-the-badge)](../../issues)
+[![Pull Requests](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](../../pulls)
+[![Contributions](https://img.shields.io/badge/Contributions-Welcome-blue?style=for-the-badge)](../../pulls)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white)
 ](https://discord.gg/RHeX47wvDU)
 
