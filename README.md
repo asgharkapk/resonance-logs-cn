@@ -8,6 +8,30 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 
 [![English](https://img.shields.io/badge/README-English-blue?style=for-the-badge)](./README_EN.md)
 [![简体中文](https://img.shields.io/badge/README-简体中文-red?style=for-the-badge)](./README_CN.md)
+[![日本語](https://img.shields.io/badge/README-日本語-purple?style=for-the-badge)](./README_JP.md)
+
+![DPS Meter](https://img.shields.io/badge/DPS%20Meter-✓-blue?style=for-the-badge)
+![Raid DBM](https://img.shields.io/badge/Raid%20DBM-✓-purple?style=for-the-badge)
+![Minimap](https://img.shields.io/badge/Minimap-✓-green?style=for-the-badge)
+![Voice Callouts](https://img.shields.io/badge/Voice%20Callouts-✓-red?style=for-the-badge)
+![Buff Tracker](https://img.shields.io/badge/Buff%20Tracker-✓-orange?style=for-the-badge)
+![Overlay](https://img.shields.io/badge/Overlay-✓-teal?style=for-the-badge)
+
+![Windows x64](https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge)
+![Portable](https://img.shields.io/badge/Portable-Available-success?style=for-the-badge)
+![Installer](https://img.shields.io/badge/Installer-MSI-blue?style=for-the-badge)
+![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust)
+![Tauri](https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
+
+![Open Source](https://img.shields.io/badge/Open%20Source-Yes-success?style=for-the-badge)
+![Actively Developed](https://img.shields.io/badge/Status-Actively%20Developed-brightgreen?style=for-the-badge)
+![Stable](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)
+![MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+![GitHub Issues](https://img.shields.io/badge/Issues-Welcome-success?style=for-the-badge)
+![Pull Requests](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)
+![Contributions](https://img.shields.io/badge/Contributions-Welcome-blue?style=for-the-badge)
+![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white)
 
 ---
 
@@ -18,7 +42,10 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 | 📘 [README](README.md)                    | Main documentation               |
 | 🇺🇸 [README_EN.md](README_EN.md)         | English documentation            |
 | 🇨🇳 [README_CN.md](README_CN.md)         | Simplified Chinese documentation |
-| 📝 [CHANGELOG.md](CHANGELOG.md)           | Project changelog                |
+| 🇨🇳 [README_JP.md](README_JP.md)         | Simplified Chinese documentation |
+| 📝 [CHANGELOG_CN.md](CHANGELOG.md)           | Project changelog                |
+| 📝 [CHANGELOG_EN.md](src/lib/changelog/en-US.md)           | Project changelog                |
+| 📝 [CHANGELOG_JP.md](src/lib/changelog/ja-JP.md)           | Project changelog                |
 | 🍴 [CHANGELOG_FORK.md](CHANGELOG_FORK.md) | Fork-specific changes            |
 | 🍴 [TODO.md](TODO.md) | ToDo List            |
 
