@@ -20,6 +20,7 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 [![Windows x64](https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge)](/releases)
 [![Portable](https://img.shields.io/badge/Portable-Available-success?style=for-the-badge)](/releases)
 [![Installer](https://img.shields.io/badge/Installer-MSI-blue?style=for-the-badge)](/releases)
+
 [![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 ](https://www.microsoft.com/en-us/windows)
 [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust)
