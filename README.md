@@ -46,11 +46,11 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 | --------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 📘 [README](README.md)                    | Main documentation               |
 | 🇺🇸 [README_EN.md](README_EN.md)         | English documentation            |
-| 🇨🇳 [README_CN.md](README_CN.md)         | Simplified Chinese documentation |
-| 🇨🇳 [README_JP.md](README_JP.md)         | Simplified Chinese documentation |
-| 📝 [CHANGELOG_CN.md](CHANGELOG.md)           | Project changelog                |
+| 🇨🇳 [README_CN.md](README_CN.md)         | 文档 |
+| 🇨🇳 [README_JP.md](README_JP.md)         | ドキュメント |
+| 📝 [CHANGELOG_CN.md](CHANGELOG.md)           | 项目变更日志                |
 | 📝 [CHANGELOG_EN.md](src/lib/changelog/en-US.md)           | Project changelog                |
-| 📝 [CHANGELOG_JP.md](src/lib/changelog/ja-JP.md)           | Project changelog                |
+| 📝 [CHANGELOG_JP.md](src/lib/changelog/ja-JP.md)           | プロジェクト変更履歴                |
 | 🍴 [CHANGELOG_FORK.md](CHANGELOG_FORK.md) | Fork-specific changes            |
 | 🍴 [TODO.md](TODO.md) | ToDo List            |
 
@@ -62,9 +62,9 @@ The documentation is separated by language.
 
 | Language                | Documentation                        | Description            |
 | ----------------------- | ------------------------------------ | ---------------------- |
-| 🇨🇳 Simplified Chinese | [doc/zh-CN](doc/zh-CN/README.md) | Default documentation  |
+| 🇨🇳 Simplified Chinese | [doc/zh-CN](doc/zh-CN/README.md) | 默认文档  |
 | 🇺🇸 English            | [doc/en-US](doc/en-US/README.md) | English documentation  |
-| 🇯🇵 Japanese           | [doc/ja-JP](doc/ja-JP/README.md) | Japanese documentation |
+| 🇯🇵 Japanese           | [doc/ja-JP](doc/ja-JP/README.md) | 日本語のドキュメント |
 
 </div>
 
