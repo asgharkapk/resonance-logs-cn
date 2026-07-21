@@ -10,28 +10,32 @@ A feature-rich companion application for **Star Resonance** with DPS analysis, o
 [![简体中文](https://img.shields.io/badge/README-简体中文-red?style=for-the-badge)](./README_CN.md)
 [![日本語](https://img.shields.io/badge/README-日本語-purple?style=for-the-badge)](./README_JP.md)
 
-![DPS Meter](https://img.shields.io/badge/DPS%20Meter-✓-blue?style=for-the-badge)
-![Raid DBM](https://img.shields.io/badge/Raid%20DBM-✓-purple?style=for-the-badge)
-![Minimap](https://img.shields.io/badge/Minimap-✓-green?style=for-the-badge)
-![Voice Callouts](https://img.shields.io/badge/Voice%20Callouts-✓-red?style=for-the-badge)
-![Buff Tracker](https://img.shields.io/badge/Buff%20Tracker-✓-orange?style=for-the-badge)
-![Overlay](https://img.shields.io/badge/Overlay-✓-teal?style=for-the-badge)
+[![DPS Meter](https://img.shields.io/badge/DPS%20Meter-✓-blue?style=for-the-badge)](#compact-theme)
+[![Raid DBM](https://img.shields.io/badge/Raid%20DBM-✓-purple?style=for-the-badge)](#theme-customization)
+[![Minimap](https://img.shields.io/badge/Minimap-✓-green?style=for-the-badge)](#dungeon-mechanics-guide-minimap)
+[![Voice Callouts](https://img.shields.io/badge/Voice%20Callouts-✓-red?style=for-the-badge)](#-changing-the-application-language)
+[![Buff Tracker](https://img.shields.io/badge/Buff%20Tracker-✓-orange?style=for-the-badge)](#-changing-the-application-language)
+[![Overlay](https://img.shields.io/badge/Overlay-✓-teal?style=for-the-badge)](#dps-overlay-as-your-game-ui)
 
-![Windows x64](https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge)
-![Portable](https://img.shields.io/badge/Portable-Available-success?style=for-the-badge)
-![Installer](https://img.shields.io/badge/Installer-MSI-blue?style=for-the-badge)
-![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
-![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust)
-![Tauri](https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
+[![Windows x64](https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge)](/releases)
+[![Portable](https://img.shields.io/badge/Portable-Available-success?style=for-the-badge)](/releases)
+[![Installer](https://img.shields.io/badge/Installer-MSI-blue?style=for-the-badge)](/releases)
+[![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+](https://www.microsoft.com/en-us/windows)
+[![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust)
+](https://rust-lang.org/)
+[![Tauri](https://img.shields.io/badge/Tauri-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)
+](https://v2.tauri.app/)
 
-![Open Source](https://img.shields.io/badge/Open%20Source-Yes-success?style=for-the-badge)
-![Actively Developed](https://img.shields.io/badge/Status-Actively%20Developed-brightgreen?style=for-the-badge)
-![Stable](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)
-![MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
-![GitHub Issues](https://img.shields.io/badge/Issues-Welcome-success?style=for-the-badge)
-![Pull Requests](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)
-![Contributions](https://img.shields.io/badge/Contributions-Welcome-blue?style=for-the-badge)
-![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white)
+[![Open Source](https://img.shields.io/badge/Open%20Source-Yes-success?style=for-the-badge)](#)
+[![Actively Developed](https://img.shields.io/badge/Status-Actively%20Developed-brightgreen?style=for-the-badge)](#)
+[![Stable](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](#)
+[![MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](https://www.mit.edu/)
+[![GitHub Issues](https://img.shields.io/badge/Issues-Welcome-success?style=for-the-badge)](#)
+[![Pull Requests](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](#)
+[![Contributions](https://img.shields.io/badge/Contributions-Welcome-blue?style=for-the-badge)](#)
+[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white)
+](https://discord.gg/RHeX47wvDU)
 
 ---
 
@@ -57,9 +61,9 @@ The documentation is separated by language.
 
 | Language                | Documentation                        | Description            |
 | ----------------------- | ------------------------------------ | ---------------------- |
-| 🇨🇳 Simplified Chinese | [zh-CN/README.md](doc/zh-CN/README.md) | Default documentation  |
-| 🇺🇸 English            | [en-US/README.md](doc/en-US/README.md) | English documentation  |
-| 🇯🇵 Japanese           | [ja-JP/README.md](doc/ja-JP/README.md) | Japanese documentation |
+| 🇨🇳 Simplified Chinese | [doc/zh-CN](doc/zh-CN/README.md) | Default documentation  |
+| 🇺🇸 English            | [doc/en-US](doc/en-US/README.md) | English documentation  |
+| 🇯🇵 Japanese           | [doc/ja-JP](doc/ja-JP/README.md) | Japanese documentation |
 
 </div>
 
