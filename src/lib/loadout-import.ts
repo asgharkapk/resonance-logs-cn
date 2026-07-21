@@ -109,11 +109,13 @@ const voicePhraseBindingSchema = v.variant("source", [
 const voiceEventSchema = v.object({
   enabled: v.boolean(),
   phrase: voicePhraseBindingSchema,
+  priority: v.optional(finiteNumberSchema),
 });
 
 const voiceExpiringEventSchema = v.object({
   enabled: v.boolean(),
   phrase: voicePhraseBindingSchema,
+  priority: v.optional(finiteNumberSchema),
   secondsBefore: finiteNumberSchema,
 });
 
@@ -399,7 +401,6 @@ const monsterProfileSchema = v.object({
     defaultClone(defaultMonster.monsterBuffVoiceConfigs ?? {}),
   ),
   fantasyShowAll: v.boolean(),
-  fantasyPersistentDisplay: v.boolean(),
   buffPriorityIds: numberArraySchema,
   buffAlerts: buffAlertMapSchema,
   overlayPositions: monsterOverlayPositionsSchema,
@@ -426,6 +427,7 @@ const liveGeneralSchema = v.object({
   showOthersAbilityScore: v.optional(v.boolean(), true),
   showYourSeasonStrength: v.optional(v.boolean(), false),
   showOthersSeasonStrength: v.optional(v.boolean(), false),
+  showFantasyCastIcons: v.optional(v.boolean(), false),
   relativeToTopDPSPlayer: v.optional(v.boolean(), true),
   relativeToTopDPSSkill: v.optional(v.boolean(), true),
   relativeToTopHealPlayer: v.optional(v.boolean(), true),

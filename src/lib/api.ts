@@ -130,6 +130,8 @@ export type BuffUpdateState = {
   layer: number;
   durationMs: number;
   createTimeMs: number;
+  /** Remodel level (0-5 tier) of the fantasy source that applied this buff, if known. */
+  sourceRemodelLevel: number | null;
 };
 
 export type BuffUpdatePayload = {
@@ -560,15 +562,25 @@ export const optimizeLatestModules = (
 // `#[tauri::command]` return type in this project's specta setup.
 
 export type VoiceModelDownloadProgressPayload =
-  | { kind: "fileStart"; name: string; totalBytes: number }
+  | {
+      kind: "fileStart";
+      name: string;
+      totalBytes: number;
+      source: "huggingFace" | "hfMirror";
+    }
   | {
       kind: "fileProgress";
       name: string;
       downloadedBytes: number;
       totalBytes: number;
+      source: "huggingFace" | "hfMirror";
     }
-  | { kind: "fileVerifying"; name: string }
-  | { kind: "fileDone"; name: string }
+  | {
+      kind: "fileVerifying";
+      name: string;
+      source: "huggingFace" | "hfMirror";
+    }
+  | { kind: "fileDone"; name: string; source: "huggingFace" | "hfMirror" }
   | { kind: "allDone"; modelVersion: string }
   | { kind: "error"; error: string }
   | { kind: "cancelled" };

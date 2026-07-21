@@ -1,47 +1,62 @@
-# Changelog v0.1.9
+# Changelog v0.2.0
 
 ## Changes
 
-### DPS
+### Voice Announcements (New)
 
-- Moved language selector to the bottom-left corner of the main window
-- Toggle window button now reflects whether the window is minimized
-- Reset Windows now also resets other overlay window positions
+- Added offline voice announcements: after installing the model you can clone a voice, maintain a phrase library, and play pre-generated audio on trigger
+- The voice model is based on Qwen3-TTS 0.6B and only Q8_0 / F16 quantized GGUF is supported; the Q8_0 build is downloaded in one click from the Models & Voices page by default (mirror sources supported), or a converted model can be imported manually
+- Prerequisites for generating audio: zero-shot cloning needs a 5-10 second clean vocal reference of a single speaker without background music; alternatively, fine-tune a dedicated model with your own voice data (based on Qwen3-TTS 0.6B CustomVoice, exported as GGUF and referenced, with a higher quality ceiling)
+- Voice bindings can be configured inline in Buff Monitor, Monster Buffs, Custom Counters, Boss DBM, and Dungeon Mechanics
+- The announcement overview page aggregates all bindings and can generate missing audio in one click
+- Supports CPU / Vulkan acceleration and playback queue strategies (drop low priority / interrupt with high priority)
+- Custom "on apply / on expire" text for Buffs / Monster Buffs supports the `${阶数}` (or `${remodelLevel}`) placeholder, generating audio on demand for Fantasy remodel levels 0-5
+- Phrase library supports one-click cleanup of unreferenced phrases
+- See the [Voice Announcement Guide](https://github.com/fudiyangjin/resonance-logs-cn/blob/main/doc/en-US/features/voice/README.md) for usage
+
+### Loadouts
+
+- Improved Loadout capabilities: combine skill monitor, monster monitor, and DPS sub-profiles, switching the whole setup in one click
+- DPS settings were split out and brought under loadout control, and can be exported and shared with the loadout
+- Added built-in class presets for Radiant Shield, Recovery, Block, Earthfort, Smite, and Concerto; presets can be selected on first launch for a quick start
+- Loadouts can be imported / exported
+
+### DPS / History
+
+- Death replay now shows buff snapshots of hit participants @Sanheiii
+- The live view now shows the character's most recently cast Fantasy (enable via DPS Meter → Settings → Live → Show Fantasy Icons)
+- Unified background element settings and tooltip styles
 
 ### Live Monitor
 
-- Buff search now supports lookup by buff ID @dilone
-- Added optional black overlay per functional area, off by default
-- Added setting to control font shadow
-- Custom font settings now also apply to the live monitor overlay (DPS Settings → Theme → General → Custom Font → Apply to Overlay)
-- Added Smite resource tracking; extended 2202251 as a special buff display; skill availability now links to corresponding resource energy
-- Toggle window button now reflects whether the window is minimized
+- Custom buff icons are supported (set an image for any buff)
+- Buff Monitor supports voice announcements (on apply / on expire / N seconds in advance, etc.)
+- When the source Fantasy remodel level of a buff can be resolved, the overlay shows the buff name as "Name | Level n"
 
 ### Monster Monitor
 
-- Added N20 Tina Attack Down event CD
-- Added toughness bar display; like monster buffs and aggro, shows the current main target (Monster Monitor → Toughness Bar)
-- Added optional black overlay per functional area, off by default
-- Added setting to control font shadow
-- Custom font settings now also apply to the monster monitor overlay (DPS Settings → Theme → General → Custom Font → Apply to Overlay)
-- Boss DBM now supports skill rename settings
-- Toggle window button now reflects whether the window is minimized
+- Boss DBM and Monster Buffs support voice announcements
+- Adjusted buff name documentation
 
 ### Dungeon Mechanics
 
-- Adjusted Sea-Ringed Reef and Tower maps
-- Wave width now matches actual attack range, with pre-hit prediction display (red for danger, green for safe)
-- Entity size on the minimap is now configurable
-- Custom font settings now also apply to the dungeon mechanics overlay (DPS Settings → Theme → General → Custom Font → Apply to Overlay)
-- Toggle window button now reflects whether the window is minimized
+- Mechanics support voice announcement bindings (configurable within each supported map)
+- Death marker style is customizable (color, opacity, × mark)
+- The mechanics voice announcement configuration section is collapsed by default
+
+### Data & Localization
+
+- Live server 1.2.43804.0 data update @Yozora_Hoshi
+- Supplemented Japanese / English data and completed Fantasy skills
 
 ## Notes
 
 ### Compatibility
 
-- If you used 0.0.2 or 0.0.3, first launch on 0.0.4-0.1.9 requires deleting `resonance-logs-cn.db` under `%LOCALAPPDATA%\resonance-logs-cn` and restarting
+- If you used 0.0.2 or 0.0.3, first launch on 0.0.4-0.2.0 requires deleting `resonance-logs-cn.db` under `%LOCALAPPDATA%\resonance-logs-cn` and restarting
 - 0.1.5 changed instance storage keys from uid to uuid and refactored packet capture; report logs if issues occur
 - Some factors added in 0.1.5 were not fully self-tested; please report abnormal behavior
+- Voice announcements require a separate model download; generating phrases for the first time may take a while, but playback after generation no longer loads the model
 
 ### Important
 

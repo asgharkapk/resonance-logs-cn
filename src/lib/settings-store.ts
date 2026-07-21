@@ -269,6 +269,7 @@ export type VoiceQueuePolicySetting =
 
 export type VoiceGenerationBackendSetting = "auto" | "cpu" | "vulkan";
 export type VoiceSourceSetting = "clone" | "fineTuned";
+export type VoiceModelDownloadSource = "auto" | "huggingFace" | "hfMirror";
 
 export type VoicePhraseSetting = {
   id: string;
@@ -285,6 +286,7 @@ export type VoiceSettingsConfig = {
   selectedProfileId: string | null;
   selectedSource: VoiceSourceSetting;
   generationBackend: VoiceGenerationBackendSetting;
+  modelDownloadSource: VoiceModelDownloadSource;
 };
 
 export function createDefaultVoiceSettings(): VoiceSettingsConfig {
@@ -296,6 +298,7 @@ export function createDefaultVoiceSettings(): VoiceSettingsConfig {
     selectedProfileId: null,
     selectedSource: "clone",
     generationBackend: "auto",
+    modelDownloadSource: "auto",
   };
 }
 
@@ -314,10 +317,34 @@ export function createDefaultVoicePhraseBinding(): VoicePhraseBinding {
   return { source: "auto" };
 }
 
+export const MIN_VOICE_PRIORITY = 0;
+export const MAX_VOICE_PRIORITY = 255;
+
+export const VOICE_PRIORITY_TIERS = [
+  { id: "default", value: undefined },
+  { id: "low", value: 50 },
+  { id: "medium", value: 100 },
+  { id: "high", value: 150 },
+  { id: "urgent", value: 200 },
+] as const;
+
+/** Converts persisted/user-provided values to the u8 range expected by Rust. */
+export function resolveVoicePriority(priority: number | undefined): number {
+  if (priority === undefined || !Number.isFinite(priority)) {
+    return MIN_VOICE_PRIORITY;
+  }
+  return Math.min(
+    MAX_VOICE_PRIORITY,
+    Math.max(MIN_VOICE_PRIORITY, Math.round(priority)),
+  );
+}
+
 /** A single trigger (e.g. "buff gained") toggled on/off with its phrase. */
 export type VoiceEventConfig = {
   enabled: boolean;
   phrase: VoicePhraseBinding;
+  /** 0 = lowest, 255 = highest. Missing values use the lowest priority. */
+  priority?: number | undefined;
 };
 
 /** Like `VoiceEventConfig`, but for triggers that fire ahead of an expiry. */
@@ -935,7 +962,6 @@ export type MonsterMonitorConfig = {
    */
   monsterBuffVoiceConfigs?: BuffVoiceConfigMap;
   fantasyShowAll: boolean;
-  fantasyPersistentDisplay: boolean;
   buffPriorityIds: number[];
   buffAliases: BuffAliasMap;
   buffAlerts: BuffAlertMap;
@@ -1457,7 +1483,6 @@ export function createDefaultMonsterMonitorConfig(): MonsterMonitorConfig {
     dbmVoiceConfigs: {},
     monsterBuffVoiceConfigs: {},
     fantasyShowAll: false,
-    fantasyPersistentDisplay: false,
     buffPriorityIds: [],
     buffAliases: {},
     buffAlerts: {},
@@ -1531,7 +1556,6 @@ export const MONSTER_PROFILE_FIELD_KEYS = [
   "dbmVoiceConfigs",
   "monsterBuffVoiceConfigs",
   "fantasyShowAll",
-  "fantasyPersistentDisplay",
   "buffPriorityIds",
   "buffAlerts",
   "overlayPositions",
@@ -1848,6 +1872,7 @@ const DEFAULT_GENERAL_SETTINGS = {
   showOthersAbilityScore: true,
   showYourSeasonStrength: false,
   showOthersSeasonStrength: false,
+  showFantasyCastIcons: false,
   relativeToTopDPSPlayer: true,
   relativeToTopDPSSkill: true,
   relativeToTopHealPlayer: true,

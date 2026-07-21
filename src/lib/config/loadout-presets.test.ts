@@ -34,23 +34,53 @@ function resetWithStarterLoadout(): void {
 describe("built-in loadout presets", () => {
   beforeEach(resetWithStarterLoadout);
 
-  it("exposes only the complete radiant shield preset", () => {
+  it("exposes the six built-in class presets", () => {
     const presets = buildLoadoutPresets("zh-CN");
-    expect(presets).toHaveLength(1);
+    expect(presets.map((preset) => [preset.id, preset.name])).toEqual([
+      ["radiant-shield", "光盾"],
+      ["recovery", "防盾"],
+      ["block", "格挡"],
+      ["earthfort", "岩盾"],
+      ["smite", "惩击"],
+      ["concerto", "协奏"],
+    ]);
+    for (const preset of presets) {
+      expect(preset.subtitle).not.toHaveLength(0);
+      expect(preset.iconPath).toMatch(/^\/images\/class_specs\/\w+\.png$/);
+      expect(preset.palette).toHaveLength(3);
+    }
 
-    const preset = presets[0]!;
-    expect(preset).toMatchObject({
-      id: "radiant-shield",
-      name: "光盾",
+    const radiantShield = presets[0]!;
+    expect(radiantShield).toMatchObject({
       subtitle: "神盾骑士 · 光盾专精",
       iconPath: "/images/class_specs/Shield.png",
     });
-    expect(preset.data.skillProfile.selectedClass).toBe("wind_knight");
-    expect(preset.data.skillProfile.monitoredBuffIds).toContain(2206011);
-    expect(preset.data.monsterProfile.monitoredBuffIds).toContain(501712);
-    expect(preset.data.liveProfile.appearance.themeColors.primary).toBe(
+    expect(radiantShield.data.skillProfile.selectedClass).toBe("wind_knight");
+    expect(radiantShield.data.skillProfile.monitoredBuffIds).toContain(2206011);
+    expect(radiantShield.data.monsterProfile.monitoredBuffIds).toContain(
+      501712,
+    );
+    expect(radiantShield.data.liveProfile.appearance.themeColors.primary).toBe(
       "oklch(0.75 0.09 150)",
     );
+
+    const smite = presets.find((preset) => preset.id === "smite")!;
+    expect(smite.data.skillProfile.selectedClass).toBe("verdant_oracle");
+  });
+
+  it("never ships all-white panel styles in any preset", () => {
+    for (const preset of buildLoadoutPresets("zh-CN")) {
+      for (const group of preset.data.skillProfile.customPanelGroups ?? []) {
+        expect(
+          group.style?.nameColor?.toLowerCase(),
+          `${preset.id}/${group.id} nameColor`,
+        ).not.toBe("#ffffff");
+        expect(
+          group.style?.progressColor?.toLowerCase(),
+          `${preset.id}/${group.id} progressColor`,
+        ).not.toBe("#ffffff");
+      }
+    }
   });
 
   it("uses semantic colors instead of the all-white defaults", () => {

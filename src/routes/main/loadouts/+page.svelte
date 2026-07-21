@@ -383,7 +383,7 @@
         {t("loadout.page.presetsDescription")}
       </p>
     </div>
-    <div class="max-w-md p-4">
+    <div class="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
       {#each presets as preset (preset.id)}
         <LoadoutPresetCard
           {preset}
