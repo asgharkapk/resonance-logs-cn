@@ -2,12 +2,15 @@
   import { getClassIcon, tooltip } from "$lib/utils.svelte";
   import { SETTINGS, settings } from "$lib/settings-store";
   import type { DeathRecord } from "$lib/api";
-  import getDisplayName, { normalizeNameDisplaySetting } from "$lib/name-display";
+  import getDisplayName, {
+    normalizeNameDisplaySetting,
+  } from "$lib/name-display";
   import { formatClassSpecLabel } from "$lib/class-labels";
   import AbbreviatedNumber from "$lib/components/abbreviated-number.svelte";
   import PercentFormat from "$lib/components/percent-format.svelte";
   import TableRowGlow from "$lib/components/table-row-glow.svelte";
   import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
+  import { ipcCompare, ipcNumber, ipcRatio, ipcSum } from "$lib/ipc-decimal";
 
   export type DeathPlayerEntry = {
     entityUuid: string;
@@ -73,6 +76,7 @@
     entry: DeathPlayerEntry;
     deathCount: number;
     totalTaken: number;
+    totalTakenExact: bigint;
     latestMs: number;
   };
 
@@ -80,19 +84,20 @@
     entries
       .filter((e) => e.deaths.length > 0)
       .map((entry) => {
-        let totalTaken = 0;
+        let totalTakenExact = 0n;
         let latest = 0;
         for (const death of entry.deaths) {
-          const t = Number(death.deathTimestampMs);
+          const t = ipcNumber(death.deathTimestampMs);
           if (t > latest) latest = t;
-          for (const dmg of death.recentDamages ?? []) {
-            totalTaken += Number(dmg.value);
-          }
+          totalTakenExact += ipcSum(
+            (death.recentDamages ?? []).map((damage) => damage.value),
+          );
         }
         return {
           entry,
           deathCount: entry.deaths.length,
-          totalTaken,
+          totalTaken: ipcNumber(totalTakenExact),
+          totalTakenExact,
           latestMs: latest,
         };
       }),
@@ -103,7 +108,7 @@
     [...aggregatedRows].sort((a, b) => {
       if (compactMode && variant === "live") {
         // Mirror DPS compact: sort by primary metric (totalTaken) desc.
-        return b.totalTaken - a.totalTaken;
+        return ipcCompare(b.totalTakenExact, a.totalTakenExact);
       }
       const diff = b.deathCount - a.deathCount;
       if (diff !== 0) return diff;
@@ -112,10 +117,14 @@
   );
 
   const maxTotalTaken = $derived(
-    sortedRows.reduce((max, r) => (r.totalTaken > max ? r.totalTaken : max), 0),
+    sortedRows.reduce(
+      (max, row) =>
+        ipcCompare(row.totalTakenExact, max) > 0 ? row.totalTakenExact : max,
+      0n,
+    ),
   );
   const totalTakenAcrossAll = $derived(
-    sortedRows.reduce((sum, r) => sum + r.totalTaken, 0),
+    ipcSum(sortedRows.map((row) => row.totalTakenExact)),
   );
 
   function formatAbsoluteTime(ms: number): string {
@@ -129,7 +138,8 @@
   }
 
   function resolveDisplayName(entry: DeathPlayerEntry) {
-    const isLocal = localPlayerUuid != null && entry.entityUuid === localPlayerUuid;
+    const isLocal =
+      localPlayerUuid != null && entry.entityUuid === localPlayerUuid;
     return {
       isLocal,
       displayName:
@@ -157,14 +167,12 @@
     };
   }
 
-  function pctOfTotal(totalTaken: number): number {
-    if (totalTakenAcrossAll <= 0) return 0;
-    return (totalTaken / totalTakenAcrossAll) * 100;
+  function pctOfTotal(totalTaken: bigint): number {
+    return ipcRatio(totalTaken, totalTakenAcrossAll, 100);
   }
 
-  function glowPercentage(totalTaken: number): number {
-    if (maxTotalTaken <= 0) return 0;
-    return (totalTaken / maxTotalTaken) * 100;
+  function glowPercentage(totalTaken: bigint): number {
+    return ipcRatio(totalTaken, maxTotalTaken, 100);
   }
 </script>
 
@@ -258,7 +266,10 @@
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
               >
-                <PercentFormat val={pctOfTotal(row.totalTaken)} fractionDigits={0} />
+                <PercentFormat
+                  val={pctOfTotal(row.totalTakenExact)}
+                  fractionDigits={0}
+                />
               </td>
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
@@ -267,7 +278,7 @@
               <TableRowGlow
                 className={info.className}
                 classSpecName={row.entry.classSpecName}
-                percentage={glowPercentage(row.totalTaken)}
+                percentage={glowPercentage(row.totalTakenExact)}
               />
             </tr>
           {/each}
@@ -366,8 +377,7 @@
                           </span>
                           <span class="opacity-70">)</span>
                         {:else}
-                          {formatNumber(row.totalTaken)}<span
-                            class="opacity-70"
+                          {formatNumber(row.totalTaken)}<span class="opacity-70"
                             >({t("components.deathReplay.deathCountText", {
                               count: formatNumber(row.deathCount),
                             })})</span
@@ -376,7 +386,7 @@
                       </span>
                       <span class="w-12 text-right">
                         <PercentFormat
-                          val={pctOfTotal(row.totalTaken)}
+                          val={pctOfTotal(row.totalTakenExact)}
                           fractionDigits={0}
                           suffixFontSize={tableSettings.abbreviatedFontSize}
                           suffixColor={customThemeColors.tableAbbreviatedColor}
@@ -388,7 +398,7 @@
                 <TableRowGlow
                   className={info.className}
                   classSpecName={row.entry.classSpecName}
-                  percentage={glowPercentage(row.totalTaken)}
+                  percentage={glowPercentage(row.totalTakenExact)}
                 />
               </tr>
             {:else}
@@ -445,7 +455,7 @@
                   style="color: {customThemeColors.tableTextColor};"
                 >
                   <PercentFormat
-                    val={pctOfTotal(row.totalTaken)}
+                    val={pctOfTotal(row.totalTakenExact)}
                     fractionDigits={0}
                     suffixFontSize={tableSettings.abbreviatedFontSize}
                     suffixColor={customThemeColors.tableAbbreviatedColor}
@@ -454,7 +464,7 @@
                 <TableRowGlow
                   className={info.className}
                   classSpecName={row.entry.classSpecName}
-                  percentage={glowPercentage(row.totalTaken)}
+                  percentage={glowPercentage(row.totalTakenExact)}
                 />
               </tr>
             {/if}

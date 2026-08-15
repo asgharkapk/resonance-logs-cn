@@ -5,7 +5,7 @@ pub mod game_connections;
 pub mod npcap;
 pub mod opcodes;
 pub mod packet_capture;
-mod packet_process;
+pub(crate) mod packet_process;
 pub mod parser;
 pub mod reassembler;
 pub mod utils;

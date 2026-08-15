@@ -1,6 +1,6 @@
 {
   "name": "resonance-logs-cn",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
   "type": "module",
   "scripts": {
@@ -33,6 +33,7 @@
     "@tauri-apps/plugin-store": "^2.4.3",
     "@tauri-store/svelte": "^3.1.0",
     "colorjs.io": "^0.5.2",
+    "echarts": "^6.1.0",
     "html2canvas-pro": "^1.5.11",
     "marked": "^17.0.0",
     "svelte-sonner": "^1.0.5",

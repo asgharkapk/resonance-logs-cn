@@ -111,9 +111,9 @@ describe("monitoring settings reconciliation", () => {
   });
 
   it("defaults fantasy cast icons off and preserves an explicit opt-in", () => {
-    expect(createDefaultLiveMeterProfileData().general.showFantasyCastIcons).toBe(
-      false,
-    );
+    expect(
+      createDefaultLiveMeterProfileData().general.showFantasyCastIcons,
+    ).toBe(false);
 
     const state = createDefaultMonitoringSettingsState();
     const legacy = state.liveMeter.profiles[0]!;
@@ -143,6 +143,21 @@ describe("monitoring settings reconciliation", () => {
         (profile) => profile.general.showFantasyCastIcons,
       ),
     ).toEqual([false, true, false]);
+  });
+
+  it("backfills the overlay text-style toggles onto legacy skill profiles", () => {
+    const state = createDefaultMonitoringSettingsState();
+    const legacy = state.skillMonitor.profiles[0]! as unknown as Record<
+      string,
+      unknown
+    >;
+    const overlaySizes = legacy["overlaySizes"] as Record<string, unknown>;
+    delete overlaySizes["panelAttrTextStyle"];
+
+    const repaired = reconcileMonitoringState(state);
+    expect(
+      repaired.skillMonitor.profiles[0]!.overlaySizes.panelAttrTextStyle,
+    ).toMatchObject({ textShadowEnabled: true, backgroundEnabled: false });
   });
 
   it("materializes the active loadout monster profile into the mirror", () => {

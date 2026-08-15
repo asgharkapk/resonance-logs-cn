@@ -5,10 +5,7 @@
     SETTINGS,
     type BuffAliasMap,
   } from "$lib/settings-store";
-  import {
-    ensureBuffIconOverrides,
-    resolveBuffIconSrc,
-  } from "$lib/buff-icons";
+  import { ensureBuffIconOverrides, resolveBuffIconSrc } from "$lib/buff-icons";
   import { buffIconDirUrlPrefix } from "$lib/buff-icon-dir.svelte";
   import type {
     DamageSnapshot,
@@ -27,6 +24,7 @@
   import TableRowGlow from "$lib/components/table-row-glow.svelte";
   import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
   import { uidFromEntityUuid } from "$lib/entity-id";
+  import { ipcBigInt, ipcNumber, ipcRatio } from "$lib/ipc-decimal";
 
   let {
     playerName,
@@ -123,14 +121,15 @@
   });
   const buffSnapshotCards = $derived(participantDisplay.cards);
   const hasBuffSnapshots = $derived(
-    buffSnapshotCards.length > 1 || (buffSnapshotCards[0]?.buffs.length ?? 0) > 0,
+    buffSnapshotCards.length > 1 ||
+      (buffSnapshotCards[0]?.buffs.length ?? 0) > 0,
   );
 
   const maxValue = $derived.by(() => {
-    let maxV = 0;
-    for (const d of record.recentDamages ?? []) {
-      const v = Number(d.value);
-      if (v > maxV) maxV = v;
+    let maxV = 0n;
+    for (const damage of record.recentDamages ?? []) {
+      const value = ipcBigInt(damage.value);
+      if (value > maxV) maxV = value;
     }
     return maxV;
   });
@@ -147,7 +146,7 @@
 
   function formatRelativeSeconds(snapshot: DamageSnapshot): string {
     const deltaMs =
-      Number(snapshot.timestampMs) - Number(record.deathTimestampMs);
+      ipcNumber(snapshot.timestampMs) - ipcNumber(record.deathTimestampMs);
     const seconds = deltaMs / 1000;
     if (seconds >= 0) return t("components.deathReplay.relativeSeconds.zero");
     return t("components.deathReplay.relativeSeconds.value", {
@@ -191,7 +190,7 @@
   }
 
   function resolveSkillName(snapshot: DamageSnapshot): string {
-    const skillKey = Number(snapshot.skillKey);
+    const skillKey = ipcNumber(snapshot.skillKey);
     const base = lookupDamageIdName(skillKey);
     const unknown = t("game.damage.unknown", { id: skillKey });
     if (base && base !== unknown) return base;
@@ -213,9 +212,8 @@
     })}`;
   }
 
-  function glowPercentage(value: number): number {
-    if (maxValue <= 0) return 0;
-    return (value / maxValue) * 100;
+  function glowPercentage(value: unknown): number {
+    return ipcRatio(value, maxValue, 100);
   }
 
   function resolveBuffName(buff: DeathBuffSnapshot): string {
@@ -281,9 +279,7 @@
 </script>
 
 {#snippet buffSnapshotCard(title: string, buffs: DeathBuffSnapshot[])}
-  <section
-    class="min-w-0 rounded border border-border/50 p-2"
-  >
+  <section class="min-w-0 rounded border border-border/50 p-2">
     <div class="mb-2 truncate text-xs font-medium text-foreground">
       {title}
     </div>
@@ -365,7 +361,7 @@
       <h2 class="text-xl font-semibold text-foreground">{playerName}</h2>
       <span class="text-sm text-neutral-400 tabular-nums">
         {t("components.deathReplay.deathAt", {
-          time: formatAbsoluteTime(Number(record.deathTimestampMs)),
+          time: formatAbsoluteTime(ipcNumber(record.deathTimestampMs)),
         })}
       </span>
       <span class="text-sm text-neutral-400">
@@ -416,7 +412,7 @@
           </tr>
         {:else}
           {#each rows as dmg, idx (idx)}
-            {@const pct = glowPercentage(Number(dmg.value))}
+            {@const pct = glowPercentage(dmg.value)}
             <tr
               class="relative border-t border-border/40 hover:bg-muted/60 transition-colors"
             >
@@ -436,16 +432,16 @@
               >
               <td
                 class="px-3 py-3 text-right text-sm text-muted-foreground relative z-10 tabular-nums"
-                {@attach tooltip(() => formatNumber(Number(dmg.value)))}
+                {@attach tooltip(() => formatNumber(ipcNumber(dmg.value)))}
               >
                 {#if shortenTps}
                   <AbbreviatedNumber
-                    num={Number(dmg.value)}
+                    num={ipcNumber(dmg.value)}
                     decimalPlaces={abbreviatedDecimalPlaces}
                     {abbreviationStyle}
                   />
                 {:else}
-                  {formatNumber(Number(dmg.value))}
+                  {formatNumber(ipcNumber(dmg.value))}
                 {/if}
               </td>
               <td
@@ -483,7 +479,7 @@
           </tr>
         {:else}
           {#each rows as dmg, idx (idx)}
-            {@const pct = glowPercentage(Number(dmg.value))}
+            {@const pct = glowPercentage(dmg.value)}
             <tr
               class="relative hover:bg-muted/60 transition-colors"
               style="height: {tableSettings.skillRowHeight}px; font-size: {tableSettings.skillFontSize}px;"
@@ -514,18 +510,18 @@
                   </span>
                   <span
                     class="tabular-nums font-medium shrink-0"
-                    {@attach tooltip(() => formatNumber(Number(dmg.value)))}
+                    {@attach tooltip(() => formatNumber(ipcNumber(dmg.value)))}
                   >
                     {#if shortenTps}
                       <AbbreviatedNumber
-                        num={Number(dmg.value)}
+                        num={ipcNumber(dmg.value)}
                         decimalPlaces={abbreviatedDecimalPlaces}
                         {abbreviationStyle}
                         suffixFontSize={tableSettings.skillAbbreviatedFontSize}
                         suffixColor={customThemeColors.tableAbbreviatedColor}
                       />
                     {:else}
-                      {formatNumber(Number(dmg.value))}
+                      {formatNumber(ipcNumber(dmg.value))}
                     {/if}
                   </span>
                 </div>

@@ -1,5 +1,6 @@
 use std::env;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
 
 fn main() {
     // Read version from tauri.conf.json and expose as APP_VERSION environment variable
@@ -271,37 +272,107 @@ fn compile_cuda(cpp_dir: &Path, cccl_root: Option<&Path>) -> Option<PathBuf> {
 
     let cuda_architectures =
         env::var("CMAKE_CUDA_ARCHITECTURES").unwrap_or_else(|_| "75;86;89;120".to_string());
-    let build_result = std::panic::catch_unwind(|| {
-        let mut config = cmake::Config::new(cpp_dir);
-        config
-            // cxx-build is configured with /MD and optimization flags in every Cargo profile,
-            // so the CUDA static library must use a matching MSVC runtime configuration.
-            .profile("Release")
-            .define("CMAKE_CUDA_ARCHITECTURES", cuda_architectures.as_str())
-            .define("CCCL_ROOT", cccl_root);
-        config.build()
-    });
+    let install_dir = PathBuf::from(env::var("OUT_DIR").expect("missing OUT_DIR"));
+    let build_dir = install_dir.join("build");
 
-    let dst = match build_result {
-        Ok(dst) => dst,
-        Err(_) => {
-            println!("cargo:warning=CMake CUDA build failed, falling back to CPU version");
-            return None;
-        }
-    };
+    if let Err(error) = std::fs::create_dir_all(&build_dir) {
+        println!(
+            "cargo:warning=CMake CUDA build failed, falling back to CPU version: cannot create {}: {error}",
+            build_dir.display()
+        );
+        return None;
+    }
 
-    for lib_dir in [dst.join("lib")] {
-        if lib_dir.exists() {
-            println!("cargo:warning=CUDA compilation successful");
-            return Some(lib_dir);
-        }
+    let mut configure = Command::new("cmake");
+    configure
+        .arg("-S")
+        .arg(cpp_dir)
+        .arg("-B")
+        .arg(&build_dir)
+        .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install_dir.display()))
+        .arg("-DCMAKE_BUILD_TYPE=Release")
+        .arg(format!("-DCMAKE_CUDA_ARCHITECTURES={cuda_architectures}"))
+        .arg(format!("-DCCCL_ROOT={}", cccl_root.display()));
+
+    if !run_cmake_step(configure, "configure") {
+        return None;
+    }
+
+    // cxx-build is configured with /MD and optimization flags in every Cargo profile,
+    // so the CUDA static library must use a matching MSVC runtime configuration.
+    let mut build = Command::new("cmake");
+    build
+        .arg("--build")
+        .arg(&build_dir)
+        .arg("--config")
+        .arg("Release")
+        .arg("--target")
+        .arg("install");
+
+    if !run_cmake_step(build, "build") {
+        return None;
+    }
+
+    let lib_dir = install_dir.join("lib");
+    if lib_dir.exists() {
+        println!("cargo:warning=CUDA compilation successful");
+        return Some(lib_dir);
     }
 
     println!(
         "cargo:warning=CMake CUDA build completed but no library directory was found under {}",
-        dst.display()
+        install_dir.display()
     );
     None
+}
+
+fn run_cmake_step(mut command: Command, step: &str) -> bool {
+    let output = match command.output() {
+        Ok(output) => output,
+        Err(error) => {
+            println!(
+                "cargo:warning=CMake CUDA {step} could not be started, falling back to CPU version: {error}"
+            );
+            return false;
+        }
+    };
+
+    if output.status.success() {
+        return true;
+    }
+
+    println!(
+        "cargo:warning=CMake CUDA {step} failed ({}), falling back to CPU version",
+        output.status
+    );
+    for line in cmake_failure_lines(&output) {
+        println!("cargo:warning=  {line}");
+    }
+
+    false
+}
+
+/// `cargo:warning=` only renders single lines, so the captured cmake output is
+/// flattened and trimmed to the tail where the actual diagnostics live.
+fn cmake_failure_lines(output: &Output) -> Vec<String> {
+    const MAX_LINES: usize = 40;
+
+    let mut lines: Vec<String> = [&output.stdout, &output.stderr]
+        .into_iter()
+        .flat_map(|stream| {
+            String::from_utf8_lossy(stream)
+                .lines()
+                .map(|line| line.trim().to_string())
+                .collect::<Vec<_>>()
+        })
+        .filter(|line| !line.is_empty())
+        .collect();
+
+    if lines.len() > MAX_LINES {
+        lines.drain(..lines.len() - MAX_LINES);
+    }
+
+    lines
 }
 
 fn emit_cuda_runtime_links() {

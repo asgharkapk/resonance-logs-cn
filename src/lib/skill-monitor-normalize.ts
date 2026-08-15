@@ -10,6 +10,7 @@ import {
   type TextBuffPanelStyle,
   createDefaultCustomPanelStyle,
   createDefaultOverlayTextStyle,
+  createDefaultSkillMonitorProfile,
   ensureOverlayTextStyle,
 } from "$lib/settings-store";
 
@@ -179,7 +180,11 @@ export function normalizeCustomPanelStyle(
     nameColor: style?.nameColor ?? base.nameColor,
     valueColor: style?.valueColor ?? base.valueColor,
     progressColor: style?.progressColor ?? base.progressColor,
-    progressOpacity: clampDecimal(style?.progressOpacity ?? base.progressOpacity, 0, 1),
+    progressOpacity: clampDecimal(
+      style?.progressOpacity ?? base.progressOpacity,
+      0,
+      1,
+    ),
     ...ensureOverlayTextStyle(style),
   };
 }
@@ -238,4 +243,66 @@ export function ensureShieldDetailStyle(
     healShieldColor: current?.healShieldColor ?? "#fde68a",
     ...ensureOverlayTextStyle(current),
   };
+}
+
+/**
+ * Fully normalizes a skill-monitor profile by backfilling every field that
+ * was added after some profiles were first created (overlay text-style
+ * toggles, panel-attr text style, etc.) with its default value.
+ *
+ * This is what makes exports and persisted storage converge on the current
+ * schema instead of silently carrying stale gaps forever: the runtime reads
+ * (`ensure*` above) already tolerate missing fields, but never write the
+ * backfilled value back, so without this the gaps live on disk (and in any
+ * exported loadout) indefinitely. Idempotent: normalizing an
+ * already-normalized profile returns an equivalent value.
+ */
+export function normalizeSkillProfile(
+  profile: SkillMonitorProfile,
+): SkillMonitorProfile {
+  const defaults = createDefaultSkillMonitorProfile(
+    profile.name,
+    profile.selectedClass,
+  );
+  const monitoredPanelAttrs = ensurePanelAttrs(profile);
+  const normalized: SkillMonitorProfile = {
+    ...defaults,
+    ...profile,
+    id: profile.id,
+    monitoredPanelAttrs,
+    panelAreaRowOrder: ensurePanelAreaRowOrder(profile, monitoredPanelAttrs),
+    overlayPositions: {
+      ...defaults.overlayPositions,
+      ...profile.overlayPositions,
+    },
+    overlayVisibility: {
+      ...defaults.overlayVisibility,
+      ...profile.overlayVisibility,
+    },
+    overlaySizes: ensureOverlaySizes(profile),
+    overlayTextStyle: ensureOverlayTextStyle(profile.overlayTextStyle),
+    textBuffPanelStyle: ensureTextBuffPanelStyle(profile),
+    buffGroups: ensureBuffGroups(profile),
+    individualMonitorAllGroup: ensureIndividualMonitorAllGroup(profile),
+    customPanelGroups: (profile.customPanelGroups ?? []).map((group) => ({
+      ...group,
+      style: normalizeCustomPanelStyle(group.style),
+    })),
+  };
+  // `customPanelStyle` and `shieldDetailStyle` are optional/legacy fields
+  // that a brand-new profile never sets (see the `@deprecated` note on
+  // `customPanelStyle`'s type). Only normalize their fields when the
+  // profile already carries one — manufacturing it from nothing would
+  // permanently graft a legacy field onto profiles that never had it,
+  // which would in turn break the "is this still an untouched default
+  // profile" check used for first-run UX.
+  if (profile.customPanelStyle) {
+    normalized.customPanelStyle = normalizeCustomPanelStyle(
+      profile.customPanelStyle,
+    );
+  }
+  if (profile.shieldDetailStyle) {
+    normalized.shieldDetailStyle = ensureShieldDetailStyle(profile);
+  }
+  return normalized;
 }

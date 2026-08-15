@@ -9,8 +9,7 @@ pub mod generator;
 pub mod model_manager;
 pub mod models;
 pub mod player;
-pub mod rules;
-pub mod scheduler;
+pub mod presets;
 pub mod types;
 
 use std::collections::HashMap;
@@ -72,6 +71,10 @@ pub enum ProfileSelection {
 
 pub enum VoiceSourceSelection {
     Clone(ProfileSelection),
+    /// Auto-selects the bundled reference voice for a UI locale (see
+    /// `voice::presets`), extracting-and-caching a clone profile from it
+    /// on first use.
+    Preset(presets::VoicePresetLocale),
     FineTuned,
 }
 
@@ -675,11 +678,12 @@ impl VoiceService {
             fine_tuned
                 .as_ref()
                 .map_or(FineTunedVoiceState::NotConfigured, |voice| {
+                    let state_dir = catalog::fine_tuned_dir(&fine_tuned_service.inner.voice_root);
                     fine_tuned_service
                         .inner
                         .fine_tuned_validation
                         .lock()
-                        .inspect(voice)
+                        .inspect(voice, &state_dir)
                 })
         });
         let (engine, model, fine_tuned_voice) =
@@ -717,6 +721,16 @@ impl VoiceService {
         Ok(candidate)
     }
 
+    /// Drops both validation cache layers for the fine-tuned voice. The
+    /// persisted record has to go as well: unlike the official model's
+    /// version-scoped `model_dir`, this is a single shared file, so a record
+    /// left behind would outlive the voice it described. The lock is released
+    /// before the file is touched so the mutex is never held across IO.
+    fn invalidate_fine_tuned_validation(&self) {
+        self.inner.fine_tuned_validation.lock().invalidate();
+        finetuned::clear_persisted_fingerprint(&catalog::fine_tuned_dir(&self.inner.voice_root));
+    }
+
     pub fn set_fine_tuned_voice(
         &self,
         package_path: &Path,
@@ -746,7 +760,7 @@ impl VoiceService {
         }
         catalog.fine_tuned_voice = Some(candidate.clone());
         self.commit_catalog(catalog)?;
-        self.inner.fine_tuned_validation.lock().invalidate();
+        self.invalidate_fine_tuned_validation();
         Ok(candidate)
     }
 
@@ -776,7 +790,7 @@ impl VoiceService {
             mark_fine_tuned_assets_stale(&mut catalog, &previous.model_sha256);
         }
         self.commit_catalog(catalog)?;
-        self.inner.fine_tuned_validation.lock().invalidate();
+        self.invalidate_fine_tuned_validation();
         Ok(())
     }
 
@@ -1091,90 +1105,54 @@ impl VoiceService {
             .ok_or_else(|| VoiceError::Security("base transformer is missing".to_string()))?;
         let tokenizer_path = model_dir.join("qwen3-tts-tokenizer-f16.gguf");
 
-        let (
-            transformer_path,
-            model_sha256,
-            generation_model_version,
-            source_spec,
-            profile_id_for_new,
-            reference_copy,
-            asset_source,
-        ) = match &request.source {
-            VoiceSourceSelection::Clone(ProfileSelection::Existing { profile_id }) => {
-                let catalog = self.inner.catalog.lock();
-                let profile = catalog
-                    .profiles
-                    .iter()
-                    .find(|profile| profile.id == profile_id.as_str())
-                    .ok_or_else(|| {
-                        VoiceError::not_found("voice profile", profile_id.to_string())
-                    })?;
-                if profile.model_version != model_version.as_str()
-                    || profile.model_sha256 != base_model_sha256
-                {
-                    return Err(VoiceError::Incompatible(format!(
-                        "profile {} was created for a different model",
-                        profile_id.as_str()
-                    )));
-                }
-                let q3sp_path =
-                    catalog::profile_q3sp_path(&self.inner.voice_root, profile_id.as_str());
-                if !q3sp_path.is_file() {
-                    return Err(VoiceError::not_found(
-                        "Q3SP profile",
-                        q3sp_path.display().to_string(),
-                    ));
-                }
-                (
-                    base_transformer_path.clone(),
-                    base_model_sha256.clone(),
-                    model_version.as_str().to_string(),
-                    SidecarSourceSpec {
-                        mode: "profile_existing",
-                        reference_wav_path: None,
-                        save_q3sp_path: None,
-                        existing_q3sp_path: Some(q3sp_path.display().to_string()),
-                        speaker_token_id: None,
-                    },
-                    None,
-                    None,
-                    VoiceAssetSource::CloneProfile {
-                        profile_id: profile_id.as_str().to_string(),
-                    },
-                )
-            }
+        let resolved = match &request.source {
+            VoiceSourceSelection::Clone(ProfileSelection::Existing { profile_id }) => self
+                .resolve_existing_clone_source(
+                    profile_id,
+                    &model_version,
+                    &base_model_sha256,
+                    &base_transformer_path,
+                )?,
             VoiceSourceSelection::Clone(ProfileSelection::New(specification)) => {
                 validate_label("profile.name", &specification.name, 120)?;
-                let profile_id = new_id("profile");
-                let destination = catalog::profile_dir(&self.inner.voice_root, &profile_id);
-                std::fs::create_dir_all(catalog::profiles_dir(&self.inner.voice_root))
-                    .map_err(|error| VoiceError::io("create voice profiles directory", error))?;
-                std::fs::create_dir(&destination).map_err(|error| {
-                    VoiceError::io(format!("create {}", destination.display()), error)
-                })?;
-                artifacts.track_profile_directory(destination.clone());
-                let reference_copy = destination.join("reference.wav");
-                audio::validate_and_copy_reference_wav(
+                self.prepare_new_clone_source(
+                    &mut artifacts,
+                    &model_version,
+                    &base_model_sha256,
+                    &base_transformer_path,
                     Path::new(&specification.reference_wav_path),
-                    &reference_copy,
-                )?;
-                (
-                    base_transformer_path.clone(),
-                    base_model_sha256.clone(),
-                    model_version.as_str().to_string(),
-                    SidecarSourceSpec {
-                        mode: "profile_new",
-                        reference_wav_path: Some(reference_copy.display().to_string()),
-                        save_q3sp_path: Some(
-                            destination.join("speaker.q3sp").display().to_string(),
-                        ),
-                        existing_q3sp_path: None,
-                        speaker_token_id: None,
-                    },
-                    Some(profile_id.clone()),
-                    Some(reference_copy),
-                    VoiceAssetSource::CloneProfile { profile_id },
-                )
+                    specification.name.clone(),
+                    specification.keep_reference,
+                    None,
+                )?
+            }
+            VoiceSourceSelection::Preset(locale) => {
+                let tag = presets::current_tag(*locale);
+                let existing_profile_id =
+                    self.find_matching_preset_profile(&tag, &model_version, &base_model_sha256);
+                if let Some(profile_id) = existing_profile_id {
+                    self.resolve_existing_clone_source(
+                        &profile_id,
+                        &model_version,
+                        &base_model_sha256,
+                        &base_transformer_path,
+                    )?
+                } else {
+                    let reference_wav_path =
+                        presets::resolve_audio_path(&self.inner.app_handle, *locale)?;
+                    let display_name = presets::display_name(*locale);
+                    validate_label("profile.name", &display_name, 120)?;
+                    self.prepare_new_clone_source(
+                        &mut artifacts,
+                        &model_version,
+                        &base_model_sha256,
+                        &base_transformer_path,
+                        &reference_wav_path,
+                        display_name,
+                        false,
+                        Some(tag),
+                    )?
+                }
             }
             VoiceSourceSelection::FineTuned => {
                 let voice = self
@@ -1192,27 +1170,36 @@ impl VoiceService {
                         "the configured fine-tuned voice is missing or modified".to_string(),
                     ));
                 }
-                (
-                    PathBuf::from(&voice.transformer_path),
-                    voice.model_sha256.clone(),
-                    format!("fine-tuned-{}", &voice.model_sha256[..16]),
-                    SidecarSourceSpec {
+                ResolvedGenerationSource {
+                    transformer_path: PathBuf::from(&voice.transformer_path),
+                    model_sha256: voice.model_sha256.clone(),
+                    generation_model_version: format!("fine-tuned-{}", &voice.model_sha256[..16]),
+                    source_spec: SidecarSourceSpec {
                         mode: "speaker_token",
                         reference_wav_path: None,
                         save_q3sp_path: None,
                         existing_q3sp_path: None,
                         speaker_token_id: Some(voice.speaker_token_id),
                     },
-                    None,
-                    None,
-                    VoiceAssetSource::FineTuned {
+                    pending_profile: None,
+                    reference_copy: None,
+                    asset_source: VoiceAssetSource::FineTuned {
                         model_sha256: voice.model_sha256,
                         speaker_name: voice.speaker_name,
                         speaker_token_id: voice.speaker_token_id,
                     },
-                )
+                }
             }
         };
+        let ResolvedGenerationSource {
+            transformer_path,
+            model_sha256,
+            generation_model_version,
+            source_spec,
+            pending_profile,
+            reference_copy,
+            asset_source,
+        } = resolved;
 
         let catalog_snapshot = self.inner.catalog.lock().clone();
         let fingerprint_source = match &asset_source {
@@ -1285,7 +1272,7 @@ impl VoiceService {
         );
         let outcome = outcome?;
 
-        if profile_id_for_new.is_some() && outcome.profile_meta.is_none() {
+        if pending_profile.is_some() && outcome.profile_meta.is_none() {
             return Err(VoiceError::Process(
                 "sidecar completed without returning new profile metadata".to_string(),
             ));
@@ -1293,35 +1280,27 @@ impl VoiceService {
 
         let mut catalog = self.inner.catalog.lock().clone();
         let mut committed_asset_ids = Vec::new();
-        if let (Some(profile_id), Some(meta)) = (&profile_id_for_new, &outcome.profile_meta) {
+        if let (Some(pending), Some(meta)) = (&pending_profile, &outcome.profile_meta) {
             if meta.model_sha256 != model_sha256 {
                 return Err(VoiceError::Incompatible(
                     "sidecar profile fingerprint does not match the installed model".to_string(),
                 ));
             }
-            let keep_reference = matches!(
-                &request.source,
-                VoiceSourceSelection::Clone(ProfileSelection::New(specification))
-                    if specification.keep_reference
-            );
-            if !keep_reference && let Some(path) = &reference_copy {
+            if !pending.keep_reference
+                && let Some(path) = &reference_copy
+            {
                 let _ = std::fs::remove_file(path);
             }
-            let name = match &request.source {
-                VoiceSourceSelection::Clone(ProfileSelection::New(specification)) => {
-                    specification.name.clone()
-                }
-                _ => String::new(),
-            };
             catalog.profiles.push(VoiceProfileMeta {
-                id: profile_id.clone(),
-                name,
+                id: pending.profile_id.clone(),
+                name: pending.name.clone(),
                 created_at_ms: now_ms(),
                 model_version: model_version.as_str().to_string(),
                 embedding_dim: meta.embedding_dim,
                 model_sha256: meta.model_sha256.clone(),
                 ref_audio_sha256: meta.ref_audio_sha256.clone(),
-                ref_audio_retained: keep_reference,
+                ref_audio_retained: pending.keep_reference,
+                preset: pending.preset.clone(),
             });
         }
         let resolved_profile_id = match &asset_source {
@@ -1387,6 +1366,124 @@ impl VoiceService {
             profile_id: resolved_profile_id,
             asset_ids: committed_asset_ids,
         })
+    }
+
+    /// Resolves a source spec that reuses a previously extracted `.q3sp`
+    /// profile, shared by manual "use an existing profile" selections and
+    /// by preset generation once a matching preset profile already exists.
+    fn resolve_existing_clone_source(
+        &self,
+        profile_id: &ProfileId,
+        model_version: &ModelVersion,
+        base_model_sha256: &str,
+        base_transformer_path: &Path,
+    ) -> VoiceResult<ResolvedGenerationSource> {
+        let catalog = self.inner.catalog.lock();
+        let profile = catalog
+            .profiles
+            .iter()
+            .find(|profile| profile.id == profile_id.as_str())
+            .ok_or_else(|| VoiceError::not_found("voice profile", profile_id.to_string()))?;
+        if profile.model_version != model_version.as_str() || profile.model_sha256 != base_model_sha256
+        {
+            return Err(VoiceError::Incompatible(format!(
+                "profile {} was created for a different model",
+                profile_id.as_str()
+            )));
+        }
+        drop(catalog);
+        let q3sp_path = catalog::profile_q3sp_path(&self.inner.voice_root, profile_id.as_str());
+        if !q3sp_path.is_file() {
+            return Err(VoiceError::not_found(
+                "Q3SP profile",
+                q3sp_path.display().to_string(),
+            ));
+        }
+        Ok(ResolvedGenerationSource {
+            transformer_path: base_transformer_path.to_path_buf(),
+            model_sha256: base_model_sha256.to_string(),
+            generation_model_version: model_version.as_str().to_string(),
+            source_spec: SidecarSourceSpec {
+                mode: "profile_existing",
+                reference_wav_path: None,
+                save_q3sp_path: None,
+                existing_q3sp_path: Some(q3sp_path.display().to_string()),
+                speaker_token_id: None,
+            },
+            pending_profile: None,
+            reference_copy: None,
+            asset_source: VoiceAssetSource::CloneProfile {
+                profile_id: profile_id.as_str().to_string(),
+            },
+        })
+    }
+
+    /// Resolves a source spec that extracts a brand-new clone profile from
+    /// `reference_wav_path`, shared by manual "clone from this WAV"
+    /// requests and by preset generation the first time (or after the
+    /// bundled reference audio moves to a new revision).
+    #[allow(clippy::too_many_arguments)]
+    fn prepare_new_clone_source(
+        &self,
+        artifacts: &mut GenerationArtifactsGuard,
+        model_version: &ModelVersion,
+        base_model_sha256: &str,
+        base_transformer_path: &Path,
+        reference_wav_path: &Path,
+        profile_name: String,
+        keep_reference: bool,
+        preset: Option<presets::VoicePresetTag>,
+    ) -> VoiceResult<ResolvedGenerationSource> {
+        let profile_id = new_id("profile");
+        let destination = catalog::profile_dir(&self.inner.voice_root, &profile_id);
+        std::fs::create_dir_all(catalog::profiles_dir(&self.inner.voice_root))
+            .map_err(|error| VoiceError::io("create voice profiles directory", error))?;
+        std::fs::create_dir(&destination)
+            .map_err(|error| VoiceError::io(format!("create {}", destination.display()), error))?;
+        artifacts.track_profile_directory(destination.clone());
+        let reference_copy = destination.join("reference.wav");
+        audio::validate_and_copy_reference_wav(reference_wav_path, &reference_copy)?;
+        Ok(ResolvedGenerationSource {
+            transformer_path: base_transformer_path.to_path_buf(),
+            model_sha256: base_model_sha256.to_string(),
+            generation_model_version: model_version.as_str().to_string(),
+            source_spec: SidecarSourceSpec {
+                mode: "profile_new",
+                reference_wav_path: Some(reference_copy.display().to_string()),
+                save_q3sp_path: Some(destination.join("speaker.q3sp").display().to_string()),
+                existing_q3sp_path: None,
+                speaker_token_id: None,
+            },
+            pending_profile: Some(PendingProfile {
+                profile_id: profile_id.clone(),
+                name: profile_name,
+                keep_reference,
+                preset,
+            }),
+            reference_copy: Some(reference_copy),
+            asset_source: VoiceAssetSource::CloneProfile { profile_id },
+        })
+    }
+
+    /// Finds a still-usable clone profile previously extracted from the
+    /// bundled preset reference identified by `tag`: same locale, same
+    /// manifest revision (so a bundled-audio update triggers re-extraction
+    /// instead of silently reusing the old voice), same installed model,
+    /// and its `.q3sp` file is actually present on disk.
+    fn find_matching_preset_profile(
+        &self,
+        tag: &presets::VoicePresetTag,
+        model_version: &ModelVersion,
+        base_model_sha256: &str,
+    ) -> Option<ProfileId> {
+        let profile_id = {
+            let catalog = self.inner.catalog.lock();
+            let id =
+                find_preset_profile_id_in_catalog(&catalog, tag, model_version.as_str(), base_model_sha256)?;
+            ProfileId::parse(id.to_string()).ok()?
+        };
+        let q3sp_path = catalog::profile_q3sp_path(&self.inner.voice_root, profile_id.as_str());
+        q3sp_path.is_file().then_some(profile_id)
     }
 
     fn validate_model_cached(
@@ -1467,6 +1564,36 @@ impl VoiceService {
             ))),
         }
     }
+}
+
+/// Metadata needed to persist a brand-new clone profile once the sidecar
+/// confirms extraction. Kept separate from `VoiceSourceSelection` so every
+/// source variant that can mint a new profile (manual upload, preset)
+/// populates it the same way, instead of the commit step re-matching on
+/// `request.source`.
+struct PendingProfile {
+    profile_id: String,
+    name: String,
+    keep_reference: bool,
+    preset: Option<presets::VoicePresetTag>,
+}
+
+/// Everything `generate_blocking_inner` needs to build and submit a sidecar
+/// job for one resolved voice source (existing clone profile, freshly
+/// extracted clone profile, or fine-tuned speaker token).
+struct ResolvedGenerationSource {
+    transformer_path: PathBuf,
+    model_sha256: String,
+    generation_model_version: String,
+    source_spec: SidecarSourceSpec,
+    /// `Some` only when this source will mint a new clone profile pending
+    /// sidecar confirmation.
+    pending_profile: Option<PendingProfile>,
+    /// The reference WAV copy under the voice profile directory, present
+    /// only alongside `pending_profile` so it can be deleted afterwards
+    /// unless the caller opted to keep it.
+    reference_copy: Option<PathBuf>,
+    asset_source: VoiceAssetSource,
 }
 
 #[derive(Debug, Default)]
@@ -1566,6 +1693,26 @@ fn generation_sampling_params(source: &VoiceAssetSource) -> (Option<f32>, Option
     } else {
         (None, None)
     }
+}
+
+/// Pure catalog lookup backing [`VoiceService::find_matching_preset_profile`],
+/// split out so the locale/revision/model matching rules can be unit tested
+/// without a real `AppHandle`. A profile only matches when its stored
+/// [`presets::VoicePresetTag`] is identical to `tag` (same locale *and* same
+/// manifest revision) and it was extracted from the currently installed
+/// model.
+fn find_preset_profile_id_in_catalog<'catalog>(
+    catalog: &'catalog models::VoiceCatalog,
+    tag: &presets::VoicePresetTag,
+    model_version: &str,
+    base_model_sha256: &str,
+) -> Option<&'catalog str> {
+    catalog.profiles.iter().find_map(|profile| {
+        (profile.preset.as_ref() == Some(tag)
+            && profile.model_version == model_version
+            && profile.model_sha256 == base_model_sha256)
+            .then_some(profile.id.as_str())
+    })
 }
 
 /// Enforces the "at most one asset per phrase" invariant. For any phrase
@@ -1883,6 +2030,114 @@ mod tests {
 
         assert!(removed.is_empty());
         assert_eq!(catalog.assets.len(), 1);
+    }
+
+    fn preset_profile_stub(
+        id: &str,
+        preset: Option<presets::VoicePresetTag>,
+        model_version: &str,
+        model_sha256: &str,
+    ) -> VoiceProfileMeta {
+        VoiceProfileMeta {
+            id: id.to_string(),
+            model_version: model_version.to_string(),
+            model_sha256: model_sha256.to_string(),
+            preset,
+            ..VoiceProfileMeta::default()
+        }
+    }
+
+    #[test]
+    fn preset_lookup_matches_on_locale_revision_and_installed_model() {
+        let tag = presets::VoicePresetTag {
+            locale: presets::VoicePresetLocale::ZhCn,
+            revision: 1,
+        };
+        let mut catalog = models::VoiceCatalog::default();
+        catalog.profiles = vec![preset_profile_stub(
+            "preset-zh",
+            Some(tag.clone()),
+            "model-v1",
+            "sha-current",
+        )];
+
+        let found = find_preset_profile_id_in_catalog(&catalog, &tag, "model-v1", "sha-current");
+
+        assert_eq!(found, Some("preset-zh"));
+    }
+
+    #[test]
+    fn preset_lookup_ignores_a_stale_manifest_revision() {
+        let current_tag = presets::VoicePresetTag {
+            locale: presets::VoicePresetLocale::EnUs,
+            revision: 2,
+        };
+        let stored_tag = presets::VoicePresetTag {
+            locale: presets::VoicePresetLocale::EnUs,
+            revision: 1,
+        };
+        let mut catalog = models::VoiceCatalog::default();
+        catalog.profiles = vec![preset_profile_stub(
+            "preset-en-old",
+            Some(stored_tag),
+            "model-v1",
+            "sha-current",
+        )];
+
+        // The bundled reference audio moved on to revision 2: the
+        // revision-1 profile must not be reused, so generation re-extracts
+        // from the newer audio instead of silently keeping the old voice.
+        assert_eq!(
+            find_preset_profile_id_in_catalog(&catalog, &current_tag, "model-v1", "sha-current"),
+            None
+        );
+    }
+
+    #[test]
+    fn preset_lookup_ignores_a_profile_extracted_for_a_different_model() {
+        let tag = presets::VoicePresetTag {
+            locale: presets::VoicePresetLocale::JaJp,
+            revision: 0,
+        };
+        let mut catalog = models::VoiceCatalog::default();
+        catalog.profiles = vec![preset_profile_stub(
+            "preset-ja-old-model",
+            Some(tag.clone()),
+            "model-v1",
+            "sha-old",
+        )];
+
+        assert_eq!(
+            find_preset_profile_id_in_catalog(&catalog, &tag, "model-v2", "sha-new"),
+            None
+        );
+    }
+
+    #[test]
+    fn preset_lookup_ignores_manually_cloned_profiles_and_other_locales() {
+        let tag = presets::VoicePresetTag {
+            locale: presets::VoicePresetLocale::ZhCn,
+            revision: 0,
+        };
+        let other_locale_tag = presets::VoicePresetTag {
+            locale: presets::VoicePresetLocale::JaJp,
+            revision: 0,
+        };
+        let mut catalog = models::VoiceCatalog::default();
+        catalog.profiles = vec![
+            preset_profile_stub("manual-clone", None, "model-v1", "sha-current"),
+            preset_profile_stub(
+                "preset-ja",
+                Some(other_locale_tag),
+                "model-v1",
+                "sha-current",
+            ),
+        ];
+
+        assert_eq!(
+            find_preset_profile_id_in_catalog(&catalog, &tag, "model-v1", "sha-current"),
+            None
+        );
     }
 
     #[test]

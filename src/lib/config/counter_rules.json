@@ -71,7 +71,7 @@
     "sources": [
       {
         "skillCastComplete": {
-          "skillBaseIds": [1520, 1519, 1210, 1246, 1240, 1215, 1238],
+          "skillBaseIds": [1520, 1519, 1210, 1246, 1240, 1215, 1238, 2308, 2309],
           "increment": 1
         }
       }

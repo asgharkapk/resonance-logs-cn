@@ -5,7 +5,7 @@ Corresponds to **Voice** in the toolbox. Clone or fine-tune a voice offline, mai
 Usage splits into two parts:
 
 1. **General configuration flow**: enable events and pick text on buff / mechanic pages — decides *when* and *what* to announce.
-2. **Generating announcement audio**: pick a voice source (zero-shot cloning / fine-tuning) and synthesize the text into local audio.
+2. **Generating announcement audio**: pick a voice source (preset / zero-shot cloning / fine-tuning) and synthesize the text into local audio.
 
 ## General Configuration Flow
 
@@ -71,9 +71,18 @@ All voice rules are configured inline on feature pages, not created in Bindings 
 
 ## Generating Announcement Audio
 
-Once text is configured, it must be synthesized into audio. There are two voice sources: **zero-shot cloning** (quick and easy) and **fine-tuning** (higher quality ceiling).
+Once text is configured, it must be synthesized into audio. There are three voice sources: **preset voice** (works out of the box), **zero-shot cloning** (quick and easy), and **fine-tuning** (higher quality ceiling).
 
-### Method 1: Zero-shot voice cloning
+### Method 1: Preset voice (out of the box)
+
+Once a model is installed, you can generate right away without preparing any reference audio: in **Phrase Library → Batch generate**, choose **Preset voice** (selected by default) and click **Start generation**.
+
+- The voice is picked automatically from the **current UI language** (Simplified Chinese / English / Japanese), independent of the language of the phrase text itself — even with the UI in English, announcing a Chinese phrase still uses the English-locale preset voice.
+- The first time a given UI locale's preset voice is used, the app automatically extracts and saves a voice profile from the bundled reference audio in the background; later generations for the same locale and installed model reuse it without re-extracting.
+- Switching the UI language and generating again automatically switches to the new language's preset voice.
+- You can still switch to **Cloned voice** or **Fine-tuned voice** below at any time if you prefer a specific voice — the preset is only a zero-setup default, not a restriction on manual choice.
+
+### Method 2: Zero-shot voice cloning
 
 In **Phrase Library → Batch generate**, choose **Clone voice** — no training needed, a single reference clip is enough:
 
@@ -94,7 +103,7 @@ Phrase status meanings:
 
 > First generation may be slow; once done, triggers only play local audio without reloading the model.
 
-### Method 2: Fine-tuned voice (advanced)
+### Method 3: Fine-tuned voice (advanced)
 
 Zero-shot cloning relies on a few seconds of reference audio, so similarity and stability are limited. For higher fidelity, **fine-tune** a dedicated model on the target character's speech, then reference the exported folder as a **Fine-tuned voice** on the **Model & Voices** page.
 

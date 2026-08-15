@@ -72,6 +72,16 @@ function lookupMonsterName(id: number, locale: AppLocale): string | null {
   return null;
 }
 
+function lookupMonsterSkillName(id: number, locale: AppLocale): string | null {
+  for (const candidate of getGameDataFallbackChain(locale)) {
+    const name = normalizeGameDataText(
+      getGameData(candidate).monsterSkillNames[String(id)],
+    );
+    if (name) return name;
+  }
+  return null;
+}
+
 export function resolveSceneName(
   sceneId: number | null | undefined,
   dungeonDifficulty?: number | null,
@@ -95,6 +105,16 @@ export function resolveMonsterName(
   if (id === null) return "";
 
   return lookupMonsterName(id, locale) ?? t("game.monster.unknown", { id });
+}
+
+export function resolveMonsterSkillName(
+  skillId: number | null | undefined,
+  locale = getLocale(),
+): string {
+  const id = normalizeId(skillId);
+  if (id === null) return "";
+
+  return lookupMonsterSkillName(id, locale) ?? t("game.skill.unknown", { id });
 }
 
 export function resolveMonsterType(

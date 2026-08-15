@@ -3,6 +3,8 @@ mod build_app;
 mod live;
 pub mod module_optimizer;
 mod packets;
+#[cfg(windows)]
+mod titlebar_guard;
 pub mod voice;
 
 use crate::build_app::build_and_run;
@@ -50,27 +52,30 @@ static LOGGING_INIT: OnceLock<Result<(), String>> = OnceLock::new();
 /// This function sets up and runs the Tauri application.
 fn api_builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
-        // Then register them (separated by a comma)
         .commands(collect_commands![
-            live::commands::enable_blur,
-            live::commands::disable_blur,
-            live::commands::reset_encounter,
-            live::commands::toggle_pause_encounter,
-            live::commands::start_training_dummy,
-            live::commands::stop_training_dummy,
-            live::commands::save_and_apply_monitor_runtime_snapshot,
-            database::commands::get_recent_encounters,
+            live::ipc::commands::get_live_combat,
+            live::ipc::commands::get_live_status,
+            live::ipc::commands::get_live_buffs,
+            live::ipc::commands::get_live_monster,
+            live::ipc::commands::get_live_fantasy,
+            live::ipc::commands::get_live_deaths,
+            live::ipc::commands::get_live_scene,
+            live::ipc::commands::enable_blur,
+            live::ipc::commands::disable_blur,
+            live::ipc::commands::reset_encounter,
+            live::ipc::commands::toggle_pause_encounter,
+            live::ipc::commands::start_training_dummy,
+            live::ipc::commands::stop_training_dummy,
+            live::ipc::commands::save_and_apply_monitor_runtime_snapshot,
             database::commands::get_unique_scene_ids,
             database::commands::get_unique_boss_monster_ids,
             database::commands::get_player_names_filtered,
             database::commands::get_recent_encounters_filtered,
-            database::commands::get_encounter_by_id,
-            database::commands::get_encounter_entities_raw,
+            database::commands::get_encounter_detail,
+            database::commands::get_encounter_range,
             database::commands::delete_encounter,
             database::commands::delete_encounters,
             database::commands::toggle_favorite_encounter,
-            database::commands::get_recent_players_command,
-            database::commands::get_player_name_command,
             packet_settings_commands::save_packet_capture_settings,
             settings_backup_commands::backup_settings_stores,
             settings_backup_commands::backup_failed_monitoring_stores,
@@ -107,6 +112,7 @@ fn api_builder() -> Builder<tauri::Wry> {
             voice::commands::voice_upsert_phrase,
             voice::commands::voice_stop_playback,
         ])
+        .typ::<live::ipc::models::MinimapUpdatePayload>()
 }
 
 #[cfg(debug_assertions)]
@@ -238,9 +244,26 @@ pub fn run() {
             // Setup tray icon
             setup_tray(&app_handle).expect("failed to setup tray");
 
-            // Create and manage the state manager
-            let (state_manager, control_rx) = crate::live::state::AppStateManager::new();
-            app.manage(state_manager.clone());
+            // The main window is the only one that still uses the native
+            // caption bar, so it is the only one whose close/minimize/maximize
+            // buttons can park the event loop inside win32k's tracking loop
+            // when a fullscreen game steals the mouse release. Falling back to
+            // the native behaviour is better than refusing to start.
+            #[cfg(windows)]
+            if let Some(main_window) = app.get_webview_window(WINDOW_MAIN_LABEL) {
+                if let Err(error) = titlebar_guard::install(&main_window) {
+                    warn!("failed to install the caption guard on the main window: {error}");
+                }
+            }
+
+            let (live_runtime, runtime_commands) =
+                crate::live::runtime_handle::LiveRuntimeHandle::new();
+            app.manage(live_runtime);
+
+            let (history_writer, history_join) =
+                crate::live::history_writer::HistoryWriterHandle::start()
+                    .map_err(|error| format!("failed to start history writer: {error}"))?;
+            app.manage(history_writer.clone());
 
             // Voice broadcasting / cloning feature: model, catalog and playback are all
             // owned by this single service, independent of the live capture pipeline.
@@ -263,7 +286,13 @@ pub fn run() {
             // Live Meter
             // https://v2.tauri.app/learn/splashscreen/#start-some-setup-tasks
             tauri::async_runtime::spawn(async move {
-                live::live_main::start(app_handle.clone(), control_rx).await
+                live::live_main::start(
+                    app_handle.clone(),
+                    runtime_commands,
+                    history_writer,
+                    history_join,
+                )
+                .await
             });
             Ok(())
         })
@@ -494,30 +523,6 @@ mod loadout_commands {
         std::fs::write(&path, contents).map_err(|e| format!("write {}: {}", path.display(), e))?;
         info!("exported loadout to {}", path.display());
         Ok(())
-    }
-}
-
-/// Starts the WinDivert driver.
-///
-/// This function executes a shell command to create and start the WinDivert driver service.
-#[allow(dead_code)]
-fn start_windivert() {
-    let mut cmd = Command::new("sc");
-    cmd.args([
-        "create",
-        "windivert",
-        "type=",
-        "kernel",
-        "binPath=",
-        "WinDivert64.sys",
-        "start=",
-        "demand",
-    ]);
-    let status = run_command_silently(&mut cmd);
-    if status.is_ok_and(|status| status.success()) {
-        info!("started driver");
-    } else {
-        warn!("could not execute command to start driver");
     }
 }
 
@@ -1046,7 +1051,6 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
                 disable_live_clickthrough(tray_app, &live_meter_window);
             }
             "quit" => {
-                stop_windivert();
                 tray_app.exit(0);
             }
             _ => {}

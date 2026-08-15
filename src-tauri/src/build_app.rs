@@ -14,6 +14,16 @@ pub fn build_and_run(builder: TauriBuilder<tauri::Wry>) {
         .run(|app_handle, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
                 stop_windivert();
+                if let Some(runtime) =
+                    app_handle.try_state::<crate::live::runtime_handle::LiveRuntimeHandle>()
+                {
+                    if let Err(error) = runtime.shutdown_blocking() {
+                        log::warn!(target: "app::live", "shutdown_live_runtime_failed error={error}");
+                    }
+                }
+                if let Err(error) = crate::database::shutdown_database() {
+                    log::warn!(target: "app::db", "shutdown_database_failed error={error}");
+                }
                 if let Some(voice_service) = app_handle.try_state::<VoiceService>() {
                     voice_service.shutdown();
                 }

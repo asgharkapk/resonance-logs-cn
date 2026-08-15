@@ -15,6 +15,8 @@ const snapshot: MinimapSnapshot = {
       layer: 2,
       createTimeMs: 100,
       durationMs: 1000,
+      fireUuid: null,
+      sourceConfigId: null,
       effectIds: [],
     },
     {
@@ -24,6 +26,8 @@ const snapshot: MinimapSnapshot = {
       layer: 1,
       createTimeMs: 101,
       durationMs: 1000,
+      fireUuid: null,
+      sourceConfigId: null,
       effectIds: [],
     },
   ],
@@ -51,9 +55,30 @@ describe("minimap voice cue helpers", () => {
     expect(
       resolveSkillVoiceCues(
         [
-          { entityUuid: "boss", skillId: 1, timeMs: 1000 },
-          { entityUuid: "boss", skillId: 1, timeMs: 1100 },
-          { entityUuid: "boss", skillId: 3, timeMs: 1200 },
+          {
+            entityUuid: "boss",
+            skillId: 1,
+            timeMs: 1000,
+            x: 0,
+            z: 0,
+            facing: null,
+          },
+          {
+            entityUuid: "boss",
+            skillId: 1,
+            timeMs: 1100,
+            x: 0,
+            z: 0,
+            facing: null,
+          },
+          {
+            entityUuid: "boss",
+            skillId: 3,
+            timeMs: 1200,
+            x: 0,
+            z: 0,
+            facing: null,
+          },
         ],
         { 1: "inner", 3: "outer" },
       ),

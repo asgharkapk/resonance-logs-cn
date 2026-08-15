@@ -1,7 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { SvelteMap } from "svelte/reactivity";
 import type { MinimapSkillCast, MinimapSnapshot } from "$lib/api";
-import type { EntityId } from "$lib/entity-id";
 
 const MAX_SKILL_CAST_LOG = 64;
 
@@ -11,12 +10,15 @@ const MAX_SKILL_CAST_LOG = 64;
  * (10310062/10310063/10310064 = inner/mid/outer). Used to drive the ring
  * row's lifecycle by entity presence rather than by skill-cast sequencing.
  */
-const ELECTROMAGNETIC_RING_MONSTER_IDS = new Set([10310062, 10310063, 10310064]);
+const ELECTROMAGNETIC_RING_MONSTER_IDS = new Set([
+  10310062, 10310063, 10310064,
+]);
+let snapshot = $state.raw<MinimapSnapshot | null>(null);
 
 /**
  * Reactive runtime state for the minimap overlay window.
  *
- * `snapshot` is replaced wholesale on each `minimap-update` event; consumers
+ * `snapshot` is replaced wholesale on each `minimap-snapshot` event; consumers
  * read it via `$derived`/`$effect` so canvas and info bar stay in sync.
  */
 export const minimapRuntime = $state({
@@ -25,24 +27,22 @@ export const minimapRuntime = $state({
   isInitialized: false,
   isMounted: false,
   isEditing: false,
-  snapshot: null as MinimapSnapshot | null,
   lastSceneId: null as number | null,
   skillCastLog: [] as MinimapSkillCast[],
-  playerNameCache: new SvelteMap<EntityId, string>(),
   entityFirstSeenMs: new SvelteMap<string, number>(),
   electromagneticRingResetMs: 0,
 });
 
 export function minimapSnapshot() {
-  return minimapRuntime.snapshot;
+  return snapshot;
+}
+
+export function setMinimapSnapshot(next: MinimapSnapshot | null) {
+  snapshot = next;
 }
 
 export function isMinimapEditing() {
   return minimapRuntime.isEditing;
-}
-
-export function minimapPlayerNames() {
-  return minimapRuntime.playerNameCache;
 }
 
 export function minimapSkillCasts() {
@@ -99,7 +99,7 @@ export function electromagneticRingResetMs(): number {
  * virtual body is present in the snapshot. As long as at least one virtual
  * body exists the reset timestamp is left untouched, preserving the in-cycle
  * skill sequence; once all three disappear the next cast window begins at
- * the current time. Called from the minimap-update event handler (outside
+ * the current time. Called from the minimap-snapshot event handler (outside
  * $derived) so the write stays a side effect, not a derived computation.
  */
 export function updateElectromagneticRingCycle(

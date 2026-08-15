@@ -13,11 +13,13 @@ import {
   SETTINGS,
   createDefaultMonsterMonitorProfile,
   deepCloneSettings,
+  ensureTeammatePanelStyle,
   extractMonsterProfileData,
   generateProfileId,
   type MonsterMonitorProfile,
   type MonsterMonitorProfileData,
 } from "./settings-store";
+import { normalizeCustomPanelStyle } from "./skill-monitor-normalize";
 
 export function listMonsterProfiles(): MonsterMonitorProfile[] {
   return SETTINGS.monsterMonitor.state.profiles;
@@ -64,9 +66,7 @@ function applyProfileData(data: MonsterMonitorProfileData): void {
 function flushMirrorToProfile(): void {
   const state = SETTINGS.monsterMonitor.state;
   const currentId = state.mirroredProfileId;
-  const index = state.profiles.findIndex(
-    (profile) => profile.id === currentId,
-  );
+  const index = state.profiles.findIndex((profile) => profile.id === currentId);
   if (index === -1) return;
   const data = extractMonsterProfileData(state);
   state.profiles = state.profiles.map((profile, i) =>
@@ -118,7 +118,11 @@ export function createMonsterProfile(
       // object; the new profile must own its nested data.
       deepCloneSettings(sourceData)
     : (() => {
-        const { id, name: _name, ...rest } = createDefaultMonsterMonitorProfile();
+        const {
+          id,
+          name: _name,
+          ...rest
+        } = createDefaultMonsterMonitorProfile();
         void id;
         void _name;
         return rest;
@@ -169,4 +173,25 @@ export function removeMonsterProfileById(id: string): string | null {
 /** Extracts the profile-shaped data currently materialized in the mirror. */
 export function currentMirroredProfileData(): MonsterMonitorProfileData {
   return extractMonsterProfileData(SETTINGS.monsterMonitor.state);
+}
+
+/**
+ * Backfills the text-style fields (text shadow, background) on every panel
+ * style of a monster-monitor profile. Only the currently-mirrored profile
+ * gets refreshed from the live overlay editors; other profiles (and
+ * profiles restored from an old export) can still be missing fields added
+ * after they were created. Pure/idempotent, like `normalizeSkillProfile`.
+ */
+export function normalizeMonsterProfileStyles<
+  T extends MonsterMonitorProfileData,
+>(profile: T): T {
+  return {
+    ...profile,
+    panelStyle: normalizeCustomPanelStyle(profile.panelStyle),
+    teammatePanelStyle: ensureTeammatePanelStyle(profile.teammatePanelStyle),
+    hatePanelStyle: normalizeCustomPanelStyle(profile.hatePanelStyle),
+    fantasyPanelStyle: normalizeCustomPanelStyle(profile.fantasyPanelStyle),
+    bossDbmPanelStyle: normalizeCustomPanelStyle(profile.bossDbmPanelStyle),
+    stunPanelStyle: normalizeCustomPanelStyle(profile.stunPanelStyle),
+  };
 }

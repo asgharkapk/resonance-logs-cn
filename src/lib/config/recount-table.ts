@@ -4,20 +4,28 @@ import {
   getGameDataFallbackChain,
   normalizeGameDataText,
 } from "$lib/i18n/game-data";
+import {
+  ipcBigInt,
+  ipcCompare,
+  ipcIsZero,
+  ipcNumber,
+  ipcRatio,
+  type IpcDecimal,
+} from "$lib/ipc-decimal";
 
 export type RawSkillStatsLike = {
-  totalValue: number;
-  effectiveTotalValue: number;
-  hits: number;
-  critHits: number;
-  critTotalValue: number;
-  luckyHits: number;
-  luckyTotalValue: number;
+  totalValue: IpcDecimal;
+  effectiveTotalValue: IpcDecimal;
+  hits: IpcDecimal;
+  critHits: IpcDecimal;
+  critTotalValue: IpcDecimal;
+  luckyHits: IpcDecimal;
+  luckyTotalValue: IpcDecimal;
   property?: number | null;
   damageMode?: number | null;
-  triggerHits?: number;
-  blockHits?: number;
-  luckyBlockHits?: number;
+  triggerHits?: IpcDecimal;
+  blockHits?: IpcDecimal;
+  luckyBlockHits?: IpcDecimal;
 };
 
 export type SkillDisplayRow = {
@@ -59,6 +67,7 @@ export type RecountGroup = {
   hits: number;
   hitsPerMinute: number;
   skills: SkillDisplayRow[];
+  raw: RawSkillStatsLike;
 };
 
 type RecountEntry = {
@@ -127,19 +136,54 @@ function lookupRecountName(
   return null;
 }
 
-function pct(numerator: number, denominator: number): number {
-  if (denominator <= 0) return 0;
-  return (numerator / denominator) * 100;
+function pct(numerator: unknown, denominator: unknown): number {
+  return ipcRatio(numerator, denominator, 100);
 }
 
-function rate(hits: number, totalHits: number): number {
-  if (totalHits <= 0) return 0;
-  return (hits / totalHits) * 100;
+function rate(hits: unknown, totalHits: unknown): number {
+  return ipcRatio(hits, totalHits, 100);
 }
 
-function perMinute(value: number, elapsedSecs: number): number {
-  if (elapsedSecs <= 0) return 0;
-  return (value / elapsedSecs) * 60;
+function elapsedMilliseconds(elapsedSecs: number): number {
+  return Number.isFinite(elapsedSecs) && elapsedSecs > 0
+    ? Math.round(elapsedSecs * 1_000)
+    : 0;
+}
+
+function triggerHits(stats: RawSkillStatsLike): bigint {
+  return ipcIsZero(stats.triggerHits)
+    ? ipcBigInt(stats.hits)
+    : ipcBigInt(stats.triggerHits);
+}
+
+export function aggregateRawSkillStats(
+  statsList: Iterable<RawSkillStatsLike>,
+): RawSkillStatsLike {
+  const total = {
+    totalValue: 0n,
+    effectiveTotalValue: 0n,
+    hits: 0n,
+    critHits: 0n,
+    critTotalValue: 0n,
+    luckyHits: 0n,
+    luckyTotalValue: 0n,
+    triggerHits: 0n,
+    blockHits: 0n,
+    luckyBlockHits: 0n,
+  };
+  for (const stats of statsList) {
+    total.totalValue += ipcBigInt(stats.totalValue);
+    total.effectiveTotalValue += ipcBigInt(stats.effectiveTotalValue);
+    total.hits += ipcBigInt(stats.hits);
+    total.critHits += ipcBigInt(stats.critHits);
+    total.critTotalValue += ipcBigInt(stats.critTotalValue);
+    total.luckyHits += ipcBigInt(stats.luckyHits);
+    total.luckyTotalValue += ipcBigInt(stats.luckyTotalValue);
+    total.triggerHits += triggerHits(stats);
+    total.blockHits += ipcBigInt(stats.blockHits);
+    total.luckyBlockHits += ipcBigInt(stats.luckyBlockHits);
+  }
+  return total;
 }
 
 export function lookupDamageIdName(
@@ -172,29 +216,30 @@ export function buildSkillDisplayRow(
   skillId: number,
   stats: RawSkillStatsLike,
   elapsedSecs: number,
-  parentTotal: number,
+  parentTotal: IpcDecimal,
   locale = getLocale(),
 ): SkillDisplayRow {
-  const totalDmg = Number(stats.totalValue || 0);
-  const effectiveTotal = Number(stats.effectiveTotalValue || 0);
-  const hits = Number(stats.hits || 0);
-  const triggerHits = Number(stats.triggerHits || stats.hits || 0);
+  const elapsedMs = elapsedMilliseconds(elapsedSecs);
+  const totalDmg = ipcBigInt(stats.totalValue);
+  const effectiveTotal = ipcBigInt(stats.effectiveTotalValue);
+  const hits = ipcBigInt(stats.hits);
+  const effectiveTriggerHits = triggerHits(stats);
   return {
     skillId,
     name: lookupDamageIdName(skillId, locale),
-    totalDmg,
-    effectiveTotal,
-    dps: elapsedSecs > 0 ? totalDmg / elapsedSecs : 0,
-    effectiveDps: elapsedSecs > 0 ? effectiveTotal / elapsedSecs : 0,
+    totalDmg: ipcNumber(totalDmg),
+    effectiveTotal: ipcNumber(effectiveTotal),
+    dps: ipcRatio(totalDmg, elapsedMs, 1_000),
+    effectiveDps: ipcRatio(effectiveTotal, elapsedMs, 1_000),
     dmgPct: pct(totalDmg, parentTotal),
-    critRate: rate(Number(stats.critHits || 0), hits),
-    critDmgRate: pct(Number(stats.critTotalValue || 0), totalDmg),
-    luckyRate: rate(Number(stats.luckyHits || 0), triggerHits),
-    luckyDmgRate: pct(Number(stats.luckyTotalValue || 0), totalDmg),
-    blockRate: rate(Number(stats.blockHits || 0), hits),
-    luckyBlockRate: rate(Number(stats.luckyBlockHits || 0), hits),
-    hits,
-    hitsPerMinute: perMinute(hits, elapsedSecs),
+    critRate: rate(stats.critHits, hits),
+    critDmgRate: pct(stats.critTotalValue, totalDmg),
+    luckyRate: rate(stats.luckyHits, effectiveTriggerHits),
+    luckyDmgRate: pct(stats.luckyTotalValue, totalDmg),
+    blockRate: rate(stats.blockHits, hits),
+    luckyBlockRate: rate(stats.luckyBlockHits, hits),
+    hits: ipcNumber(hits),
+    hitsPerMinute: ipcRatio(hits, elapsedMs, 60_000),
     property: stats.property ?? null,
     damageMode: stats.damageMode ?? null,
     raw: stats,
@@ -204,7 +249,7 @@ export function buildSkillDisplayRow(
 export function groupSkillsByRecount(
   skills: Partial<Record<number, RawSkillStatsLike>>,
   elapsedSecs: number,
-  parentTotal: number,
+  parentTotal: IpcDecimal,
   locale = getLocale(),
 ): { groups: RecountGroup[]; ungrouped: SkillDisplayRow[] } {
   const groupMap = new Map<number, RecountGroup>();
@@ -250,57 +295,32 @@ export function groupSkillsByRecount(
         hits: 0,
         hitsPerMinute: 0,
         skills: [],
+        raw: aggregateRawSkillStats([]),
       };
       groupMap.set(mapping.recountId, group);
     }
 
-    group.totalDmg += row.totalDmg;
-    group.effectiveTotal += row.effectiveTotal;
-    group.hits += row.hits;
     row.name = lookupChildDamageIdName(skillId, locale);
     group.skills.push(row);
   }
 
   const groups = Array.from(groupMap.values()).map((group) => {
-    const critHits = group.skills.reduce(
-      (sum, s) => sum + Number(s.raw.critHits || 0),
-      0,
-    );
-    const critTotal = group.skills.reduce(
-      (sum, s) => sum + Number(s.raw.critTotalValue || 0),
-      0,
-    );
-    const luckyHits = group.skills.reduce(
-      (sum, s) => sum + Number(s.raw.luckyHits || 0),
-      0,
-    );
-    const luckyTotal = group.skills.reduce(
-      (sum, s) => sum + Number(s.raw.luckyTotalValue || 0),
-      0,
-    );
-    const triggerHitsSum = group.skills.reduce(
-      (sum, s) => sum + Number(s.raw.triggerHits || s.raw.hits || 0),
-      0,
-    );
-    const blockHitsSum = group.skills.reduce(
-      (sum, s) => sum + Number(s.raw.blockHits || 0),
-      0,
-    );
-    const luckyBlockHitsSum = group.skills.reduce(
-      (sum, s) => sum + Number(s.raw.luckyBlockHits || 0),
-      0,
-    );
-    group.dps = elapsedSecs > 0 ? group.totalDmg / elapsedSecs : 0;
-    group.effectiveDps =
-      elapsedSecs > 0 ? group.effectiveTotal / elapsedSecs : 0;
-    group.dmgPct = pct(group.totalDmg, parentTotal);
-    group.critRate = rate(critHits, group.hits);
-    group.critDmgRate = pct(critTotal, group.totalDmg);
-    group.luckyRate = rate(luckyHits, triggerHitsSum);
-    group.luckyDmgRate = pct(luckyTotal, group.totalDmg);
-    group.blockRate = rate(blockHitsSum, group.hits);
-    group.luckyBlockRate = rate(luckyBlockHitsSum, group.hits);
-    group.hitsPerMinute = perMinute(group.hits, elapsedSecs);
+    const elapsedMs = elapsedMilliseconds(elapsedSecs);
+    const raw = aggregateRawSkillStats(group.skills.map((skill) => skill.raw));
+    group.raw = raw;
+    group.totalDmg = ipcNumber(raw.totalValue);
+    group.effectiveTotal = ipcNumber(raw.effectiveTotalValue);
+    group.hits = ipcNumber(raw.hits);
+    group.dps = ipcRatio(raw.totalValue, elapsedMs, 1_000);
+    group.effectiveDps = ipcRatio(raw.effectiveTotalValue, elapsedMs, 1_000);
+    group.dmgPct = pct(raw.totalValue, parentTotal);
+    group.critRate = rate(raw.critHits, raw.hits);
+    group.critDmgRate = pct(raw.critTotalValue, raw.totalValue);
+    group.luckyRate = rate(raw.luckyHits, raw.triggerHits);
+    group.luckyDmgRate = pct(raw.luckyTotalValue, raw.totalValue);
+    group.blockRate = rate(raw.blockHits, raw.hits);
+    group.luckyBlockRate = rate(raw.luckyBlockHits, raw.hits);
+    group.hitsPerMinute = ipcRatio(raw.hits, elapsedMs, 60_000);
     const nameCount = new Map<string, number>();
     for (const skill of group.skills) {
       nameCount.set(skill.name, (nameCount.get(skill.name) ?? 0) + 1);
@@ -308,12 +328,12 @@ export function groupSkillsByRecount(
     for (const skill of group.skills) {
       skill.showSkillId = (nameCount.get(skill.name) ?? 0) > 1;
     }
-    group.skills.sort((a, b) => b.totalDmg - a.totalDmg);
+    group.skills.sort((a, b) => ipcCompare(b.raw.totalValue, a.raw.totalValue));
     return group;
   });
 
-  groups.sort((a, b) => b.totalDmg - a.totalDmg);
-  ungrouped.sort((a, b) => b.totalDmg - a.totalDmg);
+  groups.sort((a, b) => ipcCompare(b.raw.totalValue, a.raw.totalValue));
+  ungrouped.sort((a, b) => ipcCompare(b.raw.totalValue, a.raw.totalValue));
 
   return { groups, ungrouped };
 }

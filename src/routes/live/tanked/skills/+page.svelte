@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
   import { page } from "$app/state";
   import {
     settings,
@@ -6,7 +6,7 @@
     DEFAULT_LIVE_TANKED_SKILL_STATS,
     normalizeTankedSkillColumnOrder,
   } from "$lib/settings-store";
-  import { getLiveData } from "$lib/stores/live-meter-store.svelte";
+  import { liveCombatStore } from "$lib/stores/live-topics.svelte";
   import { computePlayerRows } from "$lib/live-derived";
   import {
     groupSkillsByRecount,
@@ -17,6 +17,7 @@
   import { liveTankedSkillColumns } from "$lib/column-data";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatNumber } from "$lib/i18n/index.svelte";
+  import { ipcNumber } from "$lib/ipc-decimal";
   import { findSourceByKey } from "$lib/tanked-source-derived";
 
   const entityUuid = page.url.searchParams.get("entityUuid") ?? "";
@@ -27,7 +28,7 @@
     ungrouped: [] as SkillDisplayRow[],
   };
 
-  let liveData = $derived(getLiveData());
+  let liveData = $derived(liveCombatStore.data?.combat ?? null);
   let tankedPlayers = $derived(
     liveData ? computePlayerRows(liveData, "tanked") : [],
   );
@@ -38,7 +39,7 @@
     liveData?.entities.find((entity) => entity.entityUuid === entityUuid) ??
       null,
   );
-  let elapsedSecs = $derived((liveData?.elapsedMs ?? 0) / 1000);
+  let elapsedSecs = $derived(ipcNumber(liveData?.elapsedMs) / 1000);
 
   // When a specific monster is selected, drill into its per-source skills;
   // otherwise ("total" or absent) show the combined taken breakdown.
@@ -76,9 +77,7 @@
   let abbreviationStyle = $derived(
     SETTINGS.live.general.state.abbreviationStyle,
   );
-  let customThemeColors = $derived(
-    SETTINGS.live.appearance.state.themeColors,
-  );
+  let customThemeColors = $derived(SETTINGS.live.appearance.state.themeColors);
 
   let sortKey = $derived(SETTINGS.live.sorting.tankedSkills.state.sortKey);
   let sortDesc = $derived(SETTINGS.live.sorting.tankedSkills.state.sortDesc);

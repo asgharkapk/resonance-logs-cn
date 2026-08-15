@@ -1,0 +1,17 @@
+{
+  "revision": 0,
+  "voices": {
+    "zh-CN": {
+      "displayName": "预置音色(简体中文)",
+      "sourceNotes": "占位素材:合成谐波音,不是真人语音。发布前必须替换为已获得授权的真实录音。"
+    },
+    "en-US": {
+      "displayName": "Preset Voice (English)",
+      "sourceNotes": "Placeholder asset: a synthetic harmonic tone, not real speech. Must be replaced with licensed voice recordings before shipping to users."
+    },
+    "ja-JP": {
+      "displayName": "プリセット音声(日本語)",
+      "sourceNotes": "プレースホルダー素材:合成トーンであり、実際の音声ではありません。配布前にライセンス取得済みの録音に差し替える必要があります。"
+    }
+  }
+}

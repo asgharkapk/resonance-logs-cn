@@ -1,71 +1,52 @@
-# Changelog v0.2.0
+# Changelog v0.2.1
 
 ## Changes
 
-### Voice Announcements (New)
-
-- Added offline voice announcements: after installing the model you can clone a voice, maintain a phrase library, and play pre-generated audio on trigger
-- The voice model is based on Qwen3-TTS 0.6B and only Q8_0 / F16 quantized GGUF is supported; the Q8_0 build is downloaded in one click from the Models & Voices page by default (mirror sources supported), or a converted model can be imported manually
-- Prerequisites for generating audio: zero-shot cloning needs a 5-10 second clean vocal reference of a single speaker without background music; alternatively, fine-tune a dedicated model with your own voice data (based on Qwen3-TTS 0.6B CustomVoice, exported as GGUF and referenced, with a higher quality ceiling)
-- Voice bindings can be configured inline in Buff Monitor, Monster Buffs, Custom Counters, Boss DBM, and Dungeon Mechanics
-- The announcement overview page aggregates all bindings and can generate missing audio in one click
-- Supports CPU / Vulkan acceleration and playback queue strategies (drop low priority / interrupt with high priority)
-- Custom "on apply / on expire" text for Buffs / Monster Buffs supports the `${阶数}` (or `${remodelLevel}`) placeholder, generating audio on demand for Fantasy remodel levels 0-5
-- Phrase library supports one-click cleanup of unreferenced phrases
-- See the [Voice Announcement Guide](https://github.com/fudiyangjin/resonance-logs-cn/blob/main/doc/en-US/features/voice/README.md) for usage
-
-### Loadouts
-
-- Improved Loadout capabilities: combine skill monitor, monster monitor, and DPS sub-profiles, switching the whole setup in one click
-- DPS settings were split out and brought under loadout control, and can be exported and shared with the loadout
-- Added built-in class presets for Radiant Shield, Recovery, Block, Earthfort, Smite, and Concerto; presets can be selected on first launch for a quick start
-- Loadouts can be imported / exported
-
 ### DPS / History
 
-- Death replay now shows buff snapshots of hit participants @Sanheiii
-- The live view now shows the character's most recently cast Fantasy (enable via DPS Meter → Settings → Live → Show Fantasy Icons)
-- Unified background element settings and tooltip styles
+- Refactored the combat pipeline: history encounters are persisted in detail segments, with lookup across any timeline
+
+  ![History timeline](/images/changelog/v0.2.1_2.png)
+
+- The Live timer now uses the backend clock directly
 
 ### Live Monitor
 
-- Custom buff icons are supported (set an image for any buff)
-- Buff Monitor supports voice announcements (on apply / on expire / N seconds in advance, etc.)
-- When the source Fantasy remodel level of a buff can be resolved, the overlay shows the buff name as "Name | Level n"
+- Custom counter factor panel adapted for Season 4 node Buff effects, with automatic listen-and-display
 
-### Monster Monitor
+  ![Season 4 node Buff factor panel](/images/changelog/v0.2.1_1.png)
 
-- Boss DBM and Monster Buffs support voice announcements
-- Adjusted buff name documentation
+- Flamehorn calculation now includes the Frenzied Note skill
 
-### Dungeon Mechanics
+### Voice Announcements
 
-- Mechanics support voice announcement bindings (configurable within each supported map)
-- Death marker style is customizable (color, opacity, × mark)
-- The mechanics voice announcement configuration section is collapsed by default
+- Added preset voice defaults for Chinese / English / Japanese (selected by UI language)
+- Fine-tuned model validation results are persisted to avoid recomputing on every launch
 
-### Data & Localization
+### Loadouts
 
-- Live server 1.2.43804.0 data update @Yozora_Hoshi
-- Supplemented Japanese / English data and completed Fantasy skills
+- Fixed import/export when fields are missing so older loadouts can still be imported
+
+### Stability
+
+- Fixed the app becoming unresponsive after holding Alt in-game to show the cursor and then clicking close/minimize; intercept `WM_NCLBUTTONDOWN` to avoid nested kernel tracking loops
+- Fixed a possible `monitorRuntime` concurrent read/write issue that could leave configuration only partially loaded
 
 ## Notes
 
 ### Compatibility
 
-- If you used 0.0.2 or 0.0.3, first launch on 0.0.4-0.2.0 requires deleting `resonance-logs-cn.db` under `%LOCALAPPDATA%\resonance-logs-cn` and restarting
-- 0.1.5 changed instance storage keys from uid to uuid and refactored packet capture; report logs if issues occur
-- Some factors added in 0.1.5 were not fully self-tested; please report abnormal behavior
-- Voice announcements require a separate model download; generating phrases for the first time may take a while, but playback after generation no longer loads the model
+- If you used 0.0.2 or 0.0.3, first launch on 0.0.4-0.2.1 requires deleting `resonance-logs-cn.db` under `%LOCALAPPDATA%\resonance-logs-cn` and restarting
+- 0.2.1 refactored the backend pipeline; if existing features break, please contact me promptly
+- Voice announcements require a separate model download; the first phrase generation may take a while, but playback after that does not reload the model
 
 ### Important
 
-- If you fork without submitting a PR, change app name, version, and upstream branding before sharing
-- Close button hides to bottom-right; drag hidden bar contents to bottom-right to show them
-- FAQ is available in the manual HTML
+- If you modify the code and share builds without opening a PR, please change the app name, version, and other upstream identifiers so your fork is not mistaken for the original
+- The close button now hides to the bottom-right; drag the hidden bar back to the corner if you have many windows
+- See the HTML user guide for common questions
 
 ### Community
 
 - QQ group: `1084866292`
 - Discord: https://discord.gg/RHeX47wvDU
-- If you would like to help provide translations, contact us on [Discord](https://discord.gg/RHeX47wvDU).

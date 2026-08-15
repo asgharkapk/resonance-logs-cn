@@ -18,7 +18,10 @@ function entity(
     x: 0,
     y: 0,
     z: 0,
+    name: null,
     monsterId: monsterId ?? null,
+    facing: null,
+    topSummonerId: null,
     isDead: false,
   };
 }
@@ -60,9 +63,30 @@ describe("S3 raid voice cues", () => {
 
     expect(
       resolveRaidVoiceCues(snapshot, [
-        { entityUuid: "ring-body", skillId: 10310062, timeMs: 1000 },
-        { entityUuid: "ring-body", skillId: 10310062, timeMs: 1100 },
-        { entityUuid: "ring-body", skillId: 10310064, timeMs: 1200 },
+        {
+          entityUuid: "ring-body",
+          skillId: 10310062,
+          timeMs: 1000,
+          x: 0,
+          z: 0,
+          facing: null,
+        },
+        {
+          entityUuid: "ring-body",
+          skillId: 10310062,
+          timeMs: 1100,
+          x: 0,
+          z: 0,
+          facing: null,
+        },
+        {
+          entityUuid: "ring-body",
+          skillId: 10310064,
+          timeMs: 1200,
+          x: 0,
+          z: 0,
+          facing: null,
+        },
       ]),
     ).toEqual([
       {
@@ -90,6 +114,8 @@ describe("S3 raid voice cues", () => {
         layer: 1,
         createTimeMs: 100,
         durationMs: 1000,
+        fireUuid: null,
+        sourceConfigId: null,
         effectIds: [],
       },
       {
@@ -99,6 +125,8 @@ describe("S3 raid voice cues", () => {
         layer: 1,
         createTimeMs: 101,
         durationMs: 1000,
+        fireUuid: null,
+        sourceConfigId: null,
         effectIds: [],
       },
     ];

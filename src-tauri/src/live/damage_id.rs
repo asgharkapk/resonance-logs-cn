@@ -23,7 +23,7 @@ static SKILL_LEVEL_TO_EFFECT: LazyLock<HashMap<i32, i32>> = LazyLock::new(|| {
     })
 });
 
-fn locate_meter_data_file(relative_path: &str) -> Option<PathBuf> {
+pub(crate) fn locate_meter_data_file(relative_path: &str) -> Option<PathBuf> {
     let mut p = PathBuf::from(relative_path);
     if p.exists() {
         return Some(p);

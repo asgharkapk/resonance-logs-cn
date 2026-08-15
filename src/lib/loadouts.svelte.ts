@@ -22,6 +22,7 @@ import {
 import {
   createMonsterProfile,
   getMonsterProfileSnapshot,
+  normalizeMonsterProfileStyles,
   removeMonsterProfileById,
   switchMonsterProfile,
 } from "./monster-monitor-profile.svelte.js";
@@ -34,6 +35,7 @@ import {
 import type { LoadoutPreset } from "./config/loadout-presets";
 import type { LoadoutExport } from "./loadout-import";
 import { profilesToCollectAfterLoadoutRemoval } from "./loadout-lifecycle";
+import { normalizeSkillProfile } from "./skill-monitor-normalize";
 import { isReplaceableStarterLoadout } from "./starter-loadout";
 import { t } from "$lib/i18n/index.svelte";
 
@@ -396,12 +398,20 @@ export function exportLoadout(id: string): LoadoutExport | null {
   const liveProfile = getLiveProfileSnapshot(loadout.liveProfileId);
   if (!skillProfile || !monsterProfile || !liveProfile) return null;
 
+  // Profiles created before certain fields existed (e.g. the overlay
+  // text-style toggles) never got them backfilled on disk — normalize here
+  // so exports are always importable, including by the same schema this
+  // process is running.
   return {
     kind: "resonance-logs-loadout",
     version: 1,
     name: loadout.name,
-    skillProfile: omitProfileId(skillProfile),
-    monsterProfile: omitProfileId(monsterProfile),
+    skillProfile: omitProfileId(
+      normalizeSkillProfile(deepCloneSettings(skillProfile)),
+    ),
+    monsterProfile: omitProfileId(
+      normalizeMonsterProfileStyles(monsterProfile),
+    ),
     liveProfile: omitProfileId(liveProfile),
   };
 }

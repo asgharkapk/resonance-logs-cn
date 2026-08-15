@@ -3,10 +3,7 @@
   import { t } from "$lib/i18n/index.svelte";
   import { SETTINGS } from "$lib/settings-store";
   import { overlayNow } from "../game-overlay/overlay-clock.svelte.js";
-  import {
-    minimapPlayerNames,
-    minimapSkillCasts,
-  } from "./minimap-runtime.svelte.js";
+  import { minimapSkillCasts } from "./minimap-runtime.svelte.js";
   import { slotColor } from "./colors";
   import { resolveScene } from "./scene-registry";
   import type { MechanicRow } from "./scene-types";
@@ -26,8 +23,6 @@
 
   function displayName(entity: MinimapEntity): string {
     if (entity.name) return entity.name;
-    const cached = minimapPlayerNames().get(entity.entityUuid);
-    if (cached) return cached;
     return entity.entityUuid.length > 6
       ? `...${entity.entityUuid.slice(-4)}`
       : entity.entityUuid;

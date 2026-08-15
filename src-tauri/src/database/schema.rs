@@ -37,16 +37,6 @@ diesel::table! {
     }
 }
 
-// Represents the `encounter_data` table.
-diesel::table! {
-    encounter_data (encounter_id) {
-        // The encounter ID that owns this encoded payload.
-        encounter_id -> Integer,
-        // The compressed MessagePack payload for this encounter.
-        data -> Binary,
-    }
-}
-
 // Represents the `encounters` table.
 diesel::table! {
     encounters (id) {
@@ -62,6 +52,9 @@ diesel::table! {
         total_dmg -> Nullable<BigInt>,
         // The total healing done in the encounter.
         total_heal -> Nullable<BigInt>,
+        // Exact non-negative encounter totals.
+        total_dmg_exact -> Nullable<Text>,
+        total_heal_exact -> Nullable<Text>,
         // The ID of the scene where the encounter took place.
         scene_id -> Nullable<Integer>,
         // Dungeon difficulty suffix for the scene, if known.
@@ -82,6 +75,33 @@ diesel::table! {
         boss_monster_ids -> Nullable<Text>,
         // JSON-encoded array of player names for fast list/filter queries.
         player_names -> Nullable<Text>,
+        // Bitset describing any known loss or degradation in encounter detail.
+        quality_flags -> Integer,
+    }
+}
+
+// Immutable raw historical facts, sealed independently per stream.
+diesel::table! {
+    encounter_event_chunks (encounter_id, stream_kind, chunk_index) {
+        encounter_id -> Integer,
+        stream_kind -> Text,
+        chunk_index -> BigInt,
+        first_sequence -> BigInt,
+        last_sequence -> BigInt,
+        start_offset_ms -> BigInt,
+        end_offset_ms_exclusive -> BigInt,
+        event_count -> BigInt,
+        data -> Binary,
+    }
+}
+
+// Finalized full-encounter projection used by the detail view.
+diesel::table! {
+    encounter_projection (encounter_id) {
+        encounter_id -> Integer,
+        last_sequence -> BigInt,
+        quality_flags -> Integer,
+        data -> Binary,
     }
 }
 
@@ -95,11 +115,13 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(encounter_data -> encounters (encounter_id));
+diesel::joinable!(encounter_event_chunks -> encounters (encounter_id));
+diesel::joinable!(encounter_projection -> encounters (encounter_id));
 diesel::allow_tables_to_appear_in_same_query!(
     entities,
     encounters,
-    encounter_data,
+    encounter_event_chunks,
+    encounter_projection,
     detailed_playerdata,
     app_config,
 );

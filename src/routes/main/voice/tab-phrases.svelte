@@ -16,7 +16,8 @@
     type VoiceLanguage,
     type VoicePhraseMeta,
   } from "$lib/bindings";
-  import { t, type MessageKey } from "$lib/i18n/index.svelte";
+  import { getLocale, t, type MessageKey } from "$lib/i18n/index.svelte";
+  import { LOCALE_NATIVE_NAMES } from "$lib/i18n/locales";
   import { SETTINGS } from "$lib/settings-store";
   import {
     cancelVoiceGeneration,
@@ -25,6 +26,7 @@
     VOICE,
     voiceErrorMessage,
   } from "$lib/stores/voice-store.svelte";
+  import { presetSourceForLocale } from "$lib/voice-preset-source";
   import {
     classifyOrphanPhrases,
     collectReferencedVoiceKeys,
@@ -250,15 +252,20 @@
     }
   }
 
-  // Only the "clone an already-saved profile" and "fine-tuned voice"
-  // sources make sense for a single-phrase inline regenerate: creating a
-  // brand-new cloned profile is inherently a one-shot, multi-phrase action
-  // that belongs in the batch panel below.
+  // "Preset" needs nothing beyond an installed model: the backend
+  // extracts (and thereafter reuses) a clone profile from the bundled
+  // reference voice matching the UI locale on its own. Only the "clone an
+  // already-saved profile" and "fine-tuned voice" sources make sense for a
+  // single-phrase inline regenerate otherwise: creating a brand-new cloned
+  // profile is inherently a one-shot, multi-phrase action that belongs in
+  // the batch panel below.
   const rowSourceReady = $derived(
     status?.model.kind === "ready" &&
       (selectedSource === "fineTuned"
         ? fineTunedState?.kind === "ready"
-        : !!selectedProfileId),
+        : selectedSource === "preset"
+          ? true
+          : !!selectedProfileId),
   );
   const canRegenerateRow = $derived(!operationActive && rowSourceReady);
 
@@ -268,14 +275,19 @@
       selectedPhraseIds.size > 0 &&
       (selectedSource === "fineTuned"
         ? fineTunedState?.kind === "ready"
-        : profileMode === "existing"
-          ? !!selectedProfileId
-          : !!referenceWavPath && newProfileName.trim().length > 0),
+        : selectedSource === "preset"
+          ? true
+          : profileMode === "existing"
+            ? !!selectedProfileId
+            : !!referenceWavPath && newProfileName.trim().length > 0),
   );
 
   function buildRowSource(): VoiceGenerateRequestDto["source"] | null {
     if (selectedSource === "fineTuned") {
       return fineTunedState?.kind === "ready" ? { mode: "fineTuned" } : null;
+    }
+    if (selectedSource === "preset") {
+      return presetSourceForLocale(getLocale());
     }
     return selectedProfileId
       ? { mode: "cloneExisting", profileId: selectedProfileId }
@@ -300,10 +312,11 @@
 
   async function submitGeneration() {
     if (!canGenerate) return;
-    const request: VoiceGenerateRequestDto = {
-      source:
-        selectedSource === "fineTuned"
-          ? { mode: "fineTuned" }
+    const source: VoiceGenerateRequestDto["source"] =
+      selectedSource === "fineTuned"
+        ? { mode: "fineTuned" }
+        : selectedSource === "preset"
+          ? presetSourceForLocale(getLocale())
           : profileMode === "existing"
             ? { mode: "cloneExisting", profileId: selectedProfileId! }
             : {
@@ -311,7 +324,9 @@
                 name: newProfileName.trim(),
                 referenceWavPath: referenceWavPath!,
                 keepReference,
-              },
+              };
+    const request: VoiceGenerateRequestDto = {
+      source,
       phraseIds: Array.from(selectedPhraseIds),
       backendPreference: SETTINGS.voice.state.generationBackend,
     };
@@ -629,6 +644,17 @@
           <button
             type="button"
             class="flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors {selectedSource ===
+            'preset'
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
+            disabled={operationActive}
+            onclick={() => (SETTINGS.voice.state.selectedSource = "preset")}
+          >
+            {t("voice.phrases.generate.presetSource")}
+          </button>
+          <button
+            type="button"
+            class="flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors {selectedSource ===
             'clone'
               ? 'bg-primary text-primary-foreground border-primary'
               : 'bg-muted/30 text-foreground border-border/60 hover:bg-muted/50'}"
@@ -667,6 +693,14 @@
               {t("voice.phrases.generate.finetunedUnavailable")}
             </div>
           {/if}
+        {:else if selectedSource === "preset"}
+          <div
+            class="border-border/60 bg-muted/30 text-muted-foreground rounded border px-3 py-2 text-xs"
+          >
+            {t("voice.phrases.generate.presetSource.info", {
+              locale: LOCALE_NATIVE_NAMES[getLocale()],
+            })}
+          </div>
         {:else}
           <div class="flex gap-2">
             <button

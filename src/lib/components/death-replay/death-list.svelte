@@ -6,6 +6,7 @@
   import AbbreviatedNumber from "$lib/components/abbreviated-number.svelte";
   import TableRowGlow from "$lib/components/table-row-glow.svelte";
   import { formatDateTime, formatNumber, t } from "$lib/i18n/index.svelte";
+  import { ipcCompare, ipcNumber, ipcRatio, ipcSum } from "$lib/ipc-decimal";
 
   let {
     playerName,
@@ -51,36 +52,38 @@
   type ComputedRow = {
     record: DeathRecord;
     totalTaken: number;
+    totalTakenExact: bigint;
     hitCount: number;
   };
 
   // Sorted by death timestamp desc so the most recent death appears first.
   const rows = $derived.by<ComputedRow[]>(() =>
     [...deaths]
-      .sort(
-        (a, b) => Number(b.deathTimestampMs) - Number(a.deathTimestampMs),
-      )
+      .sort((a, b) => ipcCompare(b.deathTimestampMs, a.deathTimestampMs))
       .map((record) => {
         const recentDamages = record.recentDamages ?? [];
-        let totalTaken = 0;
-        for (const dmg of recentDamages) {
-          totalTaken += Number(dmg.value);
-        }
+        const totalTakenExact = ipcSum(
+          recentDamages.map((damage) => damage.value),
+        );
         return {
           record,
-          totalTaken,
+          totalTaken: ipcNumber(totalTakenExact),
+          totalTakenExact,
           hitCount: recentDamages.length,
         };
       }),
   );
 
   const maxTotalTaken = $derived(
-    rows.reduce((max, r) => (r.totalTaken > max ? r.totalTaken : max), 0),
+    rows.reduce(
+      (max, row) =>
+        ipcCompare(row.totalTakenExact, max) > 0 ? row.totalTakenExact : max,
+      0n,
+    ),
   );
 
-  function glowPercentage(totalTaken: number): number {
-    if (maxTotalTaken <= 0) return 0;
-    return (totalTaken / maxTotalTaken) * 100;
+  function glowPercentage(totalTaken: bigint): number {
+    return ipcRatio(totalTaken, maxTotalTaken, 100);
   }
 
   function formatAbsoluteTime(ms: number): string {
@@ -94,8 +97,12 @@
   }
 
   function formatRelative(ms: number): string | null {
-    if (fightStartTimestampMs == null || fightStartTimestampMs <= 0) return null;
-    const diffSec = Math.max(0, Math.floor((ms - fightStartTimestampMs) / 1000));
+    if (fightStartTimestampMs == null || fightStartTimestampMs <= 0)
+      return null;
+    const diffSec = Math.max(
+      0,
+      Math.floor((ms - fightStartTimestampMs) / 1000),
+    );
     const mm = String(Math.floor(diffSec / 60)).padStart(2, "0");
     const ss = String(diffSec % 60).padStart(2, "0");
     return `${mm}:${ss}`;
@@ -185,10 +192,12 @@
           </tr>
         {:else}
           {#each rows as row, idx (`${row.record.victimEntityUuid}-${row.record.deathTimestampMs}`)}
-            {@const rel = formatRelative(Number(row.record.deathTimestampMs))}
+            {@const rel = formatRelative(
+              ipcNumber(row.record.deathTimestampMs),
+            )}
             <tr
               class="relative border-t border-border/40 hover:bg-muted/60 transition-colors cursor-pointer"
-              onclick={() => onSelect(Number(row.record.deathTimestampMs))}
+              onclick={() => onSelect(ipcNumber(row.record.deathTimestampMs))}
             >
               <td
                 class="px-3 py-3 text-sm text-muted-foreground relative z-10 tabular-nums"
@@ -196,7 +205,9 @@
               >
               <td
                 class="px-3 py-3 text-sm text-muted-foreground relative z-10 tabular-nums"
-                >{formatAbsoluteTime(Number(row.record.deathTimestampMs))}</td
+                >{formatAbsoluteTime(
+                  ipcNumber(row.record.deathTimestampMs),
+                )}</td
               >
               {#if fightStartTimestampMs != null && fightStartTimestampMs > 0}
                 <td
@@ -225,7 +236,7 @@
                 isSkill={true}
                 {className}
                 {classSpecName}
-                percentage={glowPercentage(row.totalTaken)}
+                percentage={glowPercentage(row.totalTakenExact)}
               />
             </tr>
           {/each}
@@ -249,23 +260,26 @@
           </tr>
         {:else}
           {#each rows as row, idx (`${row.record.victimEntityUuid}-${row.record.deathTimestampMs}`)}
-            {@const rel = formatRelative(Number(row.record.deathTimestampMs))}
+            {@const rel = formatRelative(
+              ipcNumber(row.record.deathTimestampMs),
+            )}
             <tr
               class="relative hover:bg-muted/60 transition-colors cursor-pointer"
               style="height: {tableSettings.skillRowHeight}px; font-size: {tableSettings.skillFontSize}px;"
-              onclick={() => onSelect(Number(row.record.deathTimestampMs))}
+              onclick={() => onSelect(ipcNumber(row.record.deathTimestampMs))}
             >
               <td
                 class="px-2 py-1 relative z-10"
                 style="color: {customThemeColors.tableTextColor};"
               >
                 <div class="flex items-center h-full gap-2">
-                  <span
-                    class="tabular-nums font-semibold shrink-0 w-8"
+                  <span class="tabular-nums font-semibold shrink-0 w-8"
                     >#{formatNumber(rows.length - idx)}</span
                   >
                   <span class="tabular-nums shrink-0"
-                    >{formatAbsoluteTime(Number(row.record.deathTimestampMs))}</span
+                    >{formatAbsoluteTime(
+                      ipcNumber(row.record.deathTimestampMs),
+                    )}</span
                   >
                   {#if rel}
                     <span
@@ -305,7 +319,7 @@
                 isSkill={true}
                 {className}
                 {classSpecName}
-                percentage={glowPercentage(row.totalTaken)}
+                percentage={glowPercentage(row.totalTakenExact)}
               />
             </tr>
           {/each}

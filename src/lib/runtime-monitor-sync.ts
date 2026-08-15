@@ -11,6 +11,7 @@ import {
   getDefaultMonitoredBuffIds,
   getSeasonCultivateFactorConfiguredEffectBuffIds,
   getSeasonCultivateFactorTemplates,
+  getSeasonNodeBuffIds,
   resolveUserCounterRulesToPresets,
 } from "$lib/skill-mappings";
 import {
@@ -171,6 +172,10 @@ function buildSkillRuntimeSnapshot(): MonitorRuntimeSnapshot["skill"] {
   const factorEffectBuffIds = hasSeasonCultivateFactorGroup
     ? getSeasonCultivateFactorConfiguredEffectBuffIds()
     : [];
+
+  const seasonNodeBuffIds = hasSeasonCultivateFactorGroup
+    ? getSeasonNodeBuffIds()
+    : [];
   const defaultLinkedBuffIds = getDefaultMonitoredBuffIds(selectedClass);
   const mergedBuffIds = uniqueSortedNumbers([
     ...(skillMonitorEnabled ? monitoredBuffIds : []),
@@ -179,6 +184,7 @@ function buildSkillRuntimeSnapshot(): MonitorRuntimeSnapshot["skill"] {
     ...counterBuffIds,
     ...factorBuffIds,
     ...factorEffectBuffIds,
+    ...seasonNodeBuffIds,
     ...(skillMonitorEnabled ? defaultLinkedBuffIds : []),
   ]);
   const monitoredPanelAttrIds = uniqueSortedNumbers(

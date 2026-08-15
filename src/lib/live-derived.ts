@@ -1,21 +1,26 @@
 import type {
-  HeaderInfo,
   LiveDataPayload,
   PlayerRow,
   RawCombatStats,
   RawEntityData,
 } from "$lib/api";
+import {
+  ipcBigInt,
+  ipcIsZero,
+  ipcNumber,
+  ipcRatio,
+  ipcSum,
+  type IpcDecimal,
+} from "$lib/ipc-decimal";
 
 type Metric = "dps" | "heal" | "tanked";
 
-function percent(part: number, total: number): number {
-  if (total <= 0) return 0;
-  return (part / total) * 100;
+function percent(part: unknown, total: unknown): number {
+  return ipcRatio(part, total, 100);
 }
 
-function rate(part: number, total: number): number {
-  if (total <= 0) return 0;
-  return (part / total) * 100;
+function rate(part: unknown, total: unknown): number {
+  return ipcRatio(part, total, 100);
 }
 
 function statsByMetric(entity: RawEntityData, metric: Metric): RawCombatStats {
@@ -26,11 +31,11 @@ function statsByMetric(entity: RawEntityData, metric: Metric): RawCombatStats {
 
 type PlayerRowsSource = {
   entities: RawEntityData[];
-  elapsedMs: number;
-  activeCombatTimeMs: number;
-  totalDmg: number;
-  totalHeal: number;
-  totalDmgBossOnly: number;
+  elapsedMs: IpcDecimal;
+  activeCombatTimeMs: IpcDecimal;
+  totalDmg: IpcDecimal;
+  totalHeal: IpcDecimal;
+  totalDmgBossOnly: IpcDecimal;
 };
 
 export function computePlayerRowsFromEntities(
@@ -38,32 +43,39 @@ export function computePlayerRowsFromEntities(
   metric: Metric,
   forbiddenIds?: Set<number>,
 ): PlayerRow[] {
-  const elapsedSecs = source.elapsedMs > 0 ? source.elapsedMs / 1000 : 0;
-  const effectiveActiveCombatMs = Math.min(source.activeCombatTimeMs, source.elapsedMs);
-  const activeCombatSecs =
-    effectiveActiveCombatMs > 0 ? effectiveActiveCombatMs / 1000 : 0;
+  const elapsedMs = ipcBigInt(source.elapsedMs);
+  const activeCombatTimeMs = ipcBigInt(source.activeCombatTimeMs);
+  const effectiveActiveCombatMs =
+    elapsedMs > 0n && activeCombatTimeMs > 0n
+      ? activeCombatTimeMs < elapsedMs
+        ? activeCombatTimeMs
+        : elapsedMs
+      : 0n;
   const totalMetric =
     metric === "heal"
-      ? source.totalHeal
+      ? ipcBigInt(source.totalHeal)
       : metric === "tanked"
-        ? source.entities.reduce((sum, entity) => sum + (entity.taken?.total ?? 0), 0)
-        : source.totalDmg;
+        ? ipcSum(source.entities.map((entity) => entity.taken.total))
+        : ipcBigInt(source.totalDmg);
+  const bossTotal = ipcBigInt(source.totalDmgBossOnly);
 
   return source.entities
     .map((entity) => {
       const stats = statsByMetric(entity, metric);
-      const total = Number(stats.total || 0);
+      const total = ipcBigInt(stats.total);
       const effectiveTotal =
-        metric === "heal" ? Number(stats.effectiveTotal || 0) : 0;
-      const hits = Number(stats.hits || 0);
-      const triggerHits = Number(stats.triggerHits || stats.hits || 0);
-      const bossDmg = metric === "dps" ? Number(entity.damageBossOnly?.total || 0) : 0;
-      const bossTotal = Number(source.totalDmgBossOnly || 0);
+        metric === "heal" ? ipcBigInt(stats.effectiveTotal) : 0n;
+      const hits = ipcBigInt(stats.hits);
+      const triggerHits = ipcIsZero(stats.triggerHits)
+        ? hits
+        : ipcBigInt(stats.triggerHits);
+      const bossDmg =
+        metric === "dps" ? ipcBigInt(entity.damageBossOnly.total) : 0n;
 
       const forbiddenHitIds =
         forbiddenIds && forbiddenIds.size > 0
           ? [...forbiddenIds].filter(
-              (id) => Number(entity.takenSkills?.[id]?.hits ?? 0) > 0,
+              (id) => !ipcIsZero(entity.takenSkills[id]?.hits),
             )
           : [];
 
@@ -75,26 +87,29 @@ export function computePlayerRowsFromEntities(
         classSpecName: entity.classSpecName,
         abilityScore: entity.abilityScore,
         seasonStrength: entity.seasonStrength ?? 0,
-        totalDmg: total,
-        dps: elapsedSecs > 0 ? total / elapsedSecs : 0,
-        tdps: metric === "dps" && activeCombatSecs > 0 ? total / activeCombatSecs : 0,
-        activeTimeMs: metric === "dps" ? effectiveActiveCombatMs : 0,
-        bossDps: metric === "dps" && elapsedSecs > 0 ? bossDmg / elapsedSecs : 0,
+        totalDmg: ipcNumber(total),
+        dps: ipcRatio(total, elapsedMs, 1_000),
+        tdps:
+          metric === "dps"
+            ? ipcRatio(total, effectiveActiveCombatMs, 1_000)
+            : 0,
+        activeTimeMs: metric === "dps" ? ipcNumber(effectiveActiveCombatMs) : 0,
+        bossDps: metric === "dps" ? ipcRatio(bossDmg, elapsedMs, 1_000) : 0,
         dmgPct: percent(total, totalMetric),
-        critRate: rate(Number(stats.critHits || 0), hits),
-        critDmgRate: percent(Number(stats.critTotal || 0), total),
-        luckyRate: rate(Number(stats.luckyHits || 0), triggerHits),
-        luckyDmgRate: percent(Number(stats.luckyTotal || 0), total),
-        blockRate: metric === "tanked" ? rate(Number(stats.blockHits || 0), hits) : 0,
+        critRate: rate(stats.critHits, hits),
+        critDmgRate: percent(stats.critTotal, total),
+        luckyRate: rate(stats.luckyHits, triggerHits),
+        luckyDmgRate: percent(stats.luckyTotal, total),
+        blockRate: metric === "tanked" ? rate(stats.blockHits, hits) : 0,
         luckyBlockRate:
-          metric === "tanked" ? rate(Number(stats.luckyBlockHits || 0), hits) : 0,
-        hits,
-        hitsPerMinute: elapsedSecs > 0 ? (hits / elapsedSecs) * 60 : 0,
-        bossDmg,
+          metric === "tanked" ? rate(stats.luckyBlockHits, hits) : 0,
+        hits: ipcNumber(hits),
+        hitsPerMinute: ipcRatio(hits, elapsedMs, 60_000),
+        bossDmg: ipcNumber(bossDmg),
         bossDmgPct: metric === "dps" ? percent(bossDmg, bossTotal) : 0,
-        effectiveTotal,
+        effectiveTotal: ipcNumber(effectiveTotal),
         effectiveDps:
-          metric === "heal" && elapsedSecs > 0 ? effectiveTotal / elapsedSecs : 0,
+          metric === "heal" ? ipcRatio(effectiveTotal, elapsedMs, 1_000) : 0,
         forbiddenHit: forbiddenHitIds.length > 0,
         forbiddenHitIds,
       };
@@ -121,21 +136,4 @@ export function computePlayerRows(
     metric,
     forbiddenIds,
   );
-}
-
-export function computeHeaderInfo(data: LiveDataPayload): HeaderInfo {
-  const elapsedSecs = data.elapsedMs > 0 ? data.elapsedMs / 1000 : 0;
-  return {
-    totalDps: elapsedSecs > 0 ? data.totalDmg / elapsedSecs : 0,
-    totalDmg: data.totalDmg,
-    elapsedMs: data.elapsedMs,
-    activeCombatTimeMs: data.activeCombatTimeMs,
-    fightStartTimestampMs: data.fightStartTimestampMs,
-    bosses: data.bosses,
-    sceneId: data.sceneId,
-    dungeonDifficulty: data.dungeonDifficulty,
-    trainingDummy: {
-      phase: "idle",
-    },
-  };
 }

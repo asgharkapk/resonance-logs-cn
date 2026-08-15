@@ -121,6 +121,10 @@ pub struct EncounterRow {
     pub total_dmg: Option<i64>,
     /// The total healing done in the encounter.
     pub total_heal: Option<i64>,
+    /// Exact total damage for encounter summaries.
+    pub total_dmg_exact: Option<String>,
+    /// Exact total healing for encounter summaries.
+    pub total_heal_exact: Option<String>,
     /// The ID of the scene where the encounter took place.
     pub scene_id: Option<i32>,
     /// Dungeon difficulty suffix for the scene, if known.
@@ -139,6 +143,7 @@ pub struct EncounterRow {
     pub is_manually_reset: i32,
     pub boss_monster_ids: Option<String>,
     pub player_names: Option<String>,
+    pub quality_flags: i32,
 }
 
 /// Represents a new encounter to be inserted into the `encounters` table.
@@ -163,19 +168,4 @@ pub struct NewEncounter {
     pub duration: f64,
     /// The accumulated active combat duration in seconds.
     pub active_combat_duration: Option<f64>,
-}
-
-#[derive(Debug, Clone, Queryable, Identifiable, Associations, Serialize, Deserialize)]
-#[diesel(table_name = sch::encounter_data, primary_key(encounter_id))]
-#[diesel(belongs_to(EncounterRow, foreign_key = encounter_id))]
-pub struct EncounterDataRow {
-    pub encounter_id: i32,
-    pub data: Vec<u8>,
-}
-
-#[derive(Debug, Clone, Insertable)]
-#[diesel(table_name = sch::encounter_data)]
-pub struct NewEncounterData<'a> {
-    pub encounter_id: i32,
-    pub data: &'a [u8],
 }

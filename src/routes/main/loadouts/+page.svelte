@@ -164,7 +164,9 @@
       const parsed = parseLoadoutExport(JSON.parse(text));
       if (!parsed.success) {
         console.error("Invalid loadout import", parsed.issues);
-        toast.error(t("loadout.page.importError"));
+        toast.error(t("loadout.page.importError"), {
+          description: parsed.issues.slice(0, 3).join("\n"),
+        });
         return;
       }
       importLoadout(parsed.output);

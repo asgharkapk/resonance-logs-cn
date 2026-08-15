@@ -135,7 +135,7 @@ export type SceneDefinition = {
   /** Every voice cue this scene can fire, for the settings page to enumerate. */
   voiceCues?: MinimapVoiceCueDef[];
   /**
-   * Called on every `minimap-update` tick with that tick's fresh skill-cast
+   * Called on every `minimap-snapshot` tick with that tick's fresh skill-cast
    * delta (not the accumulated log `resolveView` receives), so each
    * qualifying mechanic occurrence appears here exactly once. Kept separate
    * from `resolveView` so cue-firing side effects never leak into the pure

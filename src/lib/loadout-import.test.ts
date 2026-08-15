@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createDefaultLiveMeterProfileData,
   createDefaultMonsterMonitorProfile,
+  createDefaultOverlayTextStyle,
   createDefaultSkillMonitorProfile,
   omitProfileId,
   resolveVoicePriority,
@@ -331,5 +332,90 @@ describe("parseLoadoutExport", () => {
     expect(result.output.liveProfile.appearance.useClassSpecColors).toBe(true);
     expect(result.output.liveProfile.general.showFantasyCastIcons).toBe(true);
     expect(parseLoadoutExport(result.output).success).toBe(true);
+  });
+
+  it("accepts a legacy export predating the overlay text-style toggles", () => {
+    // Reproduces the shape of exports taken from installs that were never
+    // fully migrated to the current schema: `overlaySizes.panelAttrTextStyle`
+    // is entirely missing, and every panel style that already exists is
+    // missing its `textShadowEnabled`/`backgroundEnabled`/`backgroundOpacity`
+    // trio (added after those styles were introduced).
+    const data = validExport();
+    const skill = data["skillProfile"] as Record<string, unknown>;
+
+    const overlaySizes = skill["overlaySizes"] as Record<string, unknown>;
+    delete overlaySizes["panelAttrTextStyle"];
+
+    const textBuffPanelStyle = skill["textBuffPanelStyle"] as Record<
+      string,
+      unknown
+    >;
+    delete textBuffPanelStyle["textShadowEnabled"];
+    delete textBuffPanelStyle["backgroundEnabled"];
+    delete textBuffPanelStyle["backgroundOpacity"];
+
+    // `customPanelStyle` is optional/legacy and may be entirely absent on an
+    // old export, but when present it can also predate these fields.
+    skill["customPanelStyle"] = {
+      gap: 6,
+      columnGap: 12,
+      fontSize: 14,
+      nameColor: "#ffffff",
+      valueColor: "#ffffff",
+      progressColor: "#ffffff",
+      progressOpacity: 0.4,
+    };
+
+    skill["customPanelGroups"] = [
+      {
+        id: "group",
+        name: "Group",
+        kind: "manual",
+        entries: [],
+        position: { x: 0, y: 0 },
+        scale: 1,
+        style: {
+          gap: 6,
+          columnGap: 12,
+          fontSize: 14,
+          nameColor: "#ffffff",
+          valueColor: "#ffffff",
+          progressColor: "#ffffff",
+          progressOpacity: 0.4,
+        },
+      },
+    ];
+
+    const result = parseLoadoutExport(data);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    const textStyleDefaults = createDefaultOverlayTextStyle();
+    expect(result.output.skillProfile.overlaySizes.panelAttrTextStyle).toEqual(
+      textStyleDefaults,
+    );
+    expect(result.output.skillProfile.customPanelStyle).toMatchObject(
+      textStyleDefaults,
+    );
+    expect(result.output.skillProfile.textBuffPanelStyle).toMatchObject(
+      textStyleDefaults,
+    );
+    expect(
+      result.output.skillProfile.customPanelGroups?.[0]?.style,
+    ).toMatchObject(textStyleDefaults);
+  });
+
+  it("includes the field path in validation issues", () => {
+    const data = validExport();
+    const skill = data["skillProfile"] as Record<string, unknown>;
+    skill["buffDisplayMode"] = "automatic";
+
+    const result = parseLoadoutExport(data);
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(
+      result.issues.some((issue) =>
+        issue.startsWith("skillProfile.buffDisplayMode:"),
+      ),
+    ).toBe(true);
   });
 });

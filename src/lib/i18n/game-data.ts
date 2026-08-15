@@ -1,15 +1,18 @@
 import damageAttrIdNamesZhCN from "$lib/config/DamageAttrIdName.json";
 import monsterIdNameTypeZhCN from "$lib/config/MonsterIdNameType.json";
+import monsterSkillNamesZhCN from "$lib/config/MonsterSkillName.json";
 import recountTableZhCN from "$lib/config/RecountTable.json";
 import sceneNamesZhCN from "$lib/config/SceneName.json";
 import buffNamesZhCN from "$lib/config/BuffName.json";
 import damageAttrIdNamesEnUS from "$lib/config/en-US/DamageAttrIdName.json";
 import monsterIdNameTypeEnUS from "$lib/config/en-US/MonsterIdNameType.json";
+import monsterSkillNamesEnUS from "$lib/config/en-US/MonsterSkillName.json";
 import recountTableEnUS from "$lib/config/en-US/RecountTable.json";
 import sceneNamesEnUS from "$lib/config/en-US/SceneName.json";
 import buffNamesEnUS from "$lib/config/en-US/BuffName.json";
 import damageAttrIdNamesJaJP from "$lib/config/ja-JP/DamageAttrIdName.json";
 import monsterIdNameTypeJaJP from "$lib/config/ja-JP/MonsterIdNameType.json";
+import monsterSkillNamesJaJP from "$lib/config/ja-JP/MonsterSkillName.json";
 import recountTableJaJP from "$lib/config/ja-JP/RecountTable.json";
 import sceneNamesJaJP from "$lib/config/ja-JP/SceneName.json";
 import buffNamesJaJP from "$lib/config/ja-JP/BuffName.json";
@@ -40,6 +43,7 @@ export type RawBuffEntry = {
 export type GameDataBundle = {
   sceneNames: Record<string, string>;
   monsterInfoById: Record<string, RawMonsterInfo>;
+  monsterSkillNames: Record<string, string>;
   recountTable: Record<string, RawRecountEntry>;
   damageAttrIdNames: Record<string, string>;
   buffNames: RawBuffEntry[];
@@ -49,6 +53,7 @@ export const GAME_DATA_BY_LOCALE = {
   "zh-CN": {
     sceneNames: sceneNamesZhCN,
     monsterInfoById: monsterIdNameTypeZhCN,
+    monsterSkillNames: monsterSkillNamesZhCN,
     recountTable: recountTableZhCN,
     damageAttrIdNames: damageAttrIdNamesZhCN,
     buffNames: buffNamesZhCN,
@@ -56,6 +61,7 @@ export const GAME_DATA_BY_LOCALE = {
   "en-US": {
     sceneNames: sceneNamesEnUS,
     monsterInfoById: monsterIdNameTypeEnUS,
+    monsterSkillNames: monsterSkillNamesEnUS,
     recountTable: recountTableEnUS,
     damageAttrIdNames: damageAttrIdNamesEnUS,
     buffNames: buffNamesEnUS,
@@ -63,6 +69,7 @@ export const GAME_DATA_BY_LOCALE = {
   "ja-JP": {
     sceneNames: sceneNamesJaJP,
     monsterInfoById: monsterIdNameTypeJaJP,
+    monsterSkillNames: monsterSkillNamesJaJP,
     recountTable: recountTableJaJP,
     damageAttrIdNames: damageAttrIdNamesJaJP,
     buffNames: buffNamesJaJP,

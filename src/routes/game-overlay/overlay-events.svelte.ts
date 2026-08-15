@@ -1,17 +1,11 @@
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { findAnySkillByBaseId } from "$lib/skill-mappings";
+import { untrack } from "svelte";
 import {
-  onBuffCounterUpdate,
-  onBuffUpdate,
-  onFightResUpdate,
-  onPanelAttrUpdate,
-  onSeasonCultivateFactorCounterUpdate,
-  onShieldDetailUpdate,
-  onSkillCdUpdate,
-  type BuffUpdateState,
-  type CounterUpdateState,
-} from "$lib/api";
+  liveBuffsStore,
+  liveStatusStore,
+} from "$lib/stores/live-topics.svelte";
+import { connectTopics } from "$lib/stores/live-topic-store.svelte";
 import {
   getAvailableBuffDefinitions,
   type BuffDefinition,
@@ -32,6 +26,8 @@ import {
   updateActiveProfile,
 } from "./overlay-profile.svelte.js";
 import { overlayRuntime } from "./overlay-runtime.svelte.js";
+import { findAnySkillByBaseId } from "$lib/skill-mappings";
+import { reconcileSkillDurationStates } from "./skill-duration-state";
 import {
   onGlobalPointerMove,
   onGlobalPointerUp,
@@ -71,82 +67,24 @@ export function initOverlay() {
       setReferenceMode(event.payload);
     },
   );
-  const unlistenBuff = onBuffUpdate((event) => {
-    const next = new Map<number, BuffUpdateState>();
-    for (const buff of event.payload.buffs) {
-      const existing = next.get(buff.baseId);
-      if (!existing || buff.createTimeMs >= existing.createTimeMs) {
-        next.set(buff.baseId, buff);
-      }
-    }
-    overlayRuntime.buffMap = next;
-  });
-  const unlistenCounter = onBuffCounterUpdate((event) => {
-    const next = new Map<number, CounterUpdateState>();
-    for (const counter of event.payload.counters) {
-      next.set(counter.ruleId, counter);
-    }
-    overlayRuntime.counterMap = next;
-  });
-  const unlistenFactorCounter = onSeasonCultivateFactorCounterUpdate((event) => {
-    const next = new Map<number, CounterUpdateState>();
-    for (const counter of event.payload.counters) {
-      next.set(counter.ruleId, counter);
-    }
-    overlayRuntime.factorCounterMap = next;
-    overlayRuntime.seasonCultivateFactorSourceItemIds = event.payload.sourceItemIds;
-    overlayRuntime.seasonCultivateFactorSlotItemIds = event.payload.slotItemIds;
-  });
-  const unlistenCd = onSkillCdUpdate((event) => {
-    const next = new Map(overlayRuntime.cdMap);
-    const nextDurationMap = new Map(overlayRuntime.skillDurationMap);
-    const classKey = selectedClassKey();
-    const durationSkillIds = new Set(monitoredSkillDurationIds());
-    for (const cd of event.payload.skillCds) {
-      const baseId = Math.floor(cd.skillLevelId / 100);
-      next.set(baseId, cd);
-      if (!durationSkillIds.has(baseId)) continue;
-      const skill = findAnySkillByBaseId(classKey, baseId);
-      const effectDurationMs = skill?.effectDurationMs;
-      if (!effectDurationMs || cd.beginTime <= 0) continue;
-      const currentDuration = nextDurationMap.get(baseId);
-      if (currentDuration?.beginTime === cd.beginTime) continue;
-      nextDurationMap.set(baseId, {
-        skillId: baseId,
-        startedAtMs: cd.receivedAt || Date.now(),
-        durationMs: effectDurationMs,
-        beginTime: cd.beginTime,
+  const stopSkillDurationEffect = $effect.root(() => {
+    $effect(() => {
+      const status = liveStatusStore.data;
+      if (!status) return;
+      const classKey = selectedClassKey();
+      // The previous map is this effect's own output; reading it tracked would
+      // make every write re-run the effect forever.
+      overlayRuntime.skillDurationMap = reconcileSkillDurationStates({
+        current: untrack(() => overlayRuntime.skillDurationMap),
+        skillCds: status.skillCds,
+        monitoredSkillIds: new Set(monitoredSkillDurationIds()),
+        durationMsForSkill: (skillId) =>
+          findAnySkillByBaseId(classKey, skillId)?.effectDurationMs,
+        fallbackStartedAtMs: Date.now(),
       });
-    }
-    for (const skillId of nextDurationMap.keys()) {
-      if (!durationSkillIds.has(skillId)) {
-        nextDurationMap.delete(skillId);
-      }
-    }
-    overlayRuntime.cdMap = next;
-    overlayRuntime.skillDurationMap = nextDurationMap;
+    });
   });
-  const unlistenRes = onFightResUpdate((event) => {
-    const next = new Map<number, number>();
-    for (const entry of event.payload.fightRes.entries) {
-      next.set(entry.id, entry.value);
-    }
-    overlayRuntime.fightResMap = next;
-  });
-  const unlistenPanelAttr = onPanelAttrUpdate((event) => {
-    const next = new Map(overlayRuntime.panelAttrMap);
-    for (const attr of event.payload.attrs) {
-      next.set(attr.attrId, attr.value);
-    }
-    overlayRuntime.panelAttrMap = next;
-  });
-  const unlistenShieldDetail = onShieldDetailUpdate((event) => {
-    overlayRuntime.shieldDetailHp = {
-      current: event.payload.currentHp,
-      max: event.payload.maxHp,
-    };
-    overlayRuntime.shieldDetailEntries = event.payload.entries;
-  });
+  const disconnectTopics = connectTopics(liveStatusStore, liveBuffsStore);
 
   window.addEventListener("pointermove", onGlobalPointerMove);
   window.addEventListener("pointerup", onGlobalPointerUp);
@@ -159,13 +97,8 @@ export function initOverlay() {
     overlayRuntime.resizeState = null;
     unlistenEditToggle.then((fn) => fn());
     unlistenReferenceToggle.then((fn) => fn());
-    unlistenBuff.then((fn) => fn());
-    unlistenCounter.then((fn) => fn());
-    unlistenFactorCounter.then((fn) => fn());
-    unlistenCd.then((fn) => fn());
-    unlistenRes.then((fn) => fn());
-    unlistenPanelAttr.then((fn) => fn());
-    unlistenShieldDetail.then((fn) => fn());
+    stopSkillDurationEffect();
+    disconnectTopics();
     window.removeEventListener("pointermove", onGlobalPointerMove);
     window.removeEventListener("pointerup", onGlobalPointerUp);
     cleanupClock();

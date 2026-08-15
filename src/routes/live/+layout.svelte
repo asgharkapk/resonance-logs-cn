@@ -1,346 +1,27 @@
 <script lang="ts">
-  /**
-   * @file This is the layout for the live meter.
-   * It sets up event listeners for live data, manages the pause state,
-   * and handles scroll position restoration.
-   *
-   * It also displays the header, footer, boss health, and notification toasts.
-   *
-   * @packageDocumentation
-   */
   import { onMount } from "svelte";
   import { SETTINGS } from "$lib/settings-store";
   import { t } from "$lib/i18n/index.svelte";
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-  import {
-    onLiveData,
-    onResetEncounter,
-    onEncounterUpdate,
-    onSceneChange,
-    onPauseEncounter,
-    onTrainingDummyUpdate,
-    onDeathReplay,
-    onTeammateFantasyUpdate,
-    onTeammateFantasyClear,
-  } from "$lib/api";
   import { applyCustomFonts } from "$lib/font-loader";
+  import { ipcNumber } from "$lib/ipc-decimal";
+  import { liveCombatStore, liveFantasyStore } from "$lib/stores/live-topics.svelte";
+  import { connectTopics } from "$lib/stores/live-topic-store.svelte";
   import { applyLiveClickthrough } from "$lib/utils.svelte";
   import { writable } from "svelte/store";
   import { beforeNavigate, afterNavigate } from "$app/navigation";
   import AppBackgroundLayer from "$lib/components/app-background-layer.svelte";
-
-  // Store for pause state
-  export const isPaused = writable(false);
-
-  // Store for scroll positions
-  const scrollPositions = writable<Record<string, number>>({});
-
-  import {
-    setLiveData,
-    setTrainingDummyState,
-    setDeathRecords,
-    clearMeterData,
-    cleanupStores,
-  } from "$lib/stores/live-meter-store.svelte";
-  import {
-    mergeFantasyCasts,
-    clearFantasyCasts,
-  } from "$lib/stores/fantasy-cast-store.svelte";
   import HeaderCustom from "./header-custom.svelte";
-
   import NotificationToast from "./notification-toast.svelte";
 
+  const scrollPositions = writable<Record<string, number>>({});
   let { children } = $props();
-  // let screenshotDiv: HTMLDivElement | undefined = $state();
-
   let notificationToast: NotificationToast;
   let mainElement: HTMLElement | undefined = undefined;
-  let unlisten: (() => void) | null = null;
   let clickthroughUnlisten: UnlistenFn | null = null;
-
-  // Prevent concurrent setupEventListeners runs which can attach duplicate listeners
-  let listenersSetupInProgress = false;
-  let lastEventTime = Date.now();
-  let hadAnyEvent = false; // becomes true after the first live event arrives
-  // Persist last known pause state across listener reconnections so we don't
-  // show a spurious "Encounter resumed" toast every time listeners are
-  // re-attached (e.g. on window focus/visibility change).
   let lastPauseState: boolean | null = null;
-  let reconnectInterval: ReturnType<typeof setInterval> | null = null;
-  let isReconnecting = false;
-  let reconnectDelay = 1000; // exponential backoff base
-  const DISCONNECT_THRESHOLD = 5000;
-  // Track if component is destroyed to prevent callbacks from firing after unmount
-  let isDestroyed = false;
+  let lastDisplayedSegmentId: number | null | undefined;
 
-  async function setupEventListeners() {
-    if (isDestroyed || isReconnecting || listenersSetupInProgress) return;
-    listenersSetupInProgress = true;
-
-    // If listeners are already attached, skip setup to avoid duplicates.
-    if (unlisten) {
-      listenersSetupInProgress = false;
-      return;
-    }
-
-    try {
-      // Set up unified live-data listener
-      const playersUnlisten = await onLiveData((event) => {
-        if (isDestroyed) return;
-        lastEventTime = Date.now();
-        hadAnyEvent = true;
-        if (event.payload.fightStartTimestampMs > 0) {
-          setLiveData(event.payload);
-        }
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      // Set up reset encounter listener
-      const resetUnlisten = await onResetEncounter(() => {
-        if (isDestroyed) return;
-        lastEventTime = Date.now();
-        hadAnyEvent = true;
-        clearMeterData();
-        notificationToast?.showToast(
-          "notice",
-          t("live.notifications.encounterReset"),
-        );
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      // Set up encounter update listener (pause/resume)
-      const encounterUnlisten = await onEncounterUpdate((event) => {
-        if (isDestroyed) return;
-        // Treat encounter updates as keep-alive too so reconnect logic doesn't fire
-        lastEventTime = Date.now();
-        hadAnyEvent = true;
-        const newPaused = event.payload.isPaused;
-        const elapsedMs = event.payload.headerInfo.elapsedMs;
-        // update the store regardless
-        isPaused.set(newPaused);
-        // only show a toast if the pause state actually changed AND we've started receiving combat data
-        // Note: do NOT show a toast on the initial listener attach (lastPauseState === null)
-        // to avoid spurious "Encounter resumed" messages when reattaching listeners
-        if (
-          elapsedMs > 0 &&
-          lastPauseState !== null &&
-          lastPauseState !== newPaused
-        ) {
-          if (newPaused) {
-            notificationToast?.showToast(
-              "notice",
-              t("live.notifications.encounterPaused"),
-            );
-          } else {
-            notificationToast?.showToast(
-              "notice",
-              t("live.notifications.encounterResumed"),
-            );
-          }
-        }
-        lastPauseState = newPaused;
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        encounterUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      // Set up scene change listener
-      const sceneChangeUnlisten = await onSceneChange((event) => {
-        if (isDestroyed) return;
-        // Treat scene change as a keep-alive
-        lastEventTime = Date.now();
-        hadAnyEvent = true;
-        console.log("Scene change event received:", event.payload);
-        // Scene display names are resolved from sceneId on the frontend.
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        encounterUnlisten();
-        sceneChangeUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      const trainingDummyUnlisten = await onTrainingDummyUpdate((event) => {
-        if (isDestroyed) return;
-        lastEventTime = Date.now();
-        hadAnyEvent = true;
-        setTrainingDummyState(event.payload);
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        encounterUnlisten();
-        sceneChangeUnlisten();
-        trainingDummyUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      const deathReplayUnlisten = await onDeathReplay((event) => {
-        if (isDestroyed) return;
-        lastEventTime = Date.now();
-        hadAnyEvent = true;
-        setDeathRecords(event.payload.records);
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        encounterUnlisten();
-        sceneChangeUnlisten();
-        trainingDummyUnlisten();
-        deathReplayUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      // Listen for explicit pause/resume events as a keep-alive as well
-      const pauseUnlisten = await onPauseEncounter((event) => {
-        if (isDestroyed) return;
-        lastEventTime = Date.now();
-        hadAnyEvent = true;
-        isPaused.set(!!event.payload);
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        encounterUnlisten();
-        sceneChangeUnlisten();
-        trainingDummyUnlisten();
-        deathReplayUnlisten();
-        pauseUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      const teammateFantasyUnlisten = await onTeammateFantasyUpdate((event) => {
-        if (isDestroyed) return;
-        mergeFantasyCasts(event.payload.fantasies);
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        encounterUnlisten();
-        sceneChangeUnlisten();
-        trainingDummyUnlisten();
-        deathReplayUnlisten();
-        pauseUnlisten();
-        teammateFantasyUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      const teammateFantasyClearUnlisten = await onTeammateFantasyClear(() => {
-        if (isDestroyed) return;
-        clearFantasyCasts();
-      });
-
-      if (isDestroyed) {
-        playersUnlisten();
-        resetUnlisten();
-        encounterUnlisten();
-        sceneChangeUnlisten();
-        trainingDummyUnlisten();
-        deathReplayUnlisten();
-        pauseUnlisten();
-        teammateFantasyUnlisten();
-        teammateFantasyClearUnlisten();
-        listenersSetupInProgress = false;
-        return;
-      }
-
-      console.log("Scene change listener set up");
-
-      // Combine all unlisten functions
-      unlisten = () => {
-        try {
-          playersUnlisten();
-        } catch {}
-        try {
-          resetUnlisten();
-        } catch {}
-        try {
-          encounterUnlisten();
-        } catch {}
-        try {
-          sceneChangeUnlisten();
-        } catch {}
-        try {
-          trainingDummyUnlisten();
-        } catch {}
-        try {
-          deathReplayUnlisten();
-        } catch {}
-        try {
-          pauseUnlisten();
-        } catch {}
-        try {
-          teammateFantasyUnlisten();
-        } catch {}
-        try {
-          teammateFantasyClearUnlisten();
-        } catch {}
-      };
-
-      console.log("Event listeners set up for live meter data");
-
-      listenersSetupInProgress = false;
-    } catch (e) {
-      console.error("Failed to set up event listeners:", e);
-      listenersSetupInProgress = false;
-      if (isDestroyed) return;
-      isReconnecting = true;
-      setTimeout(() => {
-        isReconnecting = false;
-        if (!isDestroyed) setupEventListeners();
-      }, reconnectDelay);
-      // increase backoff cap at ~10s
-      reconnectDelay = Math.min(reconnectDelay * 2, 10_000);
-    }
-  }
-
-  function startReconnectCheck() {
-    reconnectInterval = setInterval(() => {
-      if (isDestroyed) return;
-      const now = Date.now();
-      if (hadAnyEvent && now - lastEventTime > DISCONNECT_THRESHOLD) {
-        console.warn("Live event stream disconnected, attempting reconnection");
-        if (unlisten) {
-          unlisten();
-          unlisten = null;
-        }
-        // reset timer to avoid tight loop spam
-        lastEventTime = now;
-        setupEventListeners();
-        // backoff after each timer-triggered reconnect
-        reconnectDelay = Math.min(reconnectDelay * 2, 10_000);
-      }
-    }, 1000);
-  }
-
-  // Save scroll position before navigating away
   beforeNavigate(({ from }) => {
     if (mainElement && from?.url.pathname) {
       scrollPositions.update((positions) => ({
@@ -350,12 +31,10 @@
     }
   });
 
-  // Restore scroll position after navigation
   afterNavigate(({ to }) => {
     if (mainElement && to?.url.pathname) {
       const savedPosition = $scrollPositions[to.url.pathname];
       if (savedPosition !== undefined) {
-        // Use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
           if (mainElement) {
             mainElement.scrollTop = savedPosition;
@@ -366,9 +45,8 @@
   });
 
   onMount(() => {
-    isDestroyed = false;
-    setupEventListeners();
-    startReconnectCheck();
+    const disconnectTopics = connectTopics(liveCombatStore, liveFantasyStore);
+
     listen<boolean>("live-clickthrough-changed", (event) => {
       SETTINGS.accessibility.state.clickthrough = event.payload;
     })
@@ -383,16 +61,44 @@
       });
 
     return () => {
-      isDestroyed = true;
-      if (reconnectInterval) clearInterval(reconnectInterval);
-      if (unlisten) unlisten();
+      disconnectTopics();
       if (clickthroughUnlisten) {
         clickthroughUnlisten();
         clickthroughUnlisten = null;
       }
-      cleanupStores();
-      clearFantasyCasts();
     };
+  });
+
+  $effect(() => {
+    const snapshot = liveCombatStore.data;
+    if (!snapshot) return;
+
+    const paused = snapshot.combat?.isPaused ?? false;
+    const elapsedMs = ipcNumber(snapshot.combat?.elapsedMs);
+    if (elapsedMs > 0 && lastPauseState !== null && lastPauseState !== paused) {
+      notificationToast?.showToast(
+        "notice",
+        t(
+          paused
+            ? "live.notifications.encounterPaused"
+            : "live.notifications.encounterResumed",
+        ),
+      );
+    }
+
+    if (
+      lastDisplayedSegmentId !== undefined &&
+      lastDisplayedSegmentId !== null &&
+      snapshot.displayedSegmentId === null
+    ) {
+      notificationToast?.showToast(
+        "notice",
+        t("live.notifications.encounterReset"),
+      );
+    }
+
+    lastPauseState = paused;
+    lastDisplayedSegmentId = snapshot.displayedSegmentId;
   });
 
   $effect(() => {
@@ -418,8 +124,8 @@
   });
 </script>
 
-<!-- flex flex-col min-h-screen → makes the page stretch full height and stack header, body, and footer. -->
-<!-- flex-1 on <main> → makes the body expand to fill leftover space, pushing the footer down. -->
+<!-- flex flex-col min-h-screen ??makes the page stretch full height and stack header, body, and footer. -->
+<!-- flex-1 on <main> ??makes the body expand to fill leftover space, pushing the footer down. -->
 <div
   class="text-foreground relative isolate h-screen overflow-hidden rounded-xl font-sans text-[13px] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]"
   style="padding: {SETTINGS.live.headerCustomization.state.windowPadding}px"

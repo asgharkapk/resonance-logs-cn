@@ -3,6 +3,7 @@ import {
   createDefaultCustomPanelGroup,
   createDefaultLiveMeterProfileData,
   createDefaultMonsterMonitorProfile,
+  createDefaultOverlayTextStyle,
   createDefaultSkillMonitorProfile,
   deepCloneSettings,
   omitProfileId,
@@ -42,10 +43,25 @@ const pointSchema = v.object({
   y: finiteNumberSchema,
 });
 
+// Kept optional with defaults (rather than required) because these three
+// keys were added after many users' profiles were first created — old
+// stores (and exports taken from them) predate this style and don't have
+// them. Rejecting those as invalid would make legacy exports permanently
+// un-importable, including re-importing a user's own older export.
+const overlayTextStyleDefaults = createDefaultOverlayTextStyle();
 const overlayTextStyleEntries = {
-  textShadowEnabled: v.boolean(),
-  backgroundEnabled: v.boolean(),
-  backgroundOpacity: finiteNumberSchema,
+  textShadowEnabled: v.optional(
+    v.boolean(),
+    overlayTextStyleDefaults.textShadowEnabled,
+  ),
+  backgroundEnabled: v.optional(
+    v.boolean(),
+    overlayTextStyleDefaults.backgroundEnabled,
+  ),
+  backgroundOpacity: v.optional(
+    finiteNumberSchema,
+    overlayTextStyleDefaults.backgroundOpacity,
+  ),
 };
 
 const overlayTextStyleSchema = v.object(overlayTextStyleEntries);
@@ -246,7 +262,12 @@ const overlaySizesSchema = v.object({
   panelAttrGap: finiteNumberSchema,
   panelAttrFontSize: finiteNumberSchema,
   panelAttrColumnGap: finiteNumberSchema,
-  panelAttrTextStyle: overlayTextStyleSchema,
+  // Also predates some old exports — same reasoning as
+  // `overlayTextStyleEntries` above.
+  panelAttrTextStyle: v.optional(
+    overlayTextStyleSchema,
+    defaultClone(overlayTextStyleDefaults),
+  ),
   iconBuffSizes: numberRecordSchema,
   skillDurationSizes: numberRecordSchema,
   categoryIconSizes: v.optional(categoryNumberRecordSchema, {}),
@@ -612,7 +633,12 @@ export function parseLoadoutExport(data: unknown): LoadoutParseResult {
   if (!result.success) {
     return {
       success: false,
-      issues: result.issues.map((issue) => issue.message),
+      // Prefix with the dot path (e.g. "skillProfile.overlaySizes...") so
+      // failures are actually debuggable instead of a bare "Invalid type".
+      issues: result.issues.map((issue) => {
+        const path = v.getDotPath(issue);
+        return path ? `${path}: ${issue.message}` : issue.message;
+      }),
     };
   }
   return { success: true, output: result.output as unknown as LoadoutExport };

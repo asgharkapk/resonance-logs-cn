@@ -268,7 +268,13 @@ export type VoiceQueuePolicySetting =
   | "interruptForHigherPriority";
 
 export type VoiceGenerationBackendSetting = "auto" | "cpu" | "vulkan";
-export type VoiceSourceSetting = "clone" | "fineTuned";
+/**
+ * `"preset"` auto-selects the bundled reference voice matching the app's
+ * current UI locale (see `$lib/voice-preset-source.ts`) and is the default
+ * so generation works right after the model is installed, without the
+ * user recording or importing a reference clip first.
+ */
+export type VoiceSourceSetting = "preset" | "clone" | "fineTuned";
 export type VoiceModelDownloadSource = "auto" | "huggingFace" | "hfMirror";
 
 export type VoicePhraseSetting = {
@@ -296,7 +302,7 @@ export function createDefaultVoiceSettings(): VoiceSettingsConfig {
     queuePolicy: "dropLowPriority",
     rules: [],
     selectedProfileId: null,
-    selectedSource: "clone",
+    selectedSource: "preset",
     generationBackend: "auto",
     modelDownloadSource: "auto",
   };

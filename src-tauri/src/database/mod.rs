@@ -1,33 +1,67 @@
 pub mod commands;
+pub mod event_journal;
+pub mod history_codec;
+pub mod history_query;
 pub mod models;
 pub mod schema;
 
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, mpsc};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use serde::{Deserialize, Serialize};
 
-use crate::database::models as m;
 use crate::database::schema as sch;
-use crate::live::opcodes_models::{Encounter, Entity};
+
+use self::event_journal::{FinalizeEncounter, FinalizeOutcome, InsertOutcome, RecordingEncounter};
+use self::history_codec::EncodedHistoryChunk;
+use self::history_query::{
+    EncounterDetailData, EncounterDetailQuery, EncounterRangeData, EncounterRangeQuery,
+};
 
 pub const MIGRATIONS: EmbeddedMigrations = diesel_migrations::embed_migrations!();
 const MAX_ENCOUNTER_HISTORY: i64 = 200;
+const DATABASE_QUEUE_CAPACITY: usize = 256;
 
-type DbTask = Box<dyn FnOnce(&mut SqliteConnection) + Send + 'static>;
+type DatabaseOperation = Box<dyn FnOnce(&mut SqliteConnection) + Send + 'static>;
 
-static DB_SENDER: OnceLock<mpsc::Sender<DbTask>> = OnceLock::new();
+enum DatabaseRequest {
+    Execute(DatabaseOperation),
+    BeginRecording {
+        recording: RecordingEncounter,
+        reply: mpsc::SyncSender<Result<i32, String>>,
+    },
+    AppendChunk {
+        chunk: EncodedHistoryChunk,
+        reply: mpsc::SyncSender<Result<InsertOutcome, String>>,
+    },
+    Finalize {
+        finalize: FinalizeEncounter,
+        reply: mpsc::SyncSender<Result<FinalizeOutcome, String>>,
+    },
+    LoadDetail {
+        encounter_id: i32,
+        reply: mpsc::SyncSender<Result<EncounterDetailQuery, String>>,
+    },
+    LoadRange {
+        encounter_id: i32,
+        start_ms: u64,
+        end_ms_exclusive: u64,
+        reply: mpsc::SyncSender<Result<EncounterRangeQuery, String>>,
+    },
+    Barrier(mpsc::SyncSender<Result<(), String>>),
+    Shutdown(mpsc::SyncSender<Result<(), String>>),
+}
+
+static DATABASE_SENDER: OnceLock<mpsc::SyncSender<DatabaseRequest>> = OnceLock::new();
 
 #[derive(Debug, thiserror::Error)]
 pub enum DbInitError {
-    #[error("DB pool error: {0}")]
-    Pool(String),
-    #[error("Migration error: {0}")]
+    #[error("DB connection error: {0}")]
+    Connection(String),
+    #[error("DB migration error: {0}")]
     Migration(String),
 }
 
@@ -35,29 +69,6 @@ pub enum DbInitError {
 pub struct PlayerNameEntry {
     pub name: String,
     pub class_id: i32,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct EncounterMetadata {
-    pub started_at_ms: i64,
-    pub ended_at_ms: Option<i64>,
-    pub local_player_id: Option<i64>,
-    pub total_dmg: i64,
-    pub total_heal: i64,
-    pub scene_id: Option<i32>,
-    pub dungeon_difficulty: Option<i32>,
-    pub duration: f64,
-    pub active_combat_duration: Option<f64>,
-    pub is_manually_reset: bool,
-    pub boss_monster_ids: Vec<i32>,
-    pub player_names: Vec<PlayerNameEntry>,
-}
-
-pub fn now_ms() -> i64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as i64
 }
 
 pub fn default_db_path() -> PathBuf {
@@ -79,403 +90,270 @@ pub fn ensure_parent_dir(path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn apply_sqlite_pragmas(conn: &mut SqliteConnection) {
-    let _ = diesel::sql_query("PRAGMA busy_timeout=30000;").execute(conn);
-    let _ = diesel::sql_query("PRAGMA journal_mode=WAL;").execute(conn);
-    let _ = diesel::sql_query("PRAGMA synchronous=NORMAL;").execute(conn);
-    let _ = diesel::sql_query("PRAGMA foreign_keys=ON;").execute(conn);
-}
-
-fn db_thread_main(mut conn: SqliteConnection, rx: mpsc::Receiver<DbTask>) {
-    while let Ok(task) = rx.recv() {
-        task(&mut conn);
+pub fn init_db() -> Result<(), DbInitError> {
+    if DATABASE_SENDER.get().is_some() {
+        return Ok(());
     }
-    log::info!(target: "app::db", "db_thread_exiting");
+    let db_path = default_db_path();
+    log::info!(target: "app::db", "db_path={}", db_path.display());
+    ensure_parent_dir(&db_path).map_err(|error| {
+        DbInitError::Connection(format!("failed to create DB directory: {error}"))
+    })?;
+    let mut conn = SqliteConnection::establish(&db_path.to_string_lossy())
+        .map_err(|error| DbInitError::Connection(error.to_string()))?;
+    apply_sqlite_pragmas(&mut conn).map_err(DbInitError::Connection)?;
+    conn.run_pending_migrations(MIGRATIONS)
+        .map_err(|error| DbInitError::Migration(error.to_string()))?;
+
+    let (sender, receiver) = mpsc::sync_channel(DATABASE_QUEUE_CAPACITY);
+    std::thread::Builder::new()
+        .name("db-worker".to_string())
+        .spawn(move || database_actor(conn, receiver))
+        .map_err(|error| {
+            DbInitError::Connection(format!("failed to spawn database actor: {error}"))
+        })?;
+    DATABASE_SENDER
+        .set(sender)
+        .map_err(|_| DbInitError::Connection("database actor already initialized".to_string()))?;
+    Ok(())
 }
 
-pub fn db_exec<T, F>(f: F) -> Result<T, String>
+#[cfg(test)]
+pub(crate) fn init_in_memory_actor_for_test() -> Result<(), String> {
+    if DATABASE_SENDER.get().is_some() {
+        return Err("database actor is already initialized".to_string());
+    }
+
+    let mut conn = SqliteConnection::establish(":memory:").map_err(|error| error.to_string())?;
+    apply_sqlite_pragmas(&mut conn)?;
+    conn.run_pending_migrations(MIGRATIONS)
+        .map_err(|error| error.to_string())?;
+
+    let (sender, receiver) = mpsc::sync_channel(DATABASE_QUEUE_CAPACITY);
+    std::thread::Builder::new()
+        .name("db-worker-test".to_string())
+        .spawn(move || database_actor(conn, receiver))
+        .map_err(|error| format!("failed to spawn test database actor: {error}"))?;
+    DATABASE_SENDER
+        .set(sender)
+        .map_err(|_| "database actor was initialized concurrently".to_string())
+}
+
+fn apply_sqlite_pragmas(conn: &mut SqliteConnection) -> Result<(), String> {
+    for (name, statement) in [
+        ("busy_timeout", "PRAGMA busy_timeout=30000;"),
+        ("journal_mode", "PRAGMA journal_mode=WAL;"),
+        ("synchronous", "PRAGMA synchronous=NORMAL;"),
+        ("foreign_keys", "PRAGMA foreign_keys=ON;"),
+    ] {
+        diesel::sql_query(statement)
+            .execute(conn)
+            .map_err(|error| format!("failed to apply SQLite {name} pragma: {error}"))?;
+    }
+    Ok(())
+}
+
+fn database_actor(mut conn: SqliteConnection, receiver: mpsc::Receiver<DatabaseRequest>) {
+    let mut shutdown_reply = None;
+    while let Ok(request) = receiver.recv() {
+        match request {
+            DatabaseRequest::Execute(operation) => operation(&mut conn),
+            DatabaseRequest::BeginRecording { recording, reply } => {
+                let result = event_journal::begin_recording_encounter(&mut conn, &recording)
+                    .map_err(|error| error.to_string());
+                let _ = reply.send(result);
+            }
+            DatabaseRequest::AppendChunk { chunk, reply } => {
+                let result = event_journal::append_chunk(&mut conn, &chunk)
+                    .map_err(|error| error.to_string());
+                let _ = reply.send(result);
+            }
+            DatabaseRequest::Finalize { finalize, reply } => {
+                let result = event_journal::finalize_encounter(&mut conn, &finalize)
+                    .map_err(|error| error.to_string());
+                let _ = reply.send(result);
+            }
+            DatabaseRequest::LoadDetail {
+                encounter_id,
+                reply,
+            } => {
+                let result =
+                    commands::load_encounter_summary(&mut conn, encounter_id).and_then(|summary| {
+                        history_query::load_encounter_detail_query(&mut conn, summary)
+                            .map_err(|error| error.to_string())
+                    });
+                let _ = reply.send(result);
+            }
+            DatabaseRequest::LoadRange {
+                encounter_id,
+                start_ms,
+                end_ms_exclusive,
+                reply,
+            } => {
+                let result = history_query::load_encounter_range_query(
+                    &mut conn,
+                    encounter_id,
+                    start_ms,
+                    end_ms_exclusive,
+                )
+                .map_err(|error| error.to_string());
+                let _ = reply.send(result);
+            }
+            DatabaseRequest::Barrier(reply) => {
+                let _ = reply.send(Ok(()));
+            }
+            DatabaseRequest::Shutdown(reply) => {
+                shutdown_reply = Some(reply);
+                break;
+            }
+        }
+    }
+    drop(conn);
+    if let Some(reply) = shutdown_reply {
+        let _ = reply.send(Ok(()));
+    }
+    log::info!(target: "app::db", "database_actor_exiting");
+}
+
+fn database_sender() -> Result<mpsc::SyncSender<DatabaseRequest>, String> {
+    DATABASE_SENDER
+        .get()
+        .cloned()
+        .ok_or_else(|| "database actor is not initialized".to_string())
+}
+
+fn request<T>(
+    build: impl FnOnce(mpsc::SyncSender<Result<T, String>>) -> DatabaseRequest,
+) -> Result<T, String> {
+    let sender = database_sender()?;
+    let (reply, receiver) = mpsc::sync_channel(0);
+    sender
+        .send(build(reply))
+        .map_err(|_| "database actor queue is closed".to_string())?;
+    receiver
+        .recv()
+        .map_err(|_| "database actor dropped the response".to_string())?
+}
+
+/// Runs a non-history operation on the actor-owned connection.
+pub fn db_exec<T, F>(operation: F) -> Result<T, String>
 where
     T: Send + 'static,
     F: FnOnce(&mut SqliteConnection) -> Result<T, String> + Send + 'static,
 {
-    let sender = DB_SENDER
-        .get()
-        .ok_or_else(|| "DB thread not initialized".to_string())?
-        .clone();
-    let (reply_tx, reply_rx) = mpsc::channel::<Result<T, String>>();
-
+    let sender = database_sender()?;
+    let (reply, receiver) = mpsc::sync_channel(0);
     sender
-        .send(Box::new(move |conn| {
-            let _ = reply_tx.send(f(conn));
-        }))
-        .map_err(|_| "failed to enqueue DB task".to_string())?;
-
-    reply_rx
+        .send(DatabaseRequest::Execute(Box::new(move |conn| {
+            let _ = reply.send(operation(conn));
+        })))
+        .map_err(|_| "database actor queue is closed".to_string())?;
+    receiver
         .recv()
-        .map_err(|_| "failed to receive DB task result".to_string())?
+        .map_err(|_| "database actor dropped the response".to_string())?
 }
 
-pub fn db_send<F>(f: F)
+pub fn db_send<F>(operation: F)
 where
     F: FnOnce(&mut SqliteConnection) + Send + 'static,
 {
-    let Some(sender) = DB_SENDER.get() else {
-        log::error!(target: "app::db", "db_send_failed reason=not_initialized");
+    let Ok(sender) = database_sender() else {
+        log::error!(target: "app::db", "database_send_failed reason=not_initialized");
         return;
     };
-
-    if sender.send(Box::new(f)).is_err() {
-        log::error!(target: "app::db", "db_send_failed reason=channel_closed");
+    if sender
+        .send(DatabaseRequest::Execute(Box::new(operation)))
+        .is_err()
+    {
+        log::error!(target: "app::db", "database_send_failed reason=queue_closed");
     }
 }
 
-pub fn init_db() -> Result<(), DbInitError> {
-    if DB_SENDER.get().is_some() {
+pub fn begin_history_recording(recording: RecordingEncounter) -> Result<i32, String> {
+    request(|reply| DatabaseRequest::BeginRecording { recording, reply })
+}
+
+pub fn append_history_chunk(chunk: EncodedHistoryChunk) -> Result<InsertOutcome, String> {
+    request(|reply| DatabaseRequest::AppendChunk { chunk, reply })
+}
+
+pub fn finalize_history_recording(finalize: FinalizeEncounter) -> Result<FinalizeOutcome, String> {
+    request(|reply| DatabaseRequest::Finalize { finalize, reply })
+}
+
+pub fn load_history_detail(
+    encounter_id: i32,
+    target_points: u32,
+) -> Result<EncounterDetailData, String> {
+    let query = request(|reply| DatabaseRequest::LoadDetail {
+        encounter_id,
+        reply,
+    })?;
+    history_query::project_encounter_detail(query, target_points).map_err(|error| error.to_string())
+}
+
+pub fn load_history_range(
+    encounter_id: i32,
+    start_ms: u64,
+    end_ms_exclusive: u64,
+) -> Result<EncounterRangeData, String> {
+    let query = request(|reply| DatabaseRequest::LoadRange {
+        encounter_id,
+        start_ms,
+        end_ms_exclusive,
+        reply,
+    })?;
+    history_query::project_encounter_range(query, start_ms, end_ms_exclusive)
+        .map_err(|error| error.to_string())
+}
+
+pub fn flush_database() -> Result<(), String> {
+    request(DatabaseRequest::Barrier)
+}
+
+pub fn shutdown_database() -> Result<(), String> {
+    if DATABASE_SENDER.get().is_none() {
         return Ok(());
     }
-
-    let db_path = default_db_path();
-    log::info!(target: "app::db", "db_path={}", db_path.display());
-    ensure_parent_dir(&db_path)
-        .map_err(|e| DbInitError::Pool(format!("failed to create dir: {e}")))?;
-
-    let mut conn = SqliteConnection::establish(&db_path.to_string_lossy())
-        .map_err(|e| DbInitError::Pool(e.to_string()))?;
-    apply_sqlite_pragmas(&mut conn);
-
-    conn.run_pending_migrations(MIGRATIONS)
-        .map_err(|e| DbInitError::Migration(e.to_string()))?;
-
-    let (tx, rx) = mpsc::channel::<DbTask>();
-    std::thread::Builder::new()
-        .name("db-worker".to_string())
-        .spawn(move || db_thread_main(conn, rx))
-        .map_err(|e| DbInitError::Pool(format!("failed to spawn db thread: {e}")))?;
-
-    DB_SENDER
-        .set(tx)
-        .map_err(|_| DbInitError::Pool("db sender already initialized".to_string()))?;
-
-    Ok(())
+    request(DatabaseRequest::Shutdown)
 }
 
-/// Schedules startup maintenance for encounter history without blocking app setup.
+/// Delete old non-favorite summaries. Primary keys are stable and are never
+/// rewritten; child chunks/projections are removed by foreign-key cascade.
 pub fn startup_maintenance() {
     db_send(|conn| {
-        if let Err(error) = prune_and_reindex_encounters(conn, MAX_ENCOUNTER_HISTORY) {
-            log::warn!(
-                target: "app::db",
-                "startup_maintenance_failed error={}",
-                error
-            );
+        use sch::encounters::dsl as e;
+        match diesel::delete(e::encounters.filter(e::ended_at_ms.is_null())).execute(conn) {
+            Ok(deleted) if deleted > 0 => {
+                log::info!(target: "app::db", "startup_maintenance_removed_recording deleted={deleted}");
+            }
+            Ok(_) => {}
+            Err(error) => {
+                log::warn!(target: "app::db", "startup_maintenance_recording_cleanup_failed error={error}");
+                return;
+            }
+        }
+        if let Err(error) = prune_encounters(conn, MAX_ENCOUNTER_HISTORY) {
+            log::warn!(target: "app::db", "startup_maintenance_failed error={error}");
         }
     });
 }
 
-fn set_foreign_keys(conn: &mut SqliteConnection, enabled: bool) -> Result<(), String> {
-    let pragma = if enabled {
-        "PRAGMA foreign_keys=ON;"
-    } else {
-        "PRAGMA foreign_keys=OFF;"
-    };
-
-    diesel::sql_query(pragma)
-        .execute(conn)
-        .map(|_| ())
-        .map_err(|error| error.to_string())
-}
-
-fn prune_and_reindex_encounters(conn: &mut SqliteConnection, keep: i64) -> Result<(), String> {
+fn prune_encounters(conn: &mut SqliteConnection, keep: i64) -> Result<(), String> {
     use sch::encounters::dsl as e;
-
-    let total = e::encounters
-        .count()
-        .get_result::<i64>(conn)
-        .map_err(|error| error.to_string())?;
-    let non_favorite_total = e::encounters
-        .filter(e::is_favorite.eq(0))
-        .count()
-        .get_result::<i64>(conn)
-        .map_err(|error| error.to_string())?;
-    if non_favorite_total <= keep {
-        return Ok(());
-    }
-
-    let delete_ids: Vec<i32> = e::encounters
+    let delete_ids = e::encounters
         .select(e::id)
         .filter(e::is_favorite.eq(0))
         .order((e::started_at_ms.desc(), e::id.desc()))
-        .offset(keep)
-        .load(conn)
+        .offset(keep.max(0))
+        .load::<i32>(conn)
         .map_err(|error| error.to_string())?;
     if delete_ids.is_empty() {
         return Ok(());
     }
-
-    let deleted = diesel::delete(e::encounters.filter(e::id.eq_any(&delete_ids)))
+    let deleted = diesel::delete(e::encounters.filter(e::id.eq_any(delete_ids)))
         .execute(conn)
         .map_err(|error| error.to_string())?;
-    let favorites_preserved = total - non_favorite_total;
-    log::info!(
-        target: "app::db",
-        "startup_maintenance_pruned total={} non_favorite_total={} deleted={} keep={} favorites_preserved={}",
-        total,
-        non_favorite_total,
-        deleted,
-        keep,
-        favorites_preserved
-    );
-
-    set_foreign_keys(conn, false)?;
-    let maintenance_result = conn
-        .transaction::<(), diesel::result::Error, _>(|tx| {
-            diesel::sql_query("DROP TABLE IF EXISTS temp_encounters_reindex;").execute(tx)?;
-            diesel::sql_query("DROP TABLE IF EXISTS temp_encounter_data_reindex;").execute(tx)?;
-
-            diesel::sql_query(
-                "CREATE TEMP TABLE temp_encounters_reindex AS
-                 SELECT
-                   ROW_NUMBER() OVER (ORDER BY started_at_ms ASC, id ASC) AS new_id,
-                   id AS old_id,
-                   started_at_ms,
-                   ended_at_ms,
-                   local_player_id,
-                   total_dmg,
-                   total_heal,
-                   scene_id,
-                   dungeon_difficulty,
-                   duration,
-                   active_combat_duration,
-                   uploaded_at_ms,
-                   remote_encounter_id,
-                   is_favorite,
-                   is_manually_reset,
-                   boss_monster_ids,
-                   player_names
-                 FROM encounters;",
-            )
-            .execute(tx)?;
-
-            diesel::sql_query(
-                "CREATE TEMP TABLE temp_encounter_data_reindex AS
-                 SELECT
-                   te.new_id AS encounter_id,
-                   ed.data AS data
-                 FROM encounter_data ed
-                 JOIN temp_encounters_reindex te ON te.old_id = ed.encounter_id;",
-            )
-            .execute(tx)?;
-
-            diesel::sql_query("DELETE FROM encounter_data;").execute(tx)?;
-            diesel::sql_query("DELETE FROM encounters;").execute(tx)?;
-
-            diesel::sql_query(
-                "INSERT INTO encounters (
-                   id,
-                   started_at_ms,
-                   ended_at_ms,
-                   local_player_id,
-                   total_dmg,
-                   total_heal,
-                   scene_id,
-                   dungeon_difficulty,
-                   duration,
-                   active_combat_duration,
-                   uploaded_at_ms,
-                   remote_encounter_id,
-                   is_favorite,
-                   is_manually_reset,
-                   boss_monster_ids,
-                   player_names
-                 )
-                 SELECT
-                   new_id,
-                   started_at_ms,
-                   ended_at_ms,
-                   local_player_id,
-                   total_dmg,
-                   total_heal,
-                   scene_id,
-                   dungeon_difficulty,
-                   duration,
-                   active_combat_duration,
-                   uploaded_at_ms,
-                   remote_encounter_id,
-                   is_favorite,
-                   is_manually_reset,
-                   boss_monster_ids,
-                   player_names
-                 FROM temp_encounters_reindex
-                 ORDER BY new_id;",
-            )
-            .execute(tx)?;
-
-            diesel::sql_query(
-                "INSERT INTO encounter_data (encounter_id, data)
-                 SELECT encounter_id, data
-                 FROM temp_encounter_data_reindex
-                 ORDER BY encounter_id;",
-            )
-            .execute(tx)?;
-
-            diesel::sql_query("DELETE FROM sqlite_sequence WHERE name = 'encounters';")
-                .execute(tx)?;
-            diesel::sql_query(
-                "INSERT INTO sqlite_sequence (name, seq)
-                 SELECT 'encounters', COUNT(*)
-                 FROM encounters;",
-            )
-            .execute(tx)?;
-
-            diesel::sql_query("DROP TABLE temp_encounter_data_reindex;").execute(tx)?;
-            diesel::sql_query("DROP TABLE temp_encounters_reindex;").execute(tx)?;
-            Ok(())
-        })
-        .map_err(|error| error.to_string());
-    let foreign_key_result = set_foreign_keys(conn, true);
-
-    match (maintenance_result, foreign_key_result) {
-        (Ok(()), Ok(())) => {
-            let remaining = keep + favorites_preserved;
-            log::info!(
-                target: "app::db",
-                "startup_maintenance_reindexed next_encounter_id={}",
-                remaining + 1
-            );
-            Ok(())
-        }
-        (Err(error), Ok(())) => Err(error),
-        (Ok(()), Err(error)) => Err(format!("failed to restore foreign keys: {error}")),
-        (Err(error), Err(fk_error)) => Err(format!(
-            "{error}; failed to restore foreign keys: {fk_error}"
-        )),
-    }
-}
-
-pub fn flush_playerdata(player_id: i64, last_seen_ms: i64, vdata_bytes: Vec<u8>) {
-    db_send(move |conn| {
-        use sch::detailed_playerdata::dsl as dp;
-
-        let insert = m::NewDetailedPlayerData {
-            player_id,
-            last_seen_ms,
-            vdata_bytes: Some(vdata_bytes.as_slice()),
-        };
-        let update = m::UpdateDetailedPlayerData {
-            last_seen_ms,
-            vdata_bytes: Some(vdata_bytes.as_slice()),
-        };
-
-        let result = diesel::insert_into(dp::detailed_playerdata)
-            .values(&insert)
-            .on_conflict(dp::player_id)
-            .do_update()
-            .set(&update)
-            .execute(conn);
-        if let Err(e) = result {
-            log::warn!(target: "app::db", "flush_playerdata_failed error={}", e);
-        }
-    })
-}
-
-pub fn save_encounter(encounter: &Encounter, metadata: &EncounterMetadata) {
-    use sch::encounter_data::dsl as ed;
-    use sch::encounters::dsl as e;
-
-    let encounter = encounter.clone();
-    let metadata = metadata.clone();
-    db_send(move |conn| {
-        let combat_entities: HashMap<i64, Entity> = encounter
-            .entity_uuid_to_entity
-            .iter()
-            .filter_map(|(uid, entity)| {
-                let has_combat =
-                    entity.damage.hits > 0 || entity.healing.hits > 0 || entity.taken.hits > 0;
-                has_combat.then_some((*uid, entity.clone()))
-            })
-            .collect();
-
-        let entities_bin = match rmp_serde::to_vec(&combat_entities) {
-            Ok(v) => v,
-            Err(e) => {
-                log::warn!(target: "app::db", "save_encounter_serialize_failed error={}", e);
-                return;
-            }
-        };
-        let compressed = match zstd::encode_all(&entities_bin[..], 3) {
-            Ok(v) => v,
-            Err(e) => {
-                log::warn!(target: "app::db", "save_encounter_compress_failed error={}", e);
-                return;
-            }
-        };
-        let boss_monster_ids_json = match serde_json::to_string(&metadata.boss_monster_ids) {
-            Ok(v) => v,
-            Err(e) => {
-                log::warn!(target: "app::db", "save_encounter_boss_ids_json_failed error={}", e);
-                return;
-            }
-        };
-        let player_names_json = match serde_json::to_string(&metadata.player_names) {
-            Ok(v) => v,
-            Err(e) => {
-                log::warn!(target: "app::db", "save_encounter_player_json_failed error={}", e);
-                return;
-            }
-        };
-
-        let result = conn.transaction::<i32, diesel::result::Error, _>(|tx| {
-            let new_enc = m::NewEncounter {
-                started_at_ms: metadata.started_at_ms,
-                ended_at_ms: metadata.ended_at_ms,
-                local_player_id: metadata.local_player_id,
-                total_dmg: Some(metadata.total_dmg),
-                total_heal: Some(metadata.total_heal),
-                scene_id: metadata.scene_id,
-                dungeon_difficulty: metadata.dungeon_difficulty,
-                duration: metadata.duration,
-                active_combat_duration: metadata.active_combat_duration,
-            };
-
-            diesel::insert_into(e::encounters)
-                .values(&new_enc)
-                .execute(tx)?;
-            let encounter_id: i32 = e::encounters.order(e::id.desc()).select(e::id).first(tx)?;
-
-            diesel::update(e::encounters.filter(e::id.eq(encounter_id)))
-                .set((
-                    e::is_manually_reset.eq(if metadata.is_manually_reset { 1 } else { 0 }),
-                    e::boss_monster_ids.eq(Some(boss_monster_ids_json)),
-                    e::player_names.eq(Some(player_names_json)),
-                ))
-                .execute(tx)?;
-
-            let payload = m::NewEncounterData {
-                encounter_id,
-                data: &compressed,
-            };
-            diesel::insert_into(ed::encounter_data)
-                .values(&payload)
-                .execute(tx)?;
-            Ok(encounter_id)
-        });
-
-        if let Err(e) = result {
-            log::warn!(target: "app::db", "save_encounter_tx_failed error={}", e);
-        }
-    })
-}
-
-pub fn load_encounter_data(encounter_id: i32) -> Result<HashMap<i64, Entity>, String> {
-    use sch::encounter_data::dsl as ed;
-
-    let compressed: Vec<u8> = db_exec(move |conn| {
-        ed::encounter_data
-            .filter(ed::encounter_id.eq(encounter_id))
-            .select(ed::data)
-            .first::<Vec<u8>>(conn)
-            .map_err(|e| e.to_string())
-    })?;
-    let decompressed = zstd::decode_all(&compressed[..]).map_err(|e| e.to_string())?;
-    rmp_serde::from_slice::<HashMap<i64, Entity>>(&decompressed).map_err(|e| e.to_string())
+    log::info!(target: "app::db", "startup_maintenance_pruned deleted={deleted} keep={keep}");
+    Ok(())
 }

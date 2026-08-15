@@ -260,6 +260,11 @@
   .markdown-body :where(table) {
     @apply block w-full overflow-x-auto text-sm;
   }
+
+  .markdown-body :where(img) {
+    @apply my-3 h-auto max-w-full rounded-lg border;
+    border-color: var(--border);
+  }
 }
 
 

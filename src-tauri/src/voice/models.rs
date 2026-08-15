@@ -7,6 +7,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
+use super::presets::VoicePresetTag;
+
 pub const VOICE_CATALOG_SCHEMA_VERSION: u32 = 3;
 pub const SIDECAR_PROTOCOL_VERSION: u32 = 3;
 
@@ -86,6 +88,12 @@ pub struct VoiceProfileMeta {
     pub ref_audio_sha256: String,
     /// Whether the original reference WAV was kept on disk (opt-in).
     pub ref_audio_retained: bool,
+    /// Set when this profile was auto-created from a bundled preset
+    /// reference (see `voice::presets`) rather than audio the user
+    /// supplied, so generation can detect a stale preset (bundled asset
+    /// revision bumped) and re-extract instead of silently reusing
+    /// outdated audio. `None` for user-provided clone profiles.
+    pub preset: Option<VoicePresetTag>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq, Eq)]

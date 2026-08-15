@@ -1,8 +1,8 @@
 import type {
-  HistoryEntityData,
-  PerSourceStats,
   RawCombatStats,
-} from "$lib/bindings";
+  RawEntityData,
+  RawPerSourceStats,
+} from "$lib/api";
 import { resolveMonsterName } from "$lib/config/game-names";
 import { t } from "$lib/i18n/index.svelte";
 
@@ -23,9 +23,9 @@ export function resolveSourceName(sourceMonsterId: number | null): string {
 
 /** Find the per-source entry matching a monster key produced by {@link sourceMonsterKey}. */
 export function findSourceByKey(
-  perSource: PerSourceStats[] | null | undefined,
+  perSource: RawPerSourceStats[] | null | undefined,
   monsterKey: string | null,
-): PerSourceStats | null {
+): RawPerSourceStats | null {
   if (!perSource || monsterKey == null) return null;
   return (
     perSource.find((src) =>
@@ -38,16 +38,16 @@ export function findSourceByKey(
 
 function zeroCombatStats(): RawCombatStats {
   return {
-    total: 0,
-    effectiveTotal: 0,
-    hits: 0,
-    critHits: 0,
-    critTotal: 0,
-    luckyHits: 0,
-    luckyTotal: 0,
-    triggerHits: 0,
-    blockHits: 0,
-    luckyBlockHits: 0,
+    total: "0",
+    effectiveTotal: "0",
+    hits: "0",
+    critHits: "0",
+    critTotal: "0",
+    luckyHits: "0",
+    luckyTotal: "0",
+    triggerHits: "0",
+    blockHits: "0",
+    luckyBlockHits: "0",
   };
 }
 
@@ -60,9 +60,9 @@ function zeroCombatStats(): RawCombatStats {
  * encoded in `entityUuid`) and its `taken` stats; damage/healing are zeroed.
  */
 export function buildSourceEntities(
-  base: HistoryEntityData,
-  perSource: PerSourceStats[] | null | undefined,
-): HistoryEntityData[] {
+  base: RawEntityData,
+  perSource: RawPerSourceStats[] | null | undefined,
+): RawEntityData[] {
   return (perSource ?? []).map((src) => ({
     ...base,
     entityUuid: sourceMonsterKey(src.sourceMonsterId),
@@ -80,8 +80,5 @@ export function buildSourceEntities(
     healSkills: {},
     takenSkills: src.skills,
     takenPerSource: [],
-    dmgPerTarget: [],
-    healPerTarget: [],
-    deaths: [],
   }));
 }

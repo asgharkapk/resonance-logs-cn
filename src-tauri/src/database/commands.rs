@@ -1,137 +1,120 @@
+use std::collections::HashSet;
+
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::database::PlayerNameEntry;
 use crate::database::db_exec;
+use crate::database::history_query::{EncounterDetailData, EncounterRangeData};
 use crate::database::schema as sch;
-use crate::live::commands_models as lc;
-use crate::live::opcodes_models::class;
-use blueprotobuf_lib::blueprotobuf::EEntityType;
+use crate::live::history_writer::HistoryWriterHandle;
 
-/// A summary of a player in an encounter.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerSummaryDto {
-    /// The player name.
     pub name: String,
-    /// The class ID of the player.
     pub class_id: i32,
 }
 
-/// A summary of an encounter.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct EncounterSummaryDto {
-    /// The ID of the encounter.
     pub id: i32,
-    /// The start time of the encounter in milliseconds since the Unix epoch.
     pub started_at_ms: i64,
-    /// The end time of the encounter in milliseconds since the Unix epoch.
     pub ended_at_ms: Option<i64>,
-    /// The total damage dealt in the encounter.
-    pub total_dmg: i64,
-    /// The total healing done in the encounter.
-    pub total_heal: i64,
-    /// The ID of the scene where the encounter took place.
+    pub total_dmg: String,
+    pub total_heal: String,
     pub scene_id: Option<i32>,
-    /// Dungeon difficulty suffix for the scene, if known.
     pub dungeon_difficulty: Option<i32>,
-    /// The duration of the encounter in seconds.
     pub duration: f64,
-    /// The accumulated active combat duration in seconds.
     pub active_combat_duration: Option<f64>,
-    /// The UID of the local player for this encounter.
     pub local_player_id: Option<i64>,
-    /// A list of bosses in the encounter.
     pub bosses: Vec<BossSummaryDto>,
-    /// A list of players in the encounter.
     pub players: Vec<PlayerSummaryDto>,
-    /// The encounter ID on the remote website/server after successful upload.
     pub remote_encounter_id: Option<i64>,
-    /// Whether the encounter is favorited.
     pub is_favorite: bool,
+    pub detail_available: bool,
 }
 
-/// The result of a query for recent encounters.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RecentEncountersResult {
-    /// The rows of encounter summaries.
     pub rows: Vec<EncounterSummaryDto>,
-    /// The total number of encounters.
     pub total_count: i64,
 }
 
-/// Filters for querying encounters.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct EncounterFiltersDto {
-    /// A list of boss monster template IDs to filter by.
     pub boss_monster_ids: Option<Vec<i32>>,
-    /// A list of scene IDs to filter by.
     pub scene_ids: Option<Vec<i32>>,
-    /// A player name to filter by.
     pub player_name: Option<String>,
-    /// A list of player names to filter by.
     pub player_names: Option<Vec<String>>,
-    /// The start date to filter by in milliseconds since the Unix epoch.
     pub date_from_ms: Option<i64>,
-    /// The end date to filter by in milliseconds since the Unix epoch.
     pub date_to_ms: Option<i64>,
-    /// Whether to filter by favorite encounters.
     pub is_favorite: Option<bool>,
 }
 
-/// The result of a query for boss monster template IDs.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BossMonsterIdsResult {
-    /// A list of boss monster template IDs.
     pub ids: Vec<i32>,
 }
 
-/// A summary of a boss.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BossSummaryDto {
-    /// The monster template ID.
     pub monster_id: i32,
-    /// The maximum HP of the monster.
     pub max_hp: Option<i64>,
-    /// Whether the boss was defeated.
     pub is_defeated: bool,
 }
 
-/// The result of a query for scene IDs.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SceneIdsResult {
-    /// A list of scene IDs.
     pub ids: Vec<i32>,
 }
 
-/// The result of a query for player names.
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerNamesResult {
-    /// A list of player names.
     pub names: Vec<String>,
 }
 
-fn with_db<T, F>(f: F) -> Result<T, String>
+#[derive(Debug, Queryable)]
+struct EncounterSummaryRow {
+    id: i32,
+    started_at_ms: i64,
+    ended_at_ms: Option<i64>,
+    total_dmg: Option<i64>,
+    total_heal: Option<i64>,
+    total_dmg_exact: Option<String>,
+    total_heal_exact: Option<String>,
+    scene_id: Option<i32>,
+    dungeon_difficulty: Option<i32>,
+    duration: f64,
+    active_combat_duration: Option<f64>,
+    local_player_id: Option<i64>,
+    remote_encounter_id: Option<i64>,
+    is_favorite: i32,
+    boss_monster_ids: Option<String>,
+    player_names: Option<String>,
+    projection_encounter_id: Option<i32>,
+}
+
+fn with_db<T, F>(operation: F) -> Result<T, String>
 where
     T: Send + 'static,
     F: FnOnce(&mut diesel::sqlite::SqliteConnection) -> Result<T, String> + Send + 'static,
 {
-    db_exec(f)
+    db_exec(operation)
 }
 
 fn parse_player_entries(json: &Option<String>) -> Vec<PlayerSummaryDto> {
-    let Some(j) = json else {
-        return vec![];
+    let Some(json) = json else {
+        return Vec::new();
     };
-
-    if let Ok(entries) = serde_json::from_str::<Vec<PlayerNameEntry>>(j) {
+    if let Ok(entries) = serde_json::from_str::<Vec<PlayerNameEntry>>(json) {
         return entries
             .into_iter()
             .map(|entry| PlayerSummaryDto {
@@ -140,446 +123,239 @@ fn parse_player_entries(json: &Option<String>) -> Vec<PlayerSummaryDto> {
             })
             .collect();
     }
-
-    serde_json::from_str::<Vec<String>>(j)
+    serde_json::from_str::<Vec<String>>(json)
         .unwrap_or_default()
         .into_iter()
         .map(|name| PlayerSummaryDto { name, class_id: 0 })
         .collect()
 }
 
-fn extract_player_names_from_json(json: &Option<String>) -> Vec<String> {
-    parse_player_entries(json)
-        .into_iter()
-        .map(|player| player.name)
-        .collect()
+fn parse_boss_ids(json: &Option<String>) -> Vec<i32> {
+    json.as_deref()
+        .and_then(|value| serde_json::from_str(value).ok())
+        .unwrap_or_default()
 }
 
-/// Gets a list of unique boss monster template IDs.
-///
-/// # Returns
-///
-/// * `Result<BossMonsterIdsResult, String>` - A list of unique boss monster IDs.
-#[tauri::command]
-#[specta::specta]
-pub fn get_unique_boss_monster_ids() -> Result<BossMonsterIdsResult, String> {
-    with_db(|conn| {
-        use sch::encounters::dsl as e;
-        use std::collections::HashSet;
+fn map_summary(row: EncounterSummaryRow) -> Result<EncounterSummaryDto, String> {
+    let total_dmg = summary_total(
+        row.id,
+        "damage",
+        row.projection_encounter_id.is_some(),
+        row.total_dmg_exact,
+        row.total_dmg,
+    )?;
+    let total_heal = summary_total(
+        row.id,
+        "healing",
+        row.projection_encounter_id.is_some(),
+        row.total_heal_exact,
+        row.total_heal,
+    )?;
+    Ok(EncounterSummaryDto {
+        id: row.id,
+        started_at_ms: row.started_at_ms,
+        ended_at_ms: row.ended_at_ms,
+        total_dmg,
+        total_heal,
+        scene_id: row.scene_id,
+        dungeon_difficulty: row.dungeon_difficulty,
+        duration: row.duration,
+        active_combat_duration: row.active_combat_duration,
+        local_player_id: row.local_player_id,
+        remote_encounter_id: row.remote_encounter_id,
+        is_favorite: row.is_favorite != 0,
+        bosses: parse_boss_ids(&row.boss_monster_ids)
+            .into_iter()
+            .map(|monster_id| BossSummaryDto {
+                monster_id,
+                max_hp: None,
+                is_defeated: true,
+            })
+            .collect(),
+        players: parse_player_entries(&row.player_names),
+        detail_available: row.projection_encounter_id.is_some(),
+    })
+}
 
-        let rows: Vec<Option<String>> = e::encounters
-            .select(e::boss_monster_ids)
-            .load::<Option<String>>(conn)
-            .map_err(|e| e.to_string())?;
-        let mut set = HashSet::new();
-        for json in rows.into_iter().flatten() {
-            if let Ok(ids) = serde_json::from_str::<Vec<i32>>(&json) {
-                for id in ids {
-                    if id > 0 {
-                        set.insert(id);
-                    }
-                }
-            }
+fn summary_total(
+    encounter_id: i32,
+    label: &str,
+    detail_available: bool,
+    exact: Option<String>,
+    stored: Option<i64>,
+) -> Result<String, String> {
+    if let Some(exact) = exact {
+        let parsed = exact
+            .parse::<u128>()
+            .map_err(|_| format!("encounter {encounter_id} has an invalid exact {label} total"))?;
+        if parsed.to_string() != exact {
+            return Err(format!(
+                "encounter {encounter_id} has a non-canonical exact {label} total"
+            ));
         }
-        let mut ids: Vec<i32> = set.into_iter().collect();
-        ids.sort_unstable();
-        Ok(BossMonsterIdsResult { ids })
-    })
+        return Ok(exact);
+    }
+    if !detail_available {
+        return Ok(stored.unwrap_or_default().to_string());
+    }
+    Err(format!(
+        "encounter {encounter_id} is missing its exact {label} total"
+    ))
 }
 
-/// Gets a list of unique scene IDs.
-///
-/// # Returns
-///
-/// * `Result<SceneIdsResult, String>` - A list of unique scene IDs.
+pub(crate) fn load_encounter_summary(
+    conn: &mut diesel::sqlite::SqliteConnection,
+    encounter_id: i32,
+) -> Result<EncounterSummaryDto, String> {
+    use sch::encounter_projection::dsl as p;
+    use sch::encounters::dsl as e;
+    e::encounters
+        .left_join(p::encounter_projection.on(p::encounter_id.eq(e::id)))
+        .filter(e::id.eq(encounter_id))
+        .select((
+            e::id,
+            e::started_at_ms,
+            e::ended_at_ms,
+            e::total_dmg,
+            e::total_heal,
+            e::total_dmg_exact,
+            e::total_heal_exact,
+            e::scene_id,
+            e::dungeon_difficulty,
+            e::duration,
+            e::active_combat_duration,
+            e::local_player_id,
+            e::remote_encounter_id,
+            e::is_favorite,
+            e::boss_monster_ids,
+            e::player_names,
+            p::encounter_id.nullable(),
+        ))
+        .first::<EncounterSummaryRow>(conn)
+        .map_err(|error| error.to_string())
+        .and_then(map_summary)
+}
+
 #[tauri::command]
 #[specta::specta]
-pub fn get_unique_scene_ids() -> Result<SceneIdsResult, String> {
-    with_db(|conn| {
-        use std::collections::HashSet;
-
-        let scene_ids: Vec<Option<i32>> = sch::encounters::dsl::encounters
-            .select(sch::encounters::dsl::scene_id)
-            .load::<Option<i32>>(conn)
-            .map_err(|e| e.to_string())?;
-
-        let mut ids: Vec<i32> = scene_ids
-            .into_iter()
-            .flatten()
-            .collect::<HashSet<_>>()
-            .into_iter()
-            .collect();
-        ids.sort_unstable();
-
-        Ok(SceneIdsResult { ids })
+pub async fn get_unique_boss_monster_ids() -> Result<BossMonsterIdsResult, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        with_db(|conn| {
+            use sch::encounters::dsl as e;
+            let rows = e::encounters
+                .select(e::boss_monster_ids)
+                .filter(e::boss_monster_ids.is_not_null())
+                .load::<Option<String>>(conn)
+                .map_err(|error| error.to_string())?;
+            let mut ids = rows
+                .into_iter()
+                .flat_map(|json| parse_boss_ids(&json))
+                .collect::<Vec<_>>();
+            ids.sort_unstable();
+            ids.dedup();
+            Ok(BossMonsterIdsResult { ids })
+        })
     })
+    .await
+    .map_err(|error| format!("boss filter worker failed: {error}"))?
 }
 
-/// Gets a list of player names filtered by a prefix.
-///
-/// This will return up to 5 matching player names (to keep the UI responsive).
-///
-/// # Arguments
-///
-/// * `prefix` - The prefix to filter by.
-///
-/// # Returns
-///
-/// * `Result<PlayerNamesResult, String>` - A list of player names.
+#[tauri::command]
+#[specta::specta]
+pub async fn get_unique_scene_ids() -> Result<SceneIdsResult, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        with_db(|conn| {
+            use sch::encounters::dsl as e;
+            let mut ids = e::encounters
+                .select(e::scene_id)
+                .filter(e::scene_id.is_not_null())
+                .distinct()
+                .load::<Option<i32>>(conn)
+                .map_err(|error| error.to_string())?
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>();
+            ids.sort_unstable();
+            Ok(SceneIdsResult { ids })
+        })
+    })
+    .await
+    .map_err(|error| format!("scene filter worker failed: {error}"))?
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn get_player_names_filtered(prefix: String) -> Result<PlayerNamesResult, String> {
-    // Only query if prefix is at least 1 character
-    if prefix.trim().len() < 1 {
-        return Ok(PlayerNamesResult { names: vec![] });
-    }
-
-    let prefix = prefix.trim().to_string();
+    let prefix = prefix.trim().to_lowercase();
     with_db(move |conn| {
+        use sch::encounters::dsl as e;
         use sch::entities::dsl as en;
-
-        let pattern = format!("%{}%", prefix);
-        // Use distinct + limit to get up to 5 unique matching names from the DB
-        let player_names: Vec<String> = en::entities
+        let mut names = en::entities
             .select(en::name)
             .filter(en::name.is_not_null())
-            .filter(en::name.like(pattern))
-            .limit(5)
             .load::<Option<String>>(conn)
-            .map_err(|e| e.to_string())?
+            .map_err(|error| error.to_string())?
             .into_iter()
             .flatten()
-            .collect();
-
-        Ok(PlayerNamesResult {
-            names: player_names,
-        })
+            .collect::<Vec<_>>();
+        let encounter_names = e::encounters
+            .select(e::player_names)
+            .filter(e::player_names.is_not_null())
+            .load::<Option<String>>(conn)
+            .map_err(|error| error.to_string())?;
+        names.extend(
+            encounter_names
+                .into_iter()
+                .flat_map(|json| parse_player_entries(&json))
+                .map(|entry| entry.name),
+        );
+        names.retain(|name| prefix.is_empty() || name.to_lowercase().starts_with(&prefix));
+        names.sort_unstable_by_key(|name| name.to_lowercase());
+        names.dedup_by(|left, right| left.eq_ignore_ascii_case(right));
+        names.truncate(100);
+        Ok(PlayerNamesResult { names })
     })
 }
 
-/// Gets a list of recent encounters filtered by the given criteria.
-///
-/// # Arguments
-///
-/// * `limit` - The maximum number of encounters to return.
-/// * `offset` - The number of encounters to skip.
-/// * `filters` - The filters to apply.
-///
-/// # Returns
-///
-/// * `Result<RecentEncountersResult, String>` - A list of recent encounters.
 #[tauri::command]
 #[specta::specta]
-pub fn get_recent_encounters_filtered(
+pub async fn get_recent_encounters_filtered(
+    limit: i32,
+    offset: i32,
+    filters: Option<EncounterFiltersDto>,
+    history_writer: tauri::State<'_, HistoryWriterHandle>,
+) -> Result<RecentEncountersResult, String> {
+    let history_writer = history_writer.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        history_writer.fence()?;
+        get_recent_encounters_filtered_blocking(limit, offset, filters)
+    })
+    .await
+    .map_err(|error| format!("encounter list worker failed: {error}"))?
+}
+
+fn get_recent_encounters_filtered_blocking(
     limit: i32,
     offset: i32,
     filters: Option<EncounterFiltersDto>,
 ) -> Result<RecentEncountersResult, String> {
+    if limit <= 0 || offset < 0 {
+        return Err("limit must be positive and offset must be non-negative".to_string());
+    }
     with_db(move |conn| {
+        use sch::encounter_projection::dsl as p;
         use sch::encounters::dsl as e;
-        let mut rows: Vec<(
-            i32,
-            i64,
-            Option<i64>,
-            Option<i64>,
-            Option<i64>,
-            Option<i32>,
-            Option<i32>,
-            f64,
-            Option<f64>,
-            Option<i64>,
-            i32,
-            Option<String>,
-            Option<String>,
-        )> = e::encounters
+        let rows = e::encounters
+            .left_join(p::encounter_projection.on(p::encounter_id.eq(e::id)))
             .filter(e::ended_at_ms.is_not_null())
-            .order(e::started_at_ms.desc())
             .select((
                 e::id,
                 e::started_at_ms,
                 e::ended_at_ms,
                 e::total_dmg,
                 e::total_heal,
-                e::scene_id,
-                e::dungeon_difficulty,
-                e::duration,
-                e::active_combat_duration,
-                e::remote_encounter_id,
-                e::is_favorite,
-                e::boss_monster_ids,
-                e::player_names,
-            ))
-            .load(conn)
-            .map_err(|er| er.to_string())?;
-        if let Some(filter) = filters {
-            rows.retain(
-                |(
-                    _,
-                    started,
-                    _,
-                    _,
-                    _,
-                    scene_id,
-                    _,
-                    _,
-                    _,
-                    _,
-                    is_favorite,
-                    boss_names_json,
-                    player_names_json,
-                )| {
-                    if let Some(is_fav) = filter.is_favorite {
-                        if is_fav && *is_favorite == 0 {
-                            return false;
-                        }
-                    }
-                    if let Some(from_ms) = filter.date_from_ms {
-                        if *started < from_ms {
-                            return false;
-                        }
-                    }
-                    if let Some(to_ms) = filter.date_to_ms {
-                        if *started > to_ms {
-                            return false;
-                        }
-                    }
-                    if let Some(ref scene_ids) = filter.scene_ids {
-                        if !scene_ids.is_empty()
-                            && !scene_id.is_some_and(|id| scene_ids.contains(&id))
-                        {
-                            return false;
-                        }
-                    }
-                    if let Some(ref boss_monster_ids) = filter.boss_monster_ids {
-                        if !boss_monster_ids.is_empty() {
-                            let stored: Vec<i32> = boss_names_json
-                                .as_ref()
-                                .and_then(|j| serde_json::from_str(j).ok())
-                                .unwrap_or_default();
-                            if !boss_monster_ids.iter().any(|id| stored.contains(id)) {
-                                return false;
-                            }
-                        }
-                    }
-                    if let Some(ref player_names) = filter.player_names {
-                        if !player_names.is_empty() {
-                            let stored = extract_player_names_from_json(player_names_json);
-                            if !player_names.iter().any(|p| stored.contains(p)) {
-                                return false;
-                            }
-                        }
-                    }
-                    if let Some(ref player_name) = filter.player_name {
-                        let trimmed = player_name.trim();
-                        if !trimmed.is_empty() {
-                            let stored = extract_player_names_from_json(player_names_json);
-                            if !stored.iter().any(|p| p.contains(trimmed)) {
-                                return false;
-                            }
-                        }
-                    }
-                    true
-                },
-            );
-        }
-        let total_count = rows.len() as i64;
-        let paged_rows = rows
-            .into_iter()
-            .skip(offset.max(0) as usize)
-            .take(limit.max(0) as usize);
-
-        // Collect boss and player data for each encounter
-        let mut mapped: Vec<EncounterSummaryDto> = Vec::new();
-
-        for (
-            id,
-            started,
-            ended,
-            td,
-            th,
-            scene_id,
-            dungeon_difficulty,
-            duration,
-            active_combat_duration,
-            remote_id,
-            is_fav,
-            boss_json,
-            player_json,
-        ) in paged_rows
-        {
-            let boss_entries: Vec<BossSummaryDto> = boss_json
-                .as_ref()
-                .and_then(|j| serde_json::from_str::<Vec<i32>>(j).ok())
-                .unwrap_or_default()
-                .into_iter()
-                .map(|monster_id| BossSummaryDto {
-                    monster_id,
-                    max_hp: None,
-                    is_defeated: true,
-                })
-                .collect();
-            let player_entries = parse_player_entries(&player_json);
-
-            mapped.push(EncounterSummaryDto {
-                id,
-                started_at_ms: started,
-                ended_at_ms: ended,
-                total_dmg: td.unwrap_or(0),
-                total_heal: th.unwrap_or(0),
-                scene_id,
-                dungeon_difficulty,
-                duration,
-                active_combat_duration,
-                local_player_id: None,
-                bosses: boss_entries,
-                players: player_entries,
-                remote_encounter_id: remote_id,
-                is_favorite: is_fav != 0,
-            });
-        }
-
-        Ok(RecentEncountersResult {
-            rows: mapped,
-            total_count,
-        })
-    })
-}
-
-/// Gets a list of recent encounters.
-///
-/// # Arguments
-///
-/// * `limit` - The maximum number of encounters to return.
-/// * `offset` - The number of encounters to skip.
-///
-/// # Returns
-///
-/// * `Result<RecentEncountersResult, String>` - A list of recent encounters.
-#[tauri::command]
-#[specta::specta]
-pub fn get_recent_encounters(limit: i32, offset: i32) -> Result<RecentEncountersResult, String> {
-    get_recent_encounters_filtered(limit, offset, None)
-}
-
-/// Get player name by UID from database
-///
-/// # Arguments
-///
-/// * `uid` - The UID of the player.
-///
-/// # Returns
-///
-/// * `Result<Option<String>, String>` - The name of the player, or `None` if not found.
-pub fn get_name_by_uid(uid: i64) -> Result<Option<String>, String> {
-    with_db(move |conn| {
-        use sch::entities::dsl as en;
-
-        let name: Option<Option<String>> = en::entities
-            .select(en::name)
-            .filter(en::entity_id.eq(uid))
-            .first::<Option<String>>(conn)
-            .optional()
-            .map_err(|e| e.to_string())?;
-
-        Ok(name.flatten())
-    })
-}
-
-/// Get recent players ordered by last_seen_ms (most recent first) kinda scuffed maybe update in future
-///
-/// # Arguments
-///
-/// * `limit` - The maximum number of players to return.
-///
-/// # Returns
-///
-/// * `Result<Vec<(i64, String)>, String>` - A list of recent players.
-pub fn get_recent_players(limit: i64) -> Result<Vec<(i64, String)>, String> {
-    with_db(move |conn| {
-        use sch::entities::dsl as en;
-
-        let rows: Vec<(i64, Option<String>)> = en::entities
-            .select((en::entity_id, en::name))
-            .filter(en::name.is_not_null())
-            .order(en::last_seen_ms.desc())
-            .limit(limit)
-            .load(conn)
-            .map_err(|e: diesel::result::Error| e.to_string())?;
-
-        Ok(rows
-            .into_iter()
-            .filter_map(|(uid, name_opt)| name_opt.map(|name| (uid, name)))
-            .collect())
-    })
-}
-
-/// A Tauri command to get a list of recent players.
-///
-/// # Arguments
-///
-/// * `limit` - The maximum number of players to return.
-///
-/// # Returns
-///
-/// * `Result<Vec<(i64, String)>, String>` - A list of recent players.
-#[tauri::command]
-#[specta::specta]
-pub fn get_recent_players_command(limit: i32) -> Result<Vec<(i64, String)>, String> {
-    get_recent_players(limit as i64)
-}
-
-/// A Tauri command to get the name of a player by their UID.
-///
-/// # Arguments
-///
-/// * `uid` - The UID of the player.
-///
-/// # Returns
-///
-/// * `Result<Option<String>, String>` - The name of the player, or `None` if not found.
-#[tauri::command]
-#[specta::specta]
-pub fn get_player_name_command(uid: i64) -> Result<Option<String>, String> {
-    get_name_by_uid(uid)
-}
-
-/// Gets an encounter by its ID.
-///
-/// # Arguments
-///
-/// * `encounter_id` - The ID of the encounter.
-///
-/// # Returns
-///
-/// * `Result<EncounterSummaryDto, String>` - The encounter summary.
-#[tauri::command]
-#[specta::specta]
-pub fn get_encounter_by_id(encounter_id: i32) -> Result<EncounterSummaryDto, String> {
-    use sch::encounters::dsl as e;
-    let row: (
-        i32,
-        i64,
-        Option<i64>,
-        Option<i64>,
-        Option<i64>,
-        Option<i32>,
-        Option<i32>,
-        f64,
-        Option<f64>,
-        Option<i64>,
-        Option<i64>,
-        i32,
-        Option<String>,
-        Option<String>,
-    ) = with_db(move |conn| {
-        e::encounters
-            .filter(e::id.eq(encounter_id))
-            .select((
-                e::id,
-                e::started_at_ms,
-                e::ended_at_ms,
-                e::total_dmg,
-                e::total_heal,
+                e::total_dmg_exact,
+                e::total_heal_exact,
                 e::scene_id,
                 e::dungeon_difficulty,
                 e::duration,
@@ -589,166 +365,209 @@ pub fn get_encounter_by_id(encounter_id: i32) -> Result<EncounterSummaryDto, Str
                 e::is_favorite,
                 e::boss_monster_ids,
                 e::player_names,
+                p::encounter_id.nullable(),
             ))
-            .first(conn)
-            .map_err(|er| er.to_string())
-    })?;
-
-    let boss_entries: Vec<BossSummaryDto> = row
-        .12
-        .as_ref()
-        .and_then(|j| serde_json::from_str::<Vec<i32>>(j).ok())
-        .unwrap_or_default()
-        .into_iter()
-        .map(|monster_id| BossSummaryDto {
-            monster_id,
-            max_hp: None,
-            is_defeated: true,
-        })
-        .collect();
-    let player_entries = parse_player_entries(&row.13);
-
-    Ok(EncounterSummaryDto {
-        id: row.0,
-        started_at_ms: row.1,
-        ended_at_ms: row.2,
-        total_dmg: row.3.unwrap_or(0),
-        total_heal: row.4.unwrap_or(0),
-        scene_id: row.5,
-        dungeon_difficulty: row.6,
-        duration: row.7,
-        active_combat_duration: row.8,
-        local_player_id: row.9,
-        bosses: boss_entries,
-        players: player_entries,
-        remote_encounter_id: row.10,
-        is_favorite: row.11 != 0,
-    })
-}
-
-/// Gets raw actor entities for a historical encounter.
-#[tauri::command]
-#[specta::specta]
-pub fn get_encounter_entities_raw(encounter_id: i32) -> Result<Vec<lc::HistoryEntityData>, String> {
-    let entities = crate::database::load_encounter_data(encounter_id)?;
-    let mut rows = Vec::new();
-    for (&entity_uuid, entity) in &entities {
-        if entity.entity_type != EEntityType::EntChar {
-            continue;
-        }
-        let has_combat = entity.damage.hits > 0 || entity.healing.hits > 0 || entity.taken.hits > 0;
-        if !has_combat {
-            continue;
-        }
-        rows.push(lc::HistoryEntityData {
-            entity_uuid: entity_uuid.to_string(),
-            display_uid: crate::live::entity_id::uid_from_uuid(entity_uuid),
-            name: entity.name.clone(),
-            class_id: entity.class_id,
-            class_spec: entity.class_spec as i32,
-            class_name: class::get_class_name(entity.class_id),
-            class_spec_name: class::get_class_spec(entity.class_spec),
-            ability_score: entity.ability_score,
-            season_strength: entity.season_strength,
-            damage: lc::to_raw_combat_stats(&entity.damage),
-            damage_boss_only: lc::to_raw_combat_stats(&entity.damage_boss_only),
-            healing: lc::to_raw_combat_stats(&entity.healing),
-            taken: lc::to_raw_combat_stats(&entity.taken),
-            dmg_skills: entity
-                .skill_uid_to_dmg_skill
-                .iter()
-                .map(|(skill_id, stats)| (*skill_id, lc::to_raw_skill_stats(stats)))
-                .collect(),
-            heal_skills: entity
-                .skill_uid_to_heal_skill
-                .iter()
-                .map(|(skill_id, stats)| (*skill_id, lc::to_raw_skill_stats(stats)))
-                .collect(),
-            taken_skills: entity
-                .skill_uid_to_taken_skill
-                .iter()
-                .map(|(skill_id, stats)| (*skill_id, lc::to_raw_skill_stats(stats)))
-                .collect(),
-            taken_per_source: lc::build_taken_per_source(&entity.skill_taken_from_source),
-            dmg_per_target: lc::build_per_target_stats(
-                &entity.skill_dmg_to_target,
-                Some(&entity.dmg_to_target),
-            ),
-            heal_per_target: lc::build_per_target_stats(&entity.skill_heal_to_target, None),
-            deaths: entity.deaths.iter().map(lc::to_death_record).collect(),
+            .order((e::started_at_ms.desc(), e::id.desc()))
+            .load::<EncounterSummaryRow>(conn)
+            .map_err(|error| error.to_string())?;
+        let filters = filters.unwrap_or(EncounterFiltersDto {
+            boss_monster_ids: None,
+            scene_ids: None,
+            player_name: None,
+            player_names: None,
+            date_from_ms: None,
+            date_to_ms: None,
+            is_favorite: None,
         });
-    }
-    rows.sort_by(|a, b| a.entity_uuid.cmp(&b.entity_uuid));
-    Ok(rows)
+        let boss_filter = filters.boss_monster_ids.unwrap_or_default();
+        let scene_filter = filters.scene_ids.unwrap_or_default();
+        let mut player_filter = filters.player_names.unwrap_or_default();
+        if let Some(player_name) = filters.player_name {
+            player_filter.push(player_name);
+        }
+        let player_filter = player_filter
+            .into_iter()
+            .map(|name| name.to_lowercase())
+            .collect::<HashSet<_>>();
+        let mut summaries = rows
+            .into_iter()
+            .map(map_summary)
+            .collect::<Result<Vec<_>, _>>()?;
+        summaries.retain(|summary| {
+            (boss_filter.is_empty()
+                || summary
+                    .bosses
+                    .iter()
+                    .any(|boss| boss_filter.contains(&boss.monster_id)))
+                && (scene_filter.is_empty()
+                    || summary
+                        .scene_id
+                        .is_some_and(|scene| scene_filter.contains(&scene)))
+                && (player_filter.is_empty()
+                    || summary
+                        .players
+                        .iter()
+                        .any(|player| player_filter.contains(&player.name.to_lowercase())))
+                && filters
+                    .date_from_ms
+                    .is_none_or(|from| summary.started_at_ms >= from)
+                && filters
+                    .date_to_ms
+                    .is_none_or(|to| summary.started_at_ms < to)
+                && filters
+                    .is_favorite
+                    .is_none_or(|favorite| summary.is_favorite == favorite)
+        });
+        let total_count = i64::try_from(summaries.len()).unwrap_or(i64::MAX);
+        let start = usize::try_from(offset)
+            .unwrap_or(usize::MAX)
+            .min(summaries.len());
+        let end = start
+            .saturating_add(usize::try_from(limit).unwrap_or(usize::MAX))
+            .min(summaries.len());
+        let rows = summaries.drain(start..end).collect();
+        Ok(RecentEncountersResult { rows, total_count })
+    })
 }
 
-/// Deletes an encounter by its ID.
-///
-/// # Arguments
-///
-/// * `encounter_id` - The ID of the encounter to delete.
-///
-/// # Returns
-///
-/// * `Result<(), String>` - An empty result indicating success or failure.
 #[tauri::command]
 #[specta::specta]
-pub fn delete_encounter(encounter_id: i32) -> Result<(), String> {
-    with_db(move |conn| {
-        use sch::encounter_data::dsl as ed;
-        use sch::encounters::dsl as e;
+pub async fn get_encounter_detail(
+    encounter_id: i32,
+    target_points: u32,
+    history_writer: tauri::State<'_, HistoryWriterHandle>,
+) -> Result<EncounterDetailData, String> {
+    let history_writer = history_writer.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        history_writer.fence()?;
+        crate::database::load_history_detail(encounter_id, target_points)
+    })
+    .await
+    .map_err(|error| format!("encounter detail worker failed: {error}"))?
+}
 
-        conn.transaction::<(), diesel::result::Error, _>(|conn| {
-            diesel::delete(ed::encounter_data.filter(ed::encounter_id.eq(encounter_id)))
-                .execute(conn)?;
-            diesel::delete(e::encounters.filter(e::id.eq(encounter_id))).execute(conn)?;
-            Ok(())
+#[tauri::command]
+#[specta::specta]
+pub async fn get_encounter_range(
+    encounter_id: i32,
+    start_ms: u64,
+    end_ms: u64,
+    history_writer: tauri::State<'_, HistoryWriterHandle>,
+) -> Result<EncounterRangeData, String> {
+    let history_writer = history_writer.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        history_writer.fence()?;
+        crate::database::load_history_range(encounter_id, start_ms, end_ms)
+    })
+    .await
+    .map_err(|error| format!("encounter range worker failed: {error}"))?
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn delete_encounter(encounter_id: i32) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::database::flush_database()?;
+        with_db(move |conn| {
+            use sch::encounters::dsl as e;
+            diesel::delete(e::encounters.filter(e::id.eq(encounter_id)))
+                .execute(conn)
+                .map(|_| ())
+                .map_err(|error| error.to_string())
         })
-        .map_err(|e| e.to_string())?;
-        Ok(())
     })
+    .await
+    .map_err(|error| format!("delete encounter worker failed: {error}"))?
 }
 
-/// Deletes multiple encounters by ID.
-///
-/// # Arguments
-///
-/// * `ids` - The IDs of the encounters to delete.
-///
-/// # Returns
-///
-/// * `Result<(), String>` - An empty result indicating success or failure.
 #[tauri::command]
 #[specta::specta]
-pub fn delete_encounters(ids: Vec<i32>) -> Result<(), String> {
-    with_db(move |conn| {
-        use sch::encounters::dsl as e;
-        diesel::delete(e::encounters.filter(e::id.eq_any(ids)))
-            .execute(conn)
-            .map_err(|er| er.to_string())?;
-        Ok(())
+pub async fn delete_encounters(ids: Vec<i32>) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::database::flush_database()?;
+        with_db(move |conn| {
+            use sch::encounters::dsl as e;
+            diesel::delete(e::encounters.filter(e::id.eq_any(ids)))
+                .execute(conn)
+                .map(|_| ())
+                .map_err(|error| error.to_string())
+        })
     })
+    .await
+    .map_err(|error| format!("delete encounters worker failed: {error}"))?
 }
 
-/// Toggles the favorite status of an encounter.
-///
-/// # Arguments
-///
-/// * `id` - The ID of the encounter.
-/// * `is_favorite` - The new favorite status.
-///
-/// # Returns
-///
-/// * `Result<(), String>` - An empty result indicating success or failure.
 #[tauri::command]
 #[specta::specta]
 pub fn toggle_favorite_encounter(id: i32, is_favorite: bool) -> Result<(), String> {
     with_db(move |conn| {
         use sch::encounters::dsl as e;
         diesel::update(e::encounters.filter(e::id.eq(id)))
-            .set(e::is_favorite.eq(if is_favorite { 1 } else { 0 }))
+            .set(e::is_favorite.eq(i32::from(is_favorite)))
             .execute(conn)
-            .map_err(|er| er.to_string())?;
-        Ok(())
+            .map(|_| ())
+            .map_err(|error| error.to_string())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn summary_row(
+        detail_available: bool,
+        total_dmg_exact: Option<String>,
+        total_heal_exact: Option<String>,
+    ) -> EncounterSummaryRow {
+        EncounterSummaryRow {
+            id: 1,
+            started_at_ms: 1_000,
+            ended_at_ms: Some(2_000),
+            total_dmg: Some(i64::MAX),
+            total_heal: None,
+            total_dmg_exact,
+            total_heal_exact,
+            scene_id: None,
+            dungeon_difficulty: None,
+            duration: 1.0,
+            active_combat_duration: Some(1.0),
+            local_player_id: None,
+            remote_encounter_id: None,
+            is_favorite: 0,
+            boss_monster_ids: None,
+            player_names: None,
+            projection_encounter_id: detail_available.then_some(1),
+        }
+    }
+
+    #[test]
+    fn summary_without_projection_uses_integer_totals() {
+        let summary = map_summary(summary_row(false, None, None)).expect("map summary");
+
+        assert_eq!(summary.total_dmg, i64::MAX.to_string());
+        assert_eq!(summary.total_heal, "0");
+        let json = serde_json::to_value(summary).expect("serialize encounter summary");
+        assert_eq!(json["totalDmg"], i64::MAX.to_string());
+        assert_eq!(json["totalHeal"], "0");
+    }
+
+    #[test]
+    fn summary_with_projection_prefers_exact_u128_totals() {
+        let summary = map_summary(summary_row(
+            true,
+            Some(u128::MAX.to_string()),
+            Some("18446744073709551616".to_string()),
+        ))
+        .expect("map summary");
+
+        assert_eq!(summary.total_dmg, u128::MAX.to_string());
+        assert_eq!(summary.total_heal, "18446744073709551616");
+    }
+
+    #[test]
+    fn summary_with_projection_rejects_missing_exact_totals() {
+        let error = map_summary(summary_row(true, None, Some("0".to_string())))
+            .expect_err("missing exact damage must fail");
+        assert!(error.contains("missing its exact damage total"));
+    }
 }

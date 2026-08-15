@@ -5,7 +5,12 @@
    * the old "permanent display" panel on the monster overlay, which took up
    * too much space with a full party.
    */
-  import { getFantasyCasts } from "$lib/stores/fantasy-cast-store.svelte";
+  import { liveFantasyStore } from "$lib/stores/live-topics.svelte";
+  import {
+    resolveFantasyDisplayName,
+    resolveFantasyIcon,
+  } from "$lib/fantasy-icons";
+  import type { TeammateFantasyState } from "$lib/api";
   import { SETTINGS } from "$lib/settings-store";
   import { tooltip } from "$lib/utils.svelte";
   import { t } from "$lib/i18n/index.svelte";
@@ -16,9 +21,39 @@
   const showFantasyCastIcons = $derived(
     SETTINGS.live.general.state.showFantasyCastIcons === true,
   );
-  const casts = $derived(
-    showFantasyCastIcons ? getFantasyCasts(entityUuid) : [],
-  );
+  const casts = $derived.by(() => {
+    if (!showFantasyCastIcons) return [];
+
+    const latestByType = new Map<string, TeammateFantasyState>();
+    for (const entry of liveFantasyStore.data?.teammateFantasies ?? []) {
+      if (entry.summonerUuid !== entityUuid) continue;
+      const key = String(entry.resonanceSkillId ?? `monster:${entry.monsterId}`);
+      const current = latestByType.get(key);
+      if (!current || entry.detectedAtMs > current.detectedAtMs) {
+        latestByType.set(key, entry);
+      }
+    }
+
+    return [...latestByType.entries()]
+      .sort(([, left], [, right]) => right.detectedAtMs - left.detectedAtMs)
+      .flatMap(([key, entry]) => {
+        const icon = resolveFantasyIcon(entry.resonanceSkillId);
+        return icon.isPlaceholder
+          ? []
+          : [
+              {
+                id: key,
+                name: resolveFantasyDisplayName(
+                  entry.resonanceSkillId,
+                  entry.monsterId,
+                ),
+                iconPath: icon.iconPath,
+                remodelLevel: entry.remodelLevel,
+              },
+            ];
+      })
+      .slice(0, 2);
+  });
 </script>
 
 {#if casts.length > 0}

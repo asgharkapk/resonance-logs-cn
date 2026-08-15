@@ -1,24 +1,24 @@
+use crate::live::runtime::events::CaptureEnvelope;
 use crate::packets::game_connections::{GameConnectionFilter, Verdict};
 use crate::packets::npcap::NpcapCapture;
-use crate::packets::opcodes::CaptureEvent;
-use crate::packets::packet_process::process_packet;
+use crate::packets::packet_process::{CaptureEmitter, process_packet};
 use crate::packets::reassembler::Reassembler;
 use crate::packets::utils::{Server, TCPReassembler, TcpInsertResult, tcp_sequence_before};
 use etherparse::NetSlice::Ipv4;
 use etherparse::SlicedPacket;
 use etherparse::TransportSlice::Tcp;
 use log::{error, info, warn};
-use once_cell::sync::OnceCell;
 use std::collections::HashMap;
+use std::hash::{DefaultHasher, Hash, Hasher};
+use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::atomic::AtomicUsize;
+use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 use tokio::sync::watch;
+use tokio_util::sync::CancellationToken;
 use windivert::WinDivert;
 use windivert::prelude::{NetworkLayer, WinDivertFlags};
-
-// Global sender for restart signal.
-static RESTART_SENDER: OnceCell<watch::Sender<bool>> = OnceCell::new();
 
 const MAX_BACKTRACK_BYTES: u32 = 2 * 1024 * 1024; // 2 MiB safety window before considering a reset
 const SESSION_IDLE_TIMEOUT: Duration = Duration::from_secs(90);
@@ -113,25 +113,73 @@ struct SessionState {
     tcp_reassembler: TCPReassembler,
     reassembler: Reassembler,
     last_seen: Instant,
+    stream_id: u64,
+    stream_epoch: u64,
 }
 
 impl SessionState {
-    fn new(now: Instant) -> Self {
+    fn new(now: Instant, stream_id: u64) -> Self {
         Self {
             tcp_reassembler: TCPReassembler::new(),
             reassembler: Reassembler::new(),
             last_seen: now,
+            stream_id,
+            stream_epoch: 1,
         }
+    }
+
+    fn begin_new_epoch(&mut self) {
+        self.stream_epoch = self.stream_epoch.saturating_add(1);
     }
 }
 
 const CAPTURE_CHANNEL_CAP: usize = 4096;
 
-pub fn start_capture(method: CaptureMethod) -> tokio::sync::mpsc::Receiver<CaptureEvent> {
+pub struct CaptureWorkerHandle {
+    cancellation: CancellationToken,
+    join: Option<JoinHandle<()>>,
+}
+
+impl Drop for CaptureWorkerHandle {
+    fn drop(&mut self) {
+        self.cancellation.cancel();
+    }
+}
+
+impl CaptureWorkerHandle {
+    pub fn join(mut self) -> std::thread::Result<()> {
+        self.cancellation.cancel();
+        self.join
+            .take()
+            .expect("capture join handle is present")
+            .join()
+    }
+}
+
+pub struct CaptureRuntime {
+    pub receiver: tokio::sync::mpsc::Receiver<CaptureEnvelope>,
+    pub worker: CaptureWorkerHandle,
+    pub outstanding: Arc<AtomicUsize>,
+}
+
+impl CaptureRuntime {
+    pub fn into_parts(
+        self,
+    ) -> (
+        tokio::sync::mpsc::Receiver<CaptureEnvelope>,
+        CaptureWorkerHandle,
+        Arc<AtomicUsize>,
+    ) {
+        (self.receiver, self.worker, self.outstanding)
+    }
+}
+
+pub fn start_capture(method: CaptureMethod) -> CaptureRuntime {
     let (packet_sender, packet_receiver) =
-        tokio::sync::mpsc::channel::<CaptureEvent>(CAPTURE_CHANNEL_CAP);
+        tokio::sync::mpsc::channel::<CaptureEnvelope>(CAPTURE_CHANNEL_CAP);
+    let outstanding = Arc::new(AtomicUsize::new(0));
+    let cancellation = CancellationToken::new();
     let (restart_sender, mut restart_receiver) = watch::channel(false);
-    RESTART_SENDER.set(restart_sender.clone()).ok();
 
     match &method {
         CaptureMethod::WinDivert => {
@@ -140,50 +188,65 @@ pub fn start_capture(method: CaptureMethod) -> tokio::sync::mpsc::Receiver<Captu
         CaptureMethod::Npcap(device) => {
             if device.trim().is_empty() {
                 error!(target: "app::capture", "capture_start_failed method=Npcap err=empty_device");
-                return packet_receiver;
             }
             info!(target: "app::capture", "capture_start method=Npcap device={device}");
         }
     }
 
-    std::thread::spawn(move || {
-        let capture_span = tracing::info_span!(
-            target: "app::capture",
-            "capture_thread",
-            method = ?method
-        );
-        let _capture_guard = capture_span.enter();
-        let dropped_total = AtomicUsize::new(0);
-        loop {
-            read_packets(
-                &packet_sender,
-                &dropped_total,
-                &mut restart_receiver,
-                method.clone(),
+    let thread_cancellation = cancellation.clone();
+    let thread_outstanding = Arc::clone(&outstanding);
+    let join = std::thread::Builder::new()
+        .name("packet-capture".to_string())
+        .spawn(move || {
+            let capture_span = tracing::info_span!(
+                target: "app::capture",
+                "capture_thread",
+                method = ?method
+            );
+            let _capture_guard = capture_span.enter();
+            let mut emitter = CaptureEmitter::new(
+                packet_sender,
+                thread_cancellation.clone(),
+                thread_outstanding,
             );
 
-            // Check if this was a requested restart or a crash/exit.
-            if !*restart_receiver.borrow() {
-                warn!("Packet capture exited unexpectedly. Restarting in 1s...");
-                std::thread::sleep(Duration::from_secs(1));
-                continue;
-            }
+            while !thread_cancellation.is_cancelled() && !emitter.is_stopped() {
+                read_packets(
+                    &mut emitter,
+                    &mut restart_receiver,
+                    &thread_cancellation,
+                    method.clone(),
+                );
 
-            // Wait for restart signal if it was requested.
-            while !*restart_receiver.borrow() {
-                std::thread::sleep(Duration::from_millis(100));
+                if thread_cancellation.is_cancelled() || emitter.is_stopped() {
+                    break;
+                }
+                if *restart_receiver.borrow() {
+                    let _ = restart_sender.send(false);
+                    continue;
+                }
+
+                warn!("Packet capture exited unexpectedly. Restarting in 1s...");
+                wait_with_cancellation(&thread_cancellation, Duration::from_secs(1));
             }
-            // Reset signal to false before next loop.
-            let _ = restart_sender.send(false);
-        }
-    });
-    packet_receiver
+            info!(target: "app::capture", "capture thread exiting");
+        })
+        .expect("failed to spawn packet capture thread");
+
+    CaptureRuntime {
+        receiver: packet_receiver,
+        worker: CaptureWorkerHandle {
+            cancellation,
+            join: Some(join),
+        },
+        outstanding,
+    }
 }
 
 fn read_packets(
-    packet_sender: &tokio::sync::mpsc::Sender<CaptureEvent>,
-    dropped_total: &AtomicUsize,
+    emitter: &mut CaptureEmitter,
     restart_receiver: &mut watch::Receiver<bool>,
+    cancellation: &CancellationToken,
     method: CaptureMethod,
 ) {
     let read_span =
@@ -250,16 +313,16 @@ fn read_packets(
             }
 
             let now = Instant::now();
+            let stream_id = stable_stream_id(curr_server);
             let session = sessions
                 .entry(curr_server)
-                .or_insert_with(|| SessionState::new(now));
+                .or_insert_with(|| SessionState::new(now, stream_id));
             session.last_seen = now;
 
             process_tcp_packet(
                 curr_server,
                 &tcp_packet,
-                packet_sender,
-                dropped_total,
+                emitter,
                 session,
                 &mut game_connections,
             );
@@ -292,7 +355,7 @@ fn read_packets(
             cleanup_last_run = Instant::now();
         }
 
-        if *restart_receiver.borrow() {
+        if cancellation.is_cancelled() || emitter.is_stopped() || *restart_receiver.borrow() {
             break;
         }
     }
@@ -301,8 +364,7 @@ fn read_packets(
 fn process_tcp_packet(
     curr_server: Server,
     tcp_packet: &etherparse::TcpSlice<'_>,
-    packet_sender: &tokio::sync::mpsc::Sender<CaptureEvent>,
-    dropped_total: &AtomicUsize,
+    emitter: &mut CaptureEmitter,
     session: &mut SessionState,
     game_connections: &mut GameConnectionFilter,
 ) {
@@ -315,11 +377,20 @@ fn process_tcp_packet(
             target: "app::capture",
             "SYN observed for {curr_server}; resetting TCP reassembler state"
         );
+        let had_previous_epoch = session.tcp_reassembler.next_sequence().is_some();
+        if had_previous_epoch {
+            session.begin_new_epoch();
+        }
         reset_stream(
             &mut session.tcp_reassembler,
             &mut session.reassembler,
             Some(sequence_number.wrapping_add(1)),
         );
+        if had_previous_epoch
+            && !emitter.emit_reassembly_reset(session.stream_id, session.stream_epoch)
+        {
+            return;
+        }
         if payload_len == 0 {
             return;
         }
@@ -334,6 +405,8 @@ fn process_tcp_packet(
     if payload_len == 0 {
         if defer_reset {
             reset_stream(&mut session.tcp_reassembler, &mut session.reassembler, None);
+            session.begin_new_epoch();
+            let _ = emitter.emit_reassembly_reset(session.stream_id, session.stream_epoch);
         }
         return;
     }
@@ -352,6 +425,10 @@ fn process_tcp_packet(
                     &mut session.reassembler,
                     Some(sequence_number),
                 );
+                session.begin_new_epoch();
+                if !emitter.emit_reassembly_reset(session.stream_id, session.stream_epoch) {
+                    return;
+                }
             }
         }
     }
@@ -373,6 +450,9 @@ fn process_tcp_packet(
                 target: "app::capture",
                 "TCP gap skipped for {curr_server}: from={from} to={to} reason={reason:?}; clearing frame reassembler"
             );
+            if !emitter.emit_stream_gap(session.stream_id, session.stream_epoch, from, to) {
+                return;
+            }
             session.reassembler.take_remaining();
             if !data.is_empty() {
                 session.reassembler.feed_bytes(bytes::Bytes::from(data));
@@ -382,19 +462,33 @@ fn process_tcp_packet(
     }
 
     while let Some(packet) = session.reassembler.try_next() {
-        process_packet(&packet, packet_sender, dropped_total);
+        process_packet(&packet, emitter, session.stream_id, session.stream_epoch);
+        if emitter.is_stopped() {
+            return;
+        }
     }
 
     if defer_reset {
         reset_stream(&mut session.tcp_reassembler, &mut session.reassembler, None);
+        session.begin_new_epoch();
+        let _ = emitter.emit_reassembly_reset(session.stream_id, session.stream_epoch);
     }
 }
 
-// Function to send restart signal from another thread/task.
-#[allow(dead_code)]
-pub fn request_restart() {
-    if let Some(sender) = RESTART_SENDER.get() {
-        let _ = sender.send(true);
+fn stable_stream_id(server: Server) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    server.hash(&mut hasher);
+    hasher.finish()
+}
+
+fn wait_with_cancellation(cancellation: &CancellationToken, duration: Duration) {
+    let deadline = Instant::now() + duration;
+    while !cancellation.is_cancelled() && Instant::now() < deadline {
+        std::thread::sleep(
+            deadline
+                .saturating_duration_since(Instant::now())
+                .min(Duration::from_millis(25)),
+        );
     }
 }
 

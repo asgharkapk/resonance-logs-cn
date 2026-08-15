@@ -1,0 +1,167 @@
+{
+  "seasonId": 4,
+  "functionId": 800522,
+  "templates": [
+    {
+      "templateId": 9,
+      "name": "幻灭崩界",
+      "displayBuffs": [
+        {
+          "buffId": 3004901
+        },
+        {
+          "buffId": 3004981
+        },
+        {
+          "buffId": 3004991
+        },
+        {
+          "buffId": 3005001
+        }
+      ],
+      "suppressRules": []
+    },
+    {
+      "templateId": 10,
+      "name": "累功刻痕",
+      "displayBuffs": [
+        {
+          "buffId": 3005102
+        }
+      ],
+      "suppressRules": []
+    },
+    {
+      "templateId": 11,
+      "name": "幻想具现",
+      "displayBuffs": [
+        {
+          "buffId": 3005331
+        },
+        {
+          "buffId": 3005341
+        },
+        {
+          "buffId": 3005361
+        }
+      ],
+      "suppressRules": []
+    },
+    {
+      "templateId": 12,
+      "name": "战意激荡",
+      "displayBuffs": [
+        {
+          "buffId": 3005501
+        }
+      ],
+      "suppressRules": []
+    },
+    {
+      "templateId": 13,
+      "name": "激励圣咏",
+      "displayBuffs": [
+        {
+          "buffId": 3005703
+        },
+        {
+          "buffId": 3005721
+        },
+        {
+          "buffId": 3005731
+        },
+        {
+          "buffId": 3005741
+        },
+        {
+          "buffId": 3005751
+        },
+        {
+          "buffId": 3005771
+        },
+        {
+          "buffId": 3005772
+        },
+        {
+          "buffId": 3005781
+        },
+        {
+          "buffId": 3005801
+        },
+        {
+          "buffId": 3003033
+        }
+      ],
+      "suppressRules": []
+    },
+    {
+      "templateId": 14,
+      "name": "叠势迸破",
+      "displayBuffs": [
+        {
+          "buffId": 3005901
+        },
+        {
+          "buffId": 3005902
+        }
+      ],
+      "suppressRules": []
+    },
+    {
+      "templateId": 15,
+      "name": "属性交响",
+      "displayBuffs": [
+        {
+          "buffId": 3006101
+        },
+        {
+          "buffId": 3006102
+        },
+        {
+          "buffId": 3006103
+        },
+        {
+          "buffId": 3006104
+        },
+        {
+          "buffId": 3006105
+        },
+        {
+          "buffId": 3006181
+        },
+        {
+          "buffId": 3006192
+        }
+      ],
+      "suppressRules": [
+        {
+          "whenBuffActive": 3006192,
+          "hide": [
+            3006101,
+            3006102,
+            3006103,
+            3006104,
+            3006105,
+            3006181
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": 16,
+      "name": "梦幻箭雨",
+      "displayBuffs": [
+        {
+          "buffId": 3002521
+        },
+        {
+          "buffId": 3002531
+        },
+        {
+          "buffId": 3002541
+        }
+      ],
+      "suppressRules": []
+    }
+  ]
+}

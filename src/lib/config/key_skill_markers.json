@@ -1,0 +1,97 @@
+[
+  {
+    "skillId": 2316,
+    "name": "万众瞩目",
+    "icon": "/images/beat_performer/skill/weapon_jt-01_kx08_2193884571674385388.png"
+  },
+  {
+    "skillId": 2315,
+    "name": "安可",
+    "icon": "/images/beat_performer/skill/weapon_jt-01_kx07_6080503737517248499.png"
+  },
+  {
+    "skillId": 2420,
+    "name": "光明决心",
+    "icon": "/images/shield_knight/skill/weapon_jd-01_kx08_3933276002928830685.png"
+  },
+  {
+    "skillId": 2415,
+    "name": "圣光守卫",
+    "icon": "/images/shield_knight/skill/weapon_jd-01_kx06_3980803170877479368.png"
+  },
+  {
+    "skillId": 2234,
+    "name": "光能轰炸",
+    "icon": "/images/marksman/skill/weapon_gj-01_kx04_-547550312812423798.png"
+  },
+  {
+    "skillId": 2231,
+    "name": "精神凝聚",
+    "icon": "/images/marksman/skill/weapon_gj-01_kx02_-8721967237189344326.png"
+  },
+  {
+    "skillId": 1923,
+    "name": "砂岩守护",
+    "icon": "/images/heavy_guardian/skill/weapon_wr-01_kx06_2700380891417243473.png"
+  },
+  {
+    "skillId": 1936,
+    "name": "巨岩躯体",
+    "icon": "/images/heavy_guardian/skill/weapon_wr-01_kx04_615789575634243887.png"
+  },
+  {
+    "skillId": 1938,
+    "name": "勇者壁垒",
+    "icon": "/images/heavy_guardian/skill/weapon_wr-01_kx08_1959893658930417921.png"
+  },
+  {
+    "skillId": 1524,
+    "name": "加速生长",
+    "icon": "/images/verdant_oracle/skill/weapon_fh-01_kx06_-5972192814303085887.png"
+  },
+  {
+    "skillId": 1520,
+    "name": "灌注",
+    "icon": "/images/verdant_oracle/skill/weapon_fh-01_kx01_-777893832486412878.png"
+  },
+  {
+    "skillId": 1420,
+    "name": "风姿卓绝",
+    "icon": "/images/wind_knight/skill/weapon_cq-01_kx01_-8358011576239105760.png"
+  },
+  {
+    "skillId": 1431,
+    "name": "锐利冲击",
+    "icon": "/images/wind_knight/skill/weapon_cq-01_kx08_-5400252487671298175.png"
+  },
+  {
+    "skillId": 1615,
+    "name": "荒川之寂灭",
+    "icon": "/images/flame_berserker/skill/weapon_sf-01_kx06.png"
+  },
+  {
+    "skillId": 1617,
+    "name": "无尽之炎魔",
+    "icon": "/images/flame_berserker/skill/weapon_sf-01_kx08.png"
+  },
+  {
+    "skillId": 1243,
+    "name": "冰之灌注",
+    "icon": "/images/frost_mage/skill/weapon_mz-01_kx01_-8852182945774833470.png"
+  },
+  {
+    "skillId": 1240,
+    "name": "冻结寒风",
+    "icon": "/images/frost_mage/skill/weapon_mz-01_kx08_6659465293341352126.png"
+  },
+  {
+    "skillId": 1730,
+    "name": "无穷雷霆之力",
+    "icon": "/images/stormblade/skill/weapon_tdl-01_kx07_5011786851491862633.png"
+  },
+  {
+    "skillId": 1731,
+    "name": "千雷闪影之意",
+    "icon": "/images/stormblade/skill/weapon_tdl-01_kx08_1310086718716380591.png"
+  }
+]

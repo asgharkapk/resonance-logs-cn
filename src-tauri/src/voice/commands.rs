@@ -12,6 +12,7 @@ use super::models::{
     FineTunedVoiceMeta, ModelState, VoiceGenerationBackend, VoiceLanguage, VoicePhraseMeta,
     VoiceStatus,
 };
+use super::presets::VoicePresetLocale;
 use super::types::{AssetId, ModelVersion, PhraseId, ProfileId};
 use super::{
     GenerateItemRequest, GenerateRequest, GenerationSummary, ProfileSelection, ProfileSelectionNew,
@@ -54,6 +55,11 @@ pub enum VoiceSourceSelectionDto {
         #[specta(rename = "profileId")]
         profile_id: String,
     },
+    /// Auto-selects the bundled reference voice for a UI locale, extracting
+    /// (and thereafter reusing) a clone profile from it on demand.
+    Preset {
+        locale: VoicePresetLocale,
+    },
     FineTuned,
 }
 
@@ -85,6 +91,7 @@ fn to_generate_request(dto: VoiceGenerateRequestDto) -> CommandResult<GenerateRe
                 profile_id: ProfileId::parse(profile_id).map_err(VoiceCommandError::from)?,
             })
         }
+        VoiceSourceSelectionDto::Preset { locale } => VoiceSourceSelection::Preset(locale),
         VoiceSourceSelectionDto::FineTuned => VoiceSourceSelection::FineTuned,
     };
     let items = dto

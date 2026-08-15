@@ -6,7 +6,7 @@
  * whatever that scene's mechanic logic already tracks). This module only
  * handles the generic part shared by every cue: deduplicating repeated
  * instances, resolving the bound phrase, and calling `voiceEnqueuePhrase`.
- * Driven from `onMinimapUpdate` in
+ * Driven from `minimap-snapshot` in
  * `minimap-events.svelte.ts`.
  */
 import { commands } from "$lib/bindings";
@@ -61,7 +61,7 @@ async function playCue(cueId: string): Promise<void> {
 
 /**
  * Fires (enqueues playback for) every cue instance that hasn't already been
- * seen. Safe to call every `minimap-update` tick with a scene's
+ * seen. Safe to call every `minimap-snapshot` tick with a scene's
  * `resolveVoiceCues` output.
  */
 export function handleMinimapVoiceCues(fires: MinimapVoiceCueFire[]): void {

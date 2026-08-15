@@ -1339,6 +1339,30 @@
     "MonsterType": 2,
     "Name": "Lapsis - Phase 1 (AI)"
   },
+  "103401": {
+    "MonsterType": 0,
+    "Name": "转盘内环"
+  },
+  "103402": {
+    "MonsterType": 0,
+    "Name": "转盘中环"
+  },
+  "103403": {
+    "MonsterType": 0,
+    "Name": "转盘外环"
+  },
+  "103404": {
+    "MonsterType": 0,
+    "Name": "光矛（隐身怪）"
+  },
+  "103410": {
+    "MonsterType": 2,
+    "Name": "拉普西斯"
+  },
+  "103420": {
+    "MonsterType": 2,
+    "Name": "拉普西斯"
+  },
   "103500": {
     "MonsterType": 2,
     "Name": "Lapsis - Phase 2 (AI)"
@@ -1359,9 +1383,65 @@
     "MonsterType": 1,
     "Name": "Light Shaping (AI)"
   },
+  "103505": {
+    "MonsterType": 1,
+    "Name": "光之塑形"
+  },
+  "103506": {
+    "MonsterType": 1,
+    "Name": "扬升（隐身怪）"
+  },
+  "103507": {
+    "MonsterType": 1,
+    "Name": "场景中央占位（隐身怪）"
+  },
+  "103508": {
+    "MonsterType": 1,
+    "Name": "光之塑形"
+  },
+  "103509": {
+    "MonsterType": 1,
+    "Name": "漩涡"
+  },
+  "103510": {
+    "MonsterType": 2,
+    "Name": "拉普西斯·极昼"
+  },
+  "103511": {
+    "MonsterType": 1,
+    "Name": "光之塑形"
+  },
+  "103520": {
+    "MonsterType": 2,
+    "Name": "拉普西斯·极昼"
+  },
   "103600": {
     "MonsterType": 2,
     "Name": "Lapsis - Phase 3 (AI)"
+  },
+  "103601": {
+    "MonsterType": 2,
+    "Name": "拉普西斯·极夜"
+  },
+  "103602": {
+    "MonsterType": 0,
+    "Name": "拉普西斯控制-光球"
+  },
+  "103603": {
+    "MonsterType": 0,
+    "Name": "拉普西斯控制-暗球"
+  },
+  "103604": {
+    "MonsterType": 1,
+    "Name": "枭兽"
+  },
+  "103610": {
+    "MonsterType": 2,
+    "Name": "拉普西斯·极夜"
+  },
+  "103620": {
+    "MonsterType": 2,
+    "Name": "拉普西斯·极夜"
   },
   "104": {
     "MonsterType": 0,
@@ -1518,6 +1598,10 @@
   "10932": {
     "MonsterType": 1,
     "Name": "[20]Illusion Edge"
+  },
+  "10933": {
+    "MonsterType": 1,
+    "Name": "[50]幻想双斧"
   },
   "110": {
     "MonsterType": 0,
@@ -6555,6 +6639,10 @@
     "MonsterType": 0,
     "Name": "Lightformed Kin (AI)"
   },
+  "33962": {
+    "MonsterType": 0,
+    "Name": "化光眷属"
+  },
   "34000": {
     "MonsterType": 2,
     "Name": "Anti-Fantasy: Boyce (AI)"
@@ -6702,6 +6790,10 @@
   "34036": {
     "MonsterType": 0,
     "Name": "Vertical Direction Marker (AI)"
+  },
+  "34037": {
+    "MonsterType": 0,
+    "Name": "大师道中传送"
   },
   "35000": {
     "MonsterType": 2,
@@ -7959,9 +8051,201 @@
     "MonsterType": 0,
     "Name": "Airona Spirit Deer_Left"
   },
+  "5000000": {
+    "MonsterType": 0,
+    "Name": "姆克头目"
+  },
+  "5000001": {
+    "MonsterType": 0,
+    "Name": "火焰食人魔"
+  },
+  "5000002": {
+    "MonsterType": 0,
+    "Name": "凶猛金牙"
+  },
+  "5000003": {
+    "MonsterType": 0,
+    "Name": "蟹蛛王"
+  },
+  "5000004": {
+    "MonsterType": 0,
+    "Name": "圣域飞鱼"
+  },
+  "5000005": {
+    "MonsterType": 0,
+    "Name": "雷电食人魔"
+  },
+  "5000006": {
+    "MonsterType": 0,
+    "Name": "寒霜食人魔"
+  },
+  "5000007": {
+    "MonsterType": 0,
+    "Name": "姆克王"
+  },
+  "5000008": {
+    "MonsterType": 0,
+    "Name": "哥布林王"
+  },
+  "5000009": {
+    "MonsterType": 0,
+    "Name": "飓风哥布林王"
+  },
+  "5000010": {
+    "MonsterType": 0,
+    "Name": "山贼头目"
+  },
+  "5000011": {
+    "MonsterType": 0,
+    "Name": "铁牙"
+  },
+  "5000012": {
+    "MonsterType": 0,
+    "Name": "蜥蜴人王"
+  },
+  "5000013": {
+    "MonsterType": 0,
+    "Name": "剧毒蜂巢"
+  },
+  "5000014": {
+    "MonsterType": 0,
+    "Name": "艾露娜"
+  },
+  "5000015": {
+    "MonsterType": 0,
+    "Name": "塔塔"
+  },
+  "5000016": {
+    "MonsterType": 0,
+    "Name": "奥尔维拉"
+  },
+  "5000017": {
+    "MonsterType": 0,
+    "Name": "蒂娜"
+  },
+  "5000018": {
+    "MonsterType": 0,
+    "Name": "灾厄之主"
+  },
+  "5000019": {
+    "MonsterType": 0,
+    "Name": "圣域飞鱼召唤怪"
+  },
+  "5000020": {
+    "MonsterType": 0,
+    "Name": "召唤近战姆克"
+  },
+  "5000021": {
+    "MonsterType": 0,
+    "Name": "召唤弩手姆克"
+  },
+  "5000022": {
+    "MonsterType": 0,
+    "Name": "召唤姆克头目"
+  },
   "50001": {
     "MonsterType": 0,
     "Name": "Airona Spirit Deer_Right"
+  },
+  "5001000": {
+    "MonsterType": 0,
+    "Name": "飞鱼"
+  },
+  "5001001": {
+    "MonsterType": 0,
+    "Name": "碧玉飞鱼"
+  },
+  "5001002": {
+    "MonsterType": 0,
+    "Name": "蜥蜴人士兵"
+  },
+  "5001003": {
+    "MonsterType": 0,
+    "Name": "蜥蜴人萨满"
+  },
+  "5001004": {
+    "MonsterType": 0,
+    "Name": "硬壳蟹蛛"
+  },
+  "5001005": {
+    "MonsterType": 0,
+    "Name": "嗜魔蟹蛛"
+  },
+  "5001006": {
+    "MonsterType": 0,
+    "Name": "钻地蟹蛛"
+  },
+  "5001007": {
+    "MonsterType": 0,
+    "Name": "卷心菜深水爱好者"
+  },
+  "5002000": {
+    "MonsterType": 1,
+    "Name": "蜥蜴人守护者"
+  },
+  "5002001": {
+    "MonsterType": 1,
+    "Name": "蜥蜴人法师"
+  },
+  "5002002": {
+    "MonsterType": 1,
+    "Name": "蜥蜴人牧师"
+  },
+  "5002003": {
+    "MonsterType": 1,
+    "Name": "不死蟹蛛"
+  },
+  "5002004": {
+    "MonsterType": 1,
+    "Name": "极速蟹蛛"
+  },
+  "5002005": {
+    "MonsterType": 1,
+    "Name": "卷心菜潜水王"
+  },
+  "5003000": {
+    "MonsterType": 2,
+    "Name": "圣域飞鱼"
+  },
+  "5003001": {
+    "MonsterType": 2,
+    "Name": "蜥蜴人王"
+  },
+  "5003002": {
+    "MonsterType": 2,
+    "Name": "幻妖蟹蛛"
+  },
+  "5003003": {
+    "MonsterType": 2,
+    "Name": "掠食蟹蛛"
+  },
+  "5003004": {
+    "MonsterType": 2,
+    "Name": "卷心菜强袭队长·托利弗"
+  },
+  "5003005": {
+    "MonsterType": 2,
+    "Name": "卷心菜绝对王牌·胡德"
+  },
+  "5004001": {
+    "MonsterType": 0,
+    "Name": ""
+  },
+  "5004002": {
+    "MonsterType": 0,
+    "Name": ""
+  },
+  "5004003": {
+    "MonsterType": 0,
+    "Name": ""
+  },
+  "5004020": {
+    "MonsterType": 0,
+    "Name": ""
+  },
+  "5004021": {
+    "MonsterType": 0,
+    "Name": ""
   },
   "501901": {
     "MonsterType": 0,
@@ -10171,6 +10455,10 @@
     "MonsterType": 1,
     "Name": "Immature Illusory Bloom (AI)"
   },
+  "6611040": {
+    "MonsterType": 0,
+    "Name": "未被倾听的祈愿"
+  },
   "661201": {
     "MonsterType": 0,
     "Name": "Demarion"
@@ -10222,6 +10510,38 @@
   "6621001": {
     "MonsterType": 0,
     "Name": "Valley Crossbowman (AI)"
+  },
+  "663401": {
+    "MonsterType": 0,
+    "Name": "博伊斯"
+  },
+  "663402": {
+    "MonsterType": 1,
+    "Name": "木人"
+  },
+  "663403": {
+    "MonsterType": 0,
+    "Name": "博伊斯"
+  },
+  "663404": {
+    "MonsterType": 0,
+    "Name": "伽雷斯"
+  },
+  "663405": {
+    "MonsterType": 0,
+    "Name": "伽雷斯"
+  },
+  "663406": {
+    "MonsterType": 0,
+    "Name": "博伊斯"
+  },
+  "663407": {
+    "MonsterType": 0,
+    "Name": "回想体·克劳斯"
+  },
+  "663408": {
+    "MonsterType": 0,
+    "Name": "残影"
   },
   "69001": {
     "MonsterType": 1,

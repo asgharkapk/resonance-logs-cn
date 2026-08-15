@@ -30,6 +30,8 @@ import {
   type SkillMonitorState,
 } from "./settings-store";
 import { t } from "$lib/i18n/index.svelte";
+import { normalizeMonsterProfileStyles } from "./monster-monitor-profile.svelte.js";
+import { normalizeSkillProfile } from "./skill-monitor-normalize";
 import { isPristineLegacyMonitoring } from "./starter-loadout";
 
 export const CURRENT_MONITORING_SCHEMA_VERSION = 3;
@@ -149,12 +151,19 @@ function normalizeSkillProfiles(
   const fallback =
     source.length > 0 ? source : [createDefaultSkillMonitorProfile()];
   const seen = new Set<string>();
-  return fallback.map((profile) => ({
-    ...profile,
-    enabled: profile.enabled ?? false,
-    autoHideInDailyScenes: profile.autoHideInDailyScenes ?? false,
-    id: nextUniqueId(profile.id, "skill", seen),
-  }));
+  return fallback.map((profile) => {
+    // Backfills fields added after this profile was first created (overlay
+    // text-style toggles, panel-attr text style, etc.) so persisted storage
+    // — and anything exported from it — converges on the current schema
+    // instead of carrying stale gaps forever.
+    const normalized = normalizeSkillProfile(profile);
+    return {
+      ...normalized,
+      enabled: profile.enabled ?? false,
+      autoHideInDailyScenes: profile.autoHideInDailyScenes ?? false,
+      id: nextUniqueId(profile.id, "skill", seen),
+    };
+  });
 }
 
 function normalizeMonsterProfiles(
@@ -172,12 +181,15 @@ function normalizeMonsterProfiles(
           },
         ];
   const seen = new Set<string>();
-  return fallback.map((profile) => ({
-    ...profile,
-    enabled: profile.enabled ?? false,
-    autoHideInDailyScenes: profile.autoHideInDailyScenes ?? false,
-    id: nextUniqueId(profile.id, "monster", seen),
-  }));
+  return fallback.map((profile) => {
+    const normalized = normalizeMonsterProfileStyles(profile);
+    return {
+      ...normalized,
+      enabled: profile.enabled ?? false,
+      autoHideInDailyScenes: profile.autoHideInDailyScenes ?? false,
+      id: nextUniqueId(profile.id, "monster", seen),
+    };
+  });
 }
 
 function materializeLegacyMonsterMirror(
@@ -295,8 +307,7 @@ function normalizeLiveProfiles(
       general: {
         ...defaults.general,
         ...profile.general,
-        showFantasyCastIcons:
-          profile.general?.showFantasyCastIcons === true,
+        showFantasyCastIcons: profile.general?.showFantasyCastIcons === true,
       },
       id: nextUniqueId(profile.id, "live", seen),
     };

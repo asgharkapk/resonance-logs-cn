@@ -20,16 +20,6 @@ impl Reassembler {
         }
     }
 
-    /// Push incoming bytes (e.g., TCP payload) into the reassembler.
-    #[allow(dead_code)]
-    pub fn push(&mut self, data: &[u8]) {
-        self.buffer.extend_from_slice(data);
-        // If buffer grows beyond max, drop to recover from malformed input.
-        if self.buffer.len() > self.max_buffer_size {
-            self.buffer.clear();
-        }
-    }
-
     /// Try to extract the next complete frame if available.
     /// Returns Some(frame_bytes) or None if not enough data yet.
     pub fn try_next(&mut self) -> Option<Bytes> {
@@ -57,18 +47,6 @@ impl Reassembler {
         Some(self.buffer.split_to(frame_len).freeze())
     }
 
-    /// Feed an owned Vec<u8> into the reassembler without copying when possible.
-    /// If the internal buffer is empty we take ownership of the
-    /// provided Vec to avoid an extra copy. Otherwise we extend the buffer.
-    #[allow(dead_code)] // Kept as compat entry; primary path is feed_bytes()
-    pub fn feed_owned(&mut self, bytes: Vec<u8>) {
-        if self.buffer.is_empty() {
-            self.buffer = Bytes::from(bytes).into();
-            return;
-        }
-        self.buffer.extend_from_slice(&bytes);
-    }
-
     /// Feed `Bytes` into the reassembler. When the internal buffer is empty the
     /// data is adopted in-place; otherwise the bytes are appended.
     pub fn feed_bytes(&mut self, b: Bytes) {
@@ -92,6 +70,7 @@ impl Reassembler {
 #[cfg(test)]
 mod tests {
     use super::Reassembler;
+    use bytes::Bytes;
 
     fn make_frame(payload: &[u8]) -> Vec<u8> {
         let total_len = (4 + payload.len()) as u32;
@@ -100,11 +79,15 @@ mod tests {
         v
     }
 
+    fn feed(r: &mut Reassembler, data: &[u8]) {
+        r.feed_bytes(Bytes::copy_from_slice(data));
+    }
+
     #[test]
     fn single_frame_in_one_push() {
         let mut r = Reassembler::new();
         let frame = make_frame(b"hello");
-        r.push(&frame);
+        feed(&mut r, &frame);
         let got = r.try_next();
         assert!(got.is_some());
         assert_eq!(&got.unwrap()[4..], b"hello");
@@ -119,7 +102,7 @@ mod tests {
         let mut combined = Vec::new();
         combined.extend_from_slice(&f1);
         combined.extend_from_slice(&f2);
-        r.push(&combined);
+        feed(&mut r, &combined);
         let g1 = r.try_next().unwrap();
         assert_eq!(&g1[4..], b"foo");
         let g2 = r.try_next().unwrap();
@@ -133,9 +116,9 @@ mod tests {
         let frame = make_frame(b"split-me");
         // push first half
         let split = frame.len() / 2;
-        r.push(&frame[..split]);
+        feed(&mut r, &frame[..split]);
         assert!(r.try_next().is_none());
-        r.push(&frame[split..]);
+        feed(&mut r, &frame[split..]);
         let got = r.try_next().unwrap();
         assert_eq!(&got[4..], b"split-me");
     }
@@ -146,11 +129,11 @@ mod tests {
         let partial = make_frame(b"lost-frame");
         let next = make_frame(b"after-gap");
 
-        r.push(&partial[..6]);
+        feed(&mut r, &partial[..6]);
         assert!(r.try_next().is_none());
         assert!(!r.take_remaining().is_empty());
 
-        r.push(&next);
+        feed(&mut r, &next);
         let got = r.try_next().unwrap();
         assert_eq!(&got[4..], b"after-gap");
         assert!(r.try_next().is_none());

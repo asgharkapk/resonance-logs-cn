@@ -1,614 +1,344 @@
-use crate::live::state::{AppState, AppStateManager, StateEvent};
-use crate::live::{
-    commands_models::{
-        BossBuffUpdatePayload, BossDbmUpdatePayload, BuffCounterUpdatePayload, BuffUpdatePayload,
-        DeathReplayPayload, EntityIdentityMapPayload, FightResourceUpdatePayload,
-        HateListUpdatePayload, PanelAttrUpdatePayload, SeasonCultivateFactorCounterUpdatePayload,
-        ShieldDetailUpdatePayload, SkillCdUpdatePayload, StunUpdatePayload,
-        TeammateBuffUpdatePayload, TeammateFantasyUpdatePayload,
-    },
-    event_manager::{EncounterUpdatePayload, SceneChangePayload},
-    event_manager::{OutboundEvent, safe_emit_to},
-};
+//! Lifecycle owner for the single live-domain pipeline.
+
+use std::future::pending;
+use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
+
+use log::{debug, error, info, warn};
+use tauri::{AppHandle, Emitter, Manager};
+use tokio::sync::{mpsc, oneshot};
+
+use crate::live::bootstrap_snapshot::{MonitorRuntimeSnapshot, load_monitor_runtime_snapshot};
+use crate::live::history_writer::HistoryWriterHandle;
+use crate::live::ipc::topic::Topic;
+use crate::live::live_core::{LiveCore, LiveCoreFlow, Publications};
+use crate::live::projection_set::TopicPublication;
+use crate::live::runtime::events::{MonoTimeMs, monotonic_now_ms};
+use crate::live::runtime_handle::RuntimeCommand;
 use crate::packets;
 use crate::packets::packet_capture::CaptureMethod;
-use log::{info, warn};
-use std::path::Path;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::{Duration, Instant};
-use tauri::{AppHandle, Manager};
-use tokio::sync::mpsc::UnboundedReceiver;
+use crate::packets::packet_process::CAPTURE_PIPELINE_FENCE;
 
-const QUEUE_DEPTH_WARN_THRESHOLD: usize = 100;
-const QUEUE_DEPTH_ERROR_THRESHOLD: usize = 500;
-const QUEUE_DEPTH_CRITICAL_THRESHOLD: usize = 2000;
-const QUEUE_DEPTH_LOG_INTERVAL: Duration = Duration::from_millis(500);
+const DECODE_CHANNEL_CAPACITY: usize = 4_096;
 
-fn log_queue_depth_if_needed(
-    queue_depth: &std::sync::atomic::AtomicUsize,
-    warn_counter: &mut usize,
-    last_log_at: &mut Instant,
-) {
-    if last_log_at.elapsed() < QUEUE_DEPTH_LOG_INTERVAL {
-        return;
-    }
-    *last_log_at = Instant::now();
-
-    let current = queue_depth.load(Ordering::Relaxed);
-    if current >= QUEUE_DEPTH_CRITICAL_THRESHOLD {
-        *warn_counter += 1;
-        if *warn_counter % 5 == 1 {
-            warn!(
-                target: "app::live",
-                "queue_depth_critical depth={} - consumer severely behind, risk of OOM",
-                current
-            );
-        }
-    } else if current >= QUEUE_DEPTH_ERROR_THRESHOLD {
-        *warn_counter += 1;
-        if *warn_counter % 3 == 1 {
-            warn!(
-                target: "app::live",
-                "queue_depth_high depth={} - consumer significantly behind",
-                current
-            );
-        }
-    } else if current >= QUEUE_DEPTH_WARN_THRESHOLD {
-        *warn_counter += 1;
-        if *warn_counter % 2 == 1 {
-            warn!(
-                target: "app::live",
-                "queue_depth_elevated depth={} - consumer falling behind",
-                current
-            );
-        }
-    } else {
-        *warn_counter = 0;
-    }
-}
-
-const DECODE_CHANNEL_CAP: usize = 4096;
-const MINIMAP_EMIT_INTERVAL: Duration = Duration::from_millis(50);
-
-/// Hot-syncs `VoiceService` playback settings (enabled/volume/queue policy)
-/// whenever a runtime snapshot control command carries an updated `voice`
-/// section. Cheap: only reads a few `Copy` fields off the snapshot, never
-/// clones it.
-fn sync_voice_runtime_settings(
-    app_handle: &AppHandle,
-    command: &crate::live::state::LiveControlCommand,
-) {
-    if let crate::live::state::LiveControlCommand::ApplyMonitorRuntimeSnapshot(snapshot) = command
-        && let Some(voice_service) = app_handle.try_state::<crate::voice::VoiceService>()
-    {
-        voice_service.apply_runtime_settings(
-            snapshot.voice.enabled,
-            snapshot.voice.volume,
-            snapshot.voice.queue_policy,
-        );
-    }
-}
-
-fn apply_control_command_synced(
-    state_manager: &AppStateManager,
-    app_handle: &AppHandle,
-    state: &mut AppState,
-    command: crate::live::state::LiveControlCommand,
-) {
-    sync_voice_runtime_settings(app_handle, &command);
-    state_manager.apply_control_command(state, command);
-}
-
-fn drain_control_commands_synced(
-    state_manager: &AppStateManager,
-    app_handle: &AppHandle,
-    state: &mut AppState,
-    control_rx: &mut UnboundedReceiver<crate::live::state::LiveControlCommand>,
-) {
-    loop {
-        let Ok(command) = control_rx.try_recv() else {
-            break;
-        };
-        apply_control_command_synced(state_manager, app_handle, state, command);
-    }
-}
-
-/// Starts the live meter.
-///
-/// This function captures packets, processes them, and emits events to the frontend.
-///
-/// # Arguments
-///
-/// * `app_handle` - A handle to the Tauri application instance.
+/// Runs the only owner of live domain state.
 pub async fn start(
-    app_handle: AppHandle,
-    mut control_rx: UnboundedReceiver<crate::live::state::LiveControlCommand>,
+    app: AppHandle,
+    mut commands: mpsc::Receiver<RuntimeCommand>,
+    history_writer: HistoryWriterHandle,
+    history_join: std::thread::JoinHandle<()>,
 ) {
-    let live_span = tracing::info_span!(
-        target: "app::live",
-        "live_meter",
-        window_live = crate::WINDOW_LIVE_LABEL,
-        window_main = crate::WINDOW_MAIN_LABEL
-    );
-    let _live_guard = live_span.enter();
+    let initial_config = load_monitor_runtime_snapshot(&app).unwrap_or_else(|| {
+        info!(target: "app::live", "monitor runtime snapshot missing; using defaults");
+        MonitorRuntimeSnapshot::default()
+    });
+    let mut core = match LiveCore::new(app.clone(), history_writer.clone(), initial_config) {
+        Ok(core) => core,
+        Err(error) => {
+            error!(target: "app::live", "live_core_start_failed error={error}");
+            let _ = history_writer.shutdown();
+            let _ = history_join.join();
+            return;
+        }
+    };
 
-    // Get the state manager from app state
-    let state_manager = app_handle.state::<AppStateManager>().inner().clone();
-    let mut state = AppState::new();
-    if let Some(snapshot) =
-        crate::live::bootstrap_snapshot::load_monitor_runtime_snapshot(&app_handle)
-    {
-        let voice_settings = snapshot.voice.clone();
-        state_manager.apply_monitor_runtime_snapshot_with_state(&mut state, snapshot);
-        if let Some(voice_service) = app_handle.try_state::<crate::voice::VoiceService>() {
-            voice_service.apply_runtime_settings(
-                voice_settings.enabled,
-                voice_settings.volume,
-                voice_settings.queue_policy,
-            );
+    let capture = packets::packet_capture::start_capture(get_capture_method(&app));
+    let (capture_receiver, capture_worker, outstanding) = capture.into_parts();
+    let (batch_sender, mut batches) = mpsc::channel(DECODE_CHANNEL_CAPACITY);
+    let decoder_worker =
+        packets::decode_worker::spawn_decode_worker(capture_receiver, batch_sender);
+
+    let mut batches_open = true;
+    let mut pending_command: Option<RuntimeCommand> = None;
+    let mut shutdown_reply: Option<oneshot::Sender<Result<(), String>>> = None;
+    let mut failure: Option<String> = None;
+
+    match core.publish_now() {
+        Ok(publications) => emit_publications(&app, publications),
+        Err(error) => {
+            warn!(target: "app::live", "initial_snapshot_emit_failed error={error}");
         }
     }
 
-    // Throttling for events - rate is read dynamically from state each iteration
-    let mut last_emit_time = Instant::now();
-    let mut last_minimap_emit_time = Instant::now();
-
-    // Heartbeat: ensure we emit events periodically even during idle periods
-    // to prevent frontend from thinking the connection is dead
-    let heartbeat_duration = Duration::from_secs(2);
-
-    // 1. Start capturing packets → decode worker → state_rx
-    let capture_method = get_capture_method(&app_handle);
-    let capture_rx = packets::packet_capture::start_capture(capture_method);
-    let queue_depth: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    let (state_tx, mut state_rx) = tokio::sync::mpsc::channel::<StateEvent>(DECODE_CHANNEL_CAP);
-    packets::decode_worker::spawn_decode_worker(capture_rx, state_tx, Arc::clone(&queue_depth));
-
-    let mut queue_depth_warn_counter = 0usize;
-    let mut queue_depth_last_log_at = Instant::now();
-
-    // 2. Use channels to receive decoded state events and control commands
     loop {
-        log_queue_depth_if_needed(
-            queue_depth.as_ref(),
-            &mut queue_depth_warn_counter,
-            &mut queue_depth_last_log_at,
-        );
+        if pending_command.is_some() && outstanding_count(&outstanding) == 0 {
+            let command = pending_command.take().expect("checked above");
+                let result = core.handle_command(command).map(|flow| match flow {
+                LiveCoreFlow::Continue => {
+                    emit_due(&app, &mut core, monotonic_now_ms());
+                    flow
+                }
+                LiveCoreFlow::ShutdownRequested { .. } => flow,
+            });
+            match result {
+                Ok(LiveCoreFlow::Continue) => {
+                    outstanding.store(0, Ordering::Release);
+                    continue;
+                }
+                Ok(LiveCoreFlow::ShutdownRequested { reply }) => {
+                    shutdown_reply = Some(reply);
+                    break;
+                }
+                Err(error) => {
+                    failure = Some(error);
+                    break;
+                }
+            }
+        }
+
+        let wakeup = core.next_wakeup();
         tokio::select! {
             biased;
 
-            Some(command) = control_rx.recv() => {
-                apply_control_command_synced(&state_manager, &app_handle, &mut state, command);
-                drain_control_commands_synced(&state_manager, &app_handle, &mut state, &mut control_rx);
-                flush_outbound_events(&app_handle, &mut state);
+            command = commands.recv(), if pending_command.is_none() => {
+                let Some(command) = command else {
+                    info!(target: "app::live", "live control channel closed");
+                    break;
+                };
+                close_capture_gate(&outstanding);
+                pending_command = Some(command);
             }
-            event = state_rx.recv() => match event {
-            Some(event) => {
-                queue_depth
-                    .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |depth| {
-                        Some(depth.saturating_sub(1))
-                    })
-                    .ok();
-
-                let mut batch_events = Vec::with_capacity(64);
-                batch_events.push(event);
-
-                let drain_start = Instant::now();
-                let drain_time_budget = Duration::from_millis(20);
-                const MAX_DRAIN: usize = 64;
-                let mut drained = 0usize;
-
-                loop {
-                    if drained >= MAX_DRAIN {
-                        break;
-                    }
-                    if Instant::now().duration_since(drain_start) >= drain_time_budget {
-                        break;
-                    }
-
-                    match state_rx.try_recv() {
-                        Ok(event) => {
-                            queue_depth
-                                .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |depth| {
-                                    Some(depth.saturating_sub(1))
-                                })
-                                .ok();
-                            let is_container_resync =
-                                matches!(event, StateEvent::SyncContainerData(_));
-                            batch_events.push(event);
-                            drained += 1;
-                            if is_container_resync {
-                                break;
-                            }
-                        }
-                        Err(tokio::sync::mpsc::error::TryRecvError::Empty) => break,
-                        Err(tokio::sync::mpsc::error::TryRecvError::Disconnected) => {
-                            warn!(
-                                target: "app::live",
-                                "Decode worker channel closed while draining"
-                            );
+            batch = batches.recv(), if batches_open => {
+                match batch {
+                    Some(batch) => {
+                        let batch_time = batch.meta.mono_ms();
+                        let result = core.process_batch(batch);
+                        decrement_outstanding(&outstanding);
+                        if let Err(error) = result {
+                            failure = Some(error);
                             break;
                         }
+                        emit_due(&app, &mut core, batch_time);
+                    }
+                    None => {
+                        batches_open = false;
+                        info!(target: "app::live", "protocol batch channel closed");
                     }
                 }
-
-                state_manager.handle_events_batch_with_state(&mut state, batch_events);
-                drain_control_commands_synced(&state_manager, &app_handle, &mut state, &mut control_rx);
-                flush_outbound_events(&app_handle, &mut state);
-
-                let emit_rate_ms = state.event_update_rate_ms;
-                let emit_throttle_duration = Duration::from_millis(emit_rate_ms);
-                let now = Instant::now();
-                if now.duration_since(last_emit_time) >= emit_throttle_duration {
-                    last_emit_time = now;
-                    state_manager.update_and_emit_events_with_state(&mut state);
-                }
-                if now.duration_since(last_minimap_emit_time) >= MINIMAP_EMIT_INTERVAL {
-                    last_minimap_emit_time = now;
-                    state_manager.emit_minimap_if_active(&mut state);
-                }
-                flush_outbound_events(&app_handle, &mut state);
             }
-            None => {
-                warn!(
-                    target: "app::live",
-                    "Packet capture channel closed, exiting live meter loop"
-                );
-                break;
+            () = wait_for_wakeup(wakeup), if outstanding.load(Ordering::Acquire) == 0 => {
+                if !claim_deadline_fence(&outstanding) {
+                    continue;
+                }
+                let now = monotonic_now_ms();
+                outstanding.store(0, Ordering::Release);
+                emit_due(&app, &mut core, now);
             }
-            },
-            _ = tokio::time::sleep(heartbeat_duration) => {
-                let emit_rate_ms = state.event_update_rate_ms;
-                let emit_throttle_duration = Duration::from_millis(emit_rate_ms);
-                let now = Instant::now();
-                if now.duration_since(last_emit_time) >= emit_throttle_duration {
-                    last_emit_time = now;
-                    state_manager.update_and_emit_events_with_state(&mut state);
-                }
-                if now.duration_since(last_minimap_emit_time) >= MINIMAP_EMIT_INTERVAL {
-                    last_minimap_emit_time = now;
-                    state_manager.emit_minimap_if_active(&mut state);
-                }
-                flush_outbound_events(&app_handle, &mut state);
+        }
+    }
+
+    // Stopping capture closes decoder ingress. Continue consuming decoder
+    // output until it closes so every envelope accepted before cancellation is
+    // applied in capture order.
+    if capture_worker.join().is_err() {
+        record_failure(&mut failure, "packet capture worker panicked");
+    }
+    while let Some(batch) = batches.recv().await {
+        if failure.is_none() {
+            let batch_time = batch.meta.mono_ms();
+            if let Err(error) = core.process_batch(batch) {
+                record_failure(&mut failure, error);
+            } else {
+                emit_due(&app, &mut core, batch_time);
+            }
+        }
+        decrement_outstanding(&outstanding);
+    }
+    if decoder_worker.join().is_err() {
+        record_failure(&mut failure, "protocol decoder worker panicked");
+    }
+
+    if let Err(error) = core.shutdown() {
+        record_failure(&mut failure, error);
+    } else {
+        match core.publish_now() {
+            Ok(publications) => emit_publications(&app, publications),
+            Err(error) => record_failure(&mut failure, error),
+        }
+    }
+    if let Err(error) = history_writer.shutdown() {
+        record_failure(&mut failure, error);
+    }
+    if history_join.join().is_err() {
+        record_failure(&mut failure, "history writer panicked");
+    }
+
+    let result = failure.map_or(Ok(()), Err);
+    if let Some(reply) = shutdown_reply {
+        let _ = reply.send(result.clone());
+    }
+    match result {
+        Ok(()) => info!(target: "app::live", "live runtime stopped cleanly"),
+        Err(error) => error!(target: "app::live", "live runtime stopped with error={error}"),
+    }
+}
+
+fn emit_due(app: &AppHandle, core: &mut LiveCore, now: MonoTimeMs) {
+    let Ok(publications) = core.take_due_publications(now) else {
+        return;
+    };
+    emit_publications(app, publications);
+}
+
+fn emit_publications(app: &AppHandle, publications: Publications) {
+    for publication in publications.topics {
+        let topic = publication.topic();
+        match publication {
+            TopicPublication::Combat(payload) => emit_to_topic_windows(app, topic, &payload),
+            TopicPublication::Status(payload) => emit_to_topic_windows(app, topic, &payload),
+            TopicPublication::Buffs(payload) => emit_to_topic_windows(app, topic, &payload),
+            TopicPublication::Monster(payload) => emit_to_topic_windows(app, topic, &payload),
+            TopicPublication::Fantasy(payload) => emit_to_topic_windows(app, topic, &payload),
+            TopicPublication::Minimap(payload) => emit_to_topic_windows(app, topic, &payload),
+            TopicPublication::Deaths(payload) => emit_to_topic_windows(app, topic, &payload),
+            TopicPublication::Scene(payload) => emit_to_topic_windows(app, topic, &payload),
+        }
+    }
+}
+
+/// Delivers a topic payload to the windows that render it. Emit failures are
+/// logged and skipped: a webview in a transient state must not take down the
+/// capture pipeline.
+fn emit_to_topic_windows<P: serde::Serialize>(app: &AppHandle, topic: Topic, payload: &P) {
+    let event = topic.event_name();
+    for label in topic.window_labels() {
+        let Some(window) = app.get_webview_window(label) else {
+            continue;
+        };
+        if let Err(error) = window.emit(event, payload) {
+            let message = error.to_string();
+            // 0x8007139F: webview minimized / hidden / mid-transition.
+            if message.contains("0x8007139F") || message.contains("not in the correct state") {
+                debug!(target: "app::live", "emit_skipped_webview_busy event={event} label={label}");
+            } else {
+                warn!(target: "app::live", "emit_failed event={event} label={label} error={message}");
             }
         }
     }
 }
 
-fn flush_outbound_events(app_handle: &AppHandle, state: &mut AppState) {
-    for event in state.event_manager.drain_outbound_events() {
-        match event {
-            OutboundEvent::EncounterUpdate {
-                header_info,
-                is_paused,
-            } => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_LIVE_LABEL,
-                    "encounter-update",
-                    EncounterUpdatePayload {
-                        header_info,
-                        is_paused,
-                    },
-                );
-            }
-            OutboundEvent::EncounterReset => {
-                safe_emit_to(app_handle, crate::WINDOW_LIVE_LABEL, "reset-encounter", "");
-            }
-            OutboundEvent::EncounterPause(is_paused) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_LIVE_LABEL,
-                    "pause-encounter",
-                    is_paused,
-                );
-            }
-            OutboundEvent::SceneChange {
-                scene_id,
-                dungeon_difficulty,
-            } => {
-                let payload = SceneChangePayload {
-                    scene_id,
-                    dungeon_difficulty,
-                };
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_LIVE_LABEL,
-                    "scene-change",
-                    payload.clone(),
-                );
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MAIN_LABEL,
-                    "scene-change",
-                    payload,
-                );
-            }
-            OutboundEvent::TrainingDummyUpdate(training_dummy) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_LIVE_LABEL,
-                    "training-dummy-update",
-                    training_dummy,
-                );
-            }
-            OutboundEvent::LiveData(payload) => {
-                safe_emit_to(app_handle, crate::WINDOW_LIVE_LABEL, "live-data", payload);
-            }
-            OutboundEvent::BuffUpdate(buffs) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_GAME_OVERLAY_LABEL,
-                    "buff-update",
-                    BuffUpdatePayload { buffs },
-                );
-            }
-            OutboundEvent::BossBuffUpdate(boss_buffs) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "boss-buff-update",
-                    BossBuffUpdatePayload { boss_buffs },
-                );
-            }
-            OutboundEvent::TeammateBuffUpdate(teammate_buffs) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "teammate-buff-update",
-                    TeammateBuffUpdatePayload { teammate_buffs },
-                );
-            }
-            OutboundEvent::TeammateFantasyUpdate(fantasies) => {
-                let payload = TeammateFantasyUpdatePayload { fantasies };
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "teammate-fantasy-update",
-                    payload.clone(),
-                );
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_LIVE_LABEL,
-                    "teammate-fantasy-update",
-                    payload,
-                );
-            }
-            OutboundEvent::TeammateFantasyClear => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "teammate-fantasy-clear",
-                    (),
-                );
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_LIVE_LABEL,
-                    "teammate-fantasy-clear",
-                    (),
-                );
-            }
-            OutboundEvent::HateListUpdate(hate_lists) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "hate-list-update",
-                    HateListUpdatePayload { hate_lists },
-                );
-            }
-            OutboundEvent::StunUpdate(entries) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "stun-update",
-                    StunUpdatePayload { entries },
-                );
-            }
-            OutboundEvent::EntityIdentityMap {
-                player_names,
-                monster_ids,
-            } => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "entity-identities",
-                    EntityIdentityMapPayload {
-                        player_names,
-                        monster_ids,
-                    },
-                );
-            }
-            OutboundEvent::BuffCounterUpdate(counters) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_GAME_OVERLAY_LABEL,
-                    "buff-counter-update",
-                    BuffCounterUpdatePayload { counters },
-                );
-            }
-            OutboundEvent::SeasonCultivateFactorCounterUpdate {
-                selection,
-                counters,
-            } => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_GAME_OVERLAY_LABEL,
-                    "season-cultivate-factor-counter-update",
-                    SeasonCultivateFactorCounterUpdatePayload {
-                        source_item_ids: selection.source_item_ids,
-                        slot_item_ids: selection.slot_item_ids,
-                        counters,
-                    },
-                );
-            }
-            OutboundEvent::SkillCdUpdate(skill_cds) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_GAME_OVERLAY_LABEL,
-                    "skill-cd-update",
-                    SkillCdUpdatePayload { skill_cds },
-                );
-            }
-            OutboundEvent::PanelAttrUpdate(attrs) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_GAME_OVERLAY_LABEL,
-                    "panel-attr-update",
-                    PanelAttrUpdatePayload { attrs },
-                );
-            }
-            OutboundEvent::FightResourceUpdate(fight_res) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_GAME_OVERLAY_LABEL,
-                    "fight-res-update",
-                    FightResourceUpdatePayload { fight_res },
-                );
-            }
-            OutboundEvent::ShieldDetailUpdate {
-                current_hp,
-                max_hp,
-                entries,
-            } => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_GAME_OVERLAY_LABEL,
-                    "shield-detail-update",
-                    ShieldDetailUpdatePayload {
-                        current_hp,
-                        max_hp,
-                        entries,
-                    },
-                );
-            }
-            OutboundEvent::DeathReplay(records) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_LIVE_LABEL,
-                    "death-replay",
-                    DeathReplayPayload { records },
-                );
-            }
-            OutboundEvent::MinimapUpdate(payload) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MINIMAP_OVERLAY_LABEL,
-                    "minimap-update",
-                    payload,
-                );
-            }
-            OutboundEvent::BossDbmUpdate(events) => {
-                safe_emit_to(
-                    app_handle,
-                    crate::WINDOW_MONSTER_OVERLAY_LABEL,
-                    "boss-dbm-update",
-                    BossDbmUpdatePayload { events },
-                );
-            }
-            OutboundEvent::VoiceCue(intents) => {
-                if let Some(voice_service) = app_handle.try_state::<crate::voice::VoiceService>() {
-                    for intent in intents {
-                        voice_service.enqueue_cue(intent);
-                    }
-                }
-            }
+async fn wait_for_wakeup(deadline: Option<MonoTimeMs>) {
+    let Some(deadline) = deadline else {
+        pending::<()>().await;
+        return;
+    };
+    let delay_ms = deadline.0.saturating_sub(monotonic_now_ms().0);
+    tokio::time::sleep(Duration::from_millis(delay_ms)).await;
+}
+
+fn decrement_outstanding(outstanding: &AtomicUsize) {
+    let _ = outstanding.fetch_update(Ordering::AcqRel, Ordering::Acquire, |depth| {
+        let count = depth & !CAPTURE_PIPELINE_FENCE;
+        if count == 0 {
+            None
+        } else {
+            Some((depth & CAPTURE_PIPELINE_FENCE) | (count - 1))
         }
+    });
+}
+
+fn claim_deadline_fence(outstanding: &AtomicUsize) -> bool {
+    outstanding
+        .compare_exchange(
+            0,
+            CAPTURE_PIPELINE_FENCE,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        )
+        .is_ok()
+}
+
+fn close_capture_gate(outstanding: &AtomicUsize) {
+    outstanding.fetch_or(CAPTURE_PIPELINE_FENCE, Ordering::AcqRel);
+}
+
+fn outstanding_count(outstanding: &AtomicUsize) -> usize {
+    outstanding.load(Ordering::Acquire) & !CAPTURE_PIPELINE_FENCE
+}
+
+fn record_failure(failure: &mut Option<String>, error: impl Into<String>) {
+    let error = error.into();
+    if failure.is_none() {
+        *failure = Some(error);
+    } else {
+        warn!(target: "app::live", "additional_shutdown_error error={error}");
     }
 }
 
 fn get_capture_method(app: &AppHandle) -> CaptureMethod {
     let filename_candidates = ["packetCapture.json", "packetCapture.bin", "packetCapture"];
     let mut dir_candidates = Vec::new();
-    if let Some(dir) = app.path().app_data_dir().ok() {
+    if let Ok(dir) = app.path().app_data_dir() {
         dir_candidates.push(dir.join("stores"));
-        dir_candidates.push(dir.clone());
+        dir_candidates.push(dir);
     }
-    if let Some(dir) = app.path().app_local_data_dir().ok() {
+    if let Ok(dir) = app.path().app_local_data_dir() {
         dir_candidates.push(dir.join("stores"));
-        dir_candidates.push(dir.clone());
+        dir_candidates.push(dir);
     }
 
-    for dir in dir_candidates.into_iter() {
+    for dir in dir_candidates {
         for file_name in filename_candidates {
             let path = dir.join(file_name);
-            if !path.exists() {
-                continue;
-            }
-            if let Ok(file) = std::fs::File::open(&path) {
-                if let Ok(json) = serde_json::from_reader::<_, serde_json::Value>(file) {
-                    return capture_method_from_json(&json, &path);
-                } else {
-                    warn!(
-                        "Failed to parse packet capture config at {}",
-                        path.display()
-                    );
-                }
+            if let Some(method) = read_capture_method(&path) {
+                return method;
             }
         }
-
-        // If specific filenames failed, try any file starting with packetCapture*
         if let Ok(entries) = std::fs::read_dir(&dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    if !name.starts_with("packetCapture") {
-                        continue;
-                    }
-                }
-                if let Ok(file) = std::fs::File::open(&path) {
-                    if let Ok(json) = serde_json::from_reader::<_, serde_json::Value>(file) {
-                        return capture_method_from_json(&json, &path);
-                    } else {
-                        warn!(
-                            "Failed to parse packet capture config at {}",
-                            path.display()
-                        );
-                    }
+                let is_candidate = path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name.starts_with("packetCapture"));
+                if is_candidate && let Some(method) = read_capture_method(&path) {
+                    return method;
                 }
             }
         }
     }
 
-    warn!(target: "app::capture", "No packetCapture config found in app data dirs; using WinDivert");
+    warn!(target: "app::capture", "packet capture config missing; using WinDivert");
     CaptureMethod::WinDivert
 }
 
+fn read_capture_method(path: &Path) -> Option<CaptureMethod> {
+    if !path.exists() {
+        return None;
+    }
+    let file = match std::fs::File::open(path) {
+        Ok(file) => file,
+        Err(error) => {
+            warn!(target: "app::capture", "capture_config_open_failed path={} error={error}", path.display());
+            return None;
+        }
+    };
+    let json = match serde_json::from_reader::<_, serde_json::Value>(file) {
+        Ok(json) => json,
+        Err(error) => {
+            warn!(target: "app::capture", "capture_config_parse_failed path={} error={error}", path.display());
+            return None;
+        }
+    };
+    Some(capture_method_from_json(&json, path))
+}
+
 fn capture_method_from_json(json: &serde_json::Value, path: &Path) -> CaptureMethod {
-    let method = json.get("method").and_then(|v| v.as_str());
+    let method = json.get("method").and_then(serde_json::Value::as_str);
     let device = json
         .get("npcapDevice")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
-    let (capture_method, method_source) = resolve_capture_method(method, device);
-
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default();
+    let (capture_method, source) = resolve_capture_method(method, device);
     info!(
         target: "app::capture",
-        "Packet capture config found at {} (method={} device={} method_source={})",
+        "capture_config_loaded path={} method={} device={} source={}",
         path.display(),
         method.unwrap_or("<missing>"),
         device,
-        method_source
+        source
     );
-
-    match &capture_method {
-        CaptureMethod::WinDivert => {
-            info!(target: "app::capture", "Using WinDivert capture");
-        }
-        CaptureMethod::Npcap(device) => {
-            info!(target: "app::capture", "Using Npcap capture device={device}");
-        }
-    }
-
-    if let Some(other) = method.filter(|value| *value != "WinDivert" && *value != "Npcap") {
-        warn!(
-            target: "app::capture",
-            "Unknown packet capture method {}; selected fallback source={}",
-            other,
-            method_source
-        );
-    }
-
     capture_method
 }
 
@@ -616,23 +346,25 @@ fn resolve_capture_method(method: Option<&str>, device: &str) -> (CaptureMethod,
     match method {
         Some("WinDivert") => (CaptureMethod::WinDivert, "explicit"),
         Some("Npcap") => (CaptureMethod::Npcap(device.to_string()), "explicit"),
-        Some(_) | None => {
-            if device.trim().is_empty() {
-                (CaptureMethod::WinDivert, "default_windivert")
-            } else {
-                (
-                    CaptureMethod::Npcap(device.to_string()),
-                    "legacy_npcap_device",
-                )
-            }
+        Some(_) | None if device.trim().is_empty() => {
+            (CaptureMethod::WinDivert, "default_windivert")
         }
+        Some(_) | None => (
+            CaptureMethod::Npcap(device.to_string()),
+            "legacy_npcap_device",
+        ),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::resolve_capture_method;
+    use super::{
+        claim_deadline_fence, close_capture_gate, decrement_outstanding, outstanding_count,
+        resolve_capture_method,
+    };
     use crate::packets::packet_capture::CaptureMethod;
+    use crate::packets::packet_process::CAPTURE_PIPELINE_FENCE;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     fn assert_npcap(method: Option<&str>, device: &str) {
         match resolve_capture_method(method, device).0 {
@@ -673,5 +405,36 @@ mod tests {
     fn unknown_method_falls_back_by_device_presence() {
         assert_npcap(Some("Other"), "npcap-device");
         assert_windivert(Some("Other"), "");
+    }
+
+    #[test]
+    fn deadline_fence_only_claims_an_empty_capture_pipeline() {
+        let outstanding = AtomicUsize::new(0);
+        assert!(claim_deadline_fence(&outstanding));
+        assert_eq!(outstanding.load(Ordering::Acquire), CAPTURE_PIPELINE_FENCE);
+        assert!(!claim_deadline_fence(&outstanding));
+        decrement_outstanding(&outstanding);
+        assert_eq!(outstanding.load(Ordering::Acquire), CAPTURE_PIPELINE_FENCE);
+
+        outstanding.store(2, Ordering::Release);
+        assert!(!claim_deadline_fence(&outstanding));
+        decrement_outstanding(&outstanding);
+        assert_eq!(outstanding.load(Ordering::Acquire), 1);
+    }
+
+    #[test]
+    fn command_gate_blocks_new_capture_while_existing_batches_drain() {
+        let outstanding = AtomicUsize::new(2);
+        close_capture_gate(&outstanding);
+        assert_eq!(outstanding_count(&outstanding), 2);
+        assert_eq!(
+            outstanding.load(Ordering::Acquire) & CAPTURE_PIPELINE_FENCE,
+            CAPTURE_PIPELINE_FENCE
+        );
+
+        decrement_outstanding(&outstanding);
+        decrement_outstanding(&outstanding);
+        assert_eq!(outstanding_count(&outstanding), 0);
+        assert_eq!(outstanding.load(Ordering::Acquire), CAPTURE_PIPELINE_FENCE);
     }
 }

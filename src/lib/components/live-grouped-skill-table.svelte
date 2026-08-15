@@ -4,11 +4,11 @@
   import PercentFormat from "$lib/components/percent-format.svelte";
   import { SvelteSet } from "svelte/reactivity";
   import type {
-    RawSkillStatsLike,
     RecountGroup,
     SkillDisplayRow,
   } from "$lib/config/recount-table";
   import { formatNumber, t } from "$lib/i18n/index.svelte";
+  import { ipcCompare, type IpcDecimal } from "$lib/ipc-decimal";
 
   type SkillColumn = {
     key: string;
@@ -101,47 +101,44 @@
     return numericValue((row as Record<string, unknown>)[key]);
   }
 
-  function buildGroupRaw(group: RecountGroup): RawSkillStatsLike {
-    return {
-      totalValue: group.totalDmg,
-      effectiveTotalValue: group.effectiveTotal,
-      hits: group.hits,
-      critHits: group.skills.reduce(
-        (sum, skill) => sum + Number(skill.raw.critHits || 0),
-        0,
-      ),
-      critTotalValue: group.skills.reduce(
-        (sum, skill) => sum + Number(skill.raw.critTotalValue || 0),
-        0,
-      ),
-      luckyHits: group.skills.reduce(
-        (sum, skill) => sum + Number(skill.raw.luckyHits || 0),
-        0,
-      ),
-      luckyTotalValue: group.skills.reduce(
-        (sum, skill) => sum + Number(skill.raw.luckyTotalValue || 0),
-        0,
-      ),
-      triggerHits: group.skills.reduce(
-        (sum, skill) => sum + Number(skill.raw.triggerHits || skill.raw.hits || 0),
-        0,
-      ),
-      blockHits: group.skills.reduce(
-        (sum, skill) => sum + Number(skill.raw.blockHits || 0),
-        0,
-      ),
-      luckyBlockHits: group.skills.reduce(
-        (sum, skill) => sum + Number(skill.raw.luckyBlockHits || 0),
-        0,
-      ),
-    };
+  function rawSortValue(
+    row: SkillDisplayRow | RecountGroup,
+    key: string,
+  ): IpcDecimal | null {
+    if (key === "totalDmg" || key === "dps" || key === "dmgPct") {
+      return row.raw.totalValue;
+    }
+    if (key === "effectiveTotal" || key === "effectiveDps") {
+      return row.raw.effectiveTotalValue;
+    }
+    if (key === "hits" || key === "hitsPerMinute") return row.raw.hits;
+    return null;
   }
 
-  function sortRows<T extends Record<string, unknown>>(rows: readonly T[]): T[] {
+  function compareRows(
+    a: SkillDisplayRow | RecountGroup,
+    b: SkillDisplayRow | RecountGroup,
+    key: string,
+    descending: boolean,
+  ): number {
+    const aRaw = rawSortValue(a, key);
+    const bRaw = rawSortValue(b, key);
+    const comparison =
+      aRaw !== null && bRaw !== null
+        ? ipcCompare(aRaw, bRaw)
+        : numericValue((a as unknown as Record<string, unknown>)[key]) <
+            numericValue((b as unknown as Record<string, unknown>)[key])
+          ? -1
+          : numericValue((a as unknown as Record<string, unknown>)[key]) >
+              numericValue((b as unknown as Record<string, unknown>)[key])
+            ? 1
+            : 0;
+    return descending ? -comparison : comparison;
+  }
+
+  function sortRows(rows: readonly SkillDisplayRow[]): SkillDisplayRow[] {
     return [...rows].sort((a, b) => {
-      const aVal = numericValue(a[sortKey]);
-      const bVal = numericValue(b[sortKey]);
-      return sortDesc ? bVal - aVal : aVal - bVal;
+      return compareRows(a, b, sortKey, sortDesc);
     });
   }
 
@@ -163,10 +160,7 @@
         (skill): TopLevelSkillItem => ({ kind: "skill", row: skill }),
       ),
     ].sort((a, b) => {
-      const key = effectiveSortKey as keyof SkillDisplayRow & keyof RecountGroup;
-      const aVal = numericValue(a.row[key]);
-      const bVal = numericValue(b.row[key]);
-      return effectiveSortDesc ? bVal - aVal : aVal - bVal;
+      return compareRows(a.row, b.row, effectiveSortKey, effectiveSortDesc);
     });
 
     for (const item of topLevel) {
@@ -200,7 +194,7 @@
         hitsPerMinute: group.hitsPerMinute,
         property: null,
         damageMode: null,
-        raw: buildGroupRaw(group),
+        raw: group.raw,
         isGroup: true,
         depth: 0,
         groupId: group.recountId,
@@ -211,15 +205,9 @@
       if (!expandedGroups.has(group.recountId)) continue;
 
       const sortedChildren = compactMode
-        ? [...group.skills].sort((a, b) => {
-            const aVal = numericValue(
-              (a as Record<string, unknown>)[effectiveSortKey],
-            );
-            const bVal = numericValue(
-              (b as Record<string, unknown>)[effectiveSortKey],
-            );
-            return bVal - aVal;
-          })
+        ? [...group.skills].sort((a, b) =>
+            compareRows(a, b, effectiveSortKey, true),
+          )
         : sortRows(group.skills);
 
       rows.push(
@@ -238,7 +226,9 @@
 
   const compactPrimaryMax = $derived(
     flatRows.reduce((max, row) => {
-      const v = numericValue((row as Record<string, unknown>)[compactPrimaryKey]);
+      const v = numericValue(
+        (row as Record<string, unknown>)[compactPrimaryKey],
+      );
       return v > max ? v : max;
     }, 0),
   );
@@ -327,8 +317,7 @@
                     </svg>
                   {:else if skill.depth > 0}
                     <span class="w-3 shrink-0 flex justify-center">
-                      <span
-                        class="size-1 rounded-full bg-muted-foreground/35"
+                      <span class="size-1 rounded-full bg-muted-foreground/35"
                       ></span>
                     </span>
                   {:else}
@@ -388,122 +377,125 @@
         {/each}
       </tbody>
     {:else}
-    <tbody>
-      {#each flatRows as skill (skill.key)}
-        <tr
-          class="relative hover:bg-muted/60 transition-colors bg-background/40"
-          style="height: {tableSettings.skillRowHeight}px; font-size: {tableSettings.skillFontSize}px;"
-        >
-          <td
-            class="px-2 py-1 relative z-10"
-            style="color: {customThemeColors.tableTextColor};"
+      <tbody>
+        {#each flatRows as skill (skill.key)}
+          <tr
+            class="relative hover:bg-muted/60 transition-colors bg-background/40"
+            style="height: {tableSettings.skillRowHeight}px; font-size: {tableSettings.skillFontSize}px;"
           >
-            <button
-              class="flex items-center gap-1 h-full w-full text-left"
-              onclick={() =>
-                skill.isGroup && skill.groupId !== undefined
-                  ? toggleGroup(skill.groupId)
-                  : undefined}
-              disabled={!skill.isGroup}
-            >
-              <span style="padding-left: {skill.depth * 16}px;"></span>
-              {#if skill.isGroup && skill.expandable}
-                <svg
-                  class="size-3 shrink-0 text-muted-foreground/70 transition-transform duration-150 {skill.expanded
-                    ? 'rotate-90'
-                    : ''}"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              {:else if skill.depth > 0}
-                <span class="w-3 shrink-0 flex justify-center">
-                  <span class="size-1 rounded-full bg-muted-foreground/35"></span>
-                </span>
-              {:else}
-                <span class="w-3 shrink-0"></span>
-              {/if}
-              <span class="truncate">{skill.name}</span>
-              {#if skill.showSkillId}
-                <span class="text-[10px] text-muted-foreground/50 shrink-0">
-                  #{skill.skillId}
-                </span>
-              {/if}
-            </button>
-          </td>
-          {#each visibleColumns as col (col.key)}
             <td
-              class="px-2 py-1 text-right relative z-10"
+              class="px-2 py-1 relative z-10"
               style="color: {customThemeColors.tableTextColor};"
             >
-              {#if col.key === "totalDmg" || col.key === "effectiveTotal"}
-                {#if shortenValues}
-                  <AbbreviatedNumber
-                    num={col.key === "totalDmg" ? skill.totalDmg : skill.effectiveTotal}
-                    decimalPlaces={abbreviatedDecimalPlaces}
-                    {abbreviationStyle}
+              <button
+                class="flex items-center gap-1 h-full w-full text-left"
+                onclick={() =>
+                  skill.isGroup && skill.groupId !== undefined
+                    ? toggleGroup(skill.groupId)
+                    : undefined}
+                disabled={!skill.isGroup}
+              >
+                <span style="padding-left: {skill.depth * 16}px;"></span>
+                {#if skill.isGroup && skill.expandable}
+                  <svg
+                    class="size-3 shrink-0 text-muted-foreground/70 transition-transform duration-150 {skill.expanded
+                      ? 'rotate-90'
+                      : ''}"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                {:else if skill.depth > 0}
+                  <span class="w-3 shrink-0 flex justify-center">
+                    <span class="size-1 rounded-full bg-muted-foreground/35"
+                    ></span>
+                  </span>
+                {:else}
+                  <span class="w-3 shrink-0"></span>
+                {/if}
+                <span class="truncate">{skill.name}</span>
+                {#if skill.showSkillId}
+                  <span class="text-[10px] text-muted-foreground/50 shrink-0">
+                    #{skill.skillId}
+                  </span>
+                {/if}
+              </button>
+            </td>
+            {#each visibleColumns as col (col.key)}
+              <td
+                class="px-2 py-1 text-right relative z-10"
+                style="color: {customThemeColors.tableTextColor};"
+              >
+                {#if col.key === "totalDmg" || col.key === "effectiveTotal"}
+                  {#if shortenValues}
+                    <AbbreviatedNumber
+                      num={col.key === "totalDmg"
+                        ? skill.totalDmg
+                        : skill.effectiveTotal}
+                      decimalPlaces={abbreviatedDecimalPlaces}
+                      {abbreviationStyle}
+                      suffixFontSize={tableSettings.skillAbbreviatedFontSize}
+                      suffixColor={customThemeColors.tableAbbreviatedColor}
+                    />
+                  {:else}
+                    {col.format(columnValue(skill, col.key))}
+                  {/if}
+                {:else if col.key === "dps" || col.key === "effectiveDps"}
+                  {#if shortenValues}
+                    <AbbreviatedNumber
+                      num={columnValue(skill, col.key)}
+                      decimalPlaces={abbreviatedDecimalPlaces}
+                      {abbreviationStyle}
+                      suffixFontSize={tableSettings.skillAbbreviatedFontSize}
+                      suffixColor={customThemeColors.tableAbbreviatedColor}
+                    />
+                  {:else}
+                    {formatRateValue(columnValue(skill, col.key))}
+                  {/if}
+                {:else if col.key === "dmgPct"}
+                  <PercentFormat
+                    val={skill.dmgPct}
+                    fractionDigits={0}
                     suffixFontSize={tableSettings.skillAbbreviatedFontSize}
                     suffixColor={customThemeColors.tableAbbreviatedColor}
                   />
+                {:else if col.key === "critRate" || col.key === "critDmgRate" || col.key === "luckyRate" || col.key === "luckyDmgRate" || col.key === "blockRate" || col.key === "luckyBlockRate"}
+                  <PercentFormat
+                    val={skill[col.key]}
+                    suffixFontSize={tableSettings.skillAbbreviatedFontSize}
+                    suffixColor={customThemeColors.tableAbbreviatedColor}
+                  />
+                {:else if col.key === "property" || col.key === "damageMode"}
+                  {#if skill.isGroup}
+                    <span class="text-muted-foreground/50">-</span>
+                  {:else}
+                    {col.format(skill[col.key] as number)}
+                  {/if}
                 {:else}
                   {col.format(columnValue(skill, col.key))}
                 {/if}
-              {:else if col.key === "dps" || col.key === "effectiveDps"}
-                {#if shortenValues}
-                  <AbbreviatedNumber
-                    num={columnValue(skill, col.key)}
-                    decimalPlaces={abbreviatedDecimalPlaces}
-                    {abbreviationStyle}
-                    suffixFontSize={tableSettings.skillAbbreviatedFontSize}
-                    suffixColor={customThemeColors.tableAbbreviatedColor}
-                  />
-                {:else}
-                  {formatRateValue(columnValue(skill, col.key))}
-                {/if}
-              {:else if col.key === "dmgPct"}
-                <PercentFormat
-                  val={skill.dmgPct}
-                  fractionDigits={0}
-                  suffixFontSize={tableSettings.skillAbbreviatedFontSize}
-                  suffixColor={customThemeColors.tableAbbreviatedColor}
-                />
-              {:else if col.key === "critRate" || col.key === "critDmgRate" || col.key === "luckyRate" || col.key === "luckyDmgRate" || col.key === "blockRate" || col.key === "luckyBlockRate"}
-                <PercentFormat
-                  val={skill[col.key]}
-                  suffixFontSize={tableSettings.skillAbbreviatedFontSize}
-                  suffixColor={customThemeColors.tableAbbreviatedColor}
-                />
-              {:else if col.key === "property" || col.key === "damageMode"}
-                {#if skill.isGroup}
-                  <span class="text-muted-foreground/50">-</span>
-                {:else}
-                  {col.format(skill[col.key] as number)}
-                {/if}
-              {:else}
-                {col.format(columnValue(skill, col.key))}
-              {/if}
-            </td>
-          {/each}
-          <TableRowGlow
-            isSkill={true}
-            className={glowClassName}
-            {classSpecName}
-            percentage={relativeToTop
-              ? maxSkillValue > 0
-                ? (skill.totalDmg / maxSkillValue) * 100
-                : 0
-              : skill.dmgPct}
-          />
-        </tr>
-      {/each}
-    </tbody>
+              </td>
+            {/each}
+            <TableRowGlow
+              isSkill={true}
+              className={glowClassName}
+              {classSpecName}
+              percentage={relativeToTop
+                ? maxSkillValue > 0
+                  ? (skill.totalDmg / maxSkillValue) * 100
+                  : 0
+                : skill.dmgPct}
+            />
+          </tr>
+        {/each}
+      </tbody>
     {/if}
   </table>
 </div>

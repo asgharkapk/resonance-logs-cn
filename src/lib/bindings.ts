@@ -8,36 +8,91 @@
 
 export const commands = {
 /**
- * Enables blur on the live meter window.
- *
- * # Arguments
- *
- * * `app` - A handle to the Tauri application instance.
+ * Bootstrap for the `live-combat` topic. Topic payloads are sliced out of the
+ * runtime snapshot so a window can hydrate before its first pushed event.
  */
+async getLiveCombat() : Promise<Result<LiveCombatPayload, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_live_combat") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Bootstrap for the `live-status` topic.
+ */
+async getLiveStatus() : Promise<Result<LiveStatusPayload, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_live_status") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Bootstrap for the `live-buffs` topic.
+ */
+async getLiveBuffs() : Promise<Result<LiveBuffsPayload, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_live_buffs") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Bootstrap for the `live-monster` topic.
+ */
+async getLiveMonster() : Promise<Result<LiveMonsterPayload, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_live_monster") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Bootstrap for the `live-fantasy` topic.
+ */
+async getLiveFantasy() : Promise<Result<LiveFantasyPayload, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_live_fantasy") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Bootstrap for the `live-deaths` topic.
+ */
+async getLiveDeaths() : Promise<Result<LiveDeathsPayload, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_live_deaths") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Bootstrap for the `live-scene` topic. `main`-only: drives the daily-scene
+ * auto-hide logic for the game/monster/minimap overlay windows without
+ * subscribing to the far heavier `live-combat` cadence.
+ */
+async getLiveScene() : Promise<Result<LiveScenePayload, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_live_scene") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async enableBlur() : Promise<void> {
     await TAURI_INVOKE("enable_blur");
 },
-/**
- * Disables blur on the live meter window.
- *
- * # Arguments
- *
- * * `app` - A handle to the Tauri application instance.
- */
 async disableBlur() : Promise<void> {
     await TAURI_INVOKE("disable_blur");
 },
-/**
- * Resets the encounter.
- *
- * # Arguments
- *
- * * `state_manager` - The state manager.
- *
- * # Returns
- *
- * * `Result<(), String>` - An empty result.
- */
 async resetEncounter() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("reset_encounter") };
@@ -46,17 +101,6 @@ async resetEncounter() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Toggles pausing the encounter.
- *
- * # Arguments
- *
- * * `state_manager` - The state manager.
- *
- * # Returns
- *
- * * `Result<(), String>` - An empty result.
- */
 async togglePauseEncounter() : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("toggle_pause_encounter") };
@@ -89,33 +133,6 @@ async saveAndApplyMonitorRuntimeSnapshot(snapshot: MonitorRuntimeSnapshot) : Pro
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Gets a list of recent encounters.
- *
- * # Arguments
- *
- * * `limit` - The maximum number of encounters to return.
- * * `offset` - The number of encounters to skip.
- *
- * # Returns
- *
- * * `Result<RecentEncountersResult, String>` - A list of recent encounters.
- */
-async getRecentEncounters(limit: number, offset: number) : Promise<Result<RecentEncountersResult, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_recent_encounters", { limit, offset }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * Gets a list of unique scene IDs.
- *
- * # Returns
- *
- * * `Result<SceneIdsResult, String>` - A list of unique scene IDs.
- */
 async getUniqueSceneIds() : Promise<Result<SceneIdsResult, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_unique_scene_ids") };
@@ -124,13 +141,6 @@ async getUniqueSceneIds() : Promise<Result<SceneIdsResult, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Gets a list of unique boss monster template IDs.
- *
- * # Returns
- *
- * * `Result<BossMonsterIdsResult, String>` - A list of unique boss monster IDs.
- */
 async getUniqueBossMonsterIds() : Promise<Result<BossMonsterIdsResult, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_unique_boss_monster_ids") };
@@ -139,19 +149,6 @@ async getUniqueBossMonsterIds() : Promise<Result<BossMonsterIdsResult, string>> 
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Gets a list of player names filtered by a prefix.
- *
- * This will return up to 5 matching player names (to keep the UI responsive).
- *
- * # Arguments
- *
- * * `prefix` - The prefix to filter by.
- *
- * # Returns
- *
- * * `Result<PlayerNamesResult, String>` - A list of player names.
- */
 async getPlayerNamesFiltered(prefix: string) : Promise<Result<PlayerNamesResult, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_player_names_filtered", { prefix }) };
@@ -160,19 +157,6 @@ async getPlayerNamesFiltered(prefix: string) : Promise<Result<PlayerNamesResult,
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Gets a list of recent encounters filtered by the given criteria.
- *
- * # Arguments
- *
- * * `limit` - The maximum number of encounters to return.
- * * `offset` - The number of encounters to skip.
- * * `filters` - The filters to apply.
- *
- * # Returns
- *
- * * `Result<RecentEncountersResult, String>` - A list of recent encounters.
- */
 async getRecentEncountersFiltered(limit: number, offset: number, filters: EncounterFiltersDto | null) : Promise<Result<RecentEncountersResult, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_recent_encounters_filtered", { limit, offset, filters }) };
@@ -181,47 +165,22 @@ async getRecentEncountersFiltered(limit: number, offset: number, filters: Encoun
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Gets an encounter by its ID.
- *
- * # Arguments
- *
- * * `encounter_id` - The ID of the encounter.
- *
- * # Returns
- *
- * * `Result<EncounterSummaryDto, String>` - The encounter summary.
- */
-async getEncounterById(encounterId: number) : Promise<Result<EncounterSummaryDto, string>> {
+async getEncounterDetail(encounterId: number, targetPoints: number) : Promise<Result<EncounterDetailData, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_encounter_by_id", { encounterId }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_encounter_detail", { encounterId, targetPoints }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Gets raw actor entities for a historical encounter.
- */
-async getEncounterEntitiesRaw(encounterId: number) : Promise<Result<HistoryEntityData[], string>> {
+async getEncounterRange(encounterId: number, startMs: number, endMs: number) : Promise<Result<EncounterRangeData, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_encounter_entities_raw", { encounterId }) };
+    return { status: "ok", data: await TAURI_INVOKE("get_encounter_range", { encounterId, startMs, endMs }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Deletes an encounter by its ID.
- *
- * # Arguments
- *
- * * `encounter_id` - The ID of the encounter to delete.
- *
- * # Returns
- *
- * * `Result<(), String>` - An empty result indicating success or failure.
- */
 async deleteEncounter(encounterId: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("delete_encounter", { encounterId }) };
@@ -230,17 +189,6 @@ async deleteEncounter(encounterId: number) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Deletes multiple encounters by ID.
- *
- * # Arguments
- *
- * * `ids` - The IDs of the encounters to delete.
- *
- * # Returns
- *
- * * `Result<(), String>` - An empty result indicating success or failure.
- */
 async deleteEncounters(ids: number[]) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("delete_encounters", { ids }) };
@@ -249,59 +197,9 @@ async deleteEncounters(ids: number[]) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-/**
- * Toggles the favorite status of an encounter.
- *
- * # Arguments
- *
- * * `id` - The ID of the encounter.
- * * `is_favorite` - The new favorite status.
- *
- * # Returns
- *
- * * `Result<(), String>` - An empty result indicating success or failure.
- */
 async toggleFavoriteEncounter(id: number, isFavorite: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("toggle_favorite_encounter", { id, isFavorite }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * A Tauri command to get a list of recent players.
- *
- * # Arguments
- *
- * * `limit` - The maximum number of players to return.
- *
- * # Returns
- *
- * * `Result<Vec<(i64, String)>, String>` - A list of recent players.
- */
-async getRecentPlayersCommand(limit: number) : Promise<Result<([number, string])[], string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_recent_players_command", { limit }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-/**
- * A Tauri command to get the name of a player by their UID.
- *
- * # Arguments
- *
- * * `uid` - The UID of the player.
- *
- * # Returns
- *
- * * `Result<Option<String>, String>` - The name of the player, or `None` if not found.
- */
-async getPlayerNameCommand(uid: number) : Promise<Result<string | null, string>> {
-    try {
-    return { status: "ok", data: await TAURI_INVOKE("get_player_name_command", { uid }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -623,33 +521,41 @@ async voiceStopPlayback() : Promise<void> {
 export type AltFreezeConfig = { conditionBuffId: number; freezeDurationMs: number }
 export type AppLocale = "zh-CN" | "en-US" | "ja-JP"
 export type AttrModifier = { attrId: number; basisPointsPerUnit?: number; maxReductionBasisPoints: number }
+export type BossDbmEvent = { skillEffectId: number; baseSkillId: number; durationMs: number; createTimeMs: number; insertion: number; serverTimestampMs: number | null }
 /**
- * The result of a query for boss monster template IDs.
+ * Represents the health of a boss.
  */
-export type BossMonsterIdsResult = {
+export type BossHealth = {
 /**
- * A list of boss monster template IDs.
+ * The unique entity UUID of the boss, serialized as a string for JS safety.
  */
-ids: number[] }
+entityUuid: string;
 /**
- * A summary of a boss.
+ * Monster template ID used by the frontend to resolve the display name.
  */
-export type BossSummaryDto = {
+monsterId: number | null;
 /**
- * The monster template ID.
+ * The current HP of the boss.
  */
-monsterId: number;
+currentHp: number | null;
 /**
- * The maximum HP of the monster.
+ * The maximum HP of the boss.
  */
 maxHp: number | null;
 /**
- * Whether the boss was defeated.
+ * Whether the boss is in ActorStateDead.
  */
-isDefeated: boolean }
+isDead: boolean }
+export type BossMonsterIdsResult = { ids: number[] }
+export type BossSummaryDto = { monsterId: number; maxHp: number | null; isDefeated: boolean }
+/**
+ * Represents a buff update state.
+ */
+export type BuffUpdateState = { baseId: number; layer: number; durationMs: number; createTimeMs: number; sourceRemodelLevel: number | null }
 export type CounterAction = "reset" | "freeze" | "resetAndFreeze" | "resetAndFreezeKeepCounting" | "resetAndStartCount" | "startCount" | "noOp"
 export type CounterRule = { ruleId: number; sources: CounterSource[]; effectSlots: EffectSlotConfig[] }
 export type CounterSource = { damageBySkillKey: { skillKeys: number[]; increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { damageBySkillKeyOnce: { skillKeys: number[]; increment: number; requiredTypeFlags?: number | null } } | { damageBySkillKeySelfTarget: { skillKeys: number[]; increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { anyDamage: { increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { damageTaken: { skillKeys?: number[] | null; increment: number; hitsRequired?: number | null; requiredTypeFlags?: number | null } } | { fightResourceSpent: { resourceId: number; unitsRequired: number; increment: number } } | { buffAdded: { buffId: number; sourceConfigId?: number | null; increment: number } } | { buffLayerSpent: { buffId: number; unitsRequired: number; increment: number } } | { buffDurationTick: { buffId: number; tickIntervalMs: number; increment: number; attrCondition?: TickAttrCondition | null } } | { skillCast: { skillBaseIds: number[]; increment: number } } | { skillDurationTick: { skillBaseId: number; tickIntervalMs: number; increment: number } } | { skillCastComplete: { skillBaseIds: number[]; increment: number } } | { movementDistance: { buffId: number; attrId: number; metersRequired: number; increment: number } }
+export type CounterUpdateState = { ruleId: number; slots: SlotUpdateState[] }
 /**
  * A single damage event recorded in the 2s sliding window used for death replay.
  */
@@ -657,7 +563,7 @@ export type DamageSnapshot = {
 /**
  * Absolute timestamp in milliseconds since UNIX epoch.
  */
-timestampMs: number;
+timestampMs: string;
 /**
  * Attacker entity UUID, serialized as a string for JS safety. None for unknown sources.
  */
@@ -673,7 +579,7 @@ skillKey: number;
 /**
  * Raw damage value.
  */
-value: number }
+value: string }
 /**
  * A single active buff copied at the moment a death replay record is created.
  */
@@ -693,119 +599,293 @@ monsterTypeId: number | null; buffs?: DeathBuffSnapshot[] }
 /**
  * A death replay record, capturing the damage taken within the window leading up to a death.
  */
-export type DeathRecord = { victimEntityUuid: string; deathTimestampMs: number;
+export type DeathRecord = { victimEntityUuid: string; deathTimestampMs: string;
 /**
  * Damage snapshots in chronological order (oldest first).
  */
 recentDamages?: DamageSnapshot[]; victimBuffs?: DeathBuffSnapshot[]; participantBuffs?: DeathParticipantBuffSnapshot[] }
 export type Device = { name: string; description: string | null }
 export type EffectSlotConfig = { slotId: number; threshold: number | null; resetBuffId: number; resetSourceConfigId?: number | null; resetBuffTarget?: ResetBuffTarget; onBuffAdd?: CounterAction; onBuffChange?: CounterAction; onBuffRemove?: CounterAction; freezeDurationMs?: number | null; onFreezeExpire?: CounterAction; altFreeze?: AltFreezeConfig | null; thresholdModifier?: AttrModifier | null; freezeDurationModifier?: AttrModifier | null; resetSkillKeys?: number[] | null; onResetSkill?: CounterAction; dungeonStartFreezeMs?: number | null }
+export type EncounterChartPointData = { offsetMs: number; damage: string; healing: string; damageTaken: string }
 /**
- * Filters for querying encounters.
+ * Sparse per-entity bucket series: one row per (entity, metric), holding only
+ * the buckets with a non-zero total. Recomputed from raw chunks at query time.
  */
-export type EncounterFiltersDto = {
+export type EncounterChartSeriesData = { entityId: string; metric: HistoryMetric; offsetsMs: number[]; totals: string[] }
+export type EncounterDeathData = { offsetMs: number; sourceEntityId: string | null; skillId: string | null; replay: DeathRecord | null }
+export type EncounterDetailData = { encounterId: number; summary: EncounterSummaryDto; detailAvailable: boolean; qualityFlags: HistoryQualityFlag[]; startMs: number; endMsExclusive: number; bucketMs: number; totals: EncounterTotalsData; entities: EncounterEntityData[]; chartPoints: EncounterChartPointData[];
 /**
- * A list of boss monster template IDs to filter by.
+ * Always recomputed from chunks on load; stored snapshots leave it empty.
  */
-bossMonsterIds: number[] | null;
+series?: EncounterChartSeriesData[]; markers: EncounterMarkerData[] }
+export type EncounterEntityData = { entityId: string; displayUid: number; name: string | null; classId: number | null; classSpec: number | null;
 /**
- * A list of scene IDs to filter by.
+ * Resolved spec display name; `None` for monsters / unknown specs.
+ * `Option` fields decode as `None` from projections stored before this
+ * field existed, and are backfilled from `class_spec` at query time.
  */
-sceneIds: number[] | null;
-/**
- * A player name to filter by.
- */
-playerName: string | null;
-/**
- * A list of player names to filter by.
- */
-playerNames: string[] | null;
-/**
- * The start date to filter by in milliseconds since the Unix epoch.
- */
-dateFromMs: number | null;
-/**
- * The end date to filter by in milliseconds since the Unix epoch.
- */
-dateToMs: number | null;
-/**
- * Whether to filter by favorite encounters.
- */
-isFavorite: boolean | null }
-/**
- * A summary of an encounter.
- */
-export type EncounterSummaryDto = {
-/**
- * The ID of the encounter.
- */
-id: number;
-/**
- * The start time of the encounter in milliseconds since the Unix epoch.
- */
-startedAtMs: number;
-/**
- * The end time of the encounter in milliseconds since the Unix epoch.
- */
-endedAtMs: number | null;
-/**
- * The total damage dealt in the encounter.
- */
-totalDmg: number;
-/**
- * The total healing done in the encounter.
- */
-totalHeal: number;
-/**
- * The ID of the scene where the encounter took place.
- */
-sceneId: number | null;
-/**
- * Dungeon difficulty suffix for the scene, if known.
- */
-dungeonDifficulty: number | null;
-/**
- * The duration of the encounter in seconds.
- */
-duration: number;
-/**
- * The accumulated active combat duration in seconds.
- */
-activeCombatDuration: number | null;
-/**
- * The UID of the local player for this encounter.
- */
-localPlayerId: number | null;
-/**
- * A list of bosses in the encounter.
- */
-bosses: BossSummaryDto[];
-/**
- * A list of players in the encounter.
- */
-players: PlayerSummaryDto[];
-/**
- * The encounter ID on the remote website/server after successful upload.
- */
-remoteEncounterId: number | null;
-/**
- * Whether the encounter is favorited.
- */
-isFavorite: boolean }
+classSpecName?: string | null; abilityScore: number | null; seasonStrength: number | null; monsterId: number | null; totals: EncounterTotalsData; skills: EncounterSkillData[]; damageTargets: EncounterTargetBreakdownData[]; healingTargets: EncounterTargetBreakdownData[]; takenSources: EncounterSourceBreakdownData[]; deaths: EncounterDeathData[] }
+export type EncounterFiltersDto = { bossMonsterIds: number[] | null; sceneIds: number[] | null; playerName: string | null; playerNames: string[] | null; dateFromMs: number | null; dateToMs: number | null; isFavorite: boolean | null }
+export type EncounterMarkerData = { offsetMs: number; sequence: number; casterEntityId: string; skillId: string; kind: HistoryCastKind }
+export type EncounterRangeData = { encounterId: number; qualityFlags: HistoryQualityFlag[]; startMs: number; endMsExclusive: number; bucketMs: number; totals: EncounterTotalsData; entities: EncounterEntityData[]; chartPoints: EncounterChartPointData[]; series?: EncounterChartSeriesData[]; markers: EncounterMarkerData[] }
+export type EncounterSkillData = { skillId: string; metric: HistoryMetric; property: number | null; damageMode: number | null; stats: EncounterStatsData }
+export type EncounterSourceBreakdownData = { sourceMonsterId: number | null; stats: EncounterStatsData; skills: EncounterSkillData[] }
+export type EncounterStatsData = { total: string; effectiveTotal: string; hits: string; criticalHits: string; criticalTotal: string; luckyHits: string; luckyTotal: string; triggerHits: string; blockedHits: string; luckyBlockHits: string }
+export type EncounterSummaryDto = { id: number; startedAtMs: number; endedAtMs: number | null; totalDmg: string; totalHeal: string; sceneId: number | null; dungeonDifficulty: number | null; duration: number; activeCombatDuration: number | null; localPlayerId: number | null; bosses: BossSummaryDto[]; players: PlayerSummaryDto[]; remoteEncounterId: number | null; isFavorite: boolean; detailAvailable: boolean }
+export type EncounterTargetBreakdownData = { targetEntityId: string; targetDisplayUid: number; targetName: string | null; targetMonsterId: number | null; isBoss: boolean; stats: EncounterStatsData; skills: EncounterSkillData[] }
+export type EncounterTotalsData = { damage: string; bossDamage: string; healing: string; effectiveHealing: string; damageTaken: string }
 export type EngineBackend = "cpu" | "vulkan"
 export type EngineDevice = { backend: EngineBackend; name: string; type: EngineDeviceType }
 export type EngineDeviceType = "cpu" | "discreteGpu" | "integratedGpu" | "accelerator" | "unknown"
 export type EngineProbe = { engine: string; protocolVersion: number; sourceCommit: string; buildType: string; variant: string; stub: boolean; compiledBackends: EngineBackend[]; devices: EngineDevice[]; supportedLanguages: VoiceLanguage[] }
 export type EngineState = { kind: "missing" } | { kind: "ready"; probe: EngineProbe } | { kind: "incompatible"; reason: string } | { kind: "error"; message: string }
 export type FactorCounterTemplate = { itemIds?: number[]; sources?: CounterSource[]; effectSlots?: EffectSlotConfig[] }
+export type FightResourceEntry = { id: number; value: number }
+export type FightResourceState = {
+/**
+ * The full list of fight resource id/value pairs
+ */
+entries: FightResourceEntry[];
+/**
+ * Local timestamp when this state was received
+ */
+receivedAt: number }
 export type FineTunedVoiceMeta = { packagePath: string; transformerPath: string; displayName: string; speakerName: string; speakerTokenId: number; modelSha256: string; sizeBytes: number; quantization: string; tokenizerAbi: string; importedAtMs: number }
 export type FineTunedVoiceState = { kind: "notConfigured" } | { kind: "ready"; voice: FineTunedVoiceMeta } | { kind: "missing"; voice: FineTunedVoiceMeta } | { kind: "modified"; voice: FineTunedVoiceMeta }
 export type GenerationState = { kind: "idle" } | { kind: "running" } | { kind: "cancelling" }
 export type GenerationSummary = { completed: number; failed: number; profileId: string | null; assetIds: string[] }
 export type GpuSupport = { cuda_available: boolean; opencl_available: boolean }
-export type HistoryEntityData = { entityUuid: string; displayUid: number; name: string; classId: number; classSpec: number; className: string; classSpecName: string; abilityScore: number; seasonStrength: number; damage: RawCombatStats; damageBossOnly: RawCombatStats; healing: RawCombatStats; taken: RawCombatStats; dmgSkills: Partial<{ [key in number]: RawSkillStats }>; healSkills: Partial<{ [key in number]: RawSkillStats }>; takenSkills: Partial<{ [key in number]: RawSkillStats }>; takenPerSource: PerSourceStats[]; dmgPerTarget: PerTargetStats[]; healPerTarget: PerTargetStats[]; deaths: DeathRecord[] }
+export type HateEntry = { entityUuid: string; hateVal: number }
+export type HistoryCastKind = "boss_skill" | "fantasy" | "key_skill"
+export type HistoryMetric = "damage" | "healing" | "damage_taken"
+export type HistoryQualityFlag = "incompleteSegment" | "missingEntityContext" | "saturatedAmount"
 export type I18nRuntimeSnapshot = { locale: AppLocale }
+/**
+ * Local player buff list (`live-buffs`), 50ms throttle.
+ */
+export type LiveBuffsPayload = { revision: number; localBuffs: BuffUpdateState[] }
+/**
+ * Combat / segment topic for the live meter window (`live-combat`).
+ * `scene_id`/`dungeon_difficulty` live only on the nested `combat` payload;
+ * they were duplicated at this level, but every consumer already reads them
+ * from `combat.sceneId`/`combat.dungeonDifficulty`.
+ */
+export type LiveCombatPayload = { revision: number; activeSegmentId: number | null; displayedSegmentId: number | null; combat: LiveDataPayload | null; training: TrainingDummyState }
+/**
+ * Represents a raw
+ */
+export type LiveDataPayload = { elapsedMs: string; activeCombatTimeMs: string; fightStartTimestampMs: string; totalDmg: string; totalDmgBossOnly: string; totalHeal: string; totalEffectiveHeal: string; localPlayerUuid: string; sceneId: number | null; dungeonDifficulty: number | null; isPaused: boolean; bosses: BossHealth[]; entities: RawEntityData[] }
+/**
+ * Player death replays (`live-deaths`), 50ms throttle. Dirty only when a
+ * record is appended or the segment resets, so it never rides the combat
+ * publication cadence.
+ */
+export type LiveDeathsPayload = { revision: number; deaths: DeathRecord[] }
+/**
+ * Fantasy cast icons shared by live + monster overlay (`live-fantasy`).
+ */
+export type LiveFantasyPayload = { revision: number; teammateFantasies: TeammateFantasyState[] }
+/**
+ * Monster overlay topic (`live-monster`), 50ms throttle.
+ */
+export type LiveMonsterPayload = { revision: number; bossBuffs: Partial<{ [key in string]: BuffUpdateState[] }>; teammateBuffs: Partial<{ [key in string]: BuffUpdateState[] }>; bossMechanics: BossDbmEvent[]; hateLists: Partial<{ [key in string]: HateEntry[] }>; stun: StunEntry[]; playerNames: Partial<{ [key in string]: string }>; monsterIds: Partial<{ [key in string]: number }> }
 export type LiveRuntimeSnapshot = { eventUpdateRateMs: number }
+export type LiveScenePayload = { revision: number; sceneId: number | null; dungeonDifficulty: number | null }
+/**
+ * Skill CD / panel attrs / fight resource / shields / counters
+ * (`live-status`). Published once per batch when dirty (no time throttle), so
+ * the shield bar gets the low latency it needs.
+ */
+export type LiveStatusPayload = { revision: number; counters: CounterUpdateState[]; factorCounters: CounterUpdateState[]; factorSourceItemIds: number[]; factorSlotItemIds: number[];
+/**
+ * Highest deep-sleep (800522) `seasonId` resolved from the last
+ * container sync/patch; `0` before any season data has been observed.
+ */
+seasonId: number; seasonActiveTemplateIds: number[]; skillCds: SkillCdState[]; panelAttrs: PanelAttrState[]; shieldCurrentHp: number; shieldMaxHp: number; shieldEntries: ShieldDetailEntry[]; fightResource: FightResourceState | null }
+/**
+ * A single active buff fact currently known to the minimap.
+ */
+export type MinimapBuffFact = {
+/**
+ * Entity UUID carrying this buff.
+ */
+targetEntityUuid: string;
+/**
+ * Runtime buff instance id.
+ */
+buffUuid: number;
+/**
+ * Buff template id.
+ */
+baseId: number;
+/**
+ * Current stack/layer.
+ */
+layer: number;
+/**
+ * Buff creation time in the local time domain (server_clock_offset applied).
+ */
+createTimeMs: number;
+/**
+ * Buff duration in milliseconds (0 if unknown/permanent).
+ */
+durationMs: number;
+/**
+ * Runtime source/caster entity when the server includes it.
+ */
+fireUuid: string | null;
+/**
+ * Skill/buff config id that caused this buff, when available.
+ */
+sourceConfigId: number | null;
+/**
+ * `PlayEffect` effect ids from the buff's logic_effects, in wire order.
+ */
+effectIds: number[] }
+/**
+ * A single entity fact rendered/interpreted by the 2D minimap overlay.
+ */
+export type MinimapEntity = {
+/**
+ * Entity UUID as string (avoids JS bigint truncation, matching existing convention).
+ */
+entityUuid: string;
+/**
+ * Raw entity type normalized for frontend use.
+ */
+entityType: MinimapEntityType;
+/**
+ * What the entity is, used by the frontend to pick color/size.
+ */
+kind: MinimapEntityKind;
+/**
+ * Horizontal map coordinate.
+ */
+x: number;
+/**
+ * Vertical game coordinate.
+ */
+y: number;
+/**
+ * Depth map coordinate (game `z`, not vertical height).
+ */
+z: number;
+/**
+ * Display name when known.
+ */
+name: string | null;
+/**
+ * Monster template id when the entity is a monster.
+ */
+monsterId: number | null;
+/**
+ * Yaw facing in degrees when known (attr 0x32, stored as centidegrees).
+ */
+facing: number | null;
+/**
+ * Whether the entity is currently in the dead actor state.
+ */
+isDead: boolean;
+/**
+ * Top-level summoner/owner UUID when present.
+ */
+topSummonerId: string | null }
+/**
+ * Classification of an entity rendered on the minimap.
+ */
+export type MinimapEntityKind =
+/**
+ * The local player.
+ */
+"local" |
+/**
+ * A teammate (party member that is not the local player).
+ */
+"teammate" |
+/**
+ * A boss-tier monster.
+ */
+"boss" |
+/**
+ * Any other monster.
+ */
+"monster" |
+/**
+ * A non-monster dummy/mechanic helper entity.
+ */
+"dummy" |
+/**
+ * Other renderable non-character entities.
+ */
+"other"
+/**
+ * Raw entity type exposed to the minimap as a reusable fact.
+ */
+export type MinimapEntityType = "unknown" | "monster" | "npc" | "sceneObject" | "zone" | "bullet" | "clientBullet" | "pet" | "char" | "dummy" | "drop" | "field" | "trap" | "collection" | "staticObject" | "vehicle" | "toy" | "communityHouse" | "houseItem" | "other"
+/**
+ * One in-game player marker to render on the minimap.
+ */
+export type MinimapMarker = {
+/**
+ * Displayed marker number 1..=6, derived as `skill_id - MARKER_SKILL_ID_BASE`.
+ */
+marker: number; skillId: number; x: number | null; z: number | null }
+/**
+ * One monster skill cast event observed from `ATTR_SKILL_ID` (attribute 100).
+ */
+export type MinimapSkillCast = {
+/**
+ * Entity UUID that emitted the skill cast.
+ */
+entityUuid: string;
+/**
+ * Skill template id.
+ */
+skillId: number;
+/**
+ * Local receive time in milliseconds.
+ */
+timeMs: number;
+/**
+ * World X position of the caster at cast time, when known.
+ */
+x: number | null;
+/**
+ * World Z position of the caster at cast time, when known.
+ */
+z: number | null;
+/**
+ * Yaw facing in degrees at cast time, when known.
+ */
+facing: number | null }
+/**
+ * One frame of minimap data for a single scene.
+ */
+export type MinimapSnapshot = {
+/**
+ * Current scene id.
+ */
+sceneId: number;
+/**
+ * Local player UUID for frontend grouping and display.
+ */
+localPlayerUuid: string;
+/**
+ * All tracked entities that currently have a known position.
+ */
+entities: MinimapEntity[];
+/**
+ * Active buff facts selected by the scene/mechanic extraction config.
+ */
+buffs: MinimapBuffFact[];
+/**
+ * Active in-game player markers
+ */
+markers: MinimapMarker[] }
+/**
+ * Event payload wrapping a [`MinimapSnapshot`] for the minimap overlay window.
+ */
+export type MinimapUpdatePayload = { snapshot: MinimapSnapshot | null; skillCasts: MinimapSkillCast[] }
 export type ModelDownloadSource = "auto" | "huggingFace" | "hfMirror"
 export type ModelState = { kind: "notInstalled" } | { kind: "installing" } | { kind: "ready"; version: string } | { kind: "corrupt"; version: string; reason: string }
 export type ModuleInfo = { name: string; config_id: number; uuid: number; quality: number; parts: ModulePart[] }
@@ -817,6 +897,7 @@ export type MonitorRuntimeSnapshot = { i18n: I18nRuntimeSnapshot; live: LiveRunt
  */
 export type MonsterBuffSourceScope = "anySource" | "localPlayerSource"
 export type MonsterRuntimeSnapshot = { enabled: boolean; globalIds: number[]; selfAppliedIds: number[]; monitorAllSelfApplied: boolean }
+export type PanelAttrState = { attrId: number; value: number }
 /**
  * Damage taken by a defender, aggregated by the attacking monster's template.
  */
@@ -824,54 +905,93 @@ export type PerSourceStats = {
 /**
  * Monster template id of the attacker. None when the source was unknown.
  */
-sourceMonsterId: number | null; totalValue: number; taken: RawCombatStats; skills: Partial<{ [key in number]: RawSkillStats }> }
-export type PerTargetStats = { targetEntityUuid: string; targetDisplayUid: number; targetMonsterId: number | null; totalValue: number; damage: RawCombatStats; skills: Partial<{ [key in number]: RawSkillStats }> }
-/**
- * The result of a query for player names.
- */
-export type PlayerNamesResult = {
-/**
- * A list of player names.
- */
-names: string[] }
-/**
- * A summary of a player in an encounter.
- */
-export type PlayerSummaryDto = {
-/**
- * The player name.
- */
-name: string;
-/**
- * The class ID of the player.
- */
-classId: number }
-export type RawCombatStats = { total: number; effectiveTotal: number; hits: number; critHits: number; critTotal: number; luckyHits: number; luckyTotal: number; triggerHits: number; blockHits: number; luckyBlockHits: number }
-export type RawSkillStats = { totalValue: number; effectiveTotalValue: number; hits: number; critHits: number; critTotalValue: number; luckyHits: number; luckyTotalValue: number; property: number | null; damageMode: number | null; triggerHits: number; blockHits: number; luckyBlockHits: number }
-/**
- * The result of a query for recent encounters.
- */
-export type RecentEncountersResult = {
-/**
- * The rows of encounter summaries.
- */
-rows: EncounterSummaryDto[];
-/**
- * The total number of encounters.
- */
-totalCount: number }
+sourceMonsterId: number | null; totalValue: string; taken: RawCombatStats; skills: Partial<{ [key in number]: RawSkillStats }> }
+export type PlayerNamesResult = { names: string[] }
+export type PlayerSummaryDto = { name: string; classId: number }
+export type RawCombatStats = { total: string; effectiveTotal: string; hits: string; critHits: string; critTotal: string; luckyHits: string; luckyTotal: string; triggerHits: string; blockHits: string; luckyBlockHits: string }
+export type RawEntityData = { entityUuid: string; displayUid: number; name: string; classId: number; classSpec: number; className: string; classSpecName: string; abilityScore: number; seasonStrength: number; damage: RawCombatStats; damageBossOnly: RawCombatStats; healing: RawCombatStats; taken: RawCombatStats; dmgSkills: Partial<{ [key in number]: RawSkillStats }>; healSkills: Partial<{ [key in number]: RawSkillStats }>; takenSkills: Partial<{ [key in number]: RawSkillStats }>; takenPerSource: PerSourceStats[] }
+export type RawSkillStats = { totalValue: string; effectiveTotalValue: string; hits: string; critHits: string; critTotalValue: string; luckyHits: string; luckyTotalValue: string; property: number | null; damageMode: number | null; triggerHits: string; blockHits: string; luckyBlockHits: string }
+export type RecentEncountersResult = { rows: EncounterSummaryDto[]; totalCount: number }
 export type ResetBuffTarget = "selfPlayer" | "anyTeam"
+export type SceneIdsResult = { ids: number[] }
 /**
- * The result of a query for scene IDs.
+ * A single shield entry parsed from attr 60050.
  */
-export type SceneIdsResult = {
+export type ShieldDetailEntry = { buffUuid: number; displayType: number;
 /**
- * A list of scene IDs.
+ * Current shield value (field 3)
  */
-ids: number[] }
+current: number;
+/**
+ * Initial shield value when the buff was applied (field 4)
+ */
+initialShield: number;
+/**
+ * Max shield value (field 5)
+ */
+maxShield: number;
+/**
+ * Base ID of the buff (from buff monitor lookup), 0 if unknown
+ */
+baseId: number;
+/**
+ * Local-clock expiry timestamp in ms, 0 if unknown or permanent
+ */
+expireTimeMs: number }
+/**
+ * Represents a skill cooldown state.
+ */
+export type SkillCdState = {
+/**
+ * The skill level ID.
+ */
+skillLevelId: number;
+/**
+ * The cooldown begin timestamp
+ */
+beginTime: number;
+/**
+ * The total duration of the cooldown in milliseconds.
+ * -1 indicates a charge/resource style entry.
+ */
+duration: number;
+/**
+ * The cooldown type enum value
+ */
+skillCdType: number;
+/**
+ * The server-reported valid cooldown time in milliseconds.
+ */
+validCdTime: number;
+/**
+ * Local timestamp when this cooldown state was received
+ */
+receivedAt: number;
+/**
+ * Cooldown duration after applying AttrSkillCD/AttrSkillCDPCT and TempAttr rules.
+ */
+calculatedDuration: number;
+/**
+ * Cooldown accelerate rate for this skill
+ */
+cdAccelerateRate: number }
 export type SkillRuntimeSnapshot = { enabled: boolean; monitoredSkillIds: number[]; monitoredBuffIds: number[]; monitorAllBuff: boolean; monitoredPanelAttrIds: number[]; buffCounterRules: CounterRule[]; seasonCultivateFactorTemplates: FactorCounterTemplate[] }
+export type SlotUpdateState = { slotId: number; currentCount: number; threshold: number | null; effectiveThreshold: number | null; isCounting: boolean; resetBuffActive: boolean; freezeUntilMs: number | null; freezeDurationMs: number | null; effectiveFreezeDurationMs: number | null }
+/**
+ * Stamina/resilience snapshot for a single monster target.
+ * `current` depletes from `max` as the monster is staggered; reaching 0
+ * means the stagger threshold has been hit.
+ */
+export type StunEntry = { bossEntityUuid: string; monsterId: number; current: number; max: number }
+export type TeammateFantasyState = { summonUuid: string; summonerUuid: string; summonerName: string | null; monsterId: number;
+/**
+ * Normalized resonance skill id that summoned this fantasy, when known.
+ */
+resonanceSkillId: number | null; remodelLevel: number; detectedAtMs: number }
 export type TeammateRuntimeSnapshot = { enabled: boolean; anySourceIds: number[]; localPlayerSourceIds: number[]; targetSelfSourceIds: number[]; monitorAll: boolean }
 export type TickAttrCondition = { attrId: number; requiredValue: number }
+export type TrainingDummyPhase = "idle" | "armed" | "running" | "finished"
+export type TrainingDummyState = { phase: TrainingDummyPhase }
 /**
  * A single generated take (WAV) for a phrase, using a specific profile/model/params.
  */
@@ -903,13 +1023,37 @@ export type VoiceOperationState = { kind: "idle" } | { kind: "installingModel"; 
  */
 export type VoicePhraseMeta = { id: string; name: string; text: string; language: VoiceLanguage; activeAssetId: string | null; updatedAtMs: number }
 /**
+ * A UI locale with a bundled reference voice. Deliberately distinct from
+ * [`super::models::VoiceLanguage`], which tags the *text* of a phrase and
+ * drives the sidecar's codec language id: a Chinese-locale user can still
+ * author (and hear synthesized) an English or Japanese phrase, and should
+ * keep hearing it in the Chinese preset voice unless they pick a different
+ * source explicitly.
+ */
+export type VoicePresetLocale = "zh-CN" | "en-US" | "ja-JP"
+/**
+ * Identifies which bundled reference file (and manifest revision) a cloned
+ * profile was extracted from. Stored on [`super::models::VoiceProfileMeta`]
+ * so a later generation can detect that the bundled audio moved on to a
+ * new revision and re-extract rather than reuse a stale embedding.
+ */
+export type VoicePresetTag = { locale: VoicePresetLocale; revision: number }
+/**
  * A persisted speaker profile (voice clone), backed by a `.q3sp` file on disk.
  */
 export type VoiceProfileMeta = { id: string; name: string; createdAtMs: number; modelVersion: string; embeddingDim: number; modelSha256: string; refAudioSha256: string;
 /**
  * Whether the original reference WAV was kept on disk (opt-in).
  */
-refAudioRetained: boolean }
+refAudioRetained: boolean;
+/**
+ * Set when this profile was auto-created from a bundled preset
+ * reference (see `voice::presets`) rather than audio the user
+ * supplied, so generation can detect a stale preset (bundled asset
+ * revision bumped) and re-extract instead of silently reusing
+ * outdated audio. `None` for user-provided clone profiles.
+ */
+preset: VoicePresetTag | null }
 /**
  * Playback queue policy when the queue is full or a higher priority cue arrives.
  */
@@ -935,7 +1079,12 @@ priority: number; cooldownMs: number; phraseIdByTier?: Partial<{ [key in number]
  * a sub-section of `MonitorRuntimeSnapshot` alongside skill/monster/teammate.
  */
 export type VoiceRuntimeSnapshot = { enabled: boolean; volume: number; queuePolicy: VoiceQueuePolicy; rules: VoiceRule[] }
-export type VoiceSourceSelectionDto = { mode: "cloneNew"; name: string; referenceWavPath: string; keepReference?: boolean } | { mode: "cloneExisting"; profileId: string } | { mode: "fineTuned" }
+export type VoiceSourceSelectionDto = { mode: "cloneNew"; name: string; referenceWavPath: string; keepReference?: boolean } | { mode: "cloneExisting"; profileId: string } |
+/**
+ * Auto-selects the bundled reference voice for a UI locale, extracting
+ * (and thereafter reusing) a clone profile from it on demand.
+ */
+{ mode: "preset"; locale: VoicePresetLocale } | { mode: "fineTuned" }
 /**
  * Overall status snapshot returned to the frontend for the voice feature.
  */

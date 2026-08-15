@@ -1,6 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { onEntityIdentities, onMinimapUpdate } from "$lib/api";
+import type { MinimapUpdatePayload } from "$lib/api";
 import {
   initOverlayClock,
   overlayNow,
@@ -13,6 +13,7 @@ import {
   clearSkillCastLog,
   consumeMinimapSkillCasts,
   minimapRuntime,
+  setMinimapSnapshot,
   updateElectromagneticRingCycle,
   updateEntityFirstSeen,
 } from "./minimap-runtime.svelte.js";
@@ -21,7 +22,7 @@ import { setMinimapEditMode } from "./minimap-state.svelte.js";
 
 /**
  * Wires up the minimap overlay: edit-mode toggle, the high-frequency
- * `minimap-update` stream, entity-name identities, and the shared overlay clock
+ * `minimap-snapshot` stream and the shared overlay clock
  * (drives buff countdowns). Returns a cleanup function that unsubscribes all
  * listeners; safe to call repeatedly (idempotent via the runtime guard).
  */
@@ -49,52 +50,46 @@ export function initMinimapOverlay() {
     void setMinimapEditMode(!minimapRuntime.isEditing);
   });
 
-  const unlistenMinimap = onMinimapUpdate((event) => {
-    const { snapshot, skillCasts } = event.payload;
-    if (snapshot) {
-      if (
-        minimapRuntime.lastSceneId !== null &&
-        minimapRuntime.lastSceneId !== snapshot.sceneId
-      ) {
+  const unlistenMinimap = listen<MinimapUpdatePayload>(
+    "minimap-snapshot",
+    (event) => {
+      const { snapshot, skillCasts } = event.payload;
+      if (snapshot) {
+        if (
+          minimapRuntime.lastSceneId !== null &&
+          minimapRuntime.lastSceneId !== snapshot.sceneId
+        ) {
+          clearSkillCastLog();
+          resetMinimapVoiceCues();
+        }
+        minimapRuntime.lastSceneId = snapshot.sceneId;
+        setMinimapSnapshot(snapshot);
+        updateEntityFirstSeen(snapshot, overlayNow());
+        updateElectromagneticRingCycle(snapshot, overlayNow());
+        // Uses this tick's fresh skill-cast delta (not the accumulated log
+        // resolveView reads), so each qualifying mechanic occurrence is seen
+        // by resolveVoiceCues exactly once.
+        const fires = resolveScene(snapshot.sceneId)?.resolveVoiceCues?.(
+          snapshot,
+          skillCasts,
+        );
+        if (fires && fires.length > 0) {
+          handleMinimapVoiceCues(fires);
+        }
+      } else if (skillCasts.length === 0) {
+        setMinimapSnapshot(null);
+        minimapRuntime.lastSceneId = null;
         clearSkillCastLog();
         resetMinimapVoiceCues();
       }
-      minimapRuntime.lastSceneId = snapshot.sceneId;
-      minimapRuntime.snapshot = snapshot;
-      updateEntityFirstSeen(snapshot, overlayNow());
-      updateElectromagneticRingCycle(snapshot, overlayNow());
-      // Uses this tick's fresh skill-cast delta (not the accumulated log
-      // resolveView reads), so each qualifying mechanic occurrence is seen
-      // by resolveVoiceCues exactly once.
-      const fires = resolveScene(snapshot.sceneId)?.resolveVoiceCues?.(
-        snapshot,
-        skillCasts,
-      );
-      if (fires && fires.length > 0) {
-        handleMinimapVoiceCues(fires);
-      }
-    } else if (skillCasts.length === 0) {
-      minimapRuntime.snapshot = null;
-      minimapRuntime.lastSceneId = null;
-      clearSkillCastLog();
-      resetMinimapVoiceCues();
-    }
-    consumeMinimapSkillCasts(skillCasts);
-  });
-
-  const unlistenIdentities = onEntityIdentities((event) => {
-    for (const [entityUuid, name] of Object.entries(
-      event.payload.playerNames,
-    )) {
-      minimapRuntime.playerNameCache.set(entityUuid, name);
-    }
-  });
+      consumeMinimapSkillCasts(skillCasts);
+    },
+  );
 
   const cleanup = () => {
     stopClock();
     void unlistenEditToggle.then((fn) => fn());
     void unlistenMinimap.then((fn) => fn());
-    void unlistenIdentities.then((fn) => fn());
     minimapRuntime.cleanup = null;
     minimapRuntime.isMounted = false;
   };

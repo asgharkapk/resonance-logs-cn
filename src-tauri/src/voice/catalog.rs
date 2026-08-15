@@ -4,6 +4,7 @@
 //! - `models/<modelVersion>/` — installed GGUF model files.
 //! - `profiles/<profileId>/speaker.q3sp` — speaker embedding profile.
 //! - `assets/<phraseId>/<assetId>.wav` — generated takes.
+//! - `finetuned/` — validation state for the user-provided CustomVoice package.
 //! - `catalog.json` — profile/phrase/asset metadata (this file).
 
 use std::path::{Path, PathBuf};
@@ -45,6 +46,13 @@ pub fn assets_dir(voice_root: &Path) -> PathBuf {
 
 pub fn staging_dir(voice_root: &Path) -> PathBuf {
     voice_root.join("staging")
+}
+
+/// Holds app-owned validation state for the configured fine-tuned voice. The
+/// package itself lives wherever the user picked it, which may be read-only or
+/// removable media, so nothing is ever written back into it.
+pub fn fine_tuned_dir(voice_root: &Path) -> PathBuf {
+    voice_root.join("finetuned")
 }
 
 pub fn profile_dir(voice_root: &Path, profile_id: &str) -> PathBuf {
@@ -311,6 +319,45 @@ mod tests {
         ));
         assert!(assets_dir(&voice_root).join("keep.txt").is_file());
         assert!(!directory.path().join("voice-legacy-v2-1").exists());
+    }
+
+    #[test]
+    fn v3_catalog_without_a_preset_tag_still_loads_with_it_defaulted_to_none() {
+        // A v3 catalog written before the preset-voice feature existed has
+        // no `preset` key on its profiles at all. Adding the field must not
+        // require a schema bump: it has to default to `None` for every
+        // profile that predates it.
+        let directory = tempfile::tempdir().unwrap();
+        let voice_root = directory.path().join("voice");
+        std::fs::create_dir_all(&voice_root).unwrap();
+        let catalog = serde_json::json!({
+            "schemaVersion": VOICE_CATALOG_SCHEMA_VERSION,
+            "profiles": [{
+                "id": "profile-1",
+                "name": "My Voice",
+                "createdAtMs": 1,
+                "modelVersion": "model-v1",
+                "embeddingDim": 1024,
+                "modelSha256": "0".repeat(64),
+                "refAudioSha256": "1".repeat(64),
+                "refAudioRetained": false
+            }],
+            "phrases": [],
+            "assets": [],
+            "installedModelVersion": null,
+            "installedModelSha256": null
+        });
+        std::fs::write(
+            voice_root.join(CATALOG_FILE_NAME),
+            serde_json::to_vec_pretty(&catalog).unwrap(),
+        )
+        .unwrap();
+
+        let loaded = load_catalog(&voice_root).unwrap();
+
+        assert_eq!(loaded.schema_version, VOICE_CATALOG_SCHEMA_VERSION);
+        assert_eq!(loaded.profiles.len(), 1);
+        assert!(loaded.profiles[0].preset.is_none());
     }
 
     #[test]

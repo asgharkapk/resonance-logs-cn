@@ -1,9 +1,9 @@
-use crate::live::counter_tracker::CounterRule;
-use crate::live::season_cultivate::{FactorCounterTemplate, normalize_factor_templates};
+use crate::live::counter::engine::CounterRule;
+use crate::live::counter::season_cultivate::{FactorCounterTemplate, normalize_factor_templates};
 use crate::voice::models::VoiceRuntimeSnapshot;
 use log::{info, warn};
 use serde::{Deserialize, Deserializer, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 use tauri::Manager;
 
@@ -230,6 +230,7 @@ pub(crate) fn save_monitor_runtime_snapshot(
         app_handle.path().app_local_data_dir(),
     ];
     let mut last_err = None;
+    let bytes = serde_json::to_vec_pretty(snapshot).map_err(|error| error.to_string())?;
 
     for dir in app_data_dirs.into_iter().flatten() {
         let target_dir = dir.join("stores");
@@ -243,10 +244,7 @@ pub(crate) fn save_monitor_runtime_snapshot(
         }
 
         let path = target_dir.join(SNAPSHOT_FILE_NAME);
-        match std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(snapshot).map_err(|error| error.to_string())?,
-        ) {
+        match write_snapshot_atomically(&target_dir, &path, &bytes) {
             Ok(_) => {
                 info!(
                     target: "app::startup",
@@ -276,6 +274,28 @@ pub(crate) fn save_monitor_runtime_snapshot(
     }
 
     Err(last_err.unwrap_or_else(|| "failed to save monitor runtime snapshot".to_string()))
+}
+
+/// Writes the snapshot to a sibling temp file and renames it over the target, so
+/// a reader can only ever observe the complete previous or complete next
+/// version — never the half-written file a plain truncate-then-write leaves
+/// behind while the updater check or the next launch is reading it.
+///
+/// `std::fs::rename` maps to `MoveFileExW` with `MOVEFILE_REPLACE_EXISTING` on
+/// Windows and to `rename(2)` (already atomic) on POSIX, so a plain rename is
+/// sufficient here. The temp file is created in the destination directory
+/// because a rename is only atomic within one volume.
+fn write_snapshot_atomically(target_dir: &Path, path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let temporary = target_dir.join(format!("{SNAPSHOT_FILE_NAME}.tmp.{}", std::process::id()));
+    if let Err(error) = std::fs::write(&temporary, bytes) {
+        let _ = std::fs::remove_file(&temporary);
+        return Err(error);
+    }
+    if let Err(error) = std::fs::rename(&temporary, path) {
+        let _ = std::fs::remove_file(&temporary);
+        return Err(error);
+    }
+    Ok(())
 }
 
 pub(crate) fn load_monitor_runtime_snapshot(

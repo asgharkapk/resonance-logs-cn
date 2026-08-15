@@ -25,10 +25,21 @@ import {
   formatTimerText,
   resolveAlertState,
 } from "../game-overlay/overlay-utils";
-import type { BuffAlertState, TextBuffDisplay } from "../game-overlay/overlay-types";
+import type {
+  BuffAlertState,
+  TextBuffDisplay,
+} from "../game-overlay/overlay-types";
 import {
   isMonsterLayoutScaffold,
+  monsterBossBuffs,
+  monsterBossMechanics,
+  monsterFantasyEntries,
+  monsterHateLists,
+  monsterIds,
+  monsterPlayerNames,
   monsterRuntime,
+  monsterStunEntries,
+  monsterTeammateBuffs,
 } from "./monster-runtime.svelte.js";
 import {
   fantasyEntryKey,
@@ -284,10 +295,10 @@ function pickLatestBuff(
 }
 
 function resolveEntityDisplayName(entityUuid: EntityId): string {
-  const playerName = monsterRuntime.playerNameCache.get(entityUuid);
+  const playerName = monsterPlayerNames().get(entityUuid);
   if (playerName) return playerName;
 
-  const monsterId = monsterRuntime.monsterIdCache.get(entityUuid);
+  const monsterId = monsterIds().get(entityUuid);
   if (monsterId !== undefined) return resolveMonsterName(monsterId);
 
   return t("monsterOverlay.entity.uid", { uid: uidFromEntityUuid(entityUuid) });
@@ -335,13 +346,15 @@ function buildFantasyPlaceholderRows(): MonsterFantasyRow[] {
 }
 
 function sortFantasyEntries(entries: TeammateFantasyState[]) {
-  return [...entries].sort((left, right) => right.detectedAtMs - left.detectedAtMs);
+  return [...entries].sort(
+    (left, right) => right.detectedAtMs - left.detectedAtMs,
+  );
 }
 
 function buildFantasyRows(now: number): MonsterFantasyRow[] {
   const state = SETTINGS.monsterMonitor.state;
   const latestByFantasy = new Map<string, TeammateFantasyState>();
-  for (const entry of monsterRuntime.fantasyEntries) {
+  for (const entry of monsterFantasyEntries()) {
     if (entry.detectedAtMs + FANTASY_DISPLAY_TTL_MS <= now) {
       continue;
     }
@@ -364,8 +377,6 @@ function buildFantasyRows(now: number): MonsterFantasyRow[] {
   }
 
   const activeEntries = sortFantasyEntries([...latestByFantasy.values()]);
-  monsterRuntime.fantasyEntries = activeEntries;
-
   const whitelist = new Set(state.fantasyWhitelistMonsterIds ?? []);
   const fantasyEntries = activeEntries.filter((entry) =>
     isResonanceFantasyMonsterId(entry.monsterId),
@@ -378,7 +389,7 @@ function buildFantasyRows(now: number): MonsterFantasyRow[] {
   return filteredEntries.map((entry) => {
     const summonerName =
       entry.summonerName ||
-      monsterRuntime.playerNameCache.get(entry.summonerUuid) ||
+      monsterPlayerNames().get(entry.summonerUuid) ||
       t("monsterOverlay.entity.uid", {
         uid: uidFromEntityUuid(entry.summonerUuid),
       });
@@ -394,7 +405,7 @@ function buildFantasyRows(now: number): MonsterFantasyRow[] {
 }
 
 function resolveMonsterSectionTitle(entityUuid: EntityId): string {
-  const monsterId = monsterRuntime.monsterIdCache.get(entityUuid);
+  const monsterId = monsterIds().get(entityUuid);
   if (monsterId !== undefined) return resolveMonsterName(monsterId);
 
   return t("monsterOverlay.placeholder.target", {
@@ -404,14 +415,12 @@ function resolveMonsterSectionTitle(entityUuid: EntityId): string {
 
 function buildDbmRows(now: number): TextBuffDisplay[] {
   const entries: { createTimeMs: number; row: TextBuffDisplay }[] = [];
-  for (const [baseSkillId, event] of monsterRuntime.bossDbmMap) {
+  for (const event of monsterBossMechanics().values()) {
     const remainingMs = Math.max(
       0,
       event.createTimeMs + event.durationMs - now,
     );
     if (remainingMs <= 0) {
-      // Pulse expired: drop it so the map stays bounded across encounters.
-      monsterRuntime.bossDbmMap.delete(baseSkillId);
       continue;
     }
     entries.push({
@@ -583,10 +592,11 @@ export function updateMonsterDisplay() {
   const nextStunSections: MonsterStunSection[] = [];
   let nextFantasyRows = buildFantasyRows(now);
 
-  const sortedBossUids = Array.from(monsterRuntime.bossBuffMap.keys()).sort();
+  const bossBuffs = monsterBossBuffs();
+  const sortedBossUids = Array.from(bossBuffs.keys()).sort();
 
   for (const bossUid of sortedBossUids) {
-    const buffMap = monsterRuntime.bossBuffMap.get(bossUid) ?? new Map();
+    const buffMap = bossBuffs.get(bossUid) ?? new Map();
     const buffRows = Array.from(buffMap.values())
       .sort((left, right) => {
         const leftPriority =
@@ -617,13 +627,11 @@ export function updateMonsterDisplay() {
     });
   }
 
-  const sortedTeammateUuids = Array.from(
-    monsterRuntime.teammateBuffMap.keys(),
-  ).sort();
+  const teammateBuffs = monsterTeammateBuffs();
+  const sortedTeammateUuids = Array.from(teammateBuffs.keys()).sort();
 
   for (const teammateUuid of sortedTeammateUuids) {
-    const buffMap =
-      monsterRuntime.teammateBuffMap.get(teammateUuid) ?? new Map();
+    const buffMap = teammateBuffs.get(teammateUuid) ?? new Map();
     const cells = teammateColumns.map((column) => {
       if (column.kind === "buff") {
         const buff = buffMap.get(column.buffId);
@@ -733,16 +741,12 @@ export function updateMonsterDisplay() {
   }
 
   if (SETTINGS.monsterMonitor.state.hateListEnabled) {
-    const sortedHateBossUids = Array.from(
-      monsterRuntime.bossHateMap.keys(),
-    ).sort();
+    const hateLists = monsterHateLists();
+    const sortedHateBossUids = Array.from(hateLists.keys()).sort();
     const maxDisplay = SETTINGS.monsterMonitor.state.hateListMaxDisplay ?? 5;
 
     for (const bossUid of sortedHateBossUids) {
-      const hateRows = buildHateRows(
-        monsterRuntime.bossHateMap.get(bossUid) ?? [],
-        maxDisplay,
-      );
+      const hateRows = buildHateRows(hateLists.get(bossUid) ?? [], maxDisplay);
       if (hateRows.length === 0) continue;
       nextHateSections.push({
         bossEntityUuid: bossUid,
@@ -775,11 +779,10 @@ export function updateMonsterDisplay() {
   }
 
   if (SETTINGS.monsterMonitor.state.stunListEnabled) {
-    const sortedStunBossUids = Array.from(
-      monsterRuntime.bossStunMap.keys(),
-    ).sort();
+    const stunEntries = monsterStunEntries();
+    const sortedStunBossUids = Array.from(stunEntries.keys()).sort();
     for (const bossUid of sortedStunBossUids) {
-      const entry = monsterRuntime.bossStunMap.get(bossUid);
+      const entry = stunEntries.get(bossUid);
       if (!entry) continue;
       const stunRows = buildStunRows(entry);
       if (stunRows.length === 0) continue;

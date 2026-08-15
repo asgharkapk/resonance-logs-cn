@@ -9,6 +9,7 @@ const LOCALES = ['zh-CN', 'en-US', 'ja-JP'];
 const DOC_DIR = path.join(__dirname, '..', 'doc');
 const OUT_DIR = path.join(DOC_DIR, 'html_doc');
 const SHARED_IMG = path.join(DOC_DIR, 'shared', 'img');
+const SHARED_AUDIO = path.join(DOC_DIR, 'shared', 'audio');
 
 const localeArg = process.argv.find((a) => a.startsWith('--locale='));
 const ONLY_LOCALE = localeArg ? localeArg.split('=')[1] : null;
@@ -26,18 +27,21 @@ const FEATURE_HUBS = {
     dps: { hubHref: 'README.html', hubLabel: 'DPS 检测' },
     monster: { hubHref: 'README.html', hubLabel: '怪物监控' },
     minimap: { hubHref: 'README.html', hubLabel: '副本机制' },
+    voice: { hubHref: 'README.html', hubLabel: '语音播报' },
   },
   'en-US': {
     monitor: { hubHref: 'README.html', hubLabel: 'Buff Monitor' },
     dps: { hubHref: 'README.html', hubLabel: 'DPS Meter' },
     monster: { hubHref: 'README.html', hubLabel: 'Monster Monitor' },
     minimap: { hubHref: 'README.html', hubLabel: 'Dungeon Mechanics' },
+    voice: { hubHref: 'README.html', hubLabel: 'Voice Announcements' },
   },
   'ja-JP': {
     monitor: { hubHref: 'README.html', hubLabel: 'Buff モニター' },
     dps: { hubHref: 'README.html', hubLabel: 'DPS メーター' },
     monster: { hubHref: 'README.html', hubLabel: 'モンスターモニター' },
     minimap: { hubHref: 'README.html', hubLabel: 'ダンジョンギミック' },
+    voice: { hubHref: 'README.html', hubLabel: '音声アナウンス' },
   },
 };
 
@@ -330,7 +334,7 @@ function buildLocale(locale) {
     if (fs.existsSync(mdPath)) buildFile(mdPath, outPath, locale);
   }
 
-  for (const module of ['monitor', 'dps', 'monster', 'minimap']) {
+  for (const module of ['monitor', 'dps', 'monster', 'minimap', 'voice']) {
     buildFeatureModule(module, locale);
   }
 
@@ -394,9 +398,14 @@ function buildLandingPage() {
 }
 
 function copySharedAssets() {
-  if (!fs.existsSync(SHARED_IMG)) return;
-  copyDir(SHARED_IMG, path.join(OUT_DIR, 'shared', 'img'));
-  console.log('  copied shared/img');
+  if (fs.existsSync(SHARED_IMG)) {
+    copyDir(SHARED_IMG, path.join(OUT_DIR, 'shared', 'img'));
+    console.log('  copied shared/img');
+  }
+  if (fs.existsSync(SHARED_AUDIO)) {
+    copyDir(SHARED_AUDIO, path.join(OUT_DIR, 'shared', 'audio'));
+    console.log('  copied shared/audio');
+  }
 }
 
 function main() {

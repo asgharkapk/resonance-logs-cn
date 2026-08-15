@@ -1,7 +1,7 @@
-﻿<script lang="ts">
+<script lang="ts">
   import { page } from "$app/state";
   import { settings, SETTINGS } from "$lib/settings-store";
-  import { getLiveData } from "$lib/stores/live-meter-store.svelte";
+  import { liveCombatStore } from "$lib/stores/live-topics.svelte";
   import { computePlayerRows } from "$lib/live-derived";
   import {
     groupSkillsByRecount,
@@ -12,6 +12,7 @@
   import { liveDpsSkillColumns } from "$lib/column-data";
   import { normalizeNameDisplaySetting } from "$lib/name-display";
   import { formatNumber } from "$lib/i18n/index.svelte";
+  import { ipcNumber } from "$lib/ipc-decimal";
 
   const entityUuid = page.url.searchParams.get("entityUuid") ?? "";
   const emptyGroupedSkills = {
@@ -19,15 +20,16 @@
     ungrouped: [] as SkillDisplayRow[],
   };
 
-  let liveData = $derived(getLiveData());
-  let dpsPlayers = $derived(
-    liveData ? computePlayerRows(liveData, "dps") : [],
+  let liveData = $derived(liveCombatStore.data?.combat ?? null);
+  let dpsPlayers = $derived(liveData ? computePlayerRows(liveData, "dps") : []);
+  let currPlayer = $derived(
+    dpsPlayers.find((player) => player.entityUuid === entityUuid),
   );
-  let currPlayer = $derived(dpsPlayers.find((player) => player.entityUuid === entityUuid));
   let currEntity = $derived(
-    liveData?.entities.find((entity) => entity.entityUuid === entityUuid) ?? null,
+    liveData?.entities.find((entity) => entity.entityUuid === entityUuid) ??
+      null,
   );
-  let elapsedSecs = $derived((liveData?.elapsedMs ?? 0) / 1000);
+  let elapsedSecs = $derived(ipcNumber(liveData?.elapsedMs) / 1000);
 
   let groupedSkills = $derived(
     currEntity
@@ -40,16 +42,18 @@
   );
 
   let SETTINGS_YOUR_NAME = $derived(settings.state.live.general.showYourName);
-  let SETTINGS_OTHERS_NAME = $derived(settings.state.live.general.showOthersName);
+  let SETTINGS_OTHERS_NAME = $derived(
+    settings.state.live.general.showOthersName,
+  );
 
   let tableSettings = $derived(SETTINGS.live.tableCustomization.state);
   let abbreviatedDecimalPlaces = $derived(
     SETTINGS.live.general.state.abbreviatedDecimalPlaces ?? 1,
   );
-  let abbreviationStyle = $derived(SETTINGS.live.general.state.abbreviationStyle);
-  let customThemeColors = $derived(
-    SETTINGS.live.appearance.state.themeColors,
+  let abbreviationStyle = $derived(
+    SETTINGS.live.general.state.abbreviationStyle,
   );
+  let customThemeColors = $derived(SETTINGS.live.appearance.state.themeColors);
 
   let sortKey = $derived(SETTINGS.live.sorting.dpsSkills.state.sortKey);
   let sortDesc = $derived(SETTINGS.live.sorting.dpsSkills.state.sortDesc);
@@ -79,12 +83,14 @@
   const glowClassName = $derived.by(() => {
     if (!currPlayer) return "";
     const isLocalPlayer =
-      liveData?.localPlayerUuid != null && currPlayer.entityUuid === liveData.localPlayerUuid;
+      liveData?.localPlayerUuid != null &&
+      currPlayer.entityUuid === liveData.localPlayerUuid;
     return isLocalPlayer
       ? normalizeNameDisplaySetting(SETTINGS_YOUR_NAME) !== "Hide Your Name"
         ? currPlayer.className
         : ""
-      : normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) !== "Hide Others' Name"
+      : normalizeNameDisplaySetting(SETTINGS_OTHERS_NAME) !==
+          "Hide Others' Name"
         ? currPlayer.className
         : "";
   });
@@ -106,7 +112,7 @@
   {customThemeColors}
   {abbreviatedDecimalPlaces}
   {abbreviationStyle}
-  glowClassName={glowClassName}
+  {glowClassName}
   classSpecName={currPlayer?.classSpecName ?? ""}
   relativeToTop={SETTINGS.live.general.state.relativeToTopDPSSkill}
   shortenValues={SETTINGS.live.general.state.shortenDps}

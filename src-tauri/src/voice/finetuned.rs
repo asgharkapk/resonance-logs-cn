@@ -5,7 +5,8 @@ use std::io::Read;
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 
-use serde::Deserialize;
+use log::warn;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use super::error::{VoiceError, VoiceResult};
@@ -13,6 +14,9 @@ use super::models::{FineTunedModelInspection, FineTunedVoiceMeta, FineTunedVoice
 
 pub const PACKAGE_MANIFEST_FILE: &str = "voice-model.json";
 pub const TOKENIZER_ABI: &str = "qwen3-tts-tokenizer-12hz-v1";
+/// Mirrors the official model's cache file (see `model_manager`), so both
+/// validation paths look the same on disk.
+const VERIFIED_FINGERPRINT_FILE: &str = "verified_fingerprint.json";
 const MAX_MODEL_BYTES: u64 = 32 * 1024 * 1024 * 1024;
 const CODEC_VOCAB_SIZE: i32 = 3072;
 
@@ -159,11 +163,56 @@ pub fn inspect_state(voice: &FineTunedVoiceMeta) -> FineTunedVoiceState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// The cheap size+mtime fingerprint the transformer had the last time a full
+/// SHA-256 pass succeeded, together with the hash that pass was checked
+/// against. Structurally the counterpart of the official model's
+/// `ModelValidationFingerprint`; `model_sha256` binds the record to one voice
+/// identity so a record left over from a previously configured voice can never
+/// validate a different one.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ValidationFingerprint {
     path: String,
     size_bytes: u64,
-    modified_ns: u128,
+    modified_nanos: u128,
+    model_sha256: String,
+}
+
+/// Reads the on-disk record of the last fingerprint a full `inspect_state`
+/// SHA-256 pass actually succeeded against. Returns `None` on any read/parse
+/// error so callers always fall back to re-hashing instead of trusting a
+/// corrupt cache file.
+fn load_persisted_fingerprint(state_dir: &Path) -> Option<ValidationFingerprint> {
+    let bytes = std::fs::read(state_dir.join(VERIFIED_FINGERPRINT_FILE)).ok()?;
+    serde_json::from_slice(&bytes).ok()
+}
+
+fn write_persisted_fingerprint(
+    state_dir: &Path,
+    fingerprint: &ValidationFingerprint,
+) -> VoiceResult<()> {
+    std::fs::create_dir_all(state_dir)
+        .map_err(|error| VoiceError::io(format!("create {}", state_dir.display()), error))?;
+    let bytes = serde_json::to_vec_pretty(fingerprint)
+        .map_err(|source| VoiceError::json("serialize verified fine-tuned fingerprint", source))?;
+    let temporary = state_dir.join(format!("{VERIFIED_FINGERPRINT_FILE}.tmp"));
+    std::fs::write(&temporary, bytes)
+        .map_err(|error| VoiceError::io(format!("write {}", temporary.display()), error))?;
+    std::fs::rename(&temporary, state_dir.join(VERIFIED_FINGERPRINT_FILE))
+        .map_err(|error| VoiceError::io("finalize verified fine-tuned fingerprint", error))
+}
+
+pub fn clear_persisted_fingerprint(state_dir: &Path) {
+    let path = state_dir.join(VERIFIED_FINGERPRINT_FILE);
+    if path.exists()
+        && let Err(error) = std::fs::remove_file(&path)
+    {
+        warn!(
+            target: "app::voice",
+            "failed to remove stale verified fine-tuned fingerprint {}: {error}",
+            path.display()
+        );
+    }
 }
 
 #[derive(Debug, Default)]
@@ -172,7 +221,13 @@ pub struct FineTunedValidationCache {
 }
 
 impl FineTunedValidationCache {
-    pub fn inspect(&mut self, voice: &FineTunedVoiceMeta) -> FineTunedVoiceState {
+    /// Resolves the configured voice's state, hashing the transformer only when
+    /// the cheap fingerprint says something changed. The fingerprint is cached
+    /// both in memory and under `state_dir`, so a restarted process skips
+    /// re-hashing a multi-gigabyte GGUF that is provably untouched — the same
+    /// two-level scheme `verify_model_snapshot_cached` uses for the official
+    /// model.
+    pub fn inspect(&mut self, voice: &FineTunedVoiceMeta, state_dir: &Path) -> FineTunedVoiceState {
         let path = Path::new(&voice.transformer_path);
         let Ok(metadata) = path.metadata() else {
             self.entry = None;
@@ -186,7 +241,7 @@ impl FineTunedValidationCache {
                 voice: voice.clone(),
             };
         }
-        let modified_ns = metadata
+        let modified_nanos = metadata
             .modified()
             .ok()
             .and_then(|value| value.duration_since(UNIX_EPOCH).ok())
@@ -194,14 +249,29 @@ impl FineTunedValidationCache {
         let fingerprint = ValidationFingerprint {
             path: voice.transformer_path.clone(),
             size_bytes: metadata.len(),
-            modified_ns,
+            modified_nanos,
+            model_sha256: voice.model_sha256.clone(),
         };
         if let Some((cached_fingerprint, cached_state)) = &self.entry
             && cached_fingerprint == &fingerprint
         {
             return cached_state.clone();
         }
+        if load_persisted_fingerprint(state_dir).as_ref() == Some(&fingerprint) {
+            let state = FineTunedVoiceState::Ready {
+                voice: voice.clone(),
+            };
+            self.entry = Some((fingerprint, state.clone()));
+            return state;
+        }
         let state = inspect_state(voice);
+        if matches!(state, FineTunedVoiceState::Ready { .. }) {
+            if let Err(error) = write_persisted_fingerprint(state_dir, &fingerprint) {
+                warn!(target: "app::voice", "failed to persist verified fine-tuned fingerprint: {error}");
+            }
+        } else {
+            clear_persisted_fingerprint(state_dir);
+        }
         self.entry = Some((fingerprint, state.clone()));
         state
     }
@@ -407,17 +477,81 @@ mod tests {
     #[test]
     fn validation_cache_rechecks_when_the_file_fingerprint_changes() {
         let directory = tempdir().unwrap();
+        let state = tempdir().unwrap();
         write_package(directory.path(), "model.gguf", b"GGUFfixture");
         let voice = inspect_package(directory.path(), 123).unwrap();
         let mut cache = FineTunedValidationCache::default();
         assert!(matches!(
-            cache.inspect(&voice),
+            cache.inspect(&voice, state.path()),
             FineTunedVoiceState::Ready { .. }
         ));
+        assert!(
+            state.path().join(VERIFIED_FINGERPRINT_FILE).is_file(),
+            "a successful verify should persist the fingerprint"
+        );
 
         std::fs::write(&voice.transformer_path, b"GGUFchanged").unwrap();
         assert!(matches!(
-            cache.inspect(&voice),
+            cache.inspect(&voice, state.path()),
+            FineTunedVoiceState::Modified { .. }
+        ));
+        assert!(
+            !state.path().join(VERIFIED_FINGERPRINT_FILE).is_file(),
+            "a failed re-verify should clear the stale persisted fingerprint"
+        );
+    }
+
+    #[test]
+    fn persisted_fingerprint_skips_rehashing_after_a_restart() {
+        let directory = tempdir().unwrap();
+        let state = tempdir().unwrap();
+        write_package(directory.path(), "model.gguf", b"GGUFfixture");
+        let voice = inspect_package(directory.path(), 123).unwrap();
+        assert!(matches!(
+            FineTunedValidationCache::default().inspect(&voice, state.path()),
+            FineTunedVoiceState::Ready { .. }
+        ));
+
+        // Replace the bytes with same-length garbage and restore the original
+        // mtime, so the cheap fingerprint still matches while the contents no
+        // longer hash to `model_sha256`. A fresh cache (i.e. a restarted
+        // process) reporting Ready therefore proves the persisted-fingerprint
+        // shortcut is what's being taken -- a real re-hash would say Modified.
+        let transformer = Path::new(&voice.transformer_path);
+        let modified = transformer.metadata().unwrap().modified().unwrap();
+        std::fs::write(transformer, b"GGUFchanged").unwrap();
+        File::options()
+            .write(true)
+            .open(transformer)
+            .unwrap()
+            .set_modified(modified)
+            .unwrap();
+
+        assert!(matches!(
+            FineTunedValidationCache::default().inspect(&voice, state.path()),
+            FineTunedVoiceState::Ready { .. }
+        ));
+    }
+
+    #[test]
+    fn persisted_fingerprint_is_bound_to_one_voice_identity() {
+        let directory = tempdir().unwrap();
+        let state = tempdir().unwrap();
+        write_package(directory.path(), "model.gguf", b"GGUFfixture");
+        let voice = inspect_package(directory.path(), 123).unwrap();
+        assert!(matches!(
+            FineTunedValidationCache::default().inspect(&voice, state.path()),
+            FineTunedVoiceState::Ready { .. }
+        ));
+
+        // Same file, different expected hash: the leftover record must not
+        // satisfy it, so the cache re-hashes and reports the mismatch.
+        let other = FineTunedVoiceMeta {
+            model_sha256: "b".repeat(64),
+            ..voice
+        };
+        assert!(matches!(
+            FineTunedValidationCache::default().inspect(&other, state.path()),
             FineTunedVoiceState::Modified { .. }
         ));
     }
